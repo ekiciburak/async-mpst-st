@@ -21,6 +21,14 @@ CoInductive st: Type :=
   | st_receive: participant -> list (label*sort*st) -> st
   | st_send   : participant -> list (label*sort*st) -> st.
 
+Notation "p '&' l" := (st_receive p l) (at level 50, left associativity).
+Notation "p '!' l" := (st_send p l) (at level 50, left associativity).
+Notation "'B'" :=  sbool (at level 50, left associativity).
+Notation "'Un'" :=  sunit (at level 50, left associativity).
+Notation "'I'" :=  sint (at level 50, left associativity). 
+Notation "'N'" :=  snat (at level 50, left associativity).
+Notation "'end'" :=  st_end (at level 50, left associativity).
+
 Definition st_id (s: st): st :=
   match s with
     | st_end         => st_end

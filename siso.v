@@ -34,7 +34,7 @@ Proof. intro t.
        destruct t; try easy.
 Defined.
 
-Inductive seq_gen (seq: relation st): relation st :=
+Inductive seq_gen (seq: st -> st -> Prop): st -> st -> Prop :=
   | _seq_s_end     : seq_gen seq st_end st_end
   | _seq_s_receive : forall p1 p2 l1 l2 s1 s2 w1 w2 (R: seq w1 w2), seq_gen seq (st_receive p1 [(l1,s1,w1)]) (st_receive p2 [(l2,s2,w2)])
   | _seq_s_send    : forall p1 p2 l1 l2 s1 s2 w1 w2 (R: seq w1 w2), seq_gen seq (st_send p1 [(l1,s1,w1)]) (st_send p2 [(l2,s2,w2)]).
@@ -45,7 +45,7 @@ CoInductive siso_eq_c: st -> st -> Prop :=
   | siso_eq_fold: forall s1 s2, seq_gen siso_eq_c s1 s2 -> siso_eq_c s1 s2.
 
 (*paco*)
-Definition siso_eq_i: relation st := fun s1 s2 => paco2 seq_gen bot2 s1 s2.
+Definition siso_eq_i: st -> st -> Prop := fun s1 s2 => paco2 seq_gen bot2 s1 s2.
 
 Notation "x '==~' y" := (siso_eq_i x y) (at level 50, left associativity).
 
@@ -97,12 +97,30 @@ Inductive Bp (p: participant): Type :=
   | bp_receivea: participant -> label -> st.sort -> Bp p
   | bp_send    : forall q: participant, p <> q -> label -> st.sort -> Bp p
   | bp_mergea  : participant -> label -> st.sort -> Bp p -> Bp p
-  | bp_merge   : forall q: participant, p <> q -> label -> st.sort -> Bp p -> Bp p.
+  | bp_merge   : forall q: participant, p <> q -> label -> st.sort -> Bp p -> Bp p
+  | bp_end     : Bp p.
 
 Arguments bp_receivea {_} _ _ _.
 Arguments bp_send {_} _ _ _ _.
 Arguments bp_mergea {_} _ _ _ _.
 Arguments bp_merge {_} _ _ _ _ _.
+Arguments bp_end {_}.
+
+Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
+  match n with
+    | O   => bp_end
+    | S k =>
+      match b with
+        | bp_receivea q l s  => bp_mergea q l s (Bpn p b k)
+        | bp_send q H l s    => bp_merge q H l s (Bpn p b k)
+        | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
+        | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
+        | bp_end             => bp_end
+      end 
+  end.
+
+Compute (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) 3).
+Compute (Bpn "p" (bp_receivea "p" "l1" (I)) 4).
 
 CoFixpoint fromBp (p: participant) (b: Bp p): st :=
   match b with 
@@ -110,6 +128,7 @@ CoFixpoint fromBp (p: participant) (b: Bp p): st :=
     | bp_send q x l s    => st_send q [(l,s,st_end)]
     | bp_mergea q l s c  => st_receive q [(l,s,(fromBp p c))]
     | bp_merge q x l s c => st_send q [(l,s,(fromBp p c))]
+    | bp_end             => st_end
   end.
 
 CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
@@ -118,9 +137,16 @@ CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
     | bp_send q x l s    => st_send q [(l,s,w)]
     | bp_mergea q l s c  => st_receive q [(l,s,(merge_bp_cont p c w))]
     | bp_merge q x l s c => st_send q [(l,s,(merge_bp_cont p c w))]
+    | bp_end             => w
   end.
 
-Inductive refinementR (seq: relation st): relation st :=
+Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
+  end.
+
+Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_in : forall w w' p l s s',
                       subsort s' s -> 
                       seq w w' ->
@@ -137,24 +163,28 @@ Inductive refinementR (seq: relation st): relation st :=
                       (*bisim*) sseq (act w) (act (merge_ap_cont p a w')) ->
                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p a (st_receive p [(l,s',w')]))
 
-  | _sref_b  : forall w w' p l s s' b,
+  | _sref_b  : forall w w' p l s s' b n,
                       subsort s s' -> 
-                      seq w (merge_bp_cont p b w') ->
-                      (*bisim*) sseq (act w) (act (merge_bp_cont p b w')) ->
-                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_cont  p b (st_send p [(l,s',w')]))
+                      seq w (merge_bp_cont p (Bpn p b n) w') ->
+(*                       (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) -> *)
+                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_cont p (Bpn p b n) (st_send p [(l,s',w')]))
 
   | _sref_end: refinementR seq st_end st_end.
 
 (* rewriting issues *)
 #[export]
-Declare Instance Equivalence_seq_genR (r: relation st): Equivalence r -> Equivalence (refinementR r).
+Declare Instance Equivalence_seq_genR (r: st -> st -> Prop): Equivalence r -> Equivalence (refinementR r).
 
 (* Definition refinement_eq_i: relation siso := fun s1 s2 => paco2 refinementR refinement s1 s2. *)
 
-Definition refinement_eq_i: relation st := fun s1 s2 => paco2 refinementR bot2 s1 s2.
+Definition refinement_eq_i: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s1 s2.
 
 Notation "x '~<' y" := (refinement_eq_i x y) (at level 50, left associativity).
 
 (* rewriting issues *)
 #[export]
 Declare Instance Equivalence_ref_eqi: Equivalence refinement_eq_i.
+
+(* #[export]
+Declare Instance Proper_refinement_siso : forall x y, Proper (refinement_eq_i x y) siso_eq_i x y. *)
+
