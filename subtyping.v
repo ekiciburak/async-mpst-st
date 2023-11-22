@@ -194,29 +194,30 @@ Inductive ev : nat -> Prop :=
   | ev_0 : ev 0
   | ev_SS: forall n : nat, ev n -> ev (S (S n)).
 
-(* Lemma rOut: forall n p l s, 
-  (p & [(l, s, merge_bp_cont p (Bpn p (bp_receivea p l s) n) W)])
-  ==~
-  (merge_bp_cont p (Bpn p (bp_mergea  p l s (bp_receivea p l s)) n) (p & [(l, s, W)])).
+Lemma helper: forall n W,
+  merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) ("p" & [("l1", I, "p" ! [("l3", I, W)])])
+                 =
+  merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) (S n)) ("p" ! [("l3", I, W)]).
 Proof. intro n.
        induction n; intros.
-       - simpl.
-         rewrite(siso_eq (merge_bp_cont p bp_end W)).
-         simpl.
-         rewrite (siso_eq (merge_bp_cont p bp_end (p & [(l, s, W)]))).
-         simpl.
-       pcofix CIH. *)
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W)]))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" & [("l1", I, "p" ! [("l3", I, W)])]))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W)]))).
+       simpl.
+       easy.
 
-(* Lemma inOut: forall n,
-  ("p" & [("l1", I, merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) W1)])
-  ==~
-  (merge_bp_cont "p" (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) n) ("p" ! [("l3", I, W1)])).
-Proof. intro n.
-       induction n; intros.
-       - simpl.
-         rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))).
-         simpl.
-   *)
+       simpl in *.
+       rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" & [("l1", I, "p" ! [("l3", I, W)])]))).
+       simpl.
+       rewrite IHn.
+       rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) ("p" ! [("l3", I, W)]))).
+       simpl.
+       easy.
+Qed.
+
 Lemma W1W3Unf: forall n,
   ev n ->
   (forall r, r W3 (merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 (S (S n)))) ->
@@ -335,24 +336,7 @@ Proof. intros n Hn0 Hn.
                             (bp_receivea "p" "l1" (I)) 
                             (n.+2)
                    ); intro Hb.
-         assert(merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) ("p" & [("l1", I, "p" ! [("l3", I, W1)])])
-                 =
-                merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) (S n)) ("p" ! [("l3", I, W1)])
-               ).
-         { simpl.
-           rewrite(siso_eq(merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) ("p" & [("l1", I, "p" ! [("l3", I, W1)])]))).
-           simpl.
-           rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
-           simpl.
-           induction n; intros.
-           simpl.
-           rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))).
-           simpl.
-           easy.
-           
-           admit.
-         }
-         rewrite H.
+         rewrite helper.
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
