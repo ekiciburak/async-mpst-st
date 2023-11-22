@@ -434,6 +434,229 @@ Proof. intros n Hn0 Hn.
          easy.
 Qed.
 
+Lemma W1W3UnfVar: forall n r,
+  ev n ->
+  r W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) (S (S n))) W1) ->
+  paco2 refinementR r W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) n) W1).
+Proof. intro n.
+       induction n; intros.
+       { simpl in *.
+         pcofix CIH.
+         pfold.
+         rewrite(siso_eq (merge_bp_cont "p" bp_end W1)).
+         simpl.
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_out.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I))
+                            1
+                   ); intro Hb.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1 
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" sint)
+                            2
+                   ); intro Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end))
+          ("p" ! [("l3", I, W1)]))) in Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))
+        in Hc. simpl in Hc.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hc.
+        apply Hc.
+        apply srefl.
+        rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1))).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)).
+        simpl.
+        rewrite(siso_eq ( merge_bp_cont "p" bp_end W1)).
+        simpl.
+        unfold upaco2.
+        right.
+        rename H0 into Hn.
+        simpl in Hn.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hn.
+        simpl in Hn.
+        apply Hn.
+       }
+
+        simpl.
+        pcofix CIH.
+        pfold.
+        simpl. 
+        rename H0 into Hn.
+        simpl in *.
+
+(*         rewrite(siso_eq(merge_bp_cont "p"
+                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+        simpl. *)
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+        simpl.
+(*         pcofix CIH.
+        pfold. *)
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         rewrite(siso_eq W1).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+1)
+                   ); intro Hb.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         simpl in Hb.
+(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         (*
+         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
+         simpl. *)
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+2)
+                   ); intro Hc.
+         simpl in Hc.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc. *)
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hc.
+         simpl in Hc.
+         unfold upaco2.
+         left.
+         pfold.
+         apply Hc.
+         apply srefl.
+         
+(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
+         simpl. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+3)
+                   ); intro Hd.
+         simpl in Hd.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I)
+             (bp_mergea "p" "l1" (I)
+                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
+          ("p" ! [("l3", I, W1)])))) in Hd.
+         simpl in Hd. *)
+         rewrite(siso_eq(merge_bp_cont "p"
+            (bp_mergea "p" "l1" (I)
+               (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+            ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p"
+              (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+              ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))
+                ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         left.
+         pfold.
+         apply Hd.
+         apply srefl.
+         unfold upaco2.
+         right.
+         simpl in Hn.
+         easy.
+Qed.
+
+
 Lemma W1Unf: forall r, paco2 refinementR r ("p" & [("l1", I, "p" & [("l1", I, W1)])])
                                            ("p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, W1)])])])]).
 (* "p" & [("l1", I, "p" & [("l1", I, W1)])] ~<
@@ -512,6 +735,673 @@ Proof.
       (* consider later: sameness of actors *)
 Qed.
 
+Lemma W1W3UnfVar2: forall n r,
+  ev n ->
+  r W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) (S (S n))) W1) ->
+  refinementR (upaco2 refinementR r) W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) n) W1).
+Proof. intro n.
+       induction n; intros.
+       { simpl in *.
+         rewrite(siso_eq W3).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_out.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I))
+                            1
+                   ); intro Hb.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1 
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" sint)
+                            2
+                   ); intro Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end))
+          ("p" ! [("l3", I, W1)]))) in Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))
+        in Hc. simpl in Hc.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hc.
+        apply Hc.
+        apply srefl.
+        rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1))).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)).
+        simpl.
+        rewrite(siso_eq ( merge_bp_cont "p" bp_end W1)).
+        simpl.
+        unfold upaco2.
+        right.
+        rename H0 into Hn.
+        simpl in Hn.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hn.
+        simpl in Hn.
+        apply Hn.
+       }
+        simpl. 
+        rename H0 into Hn.
+        simpl in *.
+
+(*         rewrite(siso_eq(merge_bp_cont "p"
+                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+        simpl. *)
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+        simpl. 
+(*         pcofix CIH.
+        pfold. *)
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         rewrite(siso_eq W1).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+1)
+                   ); intro Hb.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         simpl in Hb.
+(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         (*
+         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
+         simpl. *)
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+2)
+                   ); intro Hc.
+         simpl in Hc.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc. *)
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hc.
+         simpl in Hc.
+         unfold upaco2.
+         left.
+         pfold.
+         apply Hc.
+         apply srefl.
+         
+(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
+         simpl. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+3)
+                   ); intro Hd.
+         simpl in Hd.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I)
+             (bp_mergea "p" "l1" (I)
+                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
+          ("p" ! [("l3", I, W1)])))) in Hd.
+         simpl in Hd. *)
+         rewrite(siso_eq(merge_bp_cont "p"
+            (bp_mergea "p" "l1" (I)
+               (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+            ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p"
+              (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+              ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))
+                ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         left.
+         pfold.
+         apply Hd.
+         apply srefl.
+         unfold upaco2.
+         right.
+         simpl in Hn.
+         easy.
+Qed.
+
+Lemma W1W3UnfVar3: forall n r,
+  ev n ->
+  (upaco2 refinementR r) W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) (S (S n))) W1) ->
+  refinementR (upaco2 refinementR r) W3 (merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) n) W1).
+Proof. intro n.
+       induction n; intros.
+       { simpl in *.
+         rewrite(siso_eq W3).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_out.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I))
+                            1
+                   ); intro Hb.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1 
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" sint)
+                            2
+                   ); intro Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end))
+          ("p" ! [("l3", I, W1)]))) in Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))
+        in Hc. simpl in Hc.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hc.
+        apply Hc.
+        apply srefl.
+        rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1))).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)).
+        simpl.
+        rewrite(siso_eq ( merge_bp_cont "p" bp_end W1)).
+        simpl.
+        rename H0 into Hn.
+        simpl in Hn.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)) in Hn.
+        simpl in Hn.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hn.
+        simpl in Hn.
+        unfold upaco2 in Hn.
+        destruct Hn.
+        unfold upaco2.
+        left.
+        easy.
+        unfold upaco2.
+        right.
+        easy.
+       }
+        simpl. 
+        rename H0 into Hn.
+        simpl in *.
+
+(*         rewrite(siso_eq(merge_bp_cont "p"
+                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+        simpl. *)
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+        simpl. 
+(*         pcofix CIH.
+        pfold. *)
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         rewrite(siso_eq W1).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+1)
+                   ); intro Hb.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         simpl in Hb.
+(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         (*
+         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
+         simpl. *)
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+2)
+                   ); intro Hc.
+         simpl in Hc.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc. *)
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hc.
+         simpl in Hc.
+         unfold upaco2.
+         left.
+         pfold.
+         apply Hc.
+         apply srefl.
+         
+(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
+         simpl. *)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+3)
+                   ); intro Hd.
+         simpl in Hd.
+(*          rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I)
+             (bp_mergea "p" "l1" (I)
+                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
+          ("p" ! [("l3", I, W1)])))) in Hd.
+         simpl in Hd. *)
+         rewrite(siso_eq(merge_bp_cont "p"
+            (bp_mergea "p" "l1" (I)
+               (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+            ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p"
+              (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+              ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))
+                ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         left.
+         pfold.
+         apply Hd.
+         apply srefl.
+         
+         unfold upaco2 in Hn.
+         destruct Hn as [Hn | Hn].
+         unfold upaco2.
+         left.
+         easy.
+         unfold upaco2.
+         right.
+         simpl in Hn.
+         easy.
+Qed.
+
+Lemma W1W3UnfVar4: forall n,
+  ev n ->
+  W3 ~<  merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" sint) n) W1.
+Proof. intros.
+       generalize dependent n.
+       pcofix CIH.
+       intros.
+       induction H0; intros.
+       simpl.
+
+         rewrite(siso_eq (merge_bp_cont "p" bp_end W1)).
+         simpl.
+         pfold.
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_out.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I))
+                            1
+                   ); intro Hb.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hb.
+         simpl in Hb.
+         apply Hb.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1 
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" sint)
+                            2
+                   ); intro Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end))
+          ("p" ! [("l3", I, W1)]))) in Hc.
+        simpl in Hc.
+        rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)])))
+        in Hc. simpl in Hc.
+        rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hc.
+        apply Hc.
+        apply srefl.
+        rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1))).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)).
+        simpl.
+        rewrite(siso_eq ( merge_bp_cont "p" bp_end W1)).
+        simpl.
+        unfold upaco2.
+        right.
+        specialize(CIH 2).
+        simpl in CIH.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) bp_end)) W1)) in CIH.
+        simpl in CIH.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)) in CIH.
+        simpl in CIH.
+        rewrite(siso_eq( merge_bp_cont "p" bp_end W1)) in CIH.
+        simpl in CIH.
+        apply CIH.
+        constructor.
+        constructor.
+        
+        rename CIH into Hn.
+        simpl. simpl in Hn.
+
+        rewrite(siso_eq(merge_bp_cont "p"
+                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+        simpl.
+(*         pcofix CIH. *)
+        pfold.
+         rewrite(siso_eq W3).
+         simpl.
+         apply _sref_in.
+         apply srefl.
+         unfold upaco2.
+         left.
+         pfold.
+         rewrite(siso_eq W1).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+2)
+                   ); intro Hb.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         simpl in Hb.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
+         (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
+         simpl in Hb.
+         simpl in *.
+         apply Hb.
+         apply srefl.
+         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
+         simpl.
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+
+         specialize(_sref_b (upaco2 refinementR r)
+                            ("p" ! [("l3", I, W3)])
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+3)
+                   ); intro Hc.
+         simpl in Hc.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc.
+         rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+          ("p" ! [("l3", I, W1)])))) in Hc.
+         simpl in Hc.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hc.
+         simpl in Hc.
+         unfold upaco2.
+         left.
+         pfold.
+         apply Hc.
+         apply srefl.
+         
+         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
+         simpl.
+         rewrite(siso_eq W1).
+         simpl.
+         rewrite helper.
+         simpl.
+         rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
+         simpl.
+         specialize(_sref_b (upaco2 refinementR r)
+                            W3
+                            W1
+                            "p"
+                            "l3"
+                            (I)
+                            (I)
+                            (bp_receivea "p" "l1" (I)) 
+                            (n.+4)
+                   ); intro Hd.
+         simpl in Hd.
+         rewrite(siso_eq((merge_bp_cont "p"
+          (bp_mergea "p" "l1" (I)
+             (bp_mergea "p" "l1" (I)
+                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
+          ("p" ! [("l3", I, W1)])))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p"
+            (bp_mergea "p" "l1" (I)
+               (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
+            ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p"
+              (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
+              ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))
+                ("p" ! [("l3", I, W1)]))) in Hd.
+         simpl in Hd.
+         left.
+         pfold.
+         apply Hd.
+         apply srefl.
+         unfold upaco2.
+         right.
+         specialize(Hn (n.+4)).
+         simpl in Hn.
+         apply Hn.
+         constructor.
+         constructor.
+         easy.
+Qed.
 
 Lemma st2: forall n: nat, subtype TB TB'.
 Proof. unfold subtype.
@@ -657,217 +1547,12 @@ Proof. unfold subtype.
        rewrite (siso_eq W1) in CIH.
        simpl in CIH.
        easy.
- 
-       generalize dependent n.
 
-      pcofix CIH.
-      pfold.
-      intro n.
-      rewrite (siso_eq W3).
-      rewrite (siso_eq W1).
-      simpl.
-      specialize (_sref_in (upaco2 refinementR r)
-      (st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])])
-      (st_send "p" [("l3", sint, W1)])
-      "p" "l1" sint sint
-      ); intro Ha.
-      apply Ha.
-      apply srefl.
-      
-      unfold upaco2.
-      left.
-      pcofix CIH2.
-      pfold.
-      specialize (_sref_out (upaco2 refinementR r0)
-      (st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])
-      W1
-      "p" "l3" sint sint
-      ); intro Hb.
-      apply Hb.
-      apply srefl.
-
-      unfold upaco2.
-      left.
-      pcofix CIH3.
-      pfold.
-      specialize (_sref_b (upaco2 refinementR r1)
-        (st_send "p" [("l3", sint, W3)])
-        W1
-        "p" "l3" sint sint
-        (bp_receivea "p" "l1" sint) 1
-      ); intro H.
-
-       rewrite (siso_eq ((merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) 1) ("p" ! [("l3", I, W1)])))) in H.
+       specialize(W1W3UnfVar4 0); intros.
+       rewrite(siso_eq(merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) 0) W1)) in H.
        simpl in H.
-       rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in H.
-       simpl in H.
-       rewrite (siso_eq W1).
+       rewrite(siso_eq W1).
        simpl.
        apply H.
-       apply srefl.
-
-       unfold upaco2.
-       left.
-       rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) W1)).
-       simpl.
-       rewrite(siso_eq(merge_bp_cont "p" bp_end W1)).
-       simpl.
-       pfold.
-       specialize (_sref_b (upaco2 refinementR r1)
-       W3
-       W1
-       "p" "l3" sint sint
-       (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))
-       1
-       ); intro Hc.
-
-       rewrite (siso_eq 
-        (merge_bp_cont "p" (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) 1)
-          ("p" ! [("l3", I, W1)])))
-       in Hc.
-       simpl in Hc.
-       rewrite (siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" (I) bp_end) ("p" ! [("l3", I, W1)]))) in Hc.
-       simpl in Hc.
-       rewrite (siso_eq W1).
-       simpl.
-       rewrite(siso_eq(merge_bp_cont "p" bp_end ("p" ! [("l3", I, W1)]))) in Hc.
-       simpl in Hc.
-       rewrite(siso_eq W1) in Hc.
-       simpl in Hc.
-       apply Hc.
-       apply srefl.
-
-Admitted.
-(*
-       rewrite (siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)) W1)).
-       simpl.
-       rewrite (siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" sint) W1)).
-       simpl.
-
-       unfold upaco2.
-       left. (*here*)
-       pcofix CIH4.
-       pfold.
-       rewrite(siso_eq W3).
-       simpl.
-
-      specialize (_sref_in (upaco2 refinementR r2)
-      (st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])])
-      (st_receive "p" [("l1", sint, W1)])
-      "p" "l1" sint sint
-      ); intro Hd.
-      apply Hd.
-      apply srefl.
-      unfold upaco2.
-      left.
-      rewrite(siso_eq W1).
-      simpl.
-(*       pcofix CIH6. *)
-
-      specialize (_sref_b (upaco2 refinementR r2)
-        (st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])
-        W1
-        "p" "l3" sint sint
-       (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))
-       1
-      ); intro He.
-      rewrite(siso_eq (merge_bp_contn "p"
-                      (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))
-                      (st_send "p" [("l3", sint, W1)]) 1) ) in He.
-      simpl  in He.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" sint) 
-             (st_send "p" [("l3", sint, W1)]))) in He.
-      simpl in He.
-      pfold.
-      apply He.
-      apply srefl.
-      rewrite (siso_eq (merge_bp_cont "p" 
-                       (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)) W1)).
-      simpl.
-      rewrite (siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" sint) W1)).
-      simpl.
-      
-      unfold upaco2.
-      left.
-(*       pcofix CIH8. *)
-      pfold.
-      specialize (_sref_b (upaco2 refinementR r2)
-        (st_send "p" [("l3", sint, W3)])
-        W1
-        "p" "l3" sint sint
-       (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)))
-       1
-      ); intro Hf.
-      rewrite(siso_eq (merge_bp_contn "p" (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)))
-          (st_send "p" [("l3", sint, W1)]) 1)) in Hf.
-      simpl in Hf.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))
-              (st_send "p" [("l3", sint, W1)]))) in Hf.
-      simpl in Hf.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" sint) (st_send "p" [("l3", sint, W1)]))) in Hf.
-      simpl in Hf.
-      rewrite(siso_eq W1).
-      simpl.
-      apply Hf.
-      apply srefl.
-      unfold upaco2.
-      left.
-
-      rewrite (siso_eq  (merge_bp_cont "p" (bp_mergea "p" "l1" sint 
-       (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))) W1)).
-      simpl.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" sint
-                      (bp_receivea "p" "l1" sint)) W1)).
-      simpl.
-      rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" sint) W1)).
-      simpl.
-(*       pcofix CIH10. *)
-      pfold.
-      
-      specialize (_sref_b (upaco2 refinementR r2)
-        W3
-        W1
-        "p" "l3" sint sint
-       (bp_mergea "p" "l1" sint(bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint 
-       (bp_receivea "p" "l1" sint))))
-       1
-      ); intro Hg.
-      rewrite(siso_eq (merge_bp_contn "p"
-          (bp_mergea "p" "l1" sint
-             (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))))
-          (st_send "p" [("l3", sint, W1)]) 1)) in Hg.
-      simpl in Hg.
-      rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)))
-              (st_send "p" [("l3", sint, W1)]))) in Hg.
-      simpl in Hg.
-      rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))
-                  (st_send "p" [("l3", sint, W1)]))) in Hg.
-      simpl in Hg.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" sint) (st_send "p" [("l3", sint, W1)]))) in Hg.
-      simpl in Hg.
-      rewrite (siso_eq W1).
-      simpl.
-      apply Hg.
-      apply srefl.
-      rewrite(siso_eq (merge_bp_cont "p"
-        (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint (bp_mergea "p" "l1" sint
-        (bp_receivea "p" "l1" sint)))) W1)).
-      simpl.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" sint 
-                      (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint))) W1)).
-      simpl.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_mergea "p" "l1" sint (bp_receivea "p" "l1" sint)) W1)).
-      simpl.
-      rewrite(siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" sint) W1)).
-      simpl.
-      unfold upaco2.
-      left.
-      specialize(W1W3Unf2 r2); intro HR.
-      apply HR.
-      specialize(W1W3Unf1); intro HP.
-      apply HP.
-      apply CIH5, CIH1, CIH0.
-      apply CIH.
+       constructor.
 Qed.
-*)
-
