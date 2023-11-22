@@ -25,6 +25,27 @@ Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
                R (st_receive p (zip (zip l s) ys)) t ->
                st2so R (st_receive p (zip (zip l s) xs)) t.
 
+Lemma st2so_mon: monotone2 st2so.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - apply st2so_end.
+       - specialize (st2so_snd r'); intro HS.
+         apply HS with (l := l) (s := s) (x := x).
+         apply H.
+         apply LE, H0.
+       - specialize (st2so_rcv r'); intro HS.
+         apply HS with (l := l) (s := s) (ys := ys).
+         apply Forall_forall.
+         intros(x1,x2) Ha.
+         simpl.
+         apply LE.
+         rewrite Forall_forall in H.
+         apply (H (x1,x2)).
+         apply Ha.
+         apply LE, H0.
+Qed.
+
 Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2.
 
 #[export]

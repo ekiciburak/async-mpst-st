@@ -35,6 +35,27 @@ Inductive st2si (R: st -> st -> Prop) : st -> st -> Prop :=
                R (st_send p (zip (zip l s) ys)) t ->
                st2si R (st_send p (zip (zip l s) xs)) t.
 
+Lemma st2si_mon: monotone2 st2si.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - apply st2si_end.
+       - specialize (st2si_rcv r'); intro HS.
+         apply HS with (l := l) (s := s) (x := x).
+         apply H.
+         apply LE, H0.
+       - specialize (st2si_snd r'); intro HS.
+         apply HS with (l := l) (s := s) (ys := ys).
+         apply Forall_forall.
+         intros(x1,x2) Ha.
+         simpl.
+         apply LE.
+         rewrite Forall_forall in H.
+         apply (H (x1,x2)).
+         apply Ha.
+         apply LE, H0.
+Qed.
+
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2.
 
 #[export]

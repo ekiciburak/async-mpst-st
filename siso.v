@@ -17,6 +17,21 @@ Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
                  R (st_send p [(l,s,x)]) t ->
                  st2siso R (st_send p xs) t.
 
+Lemma st2siso_mon: monotone2 st2siso.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - apply st2siso_end.
+       - specialize (st2siso_rcv r'); intro HS.
+         apply HS with (l := l) (s := s) (x := x).
+         apply H.
+         apply LE, H0.
+       - specialize (st2siso_snd r'); intro HS.
+         apply HS with (l := l) (s := s) (x := x).
+         apply H.
+         apply LE, H0.
+Qed.
+
 Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s1 s2.
 
 #[export]
