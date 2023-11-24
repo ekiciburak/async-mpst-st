@@ -1,9 +1,9 @@
-From mathcomp Require Import all_ssreflect seq.
+From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 From ST Require Import stream st.
 Require Import String List.
-Import ListNotations.
 Local Open Scope string_scope.
+Import ListNotations.
 
 From Paco Require Import paco.
 Require Import Setoid.
@@ -13,6 +13,8 @@ CoInductive so: Type :=
   | so_end    : so 
   | so_receive: participant -> list (label*sort*so) -> so 
   | so_send   : participant -> so -> so.
+
+Local Open Scope list_scope.
 
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end

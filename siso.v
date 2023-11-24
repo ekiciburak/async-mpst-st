@@ -81,6 +81,15 @@ CoFixpoint act (t: st): coseq (participant * string) :=
     | _                       => Delay conil
   end.
 
+CoInductive action: st -> coseq (participant * string) -> Prop :=
+  | a_end: action st_end (Delay conil)
+  | a_rcv: forall (p:participant) l s w a,
+           action w a ->
+           action (st_receive p [(l,s,w)]) (Delay (cocons (p, "?"%string) a))
+  | a_snd: forall (p: (participant)) l s w a,
+           action w a ->
+           action (st_send p [(l,s,w)]) (Delay (cocons (p, "!"%string) a)).
+
 Inductive Ap (p: participant): Type :=
   | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
   | ap_merge  : forall q, p <> q -> label -> st.sort -> Ap p -> Ap p.
@@ -161,6 +170,16 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
   end.
 
+Inductive cosetIncl (R: coseq (participant * string) -> list (participant * string) -> Prop):
+                        coseq (participant * string) -> list (participant * string) -> Prop :=
+  | c_nil : forall ys, cosetIncl R (Delay conil) ys
+  | c_incl: forall x xs ys,
+            List.In x ys ->
+            R xs ys ->
+            cosetIncl R (Delay (cocons x xs)) ys.
+
+Definition cosetInclC := fun s1 s2 => paco2 cosetIncl bot2 s1 s2.
+
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_in : forall w w' p l s s',
                       subsort s' s -> 
@@ -178,10 +197,12 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                       (*bisim*) sseq (act w) (act (merge_ap_cont p a w')) ->
                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p a (st_receive p [(l,s',w')]))
 
-  | _sref_b  : forall w w' p l s s' b n,
-                      subsort s s' -> 
+  | _sref_b  : forall w w' p l s s' b n L,
+                      subsort s s' ->
                       seq w (merge_bp_cont p (Bpn p b n) w') ->
-(*                       (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) -> *)
+                      cosetInclC (act w) L ->
+                      cosetInclC (act (merge_bp_contn p b w' n)) L ->
+(*                    (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) ->  *)
                       refinementR seq (st_send p [(l,s,w)]) (merge_bp_cont p (Bpn p b n) (st_send p [(l,s',w')]))
 
   | _sref_end: refinementR seq st_end st_end.
@@ -189,8 +210,6 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
 (* rewriting issues *)
 #[export]
 Declare Instance Equivalence_seq_genR (r: st -> st -> Prop): Equivalence r -> Equivalence (refinementR r).
-
-(* Definition refinement_eq_i: relation siso := fun s1 s2 => paco2 refinementR refinement s1 s2. *)
 
 Definition refinement_eq_i: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s1 s2.
 
@@ -200,6 +219,4 @@ Notation "x '~<' y" := (refinement_eq_i x y) (at level 50, left associativity).
 #[export]
 Declare Instance Equivalence_ref_eqi: Equivalence refinement_eq_i.
 
-(* #[export]
-Declare Instance Proper_refinement_siso : forall x y, Proper (refinement_eq_i x y) siso_eq_i x y. *)
 
