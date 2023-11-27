@@ -312,8 +312,78 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
+Lemma W3EqList2: forall r, paco2 cosetIncl r (act W3) listW3.
+Proof. intros.
+       pcofix CIH.
+       pfold.
+       rewrite(siso_eq W3).
+       simpl.
+       rewrite(coseq_eq ((act ("p" & [("l1", I, "p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. left. easy.
+       
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. left. easy.
+
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. left. easy.
+
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. left. easy.
+
+       unfold upaco2.
+       right.
+       apply CIH.
+Qed.
+
 Lemma W1EqList: cosetInclC (act W1) listW3.
 Proof. pcofix CIH.
+       pfold.
+       rewrite(siso_eq W1).
+       simpl.
+       rewrite(coseq_eq ((act ("p" & [("l1", I, "p" ! [("l3", I, W1)])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. left. easy.
+
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq ((act ("p" ! [("l3", I, W1)])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. left. easy.
+
+       unfold upaco2.
+       right. 
+       apply CIH.
+Qed.
+
+Lemma W1EqList2: forall r, paco2 cosetIncl r (act W1) listW3.
+Proof. intros.
+       pcofix CIH.
        pfold.
        rewrite(siso_eq W1).
        simpl.
@@ -504,93 +574,18 @@ Proof. intros n Hn0 Hn.
        
        unfold upaco2.
        left.
-       pcofix CIHE.
-       pfold.
+       apply W3EqList2.
 
-       rewrite(siso_eq W3).
-       simpl.
-       rewrite(coseq_eq ((act ("p" & [("l1", I, "p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. left. easy.
-       
-       unfold upaco2.
-       left.
-       pfold.
-       rewrite(coseq_eq((act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. right. left. easy.
-
-       unfold upaco2.
-       left.
-       pfold.
-       rewrite(coseq_eq((act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. right. left. easy.
-
-       unfold upaco2.
-       left.
-       pfold.
-       rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. right. left. easy.
-
-       unfold upaco2.
-       right.
-       apply CIHE.
-       
        pfold.
        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)) )).
        unfold coseq_id.
        simpl.
        constructor.
        simpl. left. easy.
-
-       unfold upaco2.
-       left.
-       pcofix CIHE.
        
-       pfold.
-       rewrite(siso_eq W1).
-       simpl.
-       rewrite(coseq_eq ((act ("p" & [("l1", I, "p" ! [("l3", I, W1)])])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. left. easy.
-
        unfold upaco2.
        left.
-       pfold.
-       rewrite(coseq_eq ((act ("p" ! [("l3", I, W1)])))).
-       unfold coseq_id.
-       simpl.
-       constructor.
-       simpl. right. left. easy.
-
-       unfold upaco2.
-       right. 
-       apply CIHE.
-
-(*         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
-        simpl.
-        rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
-        simpl.
-        pcofix CCIH.
-        pfold.
-        rewrite(coseq_eq(act W3)).
-        unfold coseq_id.
-        simpl.
-        rewrite(coseq_eq((act ("p" & [("l1", I, "p" & [("l1", I, W1)])])))).
-        unfold coseq_id.
-        simpl. *)
+       apply W1EqList2.
 
         simpl. simpl in Hn.
         rewrite(siso_eq(merge_bp_cont "p"
@@ -723,6 +718,9 @@ Proof. intros n Hn0 Hn.
          specialize(Hn r).
          simpl in Hn.
          easy.
+         
+         apply W3EqList.
+         
          (* actor checks admitted -- to be done easily *)
 Admitted.
 
@@ -813,6 +811,47 @@ Proof. intro n.
         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hn.
         simpl in Hn.
         apply Hn.
+        apply W3EqList.
+
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        pfold.
+        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+        unfold coseq_id.
+        simpl.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList2.
+
+        pfold.
+        rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        constructor.
+        simpl. right. left. easy.
+        unfold upaco2.
+        left.
+        apply W3EqList.
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList.
        }
 
         simpl.
@@ -822,13 +861,9 @@ Proof. intro n.
         rename H0 into Hn.
         simpl in *.
 
-(*         rewrite(siso_eq(merge_bp_cont "p"
-                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
-        simpl. *)
         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
         simpl.
-(*         pcofix CIH.
-        pfold. *)
+
          rewrite(siso_eq W3).
          simpl.
          apply _sref_in.
@@ -855,17 +890,12 @@ Proof. intro n.
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
          simpl in Hb.
-(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
-          ("p" ! [("l3", I, W1)])))) in Hb.
-         simpl in Hb. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
          simpl in Hb.
          apply Hb.
          apply srefl.
-         (*
-         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
-         simpl. *)
          rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
          simpl.
 
@@ -887,10 +917,7 @@ Proof. intro n.
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
-          ("p" ! [("l3", I, W1)])))) in Hc.
-         simpl in Hc. *)
+
          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
           ("p" ! [("l3", I, W1)])))) in Hc.
          simpl in Hc.
@@ -901,9 +928,7 @@ Proof. intro n.
          pfold.
          apply Hc.
          apply srefl.
-         
-(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
-         simpl. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
@@ -926,12 +951,6 @@ Proof. intro n.
                             listW3
                    ); intro Hd.
          simpl in Hd.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I)
-             (bp_mergea "p" "l1" (I)
-                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
-          ("p" ! [("l3", I, W1)])))) in Hd.
-         simpl in Hd. *)
          rewrite(siso_eq(merge_bp_cont "p"
             (bp_mergea "p" "l1" (I)
                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
@@ -952,33 +971,14 @@ Proof. intro n.
          right.
          simpl in Hn.
          easy.
+         apply W3EqList.
          (* actor checks admitted -- tobe done easily *)
 Admitted.
 
 
 Lemma W1Unf: forall r, paco2 refinementR r ("p" & [("l1", I, "p" & [("l1", I, W1)])])
                                            ("p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, W1)])])])]).
-(* "p" & [("l1", I, "p" & [("l1", I, W1)])] ~<
-("p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, W1)])])])]). *)
-(* merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 2 ~< merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 4. *)
-Proof. 
-(*        simpl.
-       rewrite (siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
-       simpl.
-       rewrite(siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                       (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                       (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
-       simpl.
-       rewrite (siso_eq (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
-       simpl.
-       rewrite (siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
-       simpl.
-        *)
-       pcofix CIH.
+Proof. pcofix CIH.
        pfold.
        apply _sref_in.
        apply srefl.
@@ -1032,6 +1032,7 @@ Proof.
        setoid_rewrite(siso_eq W1) in CIH2 at 2.
        simpl in CIH2.
        apply CIH2.
+       apply W1EqList.
       (* consider later: sameness of actors *)
 Admitted.
 
@@ -1119,18 +1120,55 @@ Proof. intro n.
         rewrite(siso_eq(merge_bp_cont "p" bp_end W1)) in Hn.
         simpl in Hn.
         apply Hn.
+        apply W3EqList.
+
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        pfold.
+        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+        unfold coseq_id.
+        simpl.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList2.
+
+        pfold.
+        rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        constructor.
+        simpl. right. left. easy.
+        unfold upaco2.
+        left.
+        apply W3EqList.
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList.
        }
         simpl. 
         rename H0 into Hn.
         simpl in *.
 
-(*         rewrite(siso_eq(merge_bp_cont "p"
-                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
-        simpl. *)
         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
         simpl. 
-(*         pcofix CIH.
-        pfold. *)
+
          rewrite(siso_eq W3).
          simpl.
          apply _sref_in.
@@ -1157,17 +1195,13 @@ Proof. intro n.
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
          simpl in Hb.
-(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
-          ("p" ! [("l3", I, W1)])))) in Hb.
-         simpl in Hb. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
          simpl in Hb.
          apply Hb.
          apply srefl.
-         (*
-         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
-         simpl. *)
+
          rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
          simpl.
 
@@ -1189,10 +1223,7 @@ Proof. intro n.
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
-          ("p" ! [("l3", I, W1)])))) in Hc.
-         simpl in Hc. *)
+
          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
           ("p" ! [("l3", I, W1)])))) in Hc.
          simpl in Hc.
@@ -1203,9 +1234,7 @@ Proof. intro n.
          pfold.
          apply Hc.
          apply srefl.
-         
-(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
-         simpl. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
@@ -1228,12 +1257,7 @@ Proof. intro n.
                             listW3
                    ); intro Hd.
          simpl in Hd.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I)
-             (bp_mergea "p" "l1" (I)
-                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
-          ("p" ! [("l3", I, W1)])))) in Hd.
-         simpl in Hd. *)
+
          rewrite(siso_eq(merge_bp_cont "p"
             (bp_mergea "p" "l1" (I)
                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
@@ -1254,6 +1278,7 @@ Proof. intro n.
          right.
          simpl in Hn.
          easy.
+         apply W3EqList.
 Admitted.
 
 Lemma W1W3UnfVar3: forall n r,
@@ -1345,18 +1370,55 @@ Proof. intro n.
         unfold upaco2.
         right.
         easy.
+        apply W3EqList.
+
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        pfold.
+        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+        unfold coseq_id.
+        simpl.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList2.
+
+        pfold.
+        rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        constructor.
+        simpl. right. left. easy.
+        unfold upaco2.
+        left.
+        apply W3EqList.
+        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+        unfold coseq_id.
+        simpl.
+        unfold listW3.
+        pfold.
+        constructor.
+        simpl. left. easy.
+        unfold upaco2.
+        left.
+        apply W1EqList.
        }
         simpl. 
         rename H0 into Hn.
         simpl in *.
 
-(*         rewrite(siso_eq(merge_bp_cont "p"
-                       (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
-        simpl. *)
         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
         simpl. 
-(*         pcofix CIH.
-        pfold. *)
+
          rewrite(siso_eq W3).
          simpl.
          apply _sref_in.
@@ -1383,17 +1445,13 @@ Proof. intro n.
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
          simpl in Hb.
-(*          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
-          ("p" ! [("l3", I, W1)])))) in Hb.
-         simpl in Hb. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) 
          (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))) in Hb.
          simpl in Hb.
          apply Hb.
          apply srefl.
-         (*
-         rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1))).
-         simpl. *)
+
          rewrite(siso_eq( merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
          simpl.
 
@@ -1415,10 +1473,7 @@ Proof. intro n.
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) ("p" ! [("l3", I, W1)]))).
          simpl.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
-          ("p" ! [("l3", I, W1)])))) in Hc.
-         simpl in Hc. *)
+
          rewrite(siso_eq((merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))
           ("p" ! [("l3", I, W1)])))) in Hc.
          simpl in Hc.
@@ -1429,9 +1484,7 @@ Proof. intro n.
          pfold.
          apply Hc.
          apply srefl.
-         
-(*          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
-         simpl. *)
+
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
@@ -1454,12 +1507,7 @@ Proof. intro n.
                             listW3
                    ); intro Hd.
          simpl in Hd.
-(*          rewrite(siso_eq((merge_bp_cont "p"
-          (bp_mergea "p" "l1" (I)
-             (bp_mergea "p" "l1" (I)
-                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))))
-          ("p" ! [("l3", I, W1)])))) in Hd.
-         simpl in Hd. *)
+
          rewrite(siso_eq(merge_bp_cont "p"
             (bp_mergea "p" "l1" (I)
                (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))))
@@ -1476,7 +1524,7 @@ Proof. intro n.
          pfold.
          apply Hd.
          apply srefl.
-         
+
          unfold upaco2 in Hn.
          destruct Hn as [Hn | Hn].
          unfold upaco2.
@@ -1486,6 +1534,7 @@ Proof. intro n.
          right.
          simpl in Hn.
          easy.
+         apply W3EqList.
 Admitted.
 
 Lemma W1W3UnfVar4: forall n,
@@ -1578,8 +1627,7 @@ Proof. intros.
         apply CIH.
         constructor.
         constructor.
-        
-        admit.
+        apply W3EqList.
         admit.
         admit.
         admit.
@@ -1592,7 +1640,7 @@ Proof. intros.
         simpl.
         rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)) W1)).
         simpl.
-(*         pcofix CIH. *)
+
         pfold.
          rewrite(siso_eq W3).
          simpl.
@@ -1666,7 +1714,7 @@ Proof. intros.
          pfold.
          apply Hc.
          apply srefl.
-         
+
          rewrite(siso_eq(  (merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n)))) W1))).
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_mergea "p" "l1" (I) (bp_mergea "p" "l1" (I) (Bpn "p" (bp_receivea "p" "l1" (I)) n))) W1)).
@@ -1721,6 +1769,7 @@ Proof. intros.
          constructor.
          constructor.
          easy.
+         apply W3EqList.
 Admitted.
 
 Lemma st2: forall n: nat, subtype TB TB'.

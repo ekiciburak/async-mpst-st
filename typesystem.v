@@ -93,7 +93,6 @@ CoFixpoint typ_path_red (l: coseq path) (a: action): coseq Prop :=
     | cocons (x,a,y) xs => Delay (cocons (ctx_red x a y) (typ_path_red xs a))
   end.
 
-Print Forall.
 
 
 
