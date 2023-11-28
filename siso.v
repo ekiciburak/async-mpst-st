@@ -92,15 +92,29 @@ CoInductive action: st -> coseq (participant * string) -> Prop :=
 
 Inductive Ap (p: participant): Type :=
   | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
-  | ap_merge  : forall q, p <> q -> label -> st.sort -> Ap p -> Ap p.
+  | ap_merge  : forall q, p <> q -> label -> st.sort -> Ap p -> Ap p
+  | ap_end    : Ap p.
 
 Arguments ap_receive {_} _ _ _ _.
 Arguments ap_merge {_} _ _ _ _.
+Arguments ap_end {_}.
+
+Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
+  match n with
+    | O   => ap_end
+    | S k =>
+      match a with
+        | ap_receive q H l s => ap_merge q H l s (Apn p a k)
+        | ap_merge q H l s c => ap_merge q H l s (ap_merge q H l s (Apn p a k))
+        | ap_end             => ap_end
+      end 
+  end.
 
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
     | ap_receive q x l s => st_receive q [(l,s,st_end)]
     | ap_merge q x l s c => st_receive q [(l,s,(fromAp p c))]
+    | ap_end             => st_end
   end.
 
 Lemma fromAp1: forall p q x l s,
@@ -115,6 +129,19 @@ CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
   match a with
     | ap_receive q H l s  => st_receive q [(l,s,w)]
     | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_cont p w' w))]
+    | ap_end              => st_end
+  end.
+
+Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_ap_contn p a (merge_ap_cont p a w) k
+  end.
+
+Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_ap_cont p a (merge_ap_contnA p a w k)
   end.
 
 Inductive Bp (p: participant): Type :=
@@ -130,11 +157,24 @@ Arguments bp_mergea {_} _ _ _ _.
 Arguments bp_merge {_} _ _ _ _ _.
 Arguments bp_end {_}.
 
+(* Parameters (q p: participant) (H: p = q) (b: Bp p).
+Check eq_rect p Bp b q H. *)
+
+From Equations Require Import Equations.
+
+(* Equations Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
+  Bpn p b O                        := bp_end;
+  Bpn p (bp_receivea q l s) (S k)  :=  bp_mergea q l s (Bpn p (bp_receivea q l s) k);
+  Bpn p (bp_send q H l s) (S k)    :=  bp_merge q H l s (Bpn p (bp_send q H l s) k);
+  Bpn p (bp_mergea q l s c) (S k)  :=  bp_mergea q l s (Bpn p (bp_mergea q l s c) k);
+  Bpn p (bp_merge q H l s c) (S k) :=  bp_merge q H l s (Bpn p (bp_merge q H l s c) k);
+  Bpn p (bp_end) (S k)             :=  bp_end.  *)
+
 Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
     | O   => bp_end
     | S k =>
-      match b with
+      match b in (Bp _) with
         | bp_receivea q l s  => bp_mergea q l s (Bpn p b k)
         | bp_send q H l s    => bp_merge q H l s (Bpn p b k)
         | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
@@ -142,7 +182,21 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
         | bp_end             => bp_end
       end 
   end.
-
+  
+(* Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
+  match n with
+    | O   => bp_end
+    | S k =>
+      match b with (* as bx in (Bp _) return
+         forall q (en : p = q) (ea : eq_rect p Bp b q en = bx), _ with  *)
+        | bp_receivea q l s  => bp_mergea q l s (Bpn p b k)
+        | bp_send q H l s    => bp_merge q H l s (Bpn p b k)
+        | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
+        | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
+        | bp_end             => bp_end
+      end 
+  end.
+ *)
 Compute (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) 3).
 Compute (Bpn "p" (bp_receivea "p" "l1" (I)) 4).
 
@@ -167,8 +221,17 @@ CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
 Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
   match n with
     | O    => w
-    | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
+    | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
+  
+(* Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
+  end. *)
+
+Definition merge_bp_contnA (p: participant) (b: Bp p) (w: st) (n: nat): st :=
+merge_bp_cont p (Bpn p b n) w.
 
 Inductive cosetIncl (R: coseq (participant * string) -> list (participant * string) -> Prop):
                         coseq (participant * string) -> list (participant * string) -> Prop :=
@@ -191,19 +254,21 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                       seq w w' ->
                       refinementR seq (st_send p [(l,s,w)]) (st_send p [(l,s',w')])
 
-  | _sref_a  : forall w w' p l s s' a,
-                      subsort s' s ->
-                      seq w (merge_ap_cont p a w') ->
-                      (*bisim*) sseq (act w) (act (merge_ap_cont p a w')) ->
-                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p a (st_receive p [(l,s',w')]))
+  | _sref_a  : forall w w' p l s s' a n L,
+                      subsort s s' ->
+                      seq w (merge_ap_cont p (Apn p a n) w') ->
+                      cosetInclC (act w) L ->
+                      cosetInclC (act (merge_ap_contn p a w' n)) L ->
+(*                    (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) ->  *)
+                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p (Apn p a n) (st_receive p [(l,s',w')]))
 
   | _sref_b  : forall w w' p l s s' b n L,
                       subsort s s' ->
-                      seq w (merge_bp_cont p (Bpn p b n) w') ->
+                      seq w (merge_bp_contn p b w' n) ->
                       cosetInclC (act w) L ->
                       cosetInclC (act (merge_bp_contn p b w' n)) L ->
 (*                    (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) ->  *)
-                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_cont p (Bpn p b n) (st_send p [(l,s',w')]))
+                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
 
   | _sref_end: refinementR seq st_end st_end.
 
@@ -217,6 +282,4 @@ Notation "x '~<' y" := (refinement_eq_i x y) (at level 50, left associativity).
 
 (* rewriting issues *)
 #[export]
-Declare Instance Equivalence_ref_eqi: Equivalence refinement_eq_i.
-
-
+ Declare Instance Equivalence_ref_eqi: Equivalence refinement_eq_i.

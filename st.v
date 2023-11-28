@@ -38,7 +38,7 @@ Definition st_equivC: st -> st -> Prop := fun s1 s2 => paco2 st_equiv bot2 s1 s2
 Notation "p '&' l" := (st_receive p l) (at level 50, left associativity).
 Notation "p '!' l" := (st_send p l) (at level 50, left associativity).
 Notation "'B'" :=  sbool (at level 50, left associativity).
-Notation "'Un'" :=  sunit (at level 50, left associativity).
+Notation "'()'" :=  sunit (at level 50, left associativity).
 Notation "'I'" :=  sint (at level 50, left associativity). 
 Notation "'N'" :=  snat (at level 50, left associativity).
 Notation "'end'" :=  st_end (at level 50, left associativity).

@@ -4,6 +4,7 @@ so.v
 si.v
 siso.v
 subtyping.v
+batchproc.v
 typesystem.v
 
 -Q . ST
