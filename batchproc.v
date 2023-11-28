@@ -199,4 +199,97 @@ Proof. unfold subtype.
        
        rewrite(siso_eq Tctl).
        simpl.
+
+       unfold upaco2.
+       left.
+       pfold.
+       specialize(_sref_b (upaco2 refinementR r)
+       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])
+       ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+       "src"
+       "b1"
+       sunit
+       sunit
+       (bp_mergea "src" "b2" sunit (bp_mergea "sk" "b2" sunit (bp_send "sk" Hdeq "b2" sunit)))
+       1
+       listTctl
+       ); intro Hb.
+       simpl in Hb.
+       rewrite(siso_eq( (merge_bp_cont "src"
+          (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+          ("src"
+           ! [("b1", (),
+               "src" &
+               [("b1", (),
+                 "sk" &
+                 [("b1", (),
+                   "sk"
+                   ! [("b1", (),
+                       "src"
+                       ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))) in Hb.
+        simpl in Hb.
+        rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+            ("src"
+             ! [("b1", (),
+                 "src" &
+                 [("b1", (),
+                   "sk" &
+                   [("b1", (),
+                     "sk"
+                     ! [("b1", (),
+                         "src"
+                         ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))) in Hb.
+         simpl in Hb.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+              ("src"
+               ! [("b1", (),
+                   "src" &
+                   [("b1", (),
+                     "sk" &
+                     [("b1", (),
+                       "sk"
+                       ! [("b1", (),
+                           "src"
+                           ! [("b2", (),
+                               "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))) in Hb.
+          simpl in Hb.
+          apply Hb.
+          apply srefl.
+          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+                          ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), 
+                           "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+          simpl.
+          rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+                         ("src" & [("b1", (), "sk" & [("b1", (),
+                          "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+         ("src" &
+          [("b1", (),
+            "sk" &
+            [("b1", (),
+              "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_in.
+         apply srefl.
+
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_in.
+         apply srefl.
+
+         unfold upaco2.
+         left.
+         pfold.
+         apply _sref_out.
+         apply srefl.
+         
+         unfold upaco2.
+         right.
+         apply CIH.
 Admitted.
