@@ -186,17 +186,14 @@ Proof. unfold subtype, T, T'.
                            [("p","?")]
                            ); intro H.
        simpl in H.
-       (*
-       rewrite(siso_eq ((merge_bp_cont "q" (Bpn "q" (bp_receivea "p" "success" (I)) 1)
-         ("q" ! [("cont", I, end)])))) in H.
-       simpl in H.
-       rewrite(siso_eq(merge_bp_cont "q" bp_end ("q" ! [("cont", I, end)]))) in H.
+      
+       rewrite(siso_eq ((merge_bp_cont "q" (bp_receivea "p" "success" (I)) ("q" ! [("cont", I, end)])))) in H.
        simpl in H.
        apply H.
 
        apply srefl. (*subsort*)
 
-       rewrite (siso_eq (merge_bp_cont "q" (bp_mergea "p" "success" (I) bp_end) (end))).
+       rewrite (siso_eq ((merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end)))).
        simpl.
        unfold upaco2.
        left.
@@ -208,17 +205,15 @@ Proof. unfold subtype, T, T'.
        unfold upaco2.
        left.
        pfold.
-       rewrite(siso_eq (merge_bp_cont "q" bp_end (end))).
-       simpl.
        apply _sref_end.
-       
+
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.
        pfold.
        constructor.
        simpl. left. easy.
-       
+
        unfold upaco2.
        left.
        rewrite(coseq_eq(act (end))).
@@ -241,8 +236,7 @@ Proof. unfold subtype, T, T'.
        simpl.
        pfold.
        constructor.
-       *)
-Admitted.
+Qed.
 
 CoFixpoint TS: st :=
   st_send "p" [("l3",sint,TS)].

@@ -26,6 +26,174 @@ Print Tctl'.
 
 Definition listTctl := [("src","!");("src","?");("sk","!");("sk","?")].
 
+Lemma listTctlEq: forall r, paco2 cosetIncl r (act Tctl) listTctl.
+Proof. pcofix CIH.
+       pfold.
+       rewrite(coseq_eq(act Tctl)).
+       unfold coseq_id.
+       simpl.
+       unfold listTctl.
+       constructor.
+       simpl. left. easy.
+       rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk"! [("b1", (),
+                              "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. left. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk"
+                      ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. right. right. left. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. right. left. easy.
+       rewrite(coseq_eq((act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. left. easy.
+       rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. left. easy.
+       rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. right. right. left. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. right. right. left. easy.
+       unfold upaco2.
+       right.
+       unfold listTctl in CIH.
+       apply CIH.
+Qed.
+
+Lemma listTREq: forall r, paco2 cosetIncl r (act TR) listTctl.
+Proof. intros.
+       pcofix CIH.
+       unfold listTctl.
+       rewrite(coseq_eq(act TR)).
+       unfold coseq_id.
+       simpl.
+       pfold.
+       constructor.
+       simpl. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" &
+                                     [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. right. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. right. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. right. right. left. easy.
+       unfold upaco2.
+       left.
+       pfold.
+       rewrite(coseq_eq((act ("src" ! [("b2", (), TR)])))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       simpl. left. easy.
+       unfold upaco2.
+       right.
+       unfold listTctl in CIH.
+       apply CIH.
+Qed.
+
+Lemma listTctlEq': forall r, paco2 cosetIncl r (act Tctl') listTctl.
+Proof. intros.
+       unfold listTctl.
+       rewrite(coseq_eq(act Tctl')).
+       unfold coseq_id.
+       simpl.
+       pfold.
+       constructor.
+       simpl. left. easy.
+       rewrite(coseq_eq((act ("src" ! [("b2", (), TR)])))).
+       unfold coseq_id.
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       constructor.
+       simpl. left. easy.
+       unfold upaco2.
+       left.
+       apply listTREq.
+Qed.
+
 Lemma stb: subtype Tctl' Tctl.
 Proof. unfold subtype.
        intro U.
@@ -292,4 +460,170 @@ Proof. unfold subtype.
          unfold upaco2.
          right.
          apply CIH.
-Admitted.
+         
+         pfold.
+         unfold listTctl.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
+         unfold coseq_id.
+         simpl.
+         constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))).
+         unfold coseq_id.
+         simpl.
+         unfold upaco2.
+         left.
+         pfold.
+         constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold.
+         constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b2", (), TR)])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold.
+         constructor.
+         simpl. left. easy.
+         unfold upaco2.
+         left.
+         apply listTREq.
+         
+         rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+                                              ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+                                      ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+                                      ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(coseq_eq((act ("src" & [("b2", (),
+                                "sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         pfold.
+         constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))).
+         unfold upaco2, coseq_id.
+         simpl.
+         left. pfold.
+         constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. left. easy.
+         unfold upaco2. left.
+         apply listTctlEq.
+         
+         pfold.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
+         unfold coseq_id.
+         simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
+         unfold upaco2, coseq_id.
+         left. simpl. pfold. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))).
+         unfold upaco2, coseq_id.
+         simpl. left. pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. left. easy.
+         unfold upaco2. left.
+         apply listTREq.
+         
+         rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
+                                       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (())))
+                                      ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (())) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+         simpl.
+         pfold.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. constructor. 
+         simpl. right. left. easy.
+         left. pfold.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+         unfold coseq_id.
+         simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         unfold coseq_id, upaco2.
+         left. simpl. pfold. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+         unfold coseq_id, upaco2. 
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         unfold upaco2.
+         left.
+         apply listTctlEq.
+Qed.
