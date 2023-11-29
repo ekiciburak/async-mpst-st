@@ -8,7 +8,6 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
-
 CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b1",sunit,st_send "sk" [("b1",sunit,
                                   st_send "src" [("b2",sunit,st_receive "src" [("b2",sunit,
@@ -192,6 +191,441 @@ Proof. intros.
        unfold upaco2.
        left.
        apply listTREq.
+Qed.
+
+Lemma action1: cosetIncR listTctl (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])).
+Proof. unfold listTctl.
+       rewrite(coseq_eq(act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])]))).
+       unfold coseq_id. simpl.
+       constructor.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay (cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))))
+       ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay (cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))))
+       ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))
+       ); intro Hb.
+       apply Hb.
+       simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "!") (act ("src" ! [("b2", (), TR)])) ))
+       ("sk", "!") (act ("src" ! [("b2", (), TR)]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("src", "!")
+       (Delay(cocons ("src", "!") (act TR)))
+       ("src", "!") (act TR)
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit1 ("src", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))))
+       ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))))
+       ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))))
+       ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "!")
+       (Delay(cocons ("sk", "!") (act ("src" ! [("b2", (), TR)]))))
+       ("sk", "!") (act ("src" ! [("b2", (), TR)]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit2 ("sk", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))))
+       ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "?")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))))
+       ("sk", "?") (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma action2: forall (Hdeq: "src" <> "sk"),
+cosetIncR listTctl
+  (act
+     (merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+        ("src" &
+         [("b1", (),
+           "sk" &
+           [("b1", (),
+             "sk"
+             ! [("b1", (),
+                 "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+Proof. intros.
+       unfold listTctl.
+       rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+                                     ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+                                    ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+                                    ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+       simpl.
+       rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))
+       ); intro Ha.
+       constructor.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "!") (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))))
+       ("sk", "!") 
+       (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))
+       ); intro He.
+       apply He. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "!") (act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))))
+       ("sk", "!") 
+       (act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))
+       ); intro Hf.
+       apply Hf. simpl. easy. easy.
+       rewrite(coseq_eq(act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("src", "!")
+       (Delay(cocons ("src", "!") (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))))
+       ("src", "!") 
+       (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))
+       ); intro Hg.
+       apply Hg. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit1 ("src", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       constructor.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "!")
+       (Delay(cocons ("sk", "!") (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))))
+       ("sk", "!") 
+       (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+       constructor.
+
+       specialize(CoInSplit2 ("sk", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit1 ("sk", "?")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma action3:
+cosetIncR listTctl
+  (act
+     ("src" &
+      [("b1", (),
+        "sk" &
+        [("b1", (),
+          "sk"
+          ! [("b1", (),
+              "src"
+              ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])).
+Proof. unfold listTctl.
+       rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))
+       ); intro Ha.
+       constructor.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "!") (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))))
+       ("sk", "!") 
+       (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq((act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("src", "!")
+       (Delay(cocons ("src", "!") (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])]))))
+       ("src", "!") 
+       (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])]))
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit1 ("src", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "!")
+       (Delay(cocons ("sk", "!") (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))))
+       ("sk", "!") 
+       (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit2 ("sk", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "?")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma action4: forall (Hdeq: "src" <> "sk"),
+cosetIncR listTctl
+  (act
+     (merge_bp_cont "src"
+        (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
+        ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+Proof. intros.
+       unfold listTctl.
+       rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (())))) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "src" (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (())) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+       simpl.
+       constructor.
+       rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "!") (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))))
+       ("sk", "!") 
+       (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))
+       ); intro Hc.
+       apply Hc. simpl. easy. easy.
+       rewrite(coseq_eq(act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])]))))
+       ("src", "?") 
+       (act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])]))
+       ); intro Hd.
+       apply Hd. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b2", (), Tctl)]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b2", (), Tctl)]))
+       ); intro He.
+       apply He. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("src", "!")
+       (Delay( cocons ("sk", "!") (act Tctl)))
+       ("sk", "!") 
+       (act (Tctl))
+       ); intro Hf.
+       apply Hf. simpl. easy. easy.
+       rewrite(siso_eq Tctl). simpl.
+       rewrite(coseq_eq(act ("src" ! [("b1", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("src", "!")
+       (Delay(cocons ("src", "!") (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))))
+       ("src", "!") 
+       (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))
+       ); intro Hg.
+       apply Hg. simpl. easy. easy.
+
+       constructor.
+       rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))).
+       specialize(CoInSplit1 ("src", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+
+       constructor.
+       rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("sk", "!")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+       rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "!")
+       (Delay(cocons ("sk", "!") (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))))
+       ("sk", "!") 
+       (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))
+       ); intro Hc.
+       apply Hc.  simpl. easy. easy.
+
+       constructor.
+       rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("sk", "?")
+       (Delay(cocons ("src", "?") (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))))
+       ("src", "?") 
+       (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit1 ("sk", "?")
+       (Delay(cocons ("sk", "?") (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))))
+       ("sk", "?") 
+       (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))
+       ); intro Hb.
+       apply Hb. simpl. easy. easy.
+
+       constructor.
 Qed.
 
 Lemma stb: subtype Tctl' Tctl.
@@ -553,8 +987,9 @@ Proof. unfold subtype.
          unfold upaco2. left.
          apply listTctlEq.
 
-admit.
-admit.
+         apply action1.
+         apply action2.
+
          pfold.
          rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
          unfold coseq_id.
@@ -628,6 +1063,7 @@ admit.
          unfold upaco2.
          left.
          apply listTctlEq.
-admit.
-admit.
-Admitted.
+
+         apply action3.
+         apply action4.
+Qed.
