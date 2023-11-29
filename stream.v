@@ -72,11 +72,19 @@ CoFixpoint map {A B: Type} (f: A -> B) (xs: coseq A): coseq B :=
     | cocons x xs => cocons (f x) (map f xs)
   end.
 
-Inductive CoInR {A: Type} (R: A -> coseq A ->  Prop): A -> coseq A -> Prop :=
-  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR R x xs 
-  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoInR R x xs.
+Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
+  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
+  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
+
+(* 
+Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
+  | CoInSplit1 x xs {y ys}: force xs = cocons y ys -> x = y  -> CoInR R x xs 
+  | CoInSplit2 x xs {y ys}: force xs = cocons y ys -> x <> y -> R x ys -> CoInR R x xs.
 
 Definition CoIn {A: Type}: A -> coseq A -> Prop := fun s1 s2 => paco2 (@CoInR A) bot2 s1 s2.
+*)
+
+
 
 Inductive sseq_gen {A: Type} (seq: coseq A -> coseq A -> Prop): coseq A -> coseq A -> Prop :=
   | _sseq_gen_n: sseq_gen seq (Delay conil) (Delay conil)

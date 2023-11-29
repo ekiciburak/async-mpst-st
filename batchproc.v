@@ -26,7 +26,7 @@ Print Tctl'.
 
 Definition listTctl := [("src","!");("src","?");("sk","!");("sk","?")].
 
-Lemma listTctlEq: forall r, paco2 cosetIncl r (act Tctl) listTctl.
+Lemma listTctlEq: forall r, paco2 cosetIncL r (act Tctl) listTctl.
 Proof. pcofix CIH.
        pfold.
        rewrite(coseq_eq(act Tctl)).
@@ -99,7 +99,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma listTREq: forall r, paco2 cosetIncl r (act TR) listTctl.
+Lemma listTREq: forall r, paco2 cosetIncL r (act TR) listTctl.
 Proof. intros.
        pcofix CIH.
        unfold listTctl.
@@ -172,7 +172,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma listTctlEq': forall r, paco2 cosetIncl r (act Tctl') listTctl.
+Lemma listTctlEq': forall r, paco2 cosetIncL r (act Tctl') listTctl.
 Proof. intros.
        unfold listTctl.
        rewrite(coseq_eq(act Tctl')).
@@ -552,7 +552,7 @@ Proof. unfold subtype.
          simpl. right. right. left. easy.
          unfold upaco2. left.
          apply listTctlEq.
-         
+
          pfold.
          rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
          unfold coseq_id.

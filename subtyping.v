@@ -31,7 +31,7 @@ Definition ListT := [("q","!");("p","?")].
 Definition TW  := st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))].
 Definition TW' := st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))].
 
-Lemma TWEqList: cosetInclC (act TW) ListT.
+Lemma TWEqList: cosetIncLC (act TW) ListT.
 Proof. pfold.
        unfold TW, ListT.
        simpl.
@@ -59,7 +59,7 @@ Proof. pfold.
        constructor.
 Qed.
 
-Lemma TW'EqList: cosetInclC (act TW') ListT.
+Lemma TW'EqList: cosetIncLC (act TW') ListT.
 Proof. pfold.
        unfold TW', ListT.
        simpl.
@@ -84,6 +84,70 @@ Proof. pfold.
        rewrite(coseq_eq (act (st_end))).
        unfold coseq_id.
        simpl.
+       constructor.
+Qed.
+
+Lemma TWEqListR: cosetIncR ListT (act TW).
+Proof. rewrite(coseq_eq(act TW)).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       specialize(CoInSplit2 ("q", "!")
+       (Delay(cocons ("p", "?") (act ("q" ! [("cont", I, end)]))))
+       ("p", "?") (act ("q" ! [("cont", I, end)]))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy. easy.
+
+       rewrite(coseq_eq(act ("q" ! [("cont", I, end)]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit1 ("q", "!")
+       (Delay(cocons ("q", "!") (act (end))))
+       ("q", "!") (act (end))
+       ); intro Hb.
+       apply Hb.
+       simpl. easy. easy.
+
+       specialize(CoInSplit1 ("p", "?")
+       (Delay(cocons ("p", "?") (act ("q" ! [("cont", I, end)]))))
+       ("p", "?") (act ("q" ! [("cont", I, end)]))
+       ); intro Hb.
+       constructor.
+       apply Hb.
+       simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma TWEqListR': cosetIncR ListT (act TW').
+Proof. rewrite(coseq_eq(act TW')).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       specialize(CoInSplit1 ("q", "!")
+       (Delay(cocons ("q", "!") (act ("p" & [("success", I, end)]))))
+       ("q", "!") (act ("p" & [("success", I, end)]))
+       ); intro Hb.
+       apply Hb.
+       simpl. easy. easy.
+
+       constructor.
+       specialize(CoInSplit2 ("p", "?")
+       (Delay(cocons ("q", "!")(act ("p" & [("success", I, end)]))))
+       ("q", "!") (act ("p" & [("success", I, end)]))
+       ); intro Ha. 
+       apply Ha.
+       simpl. easy. easy.
+
+       rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit1 ("p", "?")
+       (Delay(cocons ("p", "?") (act (end))))
+       ("p", "?") (act (end))
+       ); intro Hb.
+       apply Hb.
+       simpl. easy. easy.
        constructor.
 Qed.
 
@@ -236,6 +300,32 @@ Proof. unfold subtype, T, T'.
        simpl.
        pfold.
        constructor.
+
+       rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       specialize(CoInSplit1 ("p", "?")
+       (Delay(cocons ("p", "?") (act (end))))
+       ("p", "?") (act (end))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy. easy.
+       constructor.
+
+       rewrite(siso_eq(merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end))).
+       simpl.
+       rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
+       unfold coseq_id.
+       simpl.
+       constructor.
+       specialize(CoInSplit1 ("p", "?")
+       (Delay(cocons ("p", "?") (act (end))))
+       ("p", "?") (act (end))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy. easy.
+       constructor.
 Qed.
 
 CoFixpoint TS: st :=
@@ -258,6 +348,21 @@ CoFixpoint TB': st :=
 CoFixpoint W3: st :=
   st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,W3)])])])].
 
+Definition W4_gen (cont: st): st :=
+  st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,(cont))])])])].
+
+CoFixpoint W4 := W4_gen W4.
+
+Lemma W4eq: W4 = W4_gen W4.
+Proof. setoid_rewrite(siso_eq W4) at 1. simpl.
+       unfold W4_gen. easy.
+Qed.
+
+Lemma W4eq2: W4_gen W4 = st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,(W4))])])])].
+Proof. easy. Qed.
+
+Let EqW4 := (W4eq, W4eq2).
+
 CoFixpoint W1: st := st_receive "p" [("l1",sint,st_send "p" [("l3",sint,W1)])].
 
 Inductive ev : nat -> Prop :=
@@ -266,9 +371,11 @@ Inductive ev : nat -> Prop :=
 
 Definition listW3 := [("p","?"); ("p","!")].
 
-Lemma W3EqList: cosetInclC (act W3) listW3.
+Lemma W3EqList: cosetIncLC (act W3) listW3.
 Proof. pcofix CIH.
        pfold.
+(*        rewrite 2! EqW4. *)
+       simpl.
        rewrite(siso_eq W3).
        simpl.
        rewrite(coseq_eq ((act ("p" & [("l1", I, "p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])])))).
@@ -276,7 +383,7 @@ Proof. pcofix CIH.
        simpl.
        constructor.
        simpl. left. easy.
-       
+
        unfold upaco2.
        left.
        pfold.
@@ -309,7 +416,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma W3EqList2: forall r, paco2 cosetIncl r (act W3) listW3.
+Lemma W3EqList2: forall r, paco2 cosetIncL r (act W3) listW3.
 Proof. intros.
        pcofix CIH.
        pfold.
@@ -320,7 +427,7 @@ Proof. intros.
        simpl.
        constructor.
        simpl. left. easy.
-       
+
        unfold upaco2.
        left.
        pfold.
@@ -353,7 +460,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma W1EqList: cosetInclC (act W1) listW3.
+Lemma W1EqList: cosetIncLC (act W1) listW3.
 Proof. pcofix CIH.
        pfold.
        rewrite(siso_eq W1).
@@ -378,7 +485,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma W1EqList2: forall r, paco2 cosetIncl r (act W1) listW3.
+Lemma W1EqList2: forall r, paco2 cosetIncL r (act W1) listW3.
 Proof. intros.
        pcofix CIH.
        pfold.
@@ -404,7 +511,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma W1EqList3: forall n r, paco2 cosetIncl r (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)) listW3.
+Lemma W1EqList3: forall n r, paco2 cosetIncL r (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)) listW3.
 Proof. pcofix CIH.
        intros n.
        induction n; intros.
@@ -418,6 +525,79 @@ Proof. pcofix CIH.
        simpl. left. easy.
        unfold upaco2. left.
        apply IHn.
+Qed.
+
+Lemma W3EqListR: cosetIncR listW3 (act W3).
+Proof. rewrite(coseq_eq (act W3)).
+       unfold coseq_id. simpl.
+       constructor.
+       simpl.
+
+       specialize(CoInSplit1 ("p", "?")
+       (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+       ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy.
+       easy.
+
+       simpl.
+       constructor.
+       simpl.
+       specialize(CoInSplit2 ("p", "!")
+       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+       ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+       ); intro Ha.
+       simpl in Ha.
+       simpl.
+       apply Ha.
+       easy.
+       easy.
+       rewrite(coseq_eq((act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])))).
+       unfold coseq_id.
+       simpl.
+
+       specialize(CoInSplit1 ("p", "!")
+       (Delay (cocons ("p", "!") (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))))
+       ("p", "!") (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))
+       ); intro Hb.
+       simpl in Hb.
+       apply Hb.
+       easy.
+       easy.
+       constructor.
+Qed.
+
+Lemma W1EqListR: cosetIncR listW3 (act W1).
+Proof. rewrite(coseq_eq (act W1)).
+       unfold coseq_id. simpl.
+       constructor.
+       specialize(CoInSplit1 ("p", "?")
+       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
+       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       ); intro Ha.
+       apply Ha.
+       simpl. easy. easy.
+
+       specialize(CoInSplit2 ("p", "!")
+       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
+       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       ); intro Ha.
+       constructor.
+       simpl in Ha.
+       apply Ha.
+       easy. easy.
+
+       rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit1 ("p", "!")
+       (Delay(cocons ("p", "!") (act W1)))
+       ("p", "!") (act W1)
+       ); intro Hb.
+       apply Hb.
+       simpl. easy. easy.
+       constructor.
 Qed.
 
 Lemma helper: forall n W,
@@ -674,7 +854,7 @@ Proof. intros.
          rewrite helper3 in Hc.
          apply Hc.
          apply srefl.
-         
+
          specialize(_sref_b (upaco2 refinementR r)
                             W3
                             W1

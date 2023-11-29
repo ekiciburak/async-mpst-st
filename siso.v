@@ -135,7 +135,7 @@ CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
 Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
     | O    => w
-    | S k  => merge_ap_contn p a (merge_ap_cont p a w) k
+    | S k  => merge_ap_cont p a (merge_ap_contn p a w k)
   end.
 
 Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
@@ -182,7 +182,7 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
         | bp_end             => bp_end
       end 
   end.
-  
+
 (* Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
     | O   => bp_end
@@ -197,6 +197,7 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
       end 
   end.
  *)
+
 Compute (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) 3).
 Compute (Bpn "p" (bp_receivea "p" "l1" (I)) 4).
 
@@ -223,25 +224,36 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | O    => w
     | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
-  
-(* Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
+
+(* 
+Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
   match n with
     | O    => w
     | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
-  end. *)
+  end.
+*)
 
 Definition merge_bp_contnA (p: participant) (b: Bp p) (w: st) (n: nat): st :=
 merge_bp_cont p (Bpn p b n) w.
 
-Inductive cosetIncl (R: coseq (participant * string) -> list (participant * string) -> Prop):
+Inductive cosetIncL (R: coseq (participant * string) -> list (participant * string) -> Prop):
                         coseq (participant * string) -> list (participant * string) -> Prop :=
-  | c_nil : forall ys, cosetIncl R (Delay conil) ys
+  | c_nil : forall ys, cosetIncL R (Delay conil) ys
   | c_incl: forall x xs ys,
             List.In x ys ->
             R xs ys ->
-            cosetIncl R (Delay (cocons x xs)) ys.
+            cosetIncL R (Delay (cocons x xs)) ys.
 
-Definition cosetInclC := fun s1 s2 => paco2 cosetIncl bot2 s1 s2.
+Definition cosetIncLC := fun s1 s2 => paco2 cosetIncL bot2 s1 s2.
+
+Inductive cosetIncR: list (participant * string) -> coseq (participant * string) -> Prop :=
+  | l_nil : forall ys, cosetIncR nil ys
+  | l_incl: forall x xs ys,
+            CoInR x ys ->
+            cosetIncR xs ys ->
+            cosetIncR (x::xs) ys.
+
+(* Definition cosetIncRC := fun s1 s2 => paco2 cosetIncR bot2 s1 s2. *)
 
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_in : forall w w' p l s s',
@@ -250,24 +262,24 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                       refinementR seq (st_receive p [(l,s,w)]) (st_receive p [(l,s',w')])
 
   | _sref_out: forall w w' p l s s',
-                      subsort s s' -> 
+                      subsort s s' ->
                       seq w w' ->
                       refinementR seq (st_send p [(l,s,w)]) (st_send p [(l,s',w')])
 
   | _sref_a  : forall w w' p l s s' a n L,
                       subsort s s' ->
                       seq w (merge_ap_cont p (Apn p a n) w') ->
-                      cosetInclC (act w) L ->
-                      cosetInclC (act (merge_ap_contn p a w' n)) L ->
-(*                    (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) ->  *)
+                      cosetIncLC (act w) L ->
+                      cosetIncLC (act (merge_ap_contn p a w' n)) L ->
                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p (Apn p a n) (st_receive p [(l,s',w')]))
 
   | _sref_b  : forall w w' p l s s' b n L,
                       subsort s s' ->
                       seq w (merge_bp_contn p b w' n) ->
-                      cosetInclC (act w) L ->
-                      cosetInclC (act (merge_bp_contn p b w' n)) L ->
-(*                    (*bisim*) sseq (act w) (act (merge_bp_contn p b w' n)) ->  *)
+                      cosetIncLC (act w) L ->
+                      cosetIncLC (act (merge_bp_contn p b w' n)) L ->
+                      cosetIncR L (act w) ->
+                      cosetIncR L (act (merge_bp_contn p b w' n)) ->
                       refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
 
   | _sref_end: refinementR seq st_end st_end.
@@ -276,10 +288,11 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
 #[export]
 Declare Instance Equivalence_seq_genR (r: st -> st -> Prop): Equivalence r -> Equivalence (refinementR r).
 
-Definition refinement_eq_i: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s1 s2.
+Definition refinement: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s1 s2.
 
-Notation "x '~<' y" := (refinement_eq_i x y) (at level 50, left associativity).
+Notation "x '~<' y" := (refinement x y) (at level 50, left associativity).
 
 (* rewriting issues *)
 #[export]
- Declare Instance Equivalence_ref_eqi: Equivalence refinement_eq_i.
+ Declare Instance Equivalence_ref_eqi: Equivalence refinement.
+
