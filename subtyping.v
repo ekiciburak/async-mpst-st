@@ -600,6 +600,40 @@ Proof. rewrite(coseq_eq (act W1)).
        constructor.
 Qed.
 
+Lemma inW1ns: forall n l s, CoInR ("p", "!") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
+Proof. intro n.
+       induction n; intros.
+       simpl.
+       rewrite(coseq_eq (act W1)).
+       unfold coseq_id. simpl.
+       specialize(CoInSplit2 ("p", "!")
+       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
+       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit1 ("p", "!")
+       (Delay(cocons ("p", "!") (act W1)))
+       ("p", "!") (act W1)
+       ); intro Ha'.
+       apply Ha'. simpl. easy. easy.
+
+       simpl.
+       rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" l s) (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)))).
+       simpl.
+       rewrite(coseq_eq(act ("p" & [(l, s, merge_bp_contn "p" (bp_receivea "p" l s) W1 n)]))).
+       unfold coseq_id.
+       simpl.
+       specialize(CoInSplit2 ("p", "!")
+       (Delay(cocons ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))))
+       ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))
+       ); intro Ha.
+       apply Ha. simpl. easy. easy.
+       apply IHn.
+Qed.
+
 Lemma helper: forall n W,
   merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) ("p" & [("l1", I, "p" ! [("l3", I, W)])])
                  =
@@ -760,6 +794,60 @@ Proof. intros.
         unfold upaco2. left.
         apply W1EqList2.
 
+        apply W3EqListR.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+        simpl.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
+        simpl.
+        unfold listW3.
+        rewrite(coseq_eq(act ("p" & [("l1", I, "p" & [("l1", I, W1)])]))).
+        unfold coseq_id.
+        simpl.
+        constructor.
+        specialize(CoInSplit1 ("p", "?")
+        (Delay (cocons ("p", "?") (act ("p" & [("l1", I, W1)]))))
+        ("p", "?") (act ("p" & [("l1", I, W1)]))
+        ); intro Ha.
+        apply Ha.
+        simpl. easy. easy.
+
+        specialize(CoInSplit2 ("p", "!")
+        (Delay (cocons ("p", "?") (act ("p" & [("l1", I, W1)]))))
+        ("p", "?") (act ("p" & [("l1", I, W1)]))
+        ); intro Ha.
+        constructor.
+        apply Ha.
+        simpl. easy. easy.
+
+        rewrite(coseq_eq(act ("p" & [("l1", I, W1)]))).
+        unfold coseq_id. simpl.
+        specialize(CoInSplit2 ("p", "!")
+        (Delay (cocons ("p", "?") (act W1)))
+        ("p", "?") (act W1)
+        ); intro Ha'.
+        apply Ha'.
+        simpl. easy. easy.
+
+        rewrite(coseq_eq (act W1)).
+        unfold coseq_id.
+        simpl.
+        specialize(CoInSplit2 ("p", "!")
+        (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
+        ("p", "?") (act ("p" ! [("l3", I, W1)]))
+        ); intro Ha''.
+        apply Ha''.
+        simpl. easy. easy.
+        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
+        unfold coseq_id. simpl.
+
+        specialize(CoInSplit1 ("p", "!")
+        (Delay ( cocons ("p", "!") (act W1)))
+        ("p", "!") (act W1)
+        ); intro Ha'''.
+        apply Ha'''.
+        simpl. easy. easy.
+        constructor.
+
         pfold.
         rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
         unfold coseq_id.
@@ -775,6 +863,75 @@ Proof. intros.
         simpl. left. easy.
         unfold upaco2. left.
         apply W1EqList2.
+
+        unfold listW3.
+        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
+        unfold coseq_id.
+        simpl.
+        constructor.
+        specialize(CoInSplit2 ("p", "?")
+        (Delay (cocons ("p", "!") (act W3) ))
+        ("p", "!") (act W3)
+        ); intro Ha.
+        apply Ha.
+        simpl. easy. easy.
+        rewrite(coseq_eq(act W3)).
+        unfold coseq_id. simpl.
+        specialize(CoInSplit1 ("p", "?")
+        (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+        ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+        ); intro Ha'.
+        apply Ha'.
+        simpl. easy. easy.
+        specialize(CoInSplit1 ("p", "!")
+        (Delay (cocons ("p", "!") (act W3)))
+        ("p", "!") (act W3)
+        ); intro Ha''.
+        constructor.
+        apply Ha''.
+        simpl. easy. easy.
+        constructor.
+
+        unfold listW3.
+        rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
+        simpl.
+        constructor.
+        rewrite(coseq_eq(act ("p" & [("l1", I, W1)]))).
+        unfold coseq_id.
+        simpl.
+        specialize(CoInSplit1 ("p", "?")
+        (Delay (cocons ("p", "?") (act W1)))
+        ("p", "?") (act W1)
+        ); intro Ha.
+        apply Ha.
+        simpl. easy. easy.
+        rewrite(coseq_eq(act ("p" & [("l1", I, W1)]))).
+        unfold coseq_id. simpl.
+        specialize(CoInSplit2 ("p", "!")
+        (Delay (cocons ("p", "?") (act W1)))
+        ("p", "?") (act W1)
+        ); intro Ha.
+        constructor.
+        apply Ha.
+        simpl. easy. easy.
+        rewrite(coseq_eq (act W1)).
+        unfold coseq_id.
+        simpl.
+        specialize(CoInSplit2 ("p", "!")
+        (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
+        ("p", "?") (act ("p" ! [("l3", I, W1)]))
+        ); intro Ha'.
+        apply Ha'.
+        simpl. easy. easy.
+        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
+        unfold coseq_id. simpl.
+        specialize(CoInSplit1 ("p", "!")
+        (Delay (cocons ("p", "!") (act W1)))
+        ("p", "!") (act W1)
+        ); intro Ha'''.
+        apply Ha'''.
+        simpl. easy. easy.
+        constructor.
 
         rename CIH into Hn.
         simpl. simpl in Hn.
@@ -947,6 +1104,88 @@ Proof. intros.
          unfold upaco2. left.
          apply W1EqList3.
 
+         apply W3EqListR.
+         unfold listW3.
+         rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                               (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                               (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                               (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) 
+                               (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))))).
+         unfold coseq_id.
+         simpl.
+         constructor.
+         
+         specialize(CoInSplit1 ("p", "?")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))
+         ); intro Ha.
+         apply Ha. simpl. easy. easy.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))
+         ); intro Ha.
+         constructor.
+         apply Ha. simpl. easy. easy.
+         (*repeated?*)
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))).
+         simpl.
+         rewrite(coseq_eq((act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))])))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ); intro Ha'.
+         apply Ha'.
+         simpl. easy. easy.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))).
+         simpl.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))]))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))
+         ); intro Ha''.
+         apply Ha''.
+         simpl. easy. easy.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))).
+         simpl.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))
+         ); intro Ha'''.
+         apply Ha'''.
+         simpl. easy. easy.
+         apply inW1ns.
+         constructor.
+
          pfold.
          rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
          unfold coseq_id. simpl. constructor.
@@ -979,6 +1218,91 @@ Proof. intros.
          unfold upaco2. left.
          apply W1EqList3.
 
+         unfold listW3.
+         rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
+         unfold coseq_id.
+         simpl.
+         constructor.
+         specialize(CoInSplit2 ("p", "?")
+         (Delay (cocons ("p", "!") (act W3)))
+         ("p", "!") (act W3)
+         ); intro Ha. 
+         apply Ha. simpl. easy. easy.
+         rewrite(coseq_eq(act W3)).
+         unfold coseq_id. simpl.
+         specialize(CoInSplit1 ("p", "?")
+         (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+         ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+         ); intro Ha'.
+         apply Ha'. simpl. easy. easy.
+         constructor.
+         specialize(CoInSplit1 ("p", "!")
+         (Delay(cocons ("p", "!") (act W3)))
+         ("p", "!") (act W3)
+         ); intro Ha''.
+         apply Ha''. simpl. easy. easy.
+         constructor.
+
+         unfold listW3.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))).
+         simpl.
+         rewrite(coseq_eq((act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))])))).
+         unfold coseq_id.
+         simpl.
+         constructor.
+         
+         specialize(CoInSplit1 ("p", "?")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ); intro Ha.
+         apply Ha. simpl. easy. easy.
+
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ); intro Ha'.
+         constructor.
+         apply Ha'.
+         simpl. easy. easy.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))).
+         simpl.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))]))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                        (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
+                         (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))
+         ); intro Ha''.
+         apply Ha''.
+         simpl. easy. easy.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))).
+         simpl.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?")
+                        (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))
+         ); intro Ha'''.
+         apply Ha'''.
+         simpl. easy. easy.
+         apply inW1ns.
+         constructor.
+
          pfold.
          rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
          unfold coseq_id.
@@ -1005,6 +1329,68 @@ Proof. intros.
          simpl. left. easy.
          unfold upaco2. left.
          apply W1EqList3.
+
+         unfold listW3.
+         rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
+         unfold coseq_id. simpl.
+         constructor.
+         specialize(CoInSplit2 ("p", "?")
+         (Delay (cocons ("p", "!") (act ("p" ! [("l3", I, W3)]))))
+         ("p", "!") (act ("p" ! [("l3", I, W3)]))
+         ); intro Ha.
+         apply Ha. simpl. easy. easy.
+         rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
+         unfold coseq_id.
+         simpl.
+         specialize(CoInSplit2 ("p", "?")
+         (Delay (cocons ("p", "!") (act W3) ))
+         ("p", "!") (act W3) 
+         ); intro Ha'.
+         apply Ha'. simpl. easy. easy.
+         rewrite(coseq_eq(act W3)). 
+         unfold coseq_id. simpl.
+         specialize(CoInSplit1 ("p", "?")
+         (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+         ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+         ); intro Ha''.
+         apply Ha''. simpl. easy. easy.
+         specialize(CoInSplit1 ("p", "!")
+         (Delay (cocons ("p", "!") (act ("p" ! [("l3", I, W3)]))))
+         ("p", "!") (act ("p" ! [("l3", I, W3)]))
+         ); intro Ha'''.
+         constructor.
+         apply Ha'''. simpl. easy. easy.
+         constructor.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))).
+         simpl.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))]))).
+         unfold coseq_id. simpl.
+         constructor.
+         specialize(CoInSplit1 ("p", "?")
+         (Delay (cocons ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))
+         ("p", "?") (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))
+         ); intro Ha.
+         apply Ha. simpl. easy. easy.
+
+         simpl.
+         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))).
+         simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?") (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]))))
+         ("p", "?") (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]))
+         ); intro Ha.
+         constructor.
+         apply Ha.
+         simpl. easy. easy.
+         rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]))).
+         unfold coseq_id. simpl.
+         specialize(CoInSplit2 ("p", "!")
+         (Delay (cocons ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))
+         ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))
+         ); intro Ha'.
+         apply Ha'. simpl. easy. easy.
+         apply inW1ns.
+         constructor.
 Qed.
 
 Lemma st2: forall n: nat, subtype TB TB'.

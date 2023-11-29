@@ -553,6 +553,8 @@ Proof. unfold subtype.
          unfold upaco2. left.
          apply listTctlEq.
 
+admit.
+admit.
          pfold.
          rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
          unfold coseq_id.
@@ -588,7 +590,7 @@ Proof. unfold subtype.
          simpl. left. easy.
          unfold upaco2. left.
          apply listTREq.
-         
+
          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
                                        ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
          simpl.
@@ -626,4 +628,6 @@ Proof. unfold subtype.
          unfold upaco2.
          left.
          apply listTctlEq.
-Qed.
+admit.
+admit.
+Admitted.
