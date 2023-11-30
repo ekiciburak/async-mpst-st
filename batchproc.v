@@ -665,7 +665,6 @@ Proof. unfold subtype.
        simpl in Ha.
        apply Ha.
        simpl.
-       Search Forall.
        apply Forall_forall.
        intros(x1,x2) Hc.
        simpl.

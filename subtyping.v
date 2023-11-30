@@ -1410,7 +1410,6 @@ Proof. unfold subtype.
        ); intro H.
        simpl in H.
        apply H.
-       Search Forall.
        apply Forall_forall.
        intros (x,y).
        simpl. intro Ha.

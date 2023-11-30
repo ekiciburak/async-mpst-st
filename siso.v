@@ -246,6 +246,17 @@ Inductive cosetIncL (R: coseq (participant * string) -> list (participant * stri
 
 Definition cosetIncLC := fun s1 s2 => paco2 cosetIncL bot2 s1 s2.
 
+Lemma cosetIncL_mon: monotone2 cosetIncL.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - specialize (c_incl r'); intro HS.
+         apply HS.
+         apply H.
+         apply LE, H0.
+Qed.
+
 Inductive cosetIncR: list (participant * string) -> coseq (participant * string) -> Prop :=
   | l_nil : forall ys, cosetIncR nil ys
   | l_incl: forall x xs ys,
@@ -268,10 +279,12 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
 
   | _sref_a  : forall w w' p l s s' a n L,
                       subsort s s' ->
-                      seq w (merge_ap_cont p (Apn p a n) w') ->
+                      seq w (merge_ap_contn p a w' n)  ->
                       cosetIncLC (act w) L ->
                       cosetIncLC (act (merge_ap_contn p a w' n)) L ->
-                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_cont p (Apn p a n) (st_receive p [(l,s',w')]))
+                      cosetIncR L (act w) ->
+                      cosetIncR L (act (merge_ap_contn p a w' n)) ->
+                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
 
   | _sref_b  : forall w w' p l s s' b n L,
                       subsort s s' ->
@@ -292,7 +305,20 @@ Definition refinement: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s
 
 Notation "x '~<' y" := (refinement x y) (at level 50, left associativity).
 
+Lemma refinementR_mon: monotone2 refinementR.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor. exact H. apply LE. exact H0.
+       - constructor. exact H. apply LE. exact H0.
+       - specialize(_sref_a r'); intro Ha. apply Ha with (L := L); try easy.
+         apply LE. exact H0.
+       - specialize(_sref_b r'); intro Ha. apply Ha with (L := L); try easy.
+         apply LE. exact H0.
+       - constructor.
+Qed.
+
 (* rewriting issues *)
 #[export]
- Declare Instance Equivalence_ref_eqi: Equivalence refinement.
+Declare Instance Equivalence_ref_eqi: Equivalence refinement.
 
