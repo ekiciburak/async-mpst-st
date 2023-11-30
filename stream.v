@@ -76,6 +76,49 @@ Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
 
+Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
+  | CoNInSplit1 x: CoNInR x (Delay conil)
+  | CoNInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoNInR x ys -> CoNInR x xs.
+
+Lemma inOutL: forall {A: Type} x xs, CoInR x xs -> (@CoNInR A x xs -> False).
+Proof. intros.
+       induction H.
+       subst.
+       - induction H0.
+         simpl in *. easy.
+         rewrite H0 in H. inversion H.
+         subst. easy.
+       - apply IHCoInR.
+         induction H0.
+         simpl in *. easy.
+         rewrite H0 in H.
+         inversion H.
+         subst.
+         apply IHCoNInR.
+         specialize(IHCoInR H4). easy.
+         easy. easy. easy.
+Qed.
+
+Lemma inOutR: forall {A: Type} x xs, (CoNInR x xs) -> (@CoInR A x xs -> False).
+Proof. intros.
+       induction H0. 
+       subst.
+       - induction H.
+         simpl in *. easy.
+         rewrite H0 in H. inversion H.
+         subst. easy.
+       - apply IHCoInR.
+         induction H.
+         simpl in *. easy.
+         rewrite H0 in H.
+         inversion H.
+         subst.
+         apply IHCoNInR.
+         specialize(IHCoInR H4). easy.
+         easy. easy. easy.
+Qed.
+
+
 (* 
 Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoInSplit1 x xs {y ys}: force xs = cocons y ys -> x = y  -> CoInR R x xs 
@@ -83,8 +126,6 @@ Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
 
 Definition CoIn {A: Type}: A -> coseq A -> Prop := fun s1 s2 => paco2 (@CoInR A) bot2 s1 s2.
 *)
-
-
 
 Inductive sseq_gen {A: Type} (seq: coseq A -> coseq A -> Prop): coseq A -> coseq A -> Prop :=
   | _sseq_gen_n: sseq_gen seq (Delay conil) (Delay conil)

@@ -18,6 +18,27 @@ Inductive subsort: sort -> sort -> Prop :=
   | sni  : subsort snat sint
   | srefl: forall s, subsort s s.
 
+Inductive nsubsort: sort -> sort -> Prop :=
+  | nsin: nsubsort sint snat
+  | nsbi: nsubsort sbool sint
+  | nsib: nsubsort sint sbool
+  | nsbn: nsubsort sbool snat
+  | nsnb: nsubsort snat sbool
+  | nsun: nsubsort sunit snat
+  | nsnu: nsubsort snat sunit
+  | nsbu: nsubsort sbool sunit
+  | nsub: nsubsort sunit sbool.
+
+Lemma ssnssL: forall s t, subsort s t -> (nsubsort s t -> False).
+Proof. intro s.
+       induction s; intros; case_eq t; intros; subst; try easy.
+Qed.
+
+Lemma ssnssR: forall s t, nsubsort s t -> (subsort s t -> False).
+Proof. intro s.
+       induction s; intros; case_eq t; intros; subst; try easy.
+Qed.
+
 (* session trees *)
 CoInductive st: Type :=
   | st_end    : st

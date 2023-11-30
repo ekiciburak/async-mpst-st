@@ -3,6 +3,7 @@ st.v
 so.v
 si.v
 siso.v
+norefined.v
 subtyping.v
 batchproc.v
 typesystem.v
