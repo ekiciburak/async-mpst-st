@@ -247,7 +247,6 @@ Proof. unfold subtype, T, T'.
                            st_end
                            "q" "cont" sint sint
                            (bp_receivea "p" "success" sint) 1
-                           [("p","?")]
                            ); intro H.
        simpl in H.
       
@@ -271,6 +270,8 @@ Proof. unfold subtype, T, T'.
        pfold.
        apply _sref_end.
 
+       exists [("p","?")].
+       split.
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.
@@ -286,6 +287,7 @@ Proof. unfold subtype, T, T'.
        pfold.
        constructor.
 
+       split.
        pfold.
        rewrite(coseq_eq(act (merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end)))).
        unfold coseq_id.
@@ -301,6 +303,7 @@ Proof. unfold subtype, T, T'.
        pfold.
        constructor.
 
+       split.
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.
@@ -729,7 +732,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" (I))
                             1
-                            listW3
                    ); intro Hb.
          simpl in Hb.
          rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I)) ("p" ! [("l3", I, W1)])))) in Hb.
@@ -750,7 +752,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" sint)
                             2
-                            listW3
                    ); intro Hc.
         simpl in Hc.
         rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -780,8 +781,11 @@ Proof. intros.
         apply CIH.
         constructor.
         constructor.
+        
+        exists listW3. split.
         apply W3EqList.
 
+        split.
         pfold.
         rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
         unfold coseq_id. simpl.
@@ -793,7 +797,8 @@ Proof. intros.
         simpl. left. easy.
         unfold upaco2. left.
         apply W1EqList2.
-
+        
+        split.
         apply W3EqListR.
         rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
         simpl.
@@ -810,7 +815,6 @@ Proof. intros.
         ); intro Ha.
         apply Ha.
         simpl. easy. easy.
-
         specialize(CoInSplit2 ("p", "!")
         (Delay (cocons ("p", "?") (act ("p" & [("l1", I, W1)]))))
         ("p", "?") (act ("p" & [("l1", I, W1)]))
@@ -848,6 +852,8 @@ Proof. intros.
         simpl. easy. easy.
         constructor.
 
+        exists listW3.
+        split.
         pfold.
         rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
         unfold coseq_id.
@@ -856,6 +862,7 @@ Proof. intros.
         unfold upaco2. left.
         apply W3EqList2.
 
+        split.
         pfold.
         rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
         unfold coseq_id.
@@ -864,6 +871,7 @@ Proof. intros.
         unfold upaco2. left.
         apply W1EqList2.
 
+        split.
         unfold listW3.
         rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
         unfold coseq_id.
@@ -961,7 +969,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" (I)) 
                             (n.+2)
-                            listW3
                    ); intro Hb.
          simpl in Hb.
          rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -988,7 +995,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" (I)) 
                             (n.+3)
-                            listW3
                    ); intro Hc.
          simpl in Hc.
          rewrite(siso_eq W1).
@@ -1021,7 +1027,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" (I)) 
                             (n.+4)
-                            listW3
                    ); intro Hd.
          simpl in Hd.
          unfold upaco2.
@@ -1068,8 +1073,10 @@ Proof. intros.
          constructor.
          constructor.
          easy.
+         exists listW3.
+         split.
          apply W3EqList.
-         
+         split.
          rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                          (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                          (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1084,6 +1091,7 @@ Proof. intros.
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))).
          simpl.
+
          pfold.
          rewrite(coseq_eq((act ("p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, "p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)])])])])))).
          unfold coseq_id.
@@ -1103,9 +1111,11 @@ Proof. intros.
          simpl. left. easy.
          unfold upaco2. left.
          apply W1EqList3.
-
+         split.
          apply W3EqListR.
+
          unfold listW3.
+         simpl.
          rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                                (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                                (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1186,6 +1196,8 @@ Proof. intros.
          apply inW1ns.
          constructor.
 
+         exists listW3.
+         split.
          pfold.
          rewrite(coseq_eq((act ("p" ! [("l3", I, W3)])))).
          unfold coseq_id. simpl. constructor.
@@ -1193,6 +1205,7 @@ Proof. intros.
          unfold upaco2. left.
          apply W3EqList2.
 
+         split.
          rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                          (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                          (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))))).
@@ -1218,6 +1231,7 @@ Proof. intros.
          unfold upaco2. left.
          apply W1EqList3.
 
+         split.
          unfold listW3.
          rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
          unfold coseq_id.
@@ -1303,6 +1317,8 @@ Proof. intros.
          apply inW1ns.
          constructor.
 
+         exists listW3.
+         split.
          pfold.
          rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
          unfold coseq_id.
@@ -1315,6 +1331,7 @@ Proof. intros.
          unfold upaco2. left.
          apply W3EqList2.
 
+         split.
          rewrite(siso_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))).
          simpl.
          rewrite(siso_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))).
@@ -1330,6 +1347,7 @@ Proof. intros.
          unfold upaco2. left.
          apply W1EqList3.
 
+         split.
          unfold listW3.
          rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
          unfold coseq_id. simpl.

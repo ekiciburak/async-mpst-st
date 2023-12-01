@@ -754,7 +754,6 @@ Proof. unfold subtype.
                           sunit
                           (bp_mergea "src" "b1" sunit (bp_mergea "sk" "b1" sunit (bp_send "sk" Hdeq "b1" sunit)))
                           1
-                          listTctl
                  ); intro Ha.
        simpl in Ha.
        rewrite(siso_eq((merge_bp_cont "src"
@@ -797,7 +796,7 @@ Proof. unfold subtype.
        pfold.
        apply _sref_out.
        apply srefl.
-       
+
        rewrite(siso_eq Tctl).
        simpl.
 
@@ -813,7 +812,6 @@ Proof. unfold subtype.
        sunit
        (bp_mergea "src" "b2" sunit (bp_mergea "sk" "b2" sunit (bp_send "sk" Hdeq "b2" sunit)))
        1
-       listTctl
        ); intro Hb.
        simpl in Hb.
        rewrite(siso_eq( (merge_bp_cont "src"
@@ -894,6 +892,8 @@ Proof. unfold subtype.
          right.
          apply CIH.
          
+         exists listTctl.
+         split.
          pfold.
          unfold listTctl.
          rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
@@ -927,6 +927,7 @@ Proof. unfold subtype.
          left.
          apply listTREq.
          
+         split.
          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
                                               ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
          simpl.
@@ -985,10 +986,13 @@ Proof. unfold subtype.
          simpl. right. right. left. easy.
          unfold upaco2. left.
          apply listTctlEq.
-
+         
+         split.
          apply action1.
          apply action2.
 
+         exists listTctl.
+         split.
          pfold.
          rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
          unfold coseq_id.
@@ -1025,6 +1029,7 @@ Proof. unfold subtype.
          unfold upaco2. left.
          apply listTREq.
 
+         split.
          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
                                        ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
          simpl.
@@ -1062,7 +1067,8 @@ Proof. unfold subtype.
          unfold upaco2.
          left.
          apply listTctlEq.
-
+         
+         split.
          apply action3.
          apply action4.
 Qed.

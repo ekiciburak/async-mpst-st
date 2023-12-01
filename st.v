@@ -45,6 +45,12 @@ CoInductive st: Type :=
   | st_receive: participant -> list (label*sort*st) -> st
   | st_send   : participant -> list (label*sort*st) -> st.
 
+Fixpoint flattenT {A B C: Type} (l: list (A*B*C)): list C :=
+  match l with
+    | nil             => nil
+    | cons (a,b,c) xs => cons c (flattenT xs)
+  end.
+
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p l s xs ys,
@@ -74,4 +80,19 @@ Definition st_id (s: st): st :=
 Lemma st_eq: forall s, s = st_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-
+Lemma st_eq_inv: forall s t, s = t -> 
+  (s = st_end /\ t = st_end) \/
+  (exists p p' l l', s = st_receive p l /\ t = st_receive p' l' /\ p = p' /\ l' = l') \/
+  (exists p p' l l', s = st_send p l /\ t = st_send p' l' /\ p = p' /\ l' = l').
+Proof. intros.
+       destruct s; destruct t.
+       left. easy.
+       easy.
+       easy.
+       easy.
+       right. left.
+       exists s. exists s0. exists l. exists l0. inversion H. easy.
+       easy. easy. easy.
+       right. right.
+       exists s. exists s0. exists l. exists l0. inversion H. easy.
+Qed.
