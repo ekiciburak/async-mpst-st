@@ -72,6 +72,48 @@ CoFixpoint map {A B: Type} (f: A -> B) (xs: coseq A): coseq B :=
     | cocons x xs => cocons (f x) (map f xs)
   end.
 
+CoFixpoint appendC {A: Type} (l ys: coseq A): coseq A := 
+  match force l with
+    | conil       => ys
+    | cocons x xs => Delay (cocons x (appendC xs ys))
+  end.
+
+CoFixpoint appendL {A: Type} (l: list A) (ys: coseq A): coseq A := 
+  match l with
+    | nil       => ys
+    | cons x xs => Delay (cocons x (appendL xs ys))
+  end.
+
+Lemma anl: forall {A: Type} xs, @appendC A {| force := conil |} xs = xs.
+Proof. intros.
+       destruct xs. simpl.
+       rewrite(coseq_eq(appendC {| force := conil |} {| force := force0 |})).
+       unfold coseq_id. simpl.
+       destruct force0; easy.
+Qed.
+
+Lemma anl2: forall {A: Type} xs, @appendL A nil xs = xs.
+Proof. intros.
+       destruct xs. simpl.
+       simpl.
+       rewrite(coseq_eq(appendL nil {| force := force0 |})).
+       unfold coseq_id. simpl.
+       destruct force0; easy.
+Qed.
+
+Lemma app_assoc: forall {A: Type} xs ys zs,
+  @appendL A xs (appendL ys zs) = appendL (xs ++ ys) zs.
+Proof. intros A xs.
+       induction xs; intros.
+       simpl. rewrite anl2. easy.
+       simpl.
+       rewrite(coseq_eq(appendL (a :: xs) (appendL ys zs))).
+       unfold coseq_id. simpl.
+       rewrite IHxs.
+       rewrite(coseq_eq(appendL (a :: xs ++ ys) zs)).
+       unfold coseq_id. simpl. easy.
+Qed.
+
 Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.

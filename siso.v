@@ -210,6 +210,35 @@ CoFixpoint fromBp (p: participant) (b: Bp p): st :=
     | bp_end             => st_end
   end.
 
+Fixpoint actB (p: participant) (b: Bp p): list (participant * string) :=
+  match b with
+    | bp_receivea q l s  => cons (q, "?"%string) nil
+    | bp_send q x l s    => cons (q, "!"%string) nil
+    | bp_mergea q l s c  => cons (q, "?"%string) (actB p c)
+    | bp_merge q x l s c => cons (q, "!"%string) (actB p c)
+    | _                  => nil
+  end.
+
+(* Fixpoint actBn (p: participant) (b: Bp p) (n: nat): coseq (participant * string) :=
+  match n with
+    | O   => Delay conil
+    | S k => appendC (actB p b) (actBn p b k) 
+  end.
+ *)
+
+Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * string) :=
+  match n with
+    | O   => nil
+    | S k =>
+      match b with
+        | bp_receivea q l s  => cons (q, "?"%string) (actBn p b k)
+        | bp_send q x l s    => cons (q, "!"%string) (actBn p b k)
+        | bp_mergea q l s c  => (cons (q, "?"%string) (actB p c)) ++ (actBn p b k)
+        | bp_merge q x l s c => (cons (q, "!"%string) (actB p c)) ++ (actBn p b k)
+        | _                  => nil
+      end
+  end. 
+
 CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
   match b with 
     | bp_receivea q l s  => st_receive q [(l,s,w)]
@@ -225,13 +254,114 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
 
-(* 
-Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
-  match n with
-    | O    => w
-    | S k  => merge_bp_contn p b (merge_bp_cont p b w) k
-  end.
-*)
+Lemma mcomm: forall n p b w,
+             merge_bp_contn p b (merge_bp_cont p b w) n =
+             merge_bp_cont p b (merge_bp_contn p b w n).
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - simpl. rewrite IHn. easy.
+Qed.
+
+Lemma hm1: forall p b w, act (merge_bp_cont p b w) = appendL (actB p b) (act w).
+Proof. intros p b.
+       induction b; intros.
+       rewrite(coseq_eq(act (merge_bp_cont p (bp_receivea s s0 s1) w))).
+       rewrite(coseq_eq( appendL (actB p (bp_receivea s s0 s1)) (act w))).
+       unfold coseq_id.
+       simpl. rewrite anl2. easy.
+
+       rewrite(coseq_eq(act (merge_bp_cont p (bp_send q n s s0) w))).
+       unfold coseq_id. simpl.
+       rewrite(coseq_eq(appendL [(q, "!"%string)] (act w))).
+       unfold coseq_id.
+       simpl. rewrite anl2. easy.
+
+       rewrite(coseq_eq(act (merge_bp_cont p (bp_mergea s s0 s1 b) w) )).
+       rewrite(coseq_eq(appendL (actB p (bp_mergea s s0 s1 b)) (act w))).
+       unfold coseq_id. simpl.
+       rewrite IHb. easy.
+
+       rewrite(coseq_eq(act (merge_bp_cont p (bp_merge q n s s0 b) w))).
+       rewrite(coseq_eq(appendL (actB p (bp_merge q n s s0 b)) (act w))).
+       unfold coseq_id. simpl.
+       rewrite IHb. easy.
+
+       rewrite(siso_eq(merge_bp_cont p bp_end w)).
+       simpl. rewrite anl2.
+       destruct w; easy.
+Qed.
+
+Lemma unfcs: forall n p b, (actBn p b n ++ actB p b) = (actBn p b n.+1).
+Proof. intro n.
+       induction n; intros.
+       destruct b; simpl; try easy.
+       rewrite app_comm_cons.
+       rewrite app_nil_r. easy.
+       rewrite app_comm_cons.
+       rewrite app_nil_r. easy.
+
+       specialize(IHn p b).
+       simpl in *.
+       destruct b.
+       simpl in *. rewrite IHn. easy.
+       simpl in *. rewrite IHn. easy.
+
+       simpl in *.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite <- IHn. easy.
+
+       simpl in *.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite <- IHn. easy.
+
+       simpl. easy.
+Qed.
+
+Lemma hm2: forall n p, actBn p bp_end n = [].
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. easy.
+Qed.
+
+Lemma h0: forall (n: nat) p b w, 
+act (merge_bp_contn p b w n) = appendL (actBn p b n) (act w).
+Proof. intro n.
+       induction n; intros.
+       simpl. rewrite anl2. easy.
+       simpl.
+       pose proof IHn as IHnn.
+       specialize(IHn p b (merge_bp_contn p b w 1)).
+       simpl in IHn.
+       rewrite mcomm in IHn.
+       rewrite IHn.
+       rewrite hm1.
+       rewrite stream.app_assoc.
+       f_equal.
+       destruct b; try easy.
+       rewrite unfcs.
+       simpl. easy.
+
+       rewrite unfcs.
+       simpl. easy.
+
+       rewrite unfcs.
+       simpl. easy.
+
+       rewrite unfcs.
+       simpl. easy.
+
+       simpl.
+       rewrite hm2.
+       easy. 
+Qed.
 
 Definition merge_bp_contnA (p: participant) (b: Bp p) (w: st) (n: nat): st :=
 merge_bp_cont p (Bpn p b n) w.
