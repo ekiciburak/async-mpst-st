@@ -245,6 +245,42 @@ Proof. intro n.
        easy.
 Qed.
 
+Lemma bpn_n: forall n p b w,
+merge_bp_contn p b w n = merge_bp_cont p (Bpn p b n) w.
+Admitted.
+
+Lemma nrefR: forall w w',  w /~< w' -> (w ~< w' -> False).
+Proof. intros w w' H.
+       induction H; intros.
+       { apply inOutL in H. easy.
+         unfold refinement in H0.
+         punfold H0; [ | apply refinementR_mon].
+         inversion H0. admit. admit.
+       }
+       { apply inOutL in H. easy.
+         unfold refinement in H0.
+         punfold H0; [ | apply refinementR_mon].
+         inversion H0. admit. admit.
+       }
+       { apply inOutL in H. easy.
+         unfold refinement in H0.
+         punfold H0; [ | apply refinementR_mon].
+         inversion H0. admit. admit.
+         admit.
+       }
+Admitted.
+
+(* Lemma nrefL: forall w w',  (w ~< w' -> False) -> w /~< w'.
+Proof. intros w w' H.
+       
+       assert(forall n p b l s s', (p ! [(l, s, w)]) ~< (merge_bp_contn p b (p ! [(l, s', w')]) n)).
+       { pcofix CIH.
+         pfold.
+         intro n.
+         specialize (_sref_b (upaco2 refinementR r) w w'); intro Hb.
+         intros. apply Hb.
+         
+ *)
 Lemma nrefL: forall w w',  w ~< w' -> (w /~< w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
@@ -302,9 +338,29 @@ Proof. intros w w' H.
          ); intro Hb.
          apply Hb. simpl. easy. easy.
          apply neq1a in H1. easy.
-
+         rewrite bpn_n in H1.
+         unfold upaco2 in H3.
+         destruct H3.
+         punfold H3.
+         
+         
+(* 
+         induction n; intros.
+         simpl in *. admit.
+         simpl in H1.
+         case_eq b; intros.
+         subst. 
+         rewrite(siso_eq( merge_bp_cont p0 (bp_mergea s1 s2 s3 (Bpn p0 (bp_receivea s1 s2 s3) n)) (p0 ! [(l0, s', w'0)]))) in H1.
+         simpl in H1. easy.
+         subst.
+         rewrite(siso_eq(merge_bp_cont p0 (bp_merge q n0 s1 s2 (Bpn p0 (bp_send q n0 s1 s2) n)) (p0 ! [(l0, s', w'0)]) )) in H1.
+         simpl in H1. inversion H1.
+         subst.
+         apply IHn.
          apply inOutL in H0. easy.
-         rewrite <- H4.
+         rewrite <- H4. *)
+         admit.
+         admit.
          admit.
        }
        

@@ -118,6 +118,21 @@ Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
 
+Inductive CoInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
+  | CoInSplit1A x xs {ys}: force xs = cocons x ys -> CoInRA R x xs 
+  | CoInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoInRA R x xs.
+
+Definition CoIn {A} s1 s2 := paco2 (@CoInRA A) bot2 s1 s2.
+
+Lemma CoIn_mon: forall {A: Type}, monotone2 (@CoInRA A).
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - specialize(@CoInSplit1A A r' x xs ys H); intro Ha. apply Ha.
+       - specialize(@CoInSplit2A A r' x xs y ys H H0); intro Ha.
+         apply Ha, LE, H1.
+Qed.
+
 Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
   | CoNInSplit1 x: CoNInR x (Delay conil)
   | CoNInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoNInR x ys -> CoNInR x xs.
@@ -159,7 +174,6 @@ Proof. intros.
          specialize(IHCoInR H4). easy.
          easy. easy. easy.
 Qed.
-
 
 (* 
 Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=

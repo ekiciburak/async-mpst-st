@@ -237,7 +237,7 @@ Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * string) 
         | bp_merge q x l s c => (cons (q, "!"%string) (actB p c)) ++ (actBn p b k)
         | _                  => nil
       end
-  end. 
+  end.
 
 CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
   match b with 
@@ -396,6 +396,8 @@ Inductive cosetIncR: list (participant * string) -> coseq (participant * string)
 
 (* Definition cosetIncRC := fun s1 s2 => paco2 cosetIncR bot2 s1 s2. *)
 
+Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
+
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_in : forall w w' p l s s',
                       subsort s' s -> 
@@ -418,7 +420,7 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                       ) ->
                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
 
-  | _sref_b  : forall w w' p l s s' b n,
+  | _sref_b  :  forall w w' p l s s' b n,
                       subsort s s' ->
                       seq w (merge_bp_contn p b w' n) ->
                       (exists L, 
@@ -456,3 +458,21 @@ Qed.
 #[export]
 Declare Instance Equivalence_ref_eqi: Equivalence refinement.
 
+(*
+ forall w w' p l s s' b n,
+                      subsort s s' ->
+                      seq w (merge_bp_contn p b w' n) ->
+                      (exists L, 
+                         cosetIncLC (act w) L /\
+                         cosetIncLC (act (merge_bp_contn p b w' n)) L /\
+                         cosetIncR L (act w) /\
+                         cosetIncR L (act (merge_bp_contn p b w' n))
+                      ) ->
+                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
+
+ forall w w' p l s s' b n,
+                      subsort s s' ->
+                      seq w (merge_bp_contn p b w' n) ->
+                      act_eq w (merge_bp_contn p b w' n) ->
+                      refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
+*)
