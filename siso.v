@@ -420,17 +420,11 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                       ) ->
                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
 
-  | _sref_b  :  forall w w' p l s s' b n,
+  | _sref_b  : forall w w' p l s s' b n,
                       subsort s s' ->
                       seq w (merge_bp_contn p b w' n) ->
-                      (exists L, 
-                         cosetIncLC (act w) L /\
-                         cosetIncLC (act (merge_bp_contn p b w' n)) L /\
-                         cosetIncR L (act w) /\
-                         cosetIncR L (act (merge_bp_contn p b w' n))
-                      ) ->
+                      act_eq w (merge_bp_contn p b w' n) ->
                       refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
-
   | _sref_end: refinementR seq st_end st_end.
 
 (* rewriting issues *)
