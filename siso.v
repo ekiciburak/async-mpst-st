@@ -117,6 +117,24 @@ CoFixpoint fromAp (p: participant) (a: Ap p): st :=
     | ap_end             => st_end
   end.
 
+Fixpoint actA (p: participant) (a: Ap p): list (participant * string) :=
+  match a with
+    | ap_receive q x l s => cons (q, "?"%string) nil
+    | ap_merge q x l s c => cons (q, "!"%string) (actA p c)
+    | _                  => nil
+  end.
+
+Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * string) :=
+  match n with
+    | O   => nil
+    | S k =>
+      match a with
+        | ap_receive q x l s => cons (q, "?"%string) (actAn p a k)
+        | ap_merge q x l s c => (cons (q, "!"%string) (actA p c)) ++ (actAn p a k)
+        | _                  => nil
+      end
+  end.
+
 Lemma fromAp1: forall p q x l s,
   fromAp p (ap_receive q x l s) ==~ st_receive q [(l,s,st_end)].
 Proof. intros.
@@ -128,8 +146,8 @@ Qed.
 CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
   match a with
     | ap_receive q H l s  => st_receive q [(l,s,w)]
-    | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_cont p w' w))]
-    | ap_end              => st_end
+    | ap_merge q H l s w' => st_send q [(l,s,(merge_ap_cont p w' w))]
+    | ap_end              => w
   end.
 
 Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
@@ -254,9 +272,36 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
 
+Lemma bpend_ann: forall n p w, merge_bp_contn p (bp_end) w n = w.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. simpl.
+       rewrite(siso_eq(merge_bp_cont p bp_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma apend_ann: forall n p w, merge_ap_contn p (ap_end) w n = w.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. simpl.
+       rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl.
+       destruct w; easy.
+Qed.
+
 Lemma mcomm: forall n p b w,
              merge_bp_contn p b (merge_bp_cont p b w) n =
              merge_bp_cont p b (merge_bp_contn p b w n).
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - simpl. rewrite IHn. easy.
+Qed.
+
+Lemma mcomm2: forall n p a w,
+             merge_ap_contn p a (merge_ap_cont p a w) n =
+             merge_ap_cont p a (merge_ap_contn p a w n).
 Proof. intro n.
        induction n; intros.
        - simpl. easy.
@@ -288,6 +333,24 @@ Proof. intros p b.
        rewrite IHb. easy.
 
        rewrite(siso_eq(merge_bp_cont p bp_end w)).
+       simpl. rewrite anl2.
+       destruct w; easy.
+Qed.
+
+Lemma hm1a: forall p a w, act (merge_ap_cont p a w) = appendL (actA p a) (act w).
+Proof. intros p b.
+       induction b; intros.
+       rewrite(coseq_eq(act(merge_ap_cont p (ap_receive q n s s0) w))).
+       rewrite(coseq_eq( appendL (actA p (ap_receive q n s s0)) (act w))).
+       unfold coseq_id.
+       simpl. rewrite anl2. easy.
+
+       rewrite(coseq_eq(act (merge_ap_cont p (ap_merge q n s s0 b) w))).
+       rewrite(coseq_eq(appendL (actA p (ap_merge q n s s0 b)) (act w))).
+       unfold coseq_id. simpl.
+       rewrite IHb. easy.
+
+       rewrite(siso_eq(merge_ap_cont p ap_end w)).
        simpl. rewrite anl2.
        destruct w; easy.
 Qed.
@@ -324,7 +387,36 @@ Proof. intro n.
        simpl. easy.
 Qed.
 
+Lemma unfcsa: forall n p a, (actAn p a n ++ actA p a) = (actAn p a n.+1).
+Proof. intro n.
+       induction n; intros.
+       destruct a; simpl; try easy.
+       rewrite app_comm_cons.
+       rewrite app_nil_r. easy.
+
+       specialize(IHn p a).
+       simpl in *.
+       destruct a.
+       simpl in *. rewrite IHn. easy.
+
+       simpl in *.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite <- IHn. easy.
+       simpl. easy.
+Qed.
+
+
 Lemma hm2: forall n p, actBn p bp_end n = [].
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. easy.
+Qed.
+
+Lemma hm2a: forall n p, actAn p ap_end n = [].
 Proof. intro n.
        induction n; intros.
        simpl. easy.
@@ -360,6 +452,32 @@ Proof. intro n.
 
        simpl.
        rewrite hm2.
+       easy. 
+Qed.
+
+Lemma h1: forall (n: nat) p a w, 
+act (merge_ap_contn p a w n) = appendL (actAn p a n) (act w).
+Proof. intro n.
+       induction n; intros.
+       simpl. rewrite anl2. easy.
+       simpl.
+       pose proof IHn as IHnn.
+       specialize(IHn p a (merge_ap_contn p a w 1)).
+       simpl in IHn.
+       rewrite mcomm2 in IHn.
+       rewrite IHn.
+       rewrite hm1a.
+       rewrite stream.app_assoc.
+       f_equal.
+       destruct a; try easy.
+       rewrite unfcsa.
+       simpl. easy.
+
+       rewrite unfcsa.
+       simpl. easy.
+
+       simpl.
+       rewrite hm2a.
        easy. 
 Qed.
 
@@ -412,13 +530,8 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_a  : forall w w' p l s s' a n,
                       subsort s s' ->
                       seq w (merge_ap_contn p a w' n)  ->
-                      (exists L,
-                         cosetIncLC (act w) L /\
-                         cosetIncLC (act (merge_ap_contn p a w' n)) L /\
-                         cosetIncR L (act w) /\
-                         cosetIncR L (act (merge_ap_contn p a w' n))
-                      ) ->
-                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
+                      act_eq w (merge_ap_contn p a w' n) ->
+                      refinementR seq (st_receive p [(l,s',w)]) (merge_ap_contn p a (st_receive p [(l,s,w')]) n)
 
   | _sref_b  : forall w w' p l s s' b n,
                       subsort s s' ->
@@ -453,6 +566,17 @@ Qed.
 Declare Instance Equivalence_ref_eqi: Equivalence refinement.
 
 (*
+forall w w' p l s s' a n,
+                      subsort s s' ->
+                      seq w (merge_ap_contn p a w' n)  ->
+                      (exists L,
+                         cosetIncLC (act w) L /\
+                         cosetIncLC (act (merge_ap_contn p a w' n)) L /\
+                         cosetIncR L (act w) /\
+                         cosetIncR L (act (merge_ap_contn p a w' n))
+                      ) ->
+                      refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
+
  forall w w' p l s s' b n,
                       subsort s s' ->
                       seq w (merge_bp_contn p b w' n) ->

@@ -50,23 +50,6 @@ Inductive nRefinement: st -> st -> Prop :=
 
 Notation "x '/~<' y" := (nRefinement x y) (at level 50, left associativity).
 
-Lemma eq1a: forall n p q l l' s s' a w w',
-  merge_ap_contn p a (p ! [(l,s,w)]) n = q ! [(l',s',w')] -> p = q.
-Proof. intro n.
-       induction n; intros.
-       simpl in H. inversion H. easy.
-       case_eq a; intros.
-       subst.
-       rewrite(siso_eq(merge_ap_contn p (ap_receive q0 n0 s0 s1) (p ! [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-       subst.
-       rewrite(siso_eq(merge_ap_contn p (ap_merge q0 n0 s0 s1 a0) (p ! [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-       subst.
-       rewrite(siso_eq(merge_ap_contn p ap_end (p ! [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-Qed.
-
 Definition eqbp (a b: (participant*string)) :=
   andb (eqb a.1 b.1) (eqb a.2 b.2).
 
@@ -198,6 +181,104 @@ Proof. intros l.
        apply IHl. right. easy.
 Qed.
 
+Lemma eq0A: forall l (a: (participant*string)) xs, List.In a l \/ CoInRA (upaco2 CoInRA bot2) a xs ->
+             CoInRA (upaco2 CoInRA bot2) a (appendL l xs).
+Proof. intros l.
+       induction l; intros.
+       destruct H. easy.
+       rewrite anl2. easy.
+       destruct H.
+
+       inversion H.
+       subst.
+       rewrite(coseq_eq(appendL (a0 :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit1A with (ys := (appendL l xs)). simpl. easy.
+
+       case_eq(eqbp a0 a); intros.
+       unfold eqbp in H1.
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit1A with (ys := (appendL l xs)). simpl.
+       destruct a, a0.
+       rewrite Bool.andb_true_iff in H1.
+       destruct H1.
+       rewrite eqb_eq in H1.
+       rewrite eqb_eq in H2.
+       inversion H1. inversion H2.
+       simpl in *. subst.
+       easy.
+
+       unfold eqbp in H1.
+       rewrite Bool.andb_false_iff in H1.
+       destruct H1.
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit2A with (y := a) (ys := (appendL l xs)). simpl. easy. 
+       rewrite eqb_neq in H1.
+       unfold not in *.
+       intro H2.
+       apply H1.
+       destruct a, a0. simpl in *.
+       inversion H2. easy.
+       unfold upaco2. left. pfold.
+       apply IHl. left. easy.
+
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit2A with (y := a) (ys := (appendL l xs)). simpl. easy. 
+       rewrite eqb_neq in H1.
+       unfold not in *.
+       intro H2.
+       apply H1.
+       destruct a, a0. simpl in *.
+       inversion H2. easy.
+       unfold upaco2. left. pfold.
+       apply IHl. left. easy.
+
+       case_eq(eqbp a0 a); intros.
+       unfold eqbp in H0.
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit1A with (ys := (appendL l xs)). simpl.
+       destruct a, a0.
+       rewrite Bool.andb_true_iff in H0.
+       destruct H0.
+       rewrite eqb_eq in H0.
+       rewrite eqb_eq in H1.
+       inversion H0. inversion H1.
+       simpl in *. subst.
+       easy.
+
+       unfold eqbp in H0.
+       rewrite Bool.andb_false_iff in H0.
+       destruct H0.
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit2A with (y := a) (ys := (appendL l xs)). simpl. easy. 
+       rewrite eqb_neq in H0.
+       unfold not in *.
+       intro H1.
+       apply H0.
+       destruct a, a0. simpl in *.
+       inversion H1. easy.
+       unfold upaco2. left. pfold.
+       apply IHl. right. easy.
+
+       rewrite(coseq_eq(appendL (a :: l) xs)).
+       unfold coseq_id. simpl.
+       apply CoInSplit2A with (y := a) (ys := (appendL l xs)). simpl. easy. 
+       rewrite eqb_neq in H0.
+       unfold not in *.
+       intro H1.
+       apply H0.
+       destruct a, a0. simpl in *.
+       inversion H1. easy.
+       unfold upaco2. left. pfold.
+       apply IHl. right. easy.
+Qed.
+
+
 Lemma eq1b: forall n p b l s w,
 CoInR (p, "!"%string) (act (merge_bp_contn p b (p ! [(l, s, w)]) n)).
 Proof. intros. rewrite h0.
@@ -213,21 +294,6 @@ Proof. intros. rewrite h0.
        apply Ha. simpl. easy. easy.
 Qed.
 
-Lemma neq1a: forall n p q l l' s s' a w w',
-  merge_ap_contn p a (p & [(l,s,w)]) n = q ! [(l',s',w')] -> False.
-Proof. intro n.
-       induction n; intros.
-       simpl in H. inversion H.
-       apply (IHn p q l l' s s' a w w').
-       subst.
-       induction a; intros.
-       rewrite(siso_eq( merge_ap_contn p (ap_receive q0 n0 s0 s1) (p & [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-       rewrite(siso_eq(merge_ap_contn p (ap_merge q0 n0 s0 s1 a) (p & [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-       rewrite(siso_eq(merge_ap_contn p ap_end (p & [(l, s, w)]) n.+1)) in H.
-       simpl in H. easy.
-Qed.
 
 Lemma act_rec: forall n p b l s s0 s1 s2 w,
 (act (merge_bp_contn p (bp_mergea s s0 s1 b) (p ! [(l, s2, w)]) (n.+1)))
@@ -245,123 +311,296 @@ Proof. intro n.
        easy.
 Qed.
 
-Lemma bpn_n: forall n p b w,
-merge_bp_contn p b w n = merge_bp_cont p (Bpn p b n) w.
-Admitted.
-
-Lemma nrefR: forall w w',  w /~< w' -> (w ~< w' -> False).
-Proof. intros w w' H.
-       induction H; intros.
-       { apply inOutL in H. easy.
-         unfold refinement in H0.
-         punfold H0; [ | apply refinementR_mon].
-         inversion H0. admit. admit.
-       }
-       { apply inOutL in H. easy.
-         unfold refinement in H0.
-         punfold H0; [ | apply refinementR_mon].
-         inversion H0. admit. admit.
-       }
-       { apply inOutL in H. easy.
-         unfold refinement in H0.
-         punfold H0; [ | apply refinementR_mon].
-         inversion H0. admit. admit.
-         admit.
-       }
-Admitted.
-
-(* Lemma nrefL: forall w w',  (w ~< w' -> False) -> w /~< w'.
-Proof. intros w w' H.
-       
-       assert(forall n p b l s s', (p ! [(l, s, w)]) ~< (merge_bp_contn p b (p ! [(l, s', w')]) n)).
-       { pcofix CIH.
-         pfold.
-         intro n.
-         specialize (_sref_b (upaco2 refinementR r) w w'); intro Hb.
-         intros. apply Hb.
-         
- *)
 Lemma nrefL: forall w w',  w ~< w' -> (w /~< w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
        punfold H; [ | apply refinementR_mon].
        intro Ha.
        induction Ha; intros.
-       { inversion H.
+       {
+         inversion H.
          subst.
-         apply inOutL in H0. easy.
+         apply inOutLA in H0. easy.
          rewrite(coseq_eq(act (p ! [(l, s', w'0)]))).
-         specialize(CoInSplit1 (p, "!"%string)
-         (Delay(cocons (p, "!"%string) (act w'0)))
-         (p, "!"%string) 
-         (act w'0)
-         ); intro Hb.
-         apply Hb. simpl. easy. easy.
-         apply inOutL in H0. easy.
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit1A with (ys := (act w'0)). easy.
+         apply inOutLA in H0. easy.
          rewrite <- H4.
          rewrite h0.
-         apply eq0.
+         pfold.
+         apply eq0A.
          right.
          rewrite(coseq_eq(act (p ! [(l, s', w'0)]))).
          unfold coseq_id. simpl.
-         specialize(CoInSplit1 (p, "!"%string)
-         (Delay(cocons (p, "!"%string) (act w'0)))
-         (p, "!"%string) 
-         (act w'0)
-         ); intro Ha.
-         apply Ha. simpl. easy. easy.
+         apply CoInSplit1A with (ys := (act w'0)). simpl. easy.
        }
        { inversion H.
          subst.
-         apply inOutL in H0. easy.
+         apply inOutLA in H0. easy.
          rewrite(coseq_eq(act (p & [(l, s', w'0)]))).
-         specialize(CoInSplit1 (p, "?"%string)
-         (Delay(cocons (p, "?"%string) (act w'0)))
-         (p, "?"%string) 
-         (act w'0)
-         ); intro Hb.
-         apply Hb. simpl. easy. easy.
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit1A with (ys := (act w'0)). easy.
          subst.
-         apply inOutL in H0. easy.
+         apply inOutLA in H0. easy.
          simpl.
-         admit.
+         pfold.
+         rewrite h1.
+         apply eq0A.
+         right.
+         rewrite(coseq_eq(act (p & [(l, s0, w'0)]))). unfold coseq_id. simpl.
+         apply CoInSplit1A with (ys := (act w'0)). simpl. easy.
        }
        { inversion H.
          subst.
-         apply inOutL in H0. easy.
+         apply inOutLA in H0. easy.
          rewrite(coseq_eq(act (p ! [(l, s0, w0)]))).
          unfold coseq_id. simpl.
-         specialize(CoInSplit1 (p, "!"%string)
-         (Delay(cocons (p, "!"%string) (act w0)))
-         (p, "!"%string) 
-         (act w0)
-         ); intro Hb.
-         apply Hb. simpl. easy. easy.
-         apply neq1a in H1. easy.
-         rewrite bpn_n in H1.
-         unfold upaco2 in H3.
-         destruct H3.
-         punfold H3.
-         
-         
-(* 
-         induction n; intros.
-         simpl in *. admit.
-         simpl in H1.
-         case_eq b; intros.
-         subst. 
-         rewrite(siso_eq( merge_bp_cont p0 (bp_mergea s1 s2 s3 (Bpn p0 (bp_receivea s1 s2 s3) n)) (p0 ! [(l0, s', w'0)]))) in H1.
-         simpl in H1. easy.
+         pfold.
+         apply CoInSplit1A with (ys := (act w0)). easy.
+
+         unfold act_eq in H5.
+         rewrite <- H4 in H0.
+         apply inOutLA in H0. easy.
+         rewrite(coseq_eq (act (p0 & [(l0, s', w0)]))). unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit2A with (y := (p0, "?"%string)) (ys := (act w0)). simpl. easy. easy.
+         unfold upaco2.
+         specialize(H5 (p, "!"%string)).
+         unfold CoIn in H5. left.
+         apply H5.
+         pfold.
+
+         case_eq n; intros.
+         simpl in *. subst. inversion H1. 
+
+         case_eq a; intros.
          subst.
-         rewrite(siso_eq(merge_bp_cont p0 (bp_merge q n0 s1 s2 (Bpn p0 (bp_send q n0 s1 s2) n)) (p0 ! [(l0, s', w'0)]) )) in H1.
+         simpl in H1.
+         rewrite(siso_eq(merge_ap_cont p0 (ap_receive q n1 s1 s2)
+                        (merge_ap_contn p0 (ap_receive q n1 s1 s2) (p0 & [(l0, s0, w'0)]) n0))) in H1.
+         simpl in H1.
+         easy.
+
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_ap_cont p0 (ap_merge q n1 s1 s2 a0)
+       (merge_ap_contn p0 (ap_merge q n1 s1 s2 a0) 
+          (p0 & [(l0, s0, w'0)]) n0) )) in H1.
+         simpl in H1.
+         inversion H1.
+         subst.
+         rewrite h1.
+         apply eq0A.
+         subst.
+         clear H1.
+         left. simpl. left. easy.
+
+         subst.
+         rewrite apend_ann in H1.
+         inversion H1.
+         (*middle*)
+         unfold act_eq in H5.
+         rewrite <- H4 in H0.
+         apply inOutLA in H0. easy.
+         case_eq(eqb p p0); intro Heq.
+
+         rewrite(coseq_eq(act (p0 ! [(l0, s0, w0)]))). unfold coseq_id. simpl.
+         rewrite eqb_eq in Heq. subst.
+         pfold.
+         apply CoInSplit1A with (ys := (act w0)). easy.
+
+         rewrite eqb_neq in Heq.
+         rewrite(coseq_eq(act (p0 ! [(l0, s0, w0)]))).
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit2A with (y := (p0, "!"%string)) (ys := (act w0)). simpl. easy.
+         unfold not in *.
+         intro Heq2.
+         apply Heq. inversion Heq2. easy.
+         unfold upaco2. left.
+         specialize(H5 (p, "!"%string)).
+         unfold CoIn in H5.
+         apply H5.
+         pfold.
+
+         case_eq n; intros.
+         simpl in *. subst. inversion H1. subst. easy.
+         rewrite h0.
+         apply eq0A.
+         subst.
+
+         case_eq b; intros.
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_bp_cont p0 (bp_receivea s1 s2 s3) (merge_bp_contn p0 (bp_receivea s1 s2 s3) (p0 ! [(l0, s', w'0)]) n0))) in H1.
+         simpl in H1.
+         easy.
+
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_bp_cont p0 (bp_send q n s1 s2) (merge_bp_contn p0 (bp_send q n s1 s2) (p0 ! [(l0, s', w'0)]) n0))) in H1.
+         simpl in H1.
+         inversion H1.
+         subst.
+         clear H1.
+         left. simpl. left. easy.
+
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_bp_cont p0 (bp_mergea s1 s2 s3 b0) (merge_bp_contn p0 (bp_mergea s1 s2 s3 b0) (p0 ! [(l0, s', w'0)]) n0))) in H1.
+         simpl in H1.
+         easy.
+
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_bp_cont p0 (bp_merge q n s1 s2 b0) (merge_bp_contn p0 (bp_merge q n s1 s2 b0) (p0 ! [(l0, s', w'0)]) n0))) in H1.
+         simpl in H1.
+         inversion H1.
+         left. simpl. subst. left. easy.
+
+         subst.
+         rewrite bpend_ann in H1.
+         inversion H1. subst. easy.
+       }
+       { inversion H.
+         subst.
+         apply inOutLA in H0. easy.
+         rewrite(coseq_eq(act (p & [(l, s0, w0)]))).
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit1A with (ys := (act w0)). easy.
+
+         unfold act_eq in H5.
+         rewrite <- H4 in H0.
+         apply inOutLA in H0. easy.
+         case_eq(eqb p p0); intro Heq.
+
+         rewrite(coseq_eq(act (p0 & [(l0, s', w0)]))). unfold coseq_id. simpl.
+         rewrite eqb_eq in Heq. subst.
+         pfold.
+         apply CoInSplit1A with (ys := (act w0)). easy.
+
+         rewrite eqb_neq in Heq.
+         rewrite(coseq_eq(act (p0 & [(l0, s', w0)]))).
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit2A with (y := (p0, "?"%string)) (ys := (act w0)). simpl. easy.
+         unfold not in *.
+         intro Heq2.
+         apply Heq. inversion Heq2. easy.
+         unfold upaco2. left.
+         specialize(H5 (p, "?"%string)).
+         unfold CoIn in H5.
+         apply H5.
+         pfold.
+
+         case_eq n; intros.
+         simpl in *. subst. inversion H1. subst. easy.
+         rewrite h1.
+         apply eq0A.
+         subst.
+
+         case_eq a; intros.
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_ap_cont p0 (ap_receive q n s1 s2)
+       (merge_ap_contn p0 (ap_receive q n s1 s2) (p0 & [(l0, s0, w'0)]) n0) )) in H1.
+         simpl in H1.
+         inversion H1.
+         subst.
+         left. simpl. left. easy.
+
+         subst.
+         simpl in H1.
+         rewrite(siso_eq(merge_ap_cont p0 (ap_merge q n s1 s2 a0)
+       (merge_ap_contn p0 (ap_merge q n s1 s2 a0) (p0 & [(l0, s0, w'0)]) n0))) in H1.
+         simpl in H1.
+         easy.
+
+         subst.
+         rewrite apend_ann in H1.
+         inversion H1. subst. easy.
+
+         apply inOutLA in H0. easy.
+         rewrite <- H4.
+         rewrite(coseq_eq((act (p0 ! [(l0, s0, w0)])))).
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit2A with (y := (p0, "!"%string)) (ys := (act w0)). simpl. easy. easy.
+         unfold upaco2.
+         left.
+         unfold act_eq in H5.
+         apply H5.
+
+         case_eq b; intros.
+         subst.
+         simpl in H1.
+         case_eq n; intros.
+         subst. simpl in *. inversion H1.
+         subst.
+         rewrite(siso_eq(merge_bp_contn p0 (bp_receivea s1 s2 s3) (p0 ! [(l0, s', w'0)]) n0.+1)) in H1.
          simpl in H1. inversion H1.
          subst.
-         apply IHn.
-         apply inOutL in H0. easy.
-         rewrite <- H4. *)
-         admit.
-         admit.
-         admit.
+         rewrite(coseq_eq( (act (merge_bp_contn p0 (bp_receivea p l s) w'0 n0.+1)))). unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit1A with (ys := (act (merge_bp_contn p0 (bp_receivea p l s) w'0 n0))). simpl. easy.
+         subst.
+         case_eq n; intros.
+         subst. simpl in *. inversion H1.
+         subst.
+         rewrite(siso_eq(merge_bp_contn p0 (bp_send q n0 s1 s2) (p0 ! [(l0, s', w'0)]) n1.+1)) in H1. simpl in H1. easy.
+         subst.
+         case_eq n; intros.
+         subst. simpl in *. easy.
+         subst.
+         rewrite(siso_eq(merge_bp_contn p0 (bp_mergea s1 s2 s3 b0) (p0 ! [(l0, s', w'0)]) n0.+1)) in H1.
+         simpl in H1.  inversion H1. subst.
+         rewrite h0.
+         pfold.
+         apply eq0A.
+         simpl. left. left. easy.
+         case_eq n; intros.
+         subst. simpl in *. inversion H1.
+         subst.
+         rewrite(siso_eq(merge_bp_contn p0 (bp_merge q n0 s1 s2 b0) (p0 ! [(l0, s', w'0)]) n1.+1)) in H1.
+         simpl in H1. easy.
+         subst.
+         rewrite bpend_ann in H1.
+         easy.
+       }
+       {
+         inversion H.
+         subst. easy.
+         subst.
+         case_eq n; intros.
+         subst. simpl in *. inversion H6. subst. easy.
+         subst.
+         rewrite(siso_eq(merge_ap_contn p a (p & [(l, s0, w'0)]) n0.+1)) in H6.
+         simpl in H6.
+         case_eq a; intros.
+         subst. inversion H6. subst. easy.
+         subst. inversion H6. 
+         subst. rewrite apend_ann in H6. inversion H6. subst. easy.
+       }
+       { inversion H.
+         subst. apply ssnssL in H0. easy.
+         easy.
+         subst.
+         case_eq n; intros.
+         subst. simpl in *. inversion H6. subst. apply ssnssL in H0. easy.
+         apply ssnssR in H4. easy. easy.
+         
+         subst.
+         rewrite(siso_eq(merge_ap_contn p a (p & [(l, s0, w'0)]) n0.+1)) in H6. simpl in H6.
+         destruct a.
+         inversion H6. subst. easy.
+         easy.
+         rewrite apend_ann in H6.
+         inversion H6.
+         subst.
+         apply ssnssR in H4. easy. easy.
        }
        
 Admitted.

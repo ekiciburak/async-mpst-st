@@ -270,61 +270,61 @@ Proof. unfold subtype, T, T'.
        pfold.
        apply _sref_end.
 
-unfold act_eq.
-intros (p, s).
-split.
-intro Ha.
-unfold CoIn in Ha.
-punfold Ha.
-inversion Ha.
-subst.
-simpl in H0.
-inversion H0.
-rewrite(coseq_eq(act (merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end)))).
-unfold coseq_id. simpl.
-pfold.
-apply CoInSplit1A with (ys := (act (end))). simpl. easy.
-subst.
-simpl in H0.
-inversion H0.
-subst.
-unfold upaco2 in H2.
-destruct H2.
-punfold H2.
-inversion H2.
-subst. simpl in H3. easy.
-simpl in *.
-easy.
-admit.
-easy.
-admit.
+       unfold act_eq.
+       intros (p, s).
+       split.
+       intro Ha.
+       unfold CoIn in Ha.
+       punfold Ha.
+       inversion Ha.
+       subst.
+       simpl in H0.
+       inversion H0.
+       rewrite(coseq_eq(act (merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end)))).
+       unfold coseq_id. simpl.
+       pfold.
+       apply CoInSplit1A with (ys := (act (end))). simpl. easy.
+       subst.
+       simpl in H0.
+       inversion H0.
+       subst.
+       unfold upaco2 in H2.
+       destruct H2.
+       punfold H2.
+       inversion H2.
+       subst. simpl in H3. easy.
+       simpl in *.
+       easy.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
 
-intro Ha.
-unfold CoIn in Ha.
-punfold Ha.
-inversion Ha.
-subst.
-simpl in H0.
-inversion H0.
-rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
-unfold coseq_id. simpl.
-pfold.
-apply CoInSplit1A with (ys := (act (end))). simpl. easy.
-subst.
-simpl in H0.
-inversion H0.
-subst.
-unfold upaco2 in H2.
-destruct H2.
-punfold H2.
-inversion H2.
-subst. simpl in H3. easy.
-simpl in *.
-easy.
-admit.
-easy.
-admit.
-Admitted.
+       intro Ha.
+       unfold CoIn in Ha.
+       punfold Ha.
+       inversion Ha.
+       subst.
+       simpl in H0.
+       inversion H0.
+       rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
+       unfold coseq_id. simpl.
+       pfold.
+       apply CoInSplit1A with (ys := (act (end))). simpl. easy.
+       subst.
+       simpl in H0.
+       inversion H0.
+       subst.
+       unfold upaco2 in H2.
+       destruct H2.
+       punfold H2.
+       inversion H2.
+       subst. simpl in H3. easy.
+       simpl in *.
+       easy.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
+Qed.
 
 (*
        exists [("p","?")].

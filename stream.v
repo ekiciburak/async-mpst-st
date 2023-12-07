@@ -137,6 +137,12 @@ Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
   | CoNInSplit1 x: CoNInR x (Delay conil)
   | CoNInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoNInR x ys -> CoNInR x xs.
 
+Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
+  | CoNInSplit1A x: CoNInRA R x (Delay conil)
+  | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
+
+Definition CoNIn {A} s1 s2 := paco2 (@CoNInRA A) bot2 s1 s2.
+
 Lemma inOutL: forall {A: Type} x xs, CoInR x xs -> (@CoNInR A x xs -> False).
 Proof. intros.
        induction H.
@@ -174,6 +180,45 @@ Proof. intros.
          specialize(IHCoInR H4). easy.
          easy. easy. easy.
 Qed.
+
+Lemma inOutLA: forall {A: Type} x xs, CoIn x xs -> (@CoNInR A x xs -> False).
+Proof. intros.
+       induction H0.
+       punfold H.
+       inversion H. subst. easy.
+       subst. easy.
+       apply CoIn_mon.
+       apply IHCoNInR.
+       pfold.
+       punfold H.
+       inversion H. subst. rewrite H3 in H0. inversion H0. easy.
+       subst. rewrite H3 in H0. inversion H0. subst.
+       unfold upaco2 in H5. destruct H5.
+       punfold H5.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
+Qed.
+
+Lemma inOutRA: forall {A: Type} x xs, @CoNInR A x xs -> (CoIn x xs -> False).
+Proof. intros. 
+       induction H.
+       punfold H0.
+       inversion H0. subst. easy.
+       subst. easy.
+       apply CoIn_mon.
+       apply IHCoNInR.
+       pfold.
+       punfold H0.
+       inversion H0. subst. rewrite H3 in H. inversion H. easy.
+       subst. rewrite H3 in H. inversion H. subst.
+       unfold upaco2 in H5. destruct H5.
+       punfold H5.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
+Qed.
+
 
 (* 
 Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
