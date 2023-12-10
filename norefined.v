@@ -322,7 +322,7 @@ Proof. intros p a1.
        case_eq a2; intros. subst.
        rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
        rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s2 s3) (p & [(l, s1, w)]))) in H.
-       simpl in H. inversion H. subst. 
+       simpl in H. inversion H. subst.
        specialize(proof_irrelevance _ n n0); intro Hp.
        subst. easy.
        subst.
@@ -448,6 +448,32 @@ Proof. intros p a.
        rewrite apend_an in H.
        easy.
 Qed.
+
+Lemma case11: forall n p q a l l' s s' w w',
+merge_ap_contn p a (p & [(l, s, w)]) n = q ! [(l', s', w')] -> False.
+Proof. intros n.
+       induction n; intros.
+       simpl in H. easy.
+       subst.
+       simpl in H.
+(*        case_eq(eqb p q); intros.
+       rewrite eqb_eq in H0.
+       subst. *)
+       case_eq a; intros.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s0 s1)
+      (merge_ap_contn p (ap_receive q0 n0 s0 s1) (p & [(l, s, w)]) n))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s0 s1 a0)
+      (merge_ap_contn p (ap_merge q0 n0 s0 s1 a0) (p & [(l, s, w)]) n))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite apend_ann in H.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l, s, w)]))) in H.
+       simpl in H. easy.
+Qed.
+
 
 Lemma nrefL: forall w w',  w ~< w' -> (w /~< w' -> False).
 Proof. intros w w' H.
@@ -857,5 +883,17 @@ Proof. intros w w' H.
          easy.
          apply refinementR_mon.
          easy.
+       }
+       { inversion H.
+         subst.
+         specialize(case11 n p q a l l' s0 s' w'0 w' H5); intros H11.
+         easy.
+       }
+       { inversion H.
+         subst. admit.
+         subst.
+         rewrite <- mergeeq2 in H5.
+         rewrite <- mergeeq2 in H5.
+         admit.
        }
 Admitted.
