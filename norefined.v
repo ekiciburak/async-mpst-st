@@ -5,6 +5,7 @@ Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
+Require Import ProofIrrelevance.
 
 Inductive nRefinement: st -> st -> Prop :=
   | n_out  : forall w w' p l s, 
@@ -308,6 +309,84 @@ Proof. intro n.
        rewrite(coseq_eq(act (merge_bp_cont p (bp_mergea s s0 s1 b) (merge_bp_cont p (bp_mergea s s0 s1 b) (merge_bp_contn p (bp_mergea s s0 s1 b) (p ! [(l, s2, w)]) n))))).
        unfold coseq_id. simpl.
        simpl in IHn.
+       easy.
+Qed.
+
+Lemma merge_eq2: forall p a1 a2 l s w,
+merge_ap_cont p a1 (p & [(l, s, w)]) =
+merge_ap_cont p a2 (p & [(l, s, w)]) ->
+merge_ap_cont p a1 w =
+merge_ap_cont p a2 w.
+Proof. intros p a1.
+       induction a1; intros.
+       case_eq a2; intros. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s2 s3) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst. 
+       specialize(proof_irrelevance _ n n0); intro Hp.
+       subst. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s2 s3 a) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n s2 s3) w)).
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s2 s3 a) w)).
+       simpl.
+       case_eq a; intros.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n1 s s0) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       subst. 
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n1 s s0 a0) (p & [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst. rewrite(siso_eq( merge_ap_cont p ap_end w)). simpl. destruct w; easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       case_eq a2; intros.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a1) w)). simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s2 s3) w)). simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a1) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s2 s3) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       case_eq a1; intros.
+       subst. rewrite(siso_eq(merge_ap_cont p (ap_receive q n1 s s0) (p & [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst. rewrite(siso_eq(merge_ap_cont p (ap_merge q n1 s s0 a) (p & [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst. rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl. destruct w; easy.
+       subst. rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a1) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s2 s3 a) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst.
+       specialize(proof_irrelevance _ n n0) ;intro Hp.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s2 s3 a1) w)).
+       simpl.
+       rewrite(siso_eq( merge_ap_cont p (ap_merge q0 n0 s2 s3 a) w)).
+       simpl.
+       rewrite (IHa1 a l s1 w). easy. easy.
+       case_eq a2; intros.
+       subst. easy. subst. easy. subst.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a1) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
+       case_eq a2; intros. subst.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l, s, w)]))) in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s0 s1) (p & [(l, s, w)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l, s, w)]))) in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s0 s1 a) (p & [(l, s, w)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
        easy.
 Qed.
 
@@ -760,13 +839,23 @@ Proof. intros w w' H.
          apply refinementR_mon.
          easy.
          subst.
-         rewrite <- mergeeq in H6.
-         rewrite <- mergeeq in H6.
+         rewrite <- mergeeq2 in H6.
+         rewrite <- mergeeq2 in H6.
          pose proof H6.
          apply merge_eq in H6.
+         rewrite <- mergeeq2 in H8.
+         
          inversion H6. subst.
-         inversion H1.
+         apply merge_eq2 in H1.
+         
          unfold upaco2 in H7.
-         admit.
+         destruct H7.
+         punfold H2.
+         rewrite <- mergeeq2.
+         rewrite <- mergeeq2 in H2.
+         rewrite <- H1.
+         easy.
+         apply refinementR_mon.
+         easy.
        }
 Admitted.

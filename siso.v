@@ -122,8 +122,39 @@ Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
         | ap_end             => ap_end
       end 
   end.
-  
+
 (* Lemma apn_folds: forall n p q H l s c, Apn p (ap_merge q H l s c) (S n) = ap_merge q H l s (ap_merge q H l s (Apn p a k)). *)
+
+Fixpoint apListA (p: participant) (a: Ap p): list (Ap p) :=
+  match a with
+    | ap_receive q H l s => [a]
+    | ap_merge q H l s c => ap_receive q H l s :: (apListA p c)
+    | ap_end             => nil
+  end.
+
+Fixpoint listApA (p: participant) (l: list (Ap p)): Ap p :=
+  match l with
+    | nil   => ap_end
+    | x::xs => 
+      match x with
+        | ap_receive q H l s      => ap_merge q H l s (listApA p xs)
+        | _                       => x
+      end
+  end.
+
+Fixpoint nappA {A: Type} (n: nat) (l: list A): list A :=
+  match n with
+    | O   => nil
+    | S k => l ++ nappA k l
+  end.
+
+Definition ApnA2 (p: participant) (a: Ap p) (n: nat): Ap p :=
+  listApA p (nappA n (apListA p a)).
+
+(* Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
+
+Compute nappA 3 (apListA p (ap_merge q H l s (ap_receive q H l s))).
+Compute ApnA2 p (ap_merge q H l s (ap_receive q H l s)) 6. *)
 
 Fixpoint apList (p: participant) (a: Ap p): list (Ap p) :=
   match a with
@@ -161,10 +192,10 @@ Fixpoint napp {A: Type} (n: nat) (l: list A): list A :=
 Definition ApnA (p: participant) (a: Ap p) (n: nat): Ap p :=
   listAp p (napp n (apList p a)).
 
-(*
-Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
+(*(*
+Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort). *)
 Compute napp 3 (apList p (ap_merge q H l s (ap_receive q H l s))).
-Compute ApnA p ( (ap_receive q H l s)) 4. *)
+Compute ApnA p ( (ap_receive q H l s)) 6. *)
 
 
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
@@ -413,6 +444,30 @@ Proof. intros p a.
        easy.
 Qed.
 
+Lemma mergeSw2: forall p a l w,
+merge_ap_cont p (listApA p (apListA p a ++ l)) w =
+merge_ap_cont p a (merge_ap_cont p (listApA p l) w).
+Proof. intros p a.
+       induction a; intros.
+       simpl.
+       case_eq l; intros.
+       subst. simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 ap_end) w)). simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (merge_ap_cont p ap_end w))).
+       simpl. easy.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 (listApA p (a :: l0))) w)).
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (merge_ap_cont p (listApA p (a :: l0)) w))).
+       simpl. easy.
+       rewrite(siso_eq(merge_ap_cont p (listApA p (apListA p (ap_merge q n s s0 a) ++ l)) w)).
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (merge_ap_cont p (listApA p l) w))).
+       simpl.
+       rewrite IHa. easy.
+       setoid_rewrite(siso_eq(merge_ap_cont p (listApA p (apListA p ap_end ++ l)) w)) at 1.
+       rewrite(siso_eq(merge_ap_cont p ap_end (merge_ap_cont p (listApA p l) w))).
+       simpl. easy.
+Qed.
+
+
 Lemma mergeeq: forall n p a w,
   merge_ap_cont p (ApnA p a n) w = merge_ap_contn p a w n.
 Proof. intro n.
@@ -425,6 +480,21 @@ Proof. intro n.
 
        unfold ApnA. simpl.
        rewrite mergeSw. 
+       easy.
+Qed.
+
+Lemma mergeeq2: forall n p a w,
+  merge_ap_cont p (ApnA2 p a n) w = merge_ap_contn p a w n.
+Proof. intro n.
+       induction n; intros.
+       simpl. unfold ApnA2. simpl.
+       rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl.
+       destruct w; easy.
+       simpl.
+       rewrite <- IHn.
+
+       unfold ApnA2. simpl.
+       rewrite mergeSw2. 
        easy.
 Qed.
 
