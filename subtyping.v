@@ -749,7 +749,7 @@ Proof. intro n.
        apply IHn.
 Qed.
 
-Lemma helper: forall n W,
+(* Lemma helper: forall n W,
   merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) n) ("p" & [("l1", I, "p" ! [("l3", I, W)])])
                  =
   merge_bp_cont "p" (Bpn "p" (bp_receivea "p" "l1" (I)) (S n)) ("p" ! [("l3", I, W)]).
@@ -794,7 +794,7 @@ Proof. intro n.
        simpl.
        easy.
 Qed.
-
+ *)
 Lemma helper3: forall n W,
 ("p" & [("l1", I, "p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) ("p" ! [("l3", I, W)]) n)])])
 =

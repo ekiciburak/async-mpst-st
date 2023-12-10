@@ -99,6 +99,19 @@ Arguments ap_receive {_} _ _ _ _.
 Arguments ap_merge {_} _ _ _ _.
 Arguments ap_end {_}.
 
+(* Fixpoint ApnH (p: participant) (a: Ap p) (acc: Ap p) (n: nat): Ap p :=
+  match n with
+    | O   => acc
+    | S k =>
+      match a with
+        | ap_receive q H l s => ApnH p a (ap_merge q H l s acc) k
+        | ap_merge q H l s c => ApnH p a (ap_merge q H l s (ap_merge q H l s c)) k
+        | ap_end             => ap_end
+      end 
+  end.
+
+Definition Apn (p: participant) (a: Ap p) (n: nat): Ap p := ApnH p a ap_end n. *)
+
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
   match n with
     | O   => ap_end
@@ -109,6 +122,50 @@ Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
         | ap_end             => ap_end
       end 
   end.
+  
+(* Lemma apn_folds: forall n p q H l s c, Apn p (ap_merge q H l s c) (S n) = ap_merge q H l s (ap_merge q H l s (Apn p a k)). *)
+
+Fixpoint apList (p: participant) (a: Ap p): list (Ap p) :=
+  match a with
+    | ap_receive q H l s => [a]
+    | ap_merge q H l s c => ap_merge q H l s ap_end :: (apList p c)
+    | ap_end             => nil
+  end.
+
+Fixpoint listAp (p: participant) (l: list (Ap p)): Ap p :=
+  match l with
+    | nil   => ap_end
+    | [ap_receive q H l s] => ap_receive q H l s
+    | x::xs => 
+      match x with
+        | ap_receive q H l s      => ap_merge q H l s (listAp p xs)
+        | ap_merge q H l s ap_end => ap_merge q H l s (listAp p xs)
+        | _                       => x
+      end
+  end.
+
+Lemma aplisteq: forall p a, listAp p (apList p a) = a.
+Proof. intros p a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+
+Fixpoint napp {A: Type} (n: nat) (l: list A): list A :=
+  match n with
+    | O   => nil
+    | S k => l ++ napp k l
+  end.
+
+Definition ApnA (p: participant) (a: Ap p) (n: nat): Ap p :=
+  listAp p (napp n (apList p a)).
+
+(*
+Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
+Compute napp 3 (apList p (ap_merge q H l s (ap_receive q H l s))).
+Compute ApnA p ( (ap_receive q H l s)) 4. *)
+
 
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
@@ -120,7 +177,7 @@ CoFixpoint fromAp (p: participant) (a: Ap p): st :=
 Fixpoint actA (p: participant) (a: Ap p): list (participant * string) :=
   match a with
     | ap_receive q x l s => cons (q, "?"%string) nil
-    | ap_merge q x l s c => cons (q, "!"%string) (actA p c)
+    | ap_merge q x l s c => cons (q, "?"%string) (actA p c)
     | _                  => nil
   end.
 
@@ -130,23 +187,23 @@ Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * string) 
     | S k =>
       match a with
         | ap_receive q x l s => cons (q, "?"%string) (actAn p a k)
-        | ap_merge q x l s c => (cons (q, "!"%string) (actA p c)) ++ (actAn p a k)
+        | ap_merge q x l s c => (cons (q, "?"%string) (actA p c)) ++ (actAn p a k)
         | _                  => nil
       end
   end.
 
-Lemma fromAp1: forall p q x l s,
+(* Lemma fromAp1: forall p q x l s,
   fromAp p (ap_receive q x l s) ==~ st_receive q [(l,s,st_end)].
 Proof. intros.
        rewrite (siso_eq (fromAp p (ap_receive q x l s))).
        simpl.
        reflexivity.
-Qed.
+Qed. *)
 
 CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
   match a with
     | ap_receive q H l s  => st_receive q [(l,s,w)]
-    | ap_merge q H l s w' => st_send q [(l,s,(merge_ap_cont p w' w))]
+    | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_cont p w' w))]
     | ap_end              => w
   end.
 
@@ -159,8 +216,14 @@ Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
 Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
     | O    => w
-    | S k  => merge_ap_cont p a (merge_ap_contnA p a w k)
+    | S k  => 
+      match a with
+        | ap_receive q H l s  => st_receive q [(l,s,merge_ap_contnA p a w k)]
+        | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_contnA p w' w k))]
+        | ap_end              => w
+      end
   end.
+
 
 Inductive Bp (p: participant): Type :=
   | bp_receivea: participant -> label -> st.sort -> Bp p
@@ -188,6 +251,19 @@ From Equations Require Import Equations.
   Bpn p (bp_merge q H l s c) (S k) :=  bp_merge q H l s (Bpn p (bp_merge q H l s c) k);
   Bpn p (bp_end) (S k)             :=  bp_end.  *)
 
+(* Fixpoint BpnH (p: participant) (b: Bp p) (acc: Bp p) (n: nat): Bp p :=
+  match n with
+    | O   => acc
+    | S k => 
+      match b in (Bp _) with
+        | bp_receivea q l s  => BpnH p b (bp_mergea q l s c) k
+        | bp_send q H l s    => BpnH p b (bp_send q H l s) k
+        | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
+        | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
+        | bp_end             => bp_end
+      end 
+  end. *)
+  
 Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
     | O   => bp_end
@@ -199,7 +275,7 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
         | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
         | bp_end             => bp_end
       end 
-  end.
+  end. 
 
 (* Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
@@ -290,6 +366,12 @@ Proof. intro n.
        destruct w; easy.
 Qed.
 
+Lemma apend_an: forall p w, merge_ap_cont p (ap_end) w = w.
+Proof. intros.
+       rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl.
+       destruct w; easy.
+Qed.
+
 Lemma mcomm: forall n p b w,
              merge_bp_contn p b (merge_bp_cont p b w) n =
              merge_bp_cont p b (merge_bp_contn p b w n).
@@ -306,6 +388,44 @@ Proof. intro n.
        induction n; intros.
        - simpl. easy.
        - simpl. rewrite IHn. easy.
+Qed.
+
+Lemma mergeSw: forall p a l w,
+merge_ap_cont p (listAp p (apList p a ++ l)) w =
+merge_ap_cont p a (merge_ap_cont p (listAp p l) w).
+Proof. intros p a.
+       induction a; intros.
+       simpl.
+       case_eq l; intros.
+       subst. simpl.
+       rewrite(siso_eq((merge_ap_cont p ap_end w))). simpl.
+       destruct w; easy.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (merge_ap_cont p (listAp p (a :: l0)) w))).
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 (listAp p (a :: l0))) w)).
+       simpl. easy.
+       simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 (listAp p (apList p a ++ l))) w)).
+       simpl. rewrite IHa.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (merge_ap_cont p (listAp p l) w))).
+       simpl. easy.
+       simpl.
+       rewrite apend_an.
+       easy.
+Qed.
+
+Lemma mergeeq: forall n p a w,
+  merge_ap_cont p (ApnA p a n) w = merge_ap_contn p a w n.
+Proof. intro n.
+       induction n; intros.
+       simpl. unfold ApnA. simpl.
+       rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl.
+       destruct w; easy.
+       simpl.
+       rewrite <- IHn.
+
+       unfold ApnA. simpl.
+       rewrite mergeSw. 
+       easy.
 Qed.
 
 Lemma hm1: forall p b w, act (merge_bp_cont p b w) = appendL (actB p b) (act w).
@@ -338,17 +458,17 @@ Proof. intros p b.
 Qed.
 
 Lemma hm1a: forall p a w, act (merge_ap_cont p a w) = appendL (actA p a) (act w).
-Proof. intros p b.
-       induction b; intros.
+Proof. intros p a.
+       induction a; intros.
        rewrite(coseq_eq(act(merge_ap_cont p (ap_receive q n s s0) w))).
        rewrite(coseq_eq( appendL (actA p (ap_receive q n s s0)) (act w))).
        unfold coseq_id.
        simpl. rewrite anl2. easy.
 
-       rewrite(coseq_eq(act (merge_ap_cont p (ap_merge q n s s0 b) w))).
-       rewrite(coseq_eq(appendL (actA p (ap_merge q n s s0 b)) (act w))).
+       rewrite(coseq_eq(act (merge_ap_cont p (ap_merge q n s s0 a) w))).
+       rewrite(coseq_eq(appendL (actA p (ap_merge q n s s0 a)) (act w))).
        unfold coseq_id. simpl.
-       rewrite IHb. easy.
+       rewrite IHa. easy.
 
        rewrite(siso_eq(merge_ap_cont p ap_end w)).
        simpl. rewrite anl2.
@@ -407,7 +527,6 @@ Proof. intro n.
        rewrite <- IHn. easy.
        simpl. easy.
 Qed.
-
 
 Lemma hm2: forall n p, actBn p bp_end n = [].
 Proof. intro n.
