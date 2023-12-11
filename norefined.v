@@ -47,7 +47,7 @@ Inductive nRefinement: st -> st -> Prop :=
   | n_b_w  : forall w w' p l s s' b n,
              subsort s s' ->
              nRefinement w (merge_bp_contn p b w' n) ->
-             nRefinement (st_receive p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n).
+             nRefinement (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n).
 
 Notation "x '/~<' y" := (nRefinement x y) (at level 50, left associativity).
 
@@ -311,6 +311,169 @@ Proof. intro n.
        simpl in IHn.
        easy.
 Qed.
+
+Lemma merge_eq4: forall p b1 b2 l s w,
+merge_bp_cont p b1 (p ! [(l, s, w)]) =
+merge_bp_cont p b2 (p ! [(l, s, w)]) ->
+merge_bp_cont p b1 w =
+merge_bp_cont p b2 w.
+Proof. intros p b1.
+       induction b1; intros.
+       case_eq b2; intros. subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s3 s4 s5) (p ! [(l, s2, w)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s3 s4) (p ! [(l, s2, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 b) (p ! [(l, s2, w)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       case_eq b; intros.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H4.
+       simpl in H4. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s s0) (p ! [(l, s2, w)]))) in H4.
+       simpl in H4. inversion H4. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 b0) (p ! [(l, s2, w)]))) in H4.
+       simpl in H4. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 b0) (p ! [(l, s2, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s3 s4 s5) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 bp_end) w)).
+       simpl.
+       rewrite bpend_an. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s3 s4 b) (p ! [(l, s2, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite bpend_an in H.
+       rewrite(siso_eq( merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l, s2, w)]))) in H.
+       simpl in H. easy.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s s0) (p ! [(l, s1, w)]))) in H.
+       simpl in H.
+       case_eq b2; intros.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s2 s3 s4) (p ! [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q0 n0 s2 s3) (p ! [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H.
+       subst.
+       specialize(proof_irrelevance _ n n0); intro Hp.
+       subst. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s2 s3 s4 b) (p ! [(l, s1, w)]))) in H.
+       simpl in H.
+       easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q0 n0 s2 s3 b) (p ! [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q0 n s2 s3) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q0 n0 s2 s3 b) w)).
+       simpl.
+       case_eq b; intros.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s4) (p ! [(l, s1, w)]))) in H4.
+       simpl in H4. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n1 s s0) (p ! [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s4 b0) (p ! [(l, s1, w)]))) in H4.
+       simpl in H4. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n1 s s0 b0) (p ! [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       rewrite bpend_an. easy.
+       subst.
+       rewrite bpend_an in H. inversion H. subst. easy.
+       
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 b1) (p ! [(l, s2, w)]))) in H.
+       simpl in H.
+       case_eq b2; intros.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s3 s4 s5) (p ! [(l, s2, w)]))) in H.
+       simpl in H.
+       inversion H.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 b1) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s3 s4 s5) w)).
+       simpl. subst.
+       specialize(IHb1 (bp_end) l s2 w).
+       rewrite IHb1. rewrite bpend_an. easy.
+       rewrite bpend_an. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s3 s4) (p ! [(l, s2, w)]))) in H.
+       simpl in H. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 b) (p ! [(l, s2, w)]))) in H.
+       simpl in H. inversion H. subst.
+       specialize(IHb1 b l s2 w).
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 b1) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s3 s4 s5 b) w)).
+       simpl.
+       rewrite IHb1. easy. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s3 s4 b) (p ! [(l, s2, w)]))) in H.
+       simpl in H. easy.
+       subst. rewrite bpend_an in H. easy.
+
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 b1) w)).
+       simpl.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 b1) (p ! [(l, s1, w)]))) in H.
+       simpl in H.
+       case_eq b2; intros.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s2 s3 s4) (p ! [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q0 n0 s2 s3) (p ! [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst.
+       rewrite(siso_eq( merge_bp_cont p (bp_send q0 n0 s2 s3) w)).
+       simpl.
+       specialize(IHb1 (bp_end) l s1 w).
+       rewrite IHb1. rewrite bpend_an. easy.
+       rewrite bpend_an. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s2 s3 s4 b) (p ! [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst. 
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q0 n0 s2 s3 b) (p ! [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst.
+       specialize(IHb1 b l s1 w).
+       rewrite IHb1. 
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q0 n0 s2 s3 b) w)). simpl.
+       easy.
+       easy.
+       subst. rewrite bpend_an in H. inversion H. subst. easy.
+       
+       rewrite bpend_an in H.
+       case_eq b2; intros.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s0 s1 s2) (p ! [(l, s, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s0 s1) (p ! [(l, s, w)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s0 s1 s2 b) (p ! [(l, s, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s0 s1 b) (p ! [(l, s, w)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       rewrite bpend_an. easy.
+Qed.
+
 
 Lemma merge_eq2: forall p a1 a2 l s w,
 merge_ap_cont p a1 (p & [(l, s, w)]) =
@@ -1244,4 +1407,46 @@ Proof. intros w w' H.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
        }
-Admitted.
+       { apply IHHa.
+         inversion H. subst.
+         unfold upaco2 in H7.
+         destruct H7.
+         punfold H1.
+         
+         case_eq n; intros.
+         subst. simpl in *. inversion H6. subst. easy.
+         subst.
+         rewrite(siso_eq(merge_bp_contn p b (p ! [(l, s', w')]) n0.+1)) in H6. simpl in H6.
+         destruct b.
+         easy.
+         inversion H6. subst. easy.
+         easy.
+         inversion H6. subst. easy.
+         rewrite bpend_ann in H6. inversion H6. subst.
+         simpl.
+         rewrite bpend_ann.
+         rewrite(siso_eq(merge_bp_cont p bp_end w')). simpl.
+         destruct w'; easy.
+         apply refinementR_mon.
+         easy.
+         subst.
+         rewrite <- mergeeq3 in H6.
+         rewrite <- mergeeq3 in H6.
+         pose proof H6.
+         apply merge_eq3 in H6.
+         rewrite <- mergeeq3 in H8.
+         
+         inversion H6. subst.
+         apply merge_eq4 in H1.
+         
+         unfold upaco2 in H7.
+         destruct H7.
+         punfold H2.
+         rewrite <- mergeeq3.
+         rewrite <- mergeeq3 in H2.
+         rewrite <- H1.
+         easy.
+         apply refinementR_mon.
+         easy.
+       }
+Qed.
