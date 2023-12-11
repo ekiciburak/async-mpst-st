@@ -861,7 +861,7 @@ Proof. intros p q a1.
        subst. rewrite apend_an in H. easy.
 Qed.
 
-Lemma nrefL: forall w w',  w ~< w' -> (w /~< w' -> False).
+Lemma nrefLS: forall w w',  w ~< w' -> (w /~< w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
        punfold H; [ | apply refinementR_mon].
@@ -1450,3 +1450,9 @@ Proof. intros w w' H.
          easy.
        }
 Qed.
+
+Lemma nrefL: forall w w', w /~< w' -> (w ~< w' -> False).
+Proof. intros.
+       apply (nrefLS w w'); easy.
+Qed.
+

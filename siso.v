@@ -99,19 +99,6 @@ Arguments ap_receive {_} _ _ _ _.
 Arguments ap_merge {_} _ _ _ _.
 Arguments ap_end {_}.
 
-(* Fixpoint ApnH (p: participant) (a: Ap p) (acc: Ap p) (n: nat): Ap p :=
-  match n with
-    | O   => acc
-    | S k =>
-      match a with
-        | ap_receive q H l s => ApnH p a (ap_merge q H l s acc) k
-        | ap_merge q H l s c => ApnH p a (ap_merge q H l s (ap_merge q H l s c)) k
-        | ap_end             => ap_end
-      end 
-  end.
-
-Definition Apn (p: participant) (a: Ap p) (n: nat): Ap p := ApnH p a ap_end n. *)
-
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
   match n with
     | O   => ap_end
@@ -122,8 +109,6 @@ Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
         | ap_end             => ap_end
       end 
   end.
-
-(* Lemma apn_folds: forall n p q H l s c, Apn p (ap_merge q H l s c) (S n) = ap_merge q H l s (ap_merge q H l s (Apn p a k)). *)
 
 Fixpoint apListA (p: participant) (a: Ap p): list (Ap p) :=
   match a with
@@ -151,10 +136,6 @@ Fixpoint nappA {A: Type} (n: nat) (l: list A): list A :=
 Definition ApnA2 (p: participant) (a: Ap p) (n: nat): Ap p :=
   listApA p (nappA n (apListA p a)).
 
-(* Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
-
-Compute nappA 3 (apListA p (ap_merge q H l s (ap_receive q H l s))).
-Compute ApnA2 p (ap_merge q H l s (ap_receive q H l s)) 6. *)
 
 Fixpoint apList (p: participant) (a: Ap p): list (Ap p) :=
   match a with
@@ -192,12 +173,6 @@ Fixpoint napp {A: Type} (n: nat) (l: list A): list A :=
 Definition ApnA (p: participant) (a: Ap p) (n: nat): Ap p :=
   listAp p (napp n (apList p a)).
 
-(*(*
-Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort). *)
-Compute napp 3 (apList p (ap_merge q H l s (ap_receive q H l s))).
-Compute ApnA p ( (ap_receive q H l s)) 6. *)
-
-
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
     | ap_receive q x l s => st_receive q [(l,s,st_end)]
@@ -222,14 +197,6 @@ Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * string) 
         | _                  => nil
       end
   end.
-
-(* Lemma fromAp1: forall p q x l s,
-  fromAp p (ap_receive q x l s) ==~ st_receive q [(l,s,st_end)].
-Proof. intros.
-       rewrite (siso_eq (fromAp p (ap_receive q x l s))).
-       simpl.
-       reflexivity.
-Qed. *)
 
 CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
   match a with
@@ -269,12 +236,10 @@ Arguments bp_mergea {_} _ _ _ _.
 Arguments bp_merge {_} _ _ _ _ _.
 Arguments bp_end {_}.
 
-(* Parameters (q p: participant) (H: p = q) (b: Bp p).
-Check eq_rect p Bp b q H. *)
-
+(* 
 From Equations Require Import Equations.
 
-(* Equations Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
+Equations Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   Bpn p b O                        := bp_end;
   Bpn p (bp_receivea q l s) (S k)  :=  bp_mergea q l s (Bpn p (bp_receivea q l s) k);
   Bpn p (bp_send q H l s) (S k)    :=  bp_merge q H l s (Bpn p (bp_send q H l s) k);
@@ -282,19 +247,7 @@ From Equations Require Import Equations.
   Bpn p (bp_merge q H l s c) (S k) :=  bp_merge q H l s (Bpn p (bp_merge q H l s c) k);
   Bpn p (bp_end) (S k)             :=  bp_end.  *)
 
-(* Fixpoint BpnH (p: participant) (b: Bp p) (acc: Bp p) (n: nat): Bp p :=
-  match n with
-    | O   => acc
-    | S k => 
-      match b in (Bp _) with
-        | bp_receivea q l s  => BpnH p b (bp_mergea q l s c) k
-        | bp_send q H l s    => BpnH p b (bp_send q H l s) k
-        | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
-        | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
-        | bp_end             => bp_end
-      end 
-  end. *)
-  
+
 Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
     | O   => bp_end
@@ -307,24 +260,6 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
         | bp_end             => bp_end
       end 
   end. 
-
-(* Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
-  match n with
-    | O   => bp_end
-    | S k =>
-      match b with (* as bx in (Bp _) return
-         forall q (en : p = q) (ea : eq_rect p Bp b q en = bx), _ with  *)
-        | bp_receivea q l s  => bp_mergea q l s (Bpn p b k)
-        | bp_send q H l s    => bp_merge q H l s (Bpn p b k)
-        | bp_mergea q l s c  => bp_mergea q l s (bp_mergea q l s (Bpn p b k))
-        | bp_merge q H l s c => bp_merge q H l s (bp_merge q H l s (Bpn p b k))
-        | bp_end             => bp_end
-      end 
-  end.
- *)
-
-Compute (Bpn "p" (bp_mergea "p" "l1" (I) (bp_receivea "p" "l1" (I))) 3).
-Compute (Bpn "p" (bp_receivea "p" "l1" (I)) 4).
 
 CoFixpoint fromBp (p: participant) (b: Bp p): st :=
   match b with 
@@ -343,13 +278,6 @@ Fixpoint actB (p: participant) (b: Bp p): list (participant * string) :=
     | bp_merge q x l s c => cons (q, "!"%string) (actB p c)
     | _                  => nil
   end.
-
-(* Fixpoint actBn (p: participant) (b: Bp p) (n: nat): coseq (participant * string) :=
-  match n with
-    | O   => Delay conil
-    | S k => appendC (actB p b) (actBn p b k) 
-  end.
- *)
 
 Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * string) :=
   match n with
@@ -401,12 +329,6 @@ Fixpoint listBp (p: participant) (l: list (Bp p)): Bp p :=
 
 Definition BpnA (p: participant) (b: Bp p) (n: nat): Bp p :=
   listBp p (napp n (bpList p b)).
-
-(*
-Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
-
-Compute nappA 3 (apListA p (ap_merge q H l s (ap_receive q H l s))).
-Compute BpnA p (bp_mergea q l s (bp_receivea q l s)) 6. *)
 
 Lemma bpend_ann: forall n p w, merge_bp_contn p (bp_end) w n = w.
 Proof. intro n.
@@ -775,8 +697,6 @@ Inductive cosetIncR: list (participant * string) -> coseq (participant * string)
             CoInR x ys ->
             cosetIncR xs ys ->
             cosetIncR (x::xs) ys.
-
-(* Definition cosetIncRC := fun s1 s2 => paco2 cosetIncR bot2 s1 s2. *)
 
 Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
 
