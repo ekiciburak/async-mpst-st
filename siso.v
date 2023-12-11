@@ -379,6 +379,35 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
 
+Fixpoint bpList (p: participant) (b: Bp p): list (Bp p) :=
+  match b with
+    | bp_receivea q l s  => [b]
+    | bp_send q x l s    => [b]
+    | bp_mergea q l s c  => bp_receivea q l s :: (bpList p c)
+    | bp_merge q H l s c => bp_send q H l s :: (bpList p c)
+    | bp_end             => nil
+  end.
+
+Fixpoint listBp (p: participant) (l: list (Bp p)): Bp p :=
+  match l with
+    | nil   => bp_end
+    | x::xs => 
+      match x with
+        | bp_receivea q l s => bp_mergea q l s (listBp p xs)
+        | bp_send q H l s   => bp_merge q H l s (listBp p xs)
+        | _                 => x
+      end
+  end.
+
+Definition BpnA (p: participant) (b: Bp p) (n: nat): Bp p :=
+  listBp p (napp n (bpList p b)).
+
+(*
+Parameters (p q: participant) (H: p <> q) (l: label) (s: st.sort).
+
+Compute nappA 3 (apListA p (ap_merge q H l s (ap_receive q H l s))).
+Compute BpnA p (bp_mergea q l s (bp_receivea q l s)) 6. *)
+
 Lemma bpend_ann: forall n p w, merge_bp_contn p (bp_end) w n = w.
 Proof. intro n.
        induction n; intros.
@@ -400,6 +429,12 @@ Qed.
 Lemma apend_an: forall p w, merge_ap_cont p (ap_end) w = w.
 Proof. intros.
        rewrite(siso_eq(merge_ap_cont p ap_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma bpend_an: forall p w, merge_bp_cont p (bp_end) w = w.
+Proof. intros.
+       rewrite(siso_eq(merge_bp_cont p bp_end w)). simpl.
        destruct w; easy.
 Qed.
 
@@ -467,6 +502,32 @@ Proof. intros p a.
        simpl. easy.
 Qed.
 
+Lemma mergeSw3: forall p b l w,
+merge_bp_cont p (listBp p (bpList p b ++ l)) w =
+merge_bp_cont p b (merge_bp_cont p (listBp p l) w).
+Proof. intros p b.
+       induction b; intros.
+       simpl.
+       case_eq l; intros.
+       subst. simpl.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 bp_end) w)). simpl.
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (merge_bp_cont p bp_end w))).
+       simpl. easy.
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 (listBp p (b :: l0))) w )).
+       rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (merge_bp_cont p (listBp p (b :: l0)) w))).
+       simpl. easy.
+       rewrite(siso_eq(merge_bp_cont p (listBp p (bpList p (bp_send q n s s0) ++ l)) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_send q n s s0) (merge_bp_cont p (listBp p l) w))).
+       simpl. easy.
+       rewrite(siso_eq(merge_bp_cont p (listBp p (bpList p (bp_mergea s s0 s1 b) ++ l)) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (merge_bp_cont p (listBp p l) w))).
+       simpl.
+       rewrite IHb. easy.
+       rewrite(siso_eq(merge_bp_cont p (listBp p (bpList p (bp_merge q n s s0 b) ++ l)) w)).
+       rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 b) (merge_bp_cont p (listBp p l) w))).
+       simpl. rewrite IHb. easy.
+       simpl. rewrite bpend_an. easy.
+Qed.
 
 Lemma mergeeq: forall n p a w,
   merge_ap_cont p (ApnA p a n) w = merge_ap_contn p a w n.
@@ -495,6 +556,20 @@ Proof. intro n.
 
        unfold ApnA2. simpl.
        rewrite mergeSw2. 
+       easy.
+Qed.
+
+Lemma mergeeq3: forall n p b w,
+  merge_bp_cont p (BpnA p b n) w = merge_bp_contn p b w n.
+Proof. intro n.
+       induction n; intros.
+       simpl. unfold BpnA. simpl.
+       rewrite bpend_an. easy.
+       simpl.
+       rewrite <- IHn.
+
+       unfold BpnA. simpl.
+       rewrite mergeSw3. 
        easy.
 Qed.
 
