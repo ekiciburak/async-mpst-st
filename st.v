@@ -27,7 +27,34 @@ Inductive nsubsort: sort -> sort -> Prop :=
   | nsun: nsubsort sunit snat
   | nsnu: nsubsort snat sunit
   | nsbu: nsubsort sbool sunit
-  | nsub: nsubsort sunit sbool.
+  | nsub: nsubsort sunit sbool
+  | nsui: nsubsort sunit sint
+  | nsiu: nsubsort sint sunit.
+
+Lemma sort_dec: forall s s', subsort s s' \/ nsubsort s s'.
+Proof. intro s.
+       induction s; intros.
+       case_eq s'; intros.
+       left. apply srefl.
+       right. apply nsub.
+       right. apply nsui.
+       right. apply nsun.
+       case_eq s'; intros.
+       right. apply nsbu.
+       left. apply srefl.
+       right. apply nsbi.
+       right. apply nsbn.
+       case_eq s'; intros.
+       right. apply nsiu.
+       right. apply nsib.
+       left. apply srefl.
+       right. apply nsin.
+       case_eq s'; intros.
+       right. apply nsnu.
+       right. apply nsnb.
+       left. apply sni.
+       left. apply srefl.
+Qed.
 
 Lemma ssnssL: forall s t, subsort s t -> (nsubsort s t -> False).
 Proof. intro s.

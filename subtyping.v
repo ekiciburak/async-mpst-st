@@ -8,6 +8,12 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
+Definition subtypeA (T T': st): Prop :=
+  forall U,  st2soCA T U /\
+  forall V', st2siCA T' V' /\
+  exists W,  so2sisoC U W /\
+  exists W', si2sisoC V' W' /\ W ~<A W'.
+  
 Definition subtype (T T': st): Prop :=
   forall U,  st2soC T U /\
   forall V', st2siC T' V' /\
@@ -170,6 +176,175 @@ Proof. rewrite(coseq_eq(act TW')).
        apply Hb.
        simpl. easy. easy.
        constructor.
+Qed.
+
+Lemma st1A: subtypeA T' T.
+Proof. unfold subtypeA, T, T'.
+       intros U.
+       split.
+       pcofix H.
+       pfold.
+       specialize (st2soA_snd (upaco2 st2soA r)
+                             "cont" 
+                             sint
+                             (st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])
+                             U
+                             ([("cont", sint,  st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)]);
+                               ("stop", sunit, st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])])
+                             "q"); intro HS.
+       apply HS.
+       simpl. left. easy.
+       unfold upaco2.
+       left.
+       pcofix H1.
+       pfold.
+       specialize(st2soA_snd (upaco2 st2soA r0) 
+                            "cont" 
+                            sint 
+                            (st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])
+                            U
+                            [("cont", sint, st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])]); intro H2.
+       apply H2.
+       simpl. left. easy.
+       unfold upaco2.
+       right. easy.
+
+       split.
+       pcofix H.
+       pfold.
+       specialize (st2siA_rcv (upaco2 st2siA r)
+                             "success" 
+                             sint
+                             (st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])
+                             V'
+                             ([("success", sint,  st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)]);
+                               ("error",   sbool, st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])])
+                             "p"); intro HS.
+       apply HS.
+       simpl. left. easy.
+       unfold upaco2.
+       left.
+       pcofix H1.
+       pfold.
+       specialize (st2siA_rcv (upaco2 st2siA r0) 
+                             "success"
+                             sint 
+                             (st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])
+                             V'
+                             [("success", sint, st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])]); intro H2.
+       apply H2.
+       simpl. left. easy.
+       unfold upaco2.
+       right. easy.
+
+       exists(siso_send "q" ("cont",sint,(siso_receive "p" ("success",sint,siso_end)))).
+       split.
+(*        symmetry. *)
+       pcofix H.
+       pfold.
+       specialize(so2siso_snd (upaco2 so2siso r) 
+                              ("cont", sint, siso_receive "p" ("success", sint, siso_end))
+                              U "q"
+                              ); intro H2.
+       apply H2.
+       simpl. right. easy.
+
+       exists(siso_receive "p" ("success", sint,(siso_send "q" ("cont", sint, siso_end)))).
+       split.
+       pcofix H.
+       pfold.
+       specialize(si2siso_rcv (upaco2 si2siso r) 
+                 ("success", sint, siso_send "q" ("cont", sint, siso_end))
+                 V'
+                 "p"); intro H2.
+       apply H2.
+       unfold upaco2.
+       right. easy.
+
+       pcofix CIH.
+       pfold.
+       specialize (_sref_bA (upaco2 refinementRA r)
+                            (siso_receive "p" ("success", sint, siso_end))
+                            siso_end
+                            "q" "cont" sint sint
+                            (bp_receivea "p" "success" sint) 1
+                           ); intro H.
+       simpl in H.
+      
+       rewrite(siso_eqA((merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_send "q" ("cont", I, siso_end))))) in H.
+       simpl in H.
+       apply H.
+
+       apply srefl. (*subsort*)
+
+       rewrite (siso_eqA ((merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_end)))).
+       simpl.
+       unfold upaco2.
+       left.
+       pfold.
+       apply _sref_inA.
+
+       apply srefl. (*subsort*)
+
+       unfold upaco2.
+       left.
+       pfold.
+       apply _sref_endA.
+
+       unfold act_eq.
+       intros (p, s).
+       split.
+       intro Ha.
+       unfold CoIn in Ha.
+       punfold Ha.
+       inversion Ha.
+       subst.
+       simpl in H0.
+       inversion H0.
+       rewrite(coseq_eq(actC (merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_end)))).
+       unfold coseq_id. simpl.
+       pfold.
+       apply CoInSplit1A with (ys := (actC (siso_end))). simpl. easy.
+       subst.
+       simpl in H0.
+       inversion H0.
+       subst.
+       unfold upaco2 in H2.
+       destruct H2.
+       punfold H2.
+       inversion H2.
+       subst. simpl in H3. easy.
+       simpl in *.
+       easy.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
+
+       intro Ha.
+       unfold CoIn in Ha.
+       punfold Ha.
+       inversion Ha.
+       subst.
+       simpl in H0.
+       inversion H0.
+       rewrite(coseq_eq((actC (siso_receive "p" ("success", I, siso_end))))).
+       unfold coseq_id. simpl.
+       pfold.
+       apply CoInSplit1A with (ys := (actC (siso_end))). simpl. easy.
+       subst.
+       simpl in H0.
+       inversion H0.
+       subst.
+       unfold upaco2 in H2.
+       destruct H2.
+       punfold H2.
+       inversion H2.
+       subst. simpl in H3. easy.
+       simpl in *.
+       easy.
+       apply CoIn_mon.
+       easy.
+       apply CoIn_mon.
 Qed.
 
 Lemma st1: subtype T' T.
