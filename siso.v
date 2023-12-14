@@ -9,7 +9,7 @@ Require Import Morphisms.
 (* CoInductive so: Type :=
   | so_end    : so 
   | so_receive: participant -> list (label*sort*so) -> so 
-  | so_send   : participant -> so -> so.
+  | so_send   : participant -> (label*sort*so) -> so.
 
 CoInductive si: Type :=
   | si_end    : si
@@ -18,30 +18,63 @@ CoInductive si: Type :=
   
  *)
 
-CoInductive siso: Type :=
+(* CoInductive siso: Type :=
   | siso_end    : siso 
   | siso_receive: participant -> (label*st.sort*siso) -> siso 
-  | siso_send   : participant -> (label*st.sort*siso) -> siso.
+  | siso_send   : participant -> (label*st.sort*siso) -> siso. *)
 
-Inductive so2siso (R: so -> siso -> Prop): so -> siso -> Prop :=
+(* Inductive so2siso (R: so -> siso -> Prop): so -> siso -> Prop :=
   | so2siso_end: so2siso R so_end siso_end
-  | so2siso_rcv: forall l s x t xs p,
+  | so2siso_rcv: forall p l s x t,
+                 R t x ->
+                 so2siso R t (siso_receive p (l,s,x))
+  | so2siso_snd: forall p l s x t,
+                 R t (siso_send p (l,s,x)) ->
+                 so2siso R t (siso_send p (l,s,x)).
+ *)
+(* Inductive so2siso (R: so -> siso -> Prop): so -> siso -> Prop :=
+  | so2siso_end: so2siso R so_end siso_end
+  | so2siso_rcv: forall p l s x xs t,
                  List.In (l,s,x) xs ->
                  R (so_receive p [(l,s,x)]) t ->
                  so2siso R (so_receive p xs) t
-  | so2siso_snd: forall x t p,
-                 R t (siso_send p x) ->
-                 so2siso R t (siso_send p x).
+  | so2siso_snd: forall p l s x t,
+                 R x t ->
+                 so2siso R (so_send p (l,s,x)) t. *)
 
-Inductive si2siso (R: si -> siso -> Prop): si -> siso -> Prop :=
+(* Inductive si2siso (R: si -> siso -> Prop): si -> siso -> Prop :=
   | si2siso_end: si2siso R si_end siso_end
-  | si2siso_rcv: forall x t p,
-                 R t (siso_receive p x) ->
-                 si2siso R t (siso_receive p x)
-  | si2siso_snd: forall l s x t xs p,
+  | si2siso_snd: forall p l s x xs t,
                  List.In (l,s,x) xs ->
                  R (si_send p [(l,s,x)]) t ->
-                 si2siso R (si_send p xs) t.
+                 si2siso R (si_send p xs) t
+  | si2siso_rcv: forall p l s x t,
+                 R x t ->
+                 si2siso R (si_receive p (l,s,x)) t. *)
+
+(* Inductive si2siso (R: si -> siso -> Prop): si -> siso -> Prop :=
+  | si2siso_end: si2siso R si_end siso_end
+  | si2siso_rcv: forall p l s x t,
+                 R t (siso_receive p (l,s,x)) ->
+                 si2siso R t (siso_receive p (l,s,x))
+  | si2siso_snd: forall l s x t p,
+                 R t x ->
+                 si2siso R t (siso_send p (l,s,x)).
+*)
+
+Inductive singletonI (R: st -> Prop): st -> Prop :=
+  | ends  : singletonI R st_end
+  | sends1: forall p l s, singletonI R (st_send p [(l,s,st_end)])
+  | sends2: forall p l s w, R w -> singletonI R (st_send p [(l,s,w)])
+  | recvs1: forall p l s, singletonI R (st_receive p [(l,s,st_end)])
+  | recvs2: forall p l s w, R w -> singletonI R (st_receive p [(l,s,w)]).
+
+Definition singleton s := paco1 (singletonI) bot1 s.
+
+Class siso: Type := mk_siso 
+{ und  : st; 
+  sprop: singleton und
+}.
 
 Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
   | st2siso_end: st2siso R st_end st_end
@@ -53,6 +86,18 @@ Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
                  List.In (l,s,x) xs ->
                  R (st_send p [(l,s,x)]) t ->
                  st2siso R (st_send p xs) t.
+
+(*
+Inductive st2sisoA (R: st -> siso -> Prop): st -> siso -> Prop :=
+  | st2sisoA_end: st2sisoA R st_end siso_end
+  | st2sisoA_rcv: forall l s x t xs p,
+                  List.In (l,s,x) xs ->
+                  R (st_receive p [(l,s,x)]) t ->
+                  st2sisoA R (st_receive p xs) t
+  | st2sisoA_snd: forall l s x t xs p,
+                  List.In (l,s,x) xs ->
+                  R (st_send p [(l,s,x)]) t ->
+                  st2sisoA R (st_send p xs) t. *)
 
 Lemma st2siso_mon: monotone2 st2siso.
 Proof. unfold monotone2.
@@ -69,12 +114,13 @@ Proof. unfold monotone2.
          apply LE, H0.
 Qed.
 
-Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s1 s2.
-Definition so2sisoC s1 s2 := paco2 (so2siso) bot2 s1 s2.
+Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s2 s1.
+(* Definition so2sisoC s1 s2 := paco2 (so2siso) bot2 s1 s2.
 Definition si2sisoC s1 s2 := paco2 (si2siso) bot2 s1 s2.
+Definition st2sisoCA s1 s2 := paco2 (st2sisoA) bot2 s1 s2. *)
 
-#[export]
-Declare Instance Equivalence_st2siso : Equivalence st2sisoC.
+(* #[export]
+Declare Instance Equivalence_st2siso : Equivalence st2sisoC. *)
 
 Definition siso_id (t: st): st :=
   match t with
@@ -88,7 +134,7 @@ Proof. intro t.
        destruct t; try easy.
 Defined.
 
-Definition siso_idA (t: siso): siso :=
+(* Definition siso_idA (t: siso): siso :=
   match t with
     | siso_receive p a => siso_receive p a
     | siso_send p a    => siso_send p a
@@ -98,7 +144,7 @@ Definition siso_idA (t: siso): siso :=
 Lemma siso_eqA: forall t, t = siso_idA t.
 Proof. intro t.
        destruct t; try easy.
-Defined.
+Defined. *)
 
 Inductive seq_gen (seq: st -> st -> Prop): st -> st -> Prop :=
   | _seq_s_end     : seq_gen seq st_end st_end
@@ -132,12 +178,12 @@ CoFixpoint act (t: st): coseq (participant * string) :=
     | _                       => Delay conil
   end.
 
-CoFixpoint actC (t: siso): coseq (participant * string) :=
+(* CoFixpoint actC (t: siso): coseq (participant * string) :=
   match t with
     | siso_receive p (l,s,w') => Delay (cocons (p, "?"%string) (actC w'))
     | siso_send p (l,s,w')    => Delay (cocons (p, "!"%string) (actC w'))
     | _                       => Delay conil
-  end.
+  end. *)
 
 CoInductive action: st -> coseq (participant * string) -> Prop :=
   | a_end: action st_end (Delay conil)
@@ -263,24 +309,24 @@ CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
     | ap_end              => w
   end.
 
-CoFixpoint merge_ap_contB (p: participant) (a: Ap p) (w: siso): siso :=
+(* CoFixpoint merge_ap_contB (p: participant) (a: Ap p) (w: siso): siso :=
   match a with
     | ap_receive q H l s  => siso_receive q (l,s,w)
     | ap_merge q H l s w' => siso_receive q (l,s,(merge_ap_contB p w' w))
     | ap_end              => w
   end.
-
+ *)
 Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
     | O    => w
     | S k  => merge_ap_cont p a (merge_ap_contn p a w k)
   end.
 
-Fixpoint merge_ap_contnB (p: participant) (a: Ap p) (w: siso) (n: nat): siso :=
+(* Fixpoint merge_ap_contnB (p: participant) (a: Ap p) (w: siso) (n: nat): siso :=
   match n with
     | O    => w
     | S k  => merge_ap_contB p a (merge_ap_contnB p a w k)
-  end.
+  end. *)
   
 Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
@@ -372,14 +418,14 @@ CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
     | bp_end             => w
   end.
 
-CoFixpoint merge_bp_contB (p: participant) (b: Bp p) (w: siso): siso :=
+(* CoFixpoint merge_bp_contB (p: participant) (b: Bp p) (w: siso): siso :=
   match b with 
     | bp_receivea q l s  => siso_receive q (l,s,w)
     | bp_send q x l s    => siso_send q (l,s,w)
     | bp_mergea q l s c  => siso_receive q (l,s,(merge_bp_contB p c w))
     | bp_merge q x l s c => siso_send q (l,s,(merge_bp_contB p c w))
     | bp_end             => w
-  end.
+  end. *)
 
 Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
   match n with
@@ -387,11 +433,11 @@ Fixpoint merge_bp_contn (p: participant) (b: Bp p) (w: st) (n: nat): st :=
     | S k  => merge_bp_cont p b (merge_bp_contn p b w k)
   end.
 
-Fixpoint merge_bp_contnB (p: participant) (b: Bp p) (w: siso) (n: nat): siso :=
+(* Fixpoint merge_bp_contnB (p: participant) (b: Bp p) (w: siso) (n: nat): siso :=
   match n with
     | O    => w
     | S k  => merge_bp_contB p b (merge_bp_contnB p b w k)
-  end.
+  end. *)
 
 Fixpoint bpList (p: participant) (b: Bp p): list (Bp p) :=
   match b with
@@ -786,7 +832,7 @@ Inductive cosetIncR: list (participant * string) -> coseq (participant * string)
 
 Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
 
-Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w').
+(* Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w'). *)
 
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_in : forall w w' p l s s',
@@ -867,7 +913,7 @@ forall w w' p l s s' a n,
                       refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
 *)
 
-Inductive refinementRA (seq: siso -> siso -> Prop): siso -> siso -> Prop :=
+(* Inductive refinementRA (seq: siso -> siso -> Prop): siso -> siso -> Prop :=
   | _sref_inA : forall w w' p l s s',
                        subsort s' s -> 
                        seq w w' ->
@@ -893,7 +939,7 @@ Inductive refinementRA (seq: siso -> siso -> Prop): siso -> siso -> Prop :=
 
 Definition refinementRAC: siso -> siso -> Prop := fun s1 s2 => paco2 refinementRA bot2 s1 s2.
 
-Notation "x '~<A' y" := (refinementRAC x y) (at level 50, left associativity).
+Notation "x '~<A' y" := (refinementRAC x y) (at level 50, left associativity). *)
 
 
 

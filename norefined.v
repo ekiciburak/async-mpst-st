@@ -7,9 +7,29 @@ Require Import Setoid.
 Require Import Morphisms.
 Require Import ProofIrrelevance.
 
+Definition lenSet (s: st): bool :=
+  match s with
+    | st_end         => true
+    | st_receive p l => if Nat.eqb (length l) 1 then true else false
+    | st_send p l    => if Nat.eqb (length l) 1 then true else false
+  end.
+
+Lemma sisoext: forall {p l s} w, singleton w -> singleton (st_send p [(l,s,w)]).
+Proof. intros.
+       pfold. constructor. left.
+       punfold H.
+       admit.
+Admitted.
+
+(* Inductive nRefinement: siso -> siso -> Prop :=
+  | n_out  : forall w w' p l s, 
+             CoNInR (p,"!"%string) (act (@und w')) -> 
+             nRefinement (mk_siso (st_send p [(l,s,(@und w))]) (sisoext (@und w) (@sprop w))) w'. *)
+
 Inductive nRefinement: st -> st -> Prop :=
   | n_out  : forall w w' p l s, 
-             CoNInR (p,"!"%string) (act w') -> nRefinement (st_send p [(l,s,w)]) w'
+             CoNInR (p,"!"%string) (act w') -> 
+             nRefinement (st_send p [(l,s,w)]) w'
   | n_inp  : forall w w' p l s, 
              CoNInR (p,"?"%string) (act w') -> nRefinement (st_receive p [(l,s,w)]) w'
   | n_out_r: forall w w' p l s, 
@@ -54,7 +74,7 @@ Inductive nRefinement: st -> st -> Prop :=
 Notation "x '/~<' y" := (nRefinement x y) (at level 50, left associativity).
 
 
-Inductive nRefinementA: siso -> siso -> Prop :=
+(* Inductive nRefinementA: siso -> siso -> Prop :=
   | n_outA  : forall w w' p l s, 
               CoNInR (p,"!"%string) (actC w') -> nRefinementA (siso_send p (l,s,w)) w'
   | n_inpA  : forall w w' p l s, 
@@ -94,9 +114,13 @@ Inductive nRefinementA: siso -> siso -> Prop :=
   | n_b_wA  : forall w w' p l s s' b n,
               subsort s s' ->
               nRefinementA w (merge_bp_contnB p b w' n) ->
-              nRefinementA (siso_send p (l,s,w)) (merge_bp_contnB p b (siso_send p (l,s',w')) n).
+              nRefinementA (siso_send p (l,s,w)) (merge_bp_contnB p b (siso_send p (l,s',w')) n). *)
 
 (* Notation "x '/~<A' y" := (nRefinementA x y) (at level 50, left associativity). *)
+
+
+(* Lemma convref: forall w w', nRefinement w w' -> nRefinementA w w'. *)
+
 
 Definition eqbp (a b: (participant*string)) :=
   andb (eqb a.1 b.1) (eqb a.2 b.2).
@@ -901,6 +925,41 @@ Proof. intros p q a1.
        subst. rewrite apend_an in H. easy.
 Qed.
 
+
+(* Inductive nRefinementS: siso -> siso -> Prop :=
+  | n_outS  : forall w w' p l s, 
+             CoNInR (p,"!"%string) (act (@und w')) -> 
+             nRefinementS (mk_siso (st_send p [(l,s,(@und w))]) (sisoext (@und w) (@sprop w))) w'. 
+
+Lemma nrefLS: forall w w',  (@und w) ~< (@und w') -> (nRefinementS w w' -> False).
+Proof. intros w w' H.
+       unfold refinement in H. simpl in *.
+       punfold H; [ | apply refinementR_mon].
+       intro Ha.
+       induction Ha; intros.
+       {
+         inversion H.
+         subst.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
+         apply inOutLA in H0. easy.
+         rewrite <- H6.
+         rewrite(coseq_eq(act (p ! [(l, s', w'0)]))).
+         unfold coseq_id. simpl.
+         pfold.
+         apply CoInSplit1A with (ys := (act w'0)). easy.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
+         apply inOutLA in H0. easy.
+         subst.
+         rewrite <- H6.
+         rewrite h0.
+         pfold.
+         apply eq0A.
+         right.
+         rewrite(coseq_eq(act (p ! [(l, s', w'0)]))).
+         unfold coseq_id. simpl.
+         apply CoInSplit1A with (ys := (act w'0)). simpl. easy.
+       } *)
+
 Lemma nrefLS: forall w w',  w ~< w' -> (w /~< w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
@@ -910,11 +969,13 @@ Proof. intros w w' H.
        {
          inversion H.
          subst.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
          apply inOutLA in H0. easy.
          rewrite(coseq_eq(act (p ! [(l, s', w'0)]))).
          unfold coseq_id. simpl.
          pfold.
          apply CoInSplit1A with (ys := (act w'0)). easy.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
          apply inOutLA in H0. easy.
          rewrite <- H4.
          rewrite h0.
@@ -927,12 +988,14 @@ Proof. intros w w' H.
        }
        { inversion H.
          subst.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
          apply inOutLA in H0. easy.
          rewrite(coseq_eq(act (p & [(l, s', w'0)]))).
          unfold coseq_id. simpl.
          pfold.
          apply CoInSplit1A with (ys := (act w'0)). easy.
          subst.
+(*          destruct H0 as (H0, (hl1,hl2)). *)
          apply inOutLA in H0. easy.
          simpl.
          pfold.
@@ -1495,7 +1558,7 @@ Proof. intros.
        apply (nrefLS w w'); easy.
 Qed.
 
-Lemma casen1: forall p l s1 s2 w1 w2,
+(* Lemma casen1: forall p l s1 s2 w1 w2,
 subsort s2 s1 ->
 (nRefinementA (siso_receive p (l, s1, w1)) (siso_receive p (l, s2, w2)) -> False) ->
 (nRefinementA w1 w2 -> False).
@@ -1517,7 +1580,109 @@ Proof. intros.
        easy.
 Qed.
 
-Lemma nrefR: forall w w', (nRefinementA w w' -> False) -> w ~<A w'.
+Lemma len0: forall {A: Type} (l: list A), length l = 0 -> l = nil.
+Proof. intros A l.
+       induction l; intros. 
+       - easy.
+       - simpl in *. easy.
+Qed.
+ *)
+ 
+(* 
+Lemma nrefR: forall w w', (nRefinement w w' -> False) -> w ~< w'.
+Proof. pcofix CIH.
+       intros.
+       unfold refinementRAC.
+       destruct w; intros.
+       { pfold.
+         case_eq w'; intros.
+         constructor.
+         subst.
+         destruct H0.
+         induction l; intros.
+         constructor.
+         simpl in H2. easy.
+         simpl in H2.
+         case_eq(Nat.eqb (Datatypes.length l) 0); intro Heqb.
+         rewrite PeanoNat.Nat.eqb_eq in Heqb.
+         apply len0 in Heqb.
+         subst.
+         rename a into p.
+         destruct p as ((l1,s1),w1).
+         destruct H1.
+         apply n_inp_r.
+         rewrite(coseq_eq(act st_end)). unfold coseq_id. simpl.
+         constructor.
+         rewrite Heqb in H2. easy.
+         subst.
+         case_eq l; intros.
+         subst.
+         simpl in *. easy.
+         subst. simpl in H2.
+         case_eq(Nat.eqb (Datatypes.length l0) 0); intro Heqb.
+         rewrite PeanoNat.Nat.eqb_eq in Heqb.
+         apply len0 in Heqb.
+         subst.
+         destruct p as ((l1,s1),w1).
+         destruct H1.
+         apply n_out_r.
+         rewrite(coseq_eq(act st_end)). unfold coseq_id. simpl.
+         constructor.
+         rewrite Heqb in H2. easy.
+       }
+       { rename s into q.
+         case_eq l; intros.
+         subst. simpl in *. easy.
+         subst.
+         simpl in *.
+         case_eq(Nat.eqb (Datatypes.length l0) 0); intro Heqb.
+         rewrite PeanoNat.Nat.eqb_eq in Heqb.
+         apply len0 in Heqb.
+         subst.
+         destruct p as ((l,s),w).
+         case_eq w'; intros.
+         subst.
+         destruct H1.
+         apply n_inp.
+         rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
+         constructor.
+
+         case_eq l0; intros.
+         subst. simpl in *. easy.
+         subst.
+         simpl in *.
+         case_eq(Nat.eqb (Datatypes.length l1) 0); intro Heqb.
+         rewrite PeanoNat.Nat.eqb_eq in Heqb.
+         apply len0 in Heqb.
+         subst.
+         destruct p as ((l1,s1),w1).
+         subst.
+         case_eq(eqb q s0); intro Heq.
+         rewrite eqb_eq in Heq.
+         case_eq(eqb l l1); intro Heq2.
+         rewrite eqb_eq in Heq2.
+         specialize(sort_dec s1 s); intro Heq3.
+         destruct Heq3 as [Heq3 | Heq3].
+         subst.
+         pfold.
+         apply _sref_in. easy.
+         unfold upaco2. right.
+         apply CIH.
+         apply (casen1 s0 l1 s s1 w w1). easy. easy.
+         subst.
+         destruct H0.
+         apply n_inp_sA. easy.
+         subst.
+         destruct H0.
+         apply n_inp_lA. apply eqb_neq in Heq2. easy.
+         admit.
+         destruct H0. subst.
+         destruct p as ((l1,s1),w1).
+         apply n_i_o_1A.
+       }
+
+ *)
+(* Lemma nrefR: forall w w', (nRefinementA w w' -> False) -> w ~<A w'.
 Proof. pcofix CIH.
        intros.
        unfold refinementRAC.
@@ -1603,5 +1768,5 @@ Proof. pcofix CIH.
          apply n_out_lA. apply eqb_neq in Heq2. easy.
          admit.
        }
-Admitted.
+Admitted. *)
 

@@ -66,6 +66,13 @@ Proof. intro s.
        induction s; intros; case_eq t; intros; subst; try easy.
 Qed.
 
+Class vector A n :=
+{
+  und : list A;
+  rest: length und = n
+}.
+
+
 (* session trees *)
 CoInductive st: Type :=
   | st_end    : st

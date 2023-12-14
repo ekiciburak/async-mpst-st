@@ -14,6 +14,20 @@ CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b2",sunit,st_send "sk" [("b2",sunit,Tctl)])])])])])])])].
 Print Tctl.
 
+Lemma singletonTctl: singleton Tctl.
+Proof. pcofix CIH.
+       pfold. rewrite(siso_eq(Tctl)). simpl.
+       constructor. 
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
 CoFixpoint TR := st_receive "src" [("b1",sunit,st_receive "sk" [("b1",sunit,
                                    st_send "sk" [("b1",sunit,st_send "src" [("b1",sunit,
                                    st_receive "src" [("b2",sunit,st_receive "sk" [("b2",sunit,
@@ -22,6 +36,24 @@ Print TR.
 
 Definition Tctl' := st_send "src" [("b1",sunit,st_send "src" [("b2",sunit,TR)])].
 Print Tctl'.
+
+Lemma singletonTctl': singleton Tctl'.
+Proof. pfold. rewrite(siso_eq(Tctl')). simpl.
+       constructor. 
+       left. pfold. constructor.
+       left.
+       pcofix CIH.
+       rewrite(siso_eq TR). simpl.
+       pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
 
 Definition listTctl := [("src","!");("src","?");("sk","!");("sk","?")].
 
@@ -1508,11 +1540,11 @@ Proof. unfold subtype.
        right.
        apply CIH.
 
-       exists Tctl'.
+       exists (mk_siso Tctl' (singletonTctl')).
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite(siso_eq Tctl'). simpl.
        specialize(st2siso_snd (upaco2 st2siso r) 
                               "b1" sunit
@@ -1524,15 +1556,15 @@ Proof. unfold subtype.
        apply Ha.
        simpl. left. easy.
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite(siso_eq Tctl') in CIH. simpl in CIH.
        apply CIH.
        
-       exists Tctl.
+       exists (mk_siso Tctl (singletonTctl)).
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite(siso_eq Tctl). simpl.
        specialize(st2siso_snd (upaco2 st2siso r) 
                               "b1" sunit
@@ -1544,9 +1576,9 @@ Proof. unfold subtype.
        apply Ha.
        simpl. left. easy.
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite(siso_eq Tctl) in CIH. simpl in CIH.
-       apply CIH.
+       apply CIH. simpl.
 
        rewrite(siso_eq Tctl').
        rewrite(siso_eq Tctl). simpl.

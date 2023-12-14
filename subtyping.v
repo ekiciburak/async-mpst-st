@@ -1,4 +1,4 @@
-From ST Require Import stream st so si siso norefined.
+From ST Require Import stream st so si siso.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
@@ -8,19 +8,19 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
-Definition subtypeA (T T': st): Prop :=
+(* Definition subtypeA (T T': st): Prop :=
   forall U,  st2soCA T U /\
   forall V', st2siCA T' V' /\
   exists W,  so2sisoC U W /\
-  exists W', si2sisoC V' W' /\ W ~<A W'.
-  
+  exists W', si2sisoC V' W' /\ W ~<A W'. *)
+
 Definition subtype (T T': st): Prop :=
   forall U,  st2soC T U /\
   forall V', st2siC T' V' /\
-  exists W,  st2sisoC U W /\
-  exists W', st2sisoC V' W' /\ W ~< W'.
+  exists (W: siso), st2sisoC U  (@und W) /\
+  exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
 
-Definition nsubtype (T T': st): Prop :=
+(* Definition nsubtype (T T': st): Prop :=
   exists U,  st2soC T U /\
   exists V', st2siC T' V' /\
   forall W,  st2sisoC U W /\
@@ -34,12 +34,12 @@ Proof. intros.
        destruct H as (Ha1, H).
        specialize(H V').
        destruct H as (Hb1, (W, (Hc, (W', (Hd, He))))).
-       specialize(H0 W).
+       specialize(H0 (@und W)).
        destruct H0 as (Hc1, H0).
-       specialize(H0 W').
+       specialize(H0 (@und W')).
        destruct H0 as (Hd', He').
        apply nrefL in He. easy. easy.
-Qed.
+Qed.  *)
 
 Definition T': st :=
   st_send "q" [
@@ -178,175 +178,6 @@ Proof. rewrite(coseq_eq(act TW')).
        constructor.
 Qed.
 
-Lemma st1A: subtypeA T' T.
-Proof. unfold subtypeA, T, T'.
-       intros U.
-       split.
-       pcofix H.
-       pfold.
-       specialize (st2soA_snd (upaco2 st2soA r)
-                             "cont" 
-                             sint
-                             (st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])
-                             U
-                             ([("cont", sint,  st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)]);
-                               ("stop", sunit, st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])])
-                             "q"); intro HS.
-       apply HS.
-       simpl. left. easy.
-       unfold upaco2.
-       left.
-       pcofix H1.
-       pfold.
-       specialize(st2soA_snd (upaco2 st2soA r0) 
-                            "cont" 
-                            sint 
-                            (st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])
-                            U
-                            [("cont", sint, st_receive "p" [("success", sint, st_end); ("error", sbool, st_end)])]); intro H2.
-       apply H2.
-       simpl. left. easy.
-       unfold upaco2.
-       right. easy.
-
-       split.
-       pcofix H.
-       pfold.
-       specialize (st2siA_rcv (upaco2 st2siA r)
-                             "success" 
-                             sint
-                             (st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])
-                             V'
-                             ([("success", sint,  st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)]);
-                               ("error",   sbool, st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])])
-                             "p"); intro HS.
-       apply HS.
-       simpl. left. easy.
-       unfold upaco2.
-       left.
-       pcofix H1.
-       pfold.
-       specialize (st2siA_rcv (upaco2 st2siA r0) 
-                             "success"
-                             sint 
-                             (st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])
-                             V'
-                             [("success", sint, st_send "q" [("cont", sint, st_end); ("stop", sunit, st_end)])]); intro H2.
-       apply H2.
-       simpl. left. easy.
-       unfold upaco2.
-       right. easy.
-
-       exists(siso_send "q" ("cont",sint,(siso_receive "p" ("success",sint,siso_end)))).
-       split.
-(*        symmetry. *)
-       pcofix H.
-       pfold.
-       specialize(so2siso_snd (upaco2 so2siso r) 
-                              ("cont", sint, siso_receive "p" ("success", sint, siso_end))
-                              U "q"
-                              ); intro H2.
-       apply H2.
-       simpl. right. easy.
-
-       exists(siso_receive "p" ("success", sint,(siso_send "q" ("cont", sint, siso_end)))).
-       split.
-       pcofix H.
-       pfold.
-       specialize(si2siso_rcv (upaco2 si2siso r) 
-                 ("success", sint, siso_send "q" ("cont", sint, siso_end))
-                 V'
-                 "p"); intro H2.
-       apply H2.
-       unfold upaco2.
-       right. easy.
-
-       pcofix CIH.
-       pfold.
-       specialize (_sref_bA (upaco2 refinementRA r)
-                            (siso_receive "p" ("success", sint, siso_end))
-                            siso_end
-                            "q" "cont" sint sint
-                            (bp_receivea "p" "success" sint) 1
-                           ); intro H.
-       simpl in H.
-      
-       rewrite(siso_eqA((merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_send "q" ("cont", I, siso_end))))) in H.
-       simpl in H.
-       apply H.
-
-       apply srefl. (*subsort*)
-
-       rewrite (siso_eqA ((merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_end)))).
-       simpl.
-       unfold upaco2.
-       left.
-       pfold.
-       apply _sref_inA.
-
-       apply srefl. (*subsort*)
-
-       unfold upaco2.
-       left.
-       pfold.
-       apply _sref_endA.
-
-       unfold act_eq.
-       intros (p, s).
-       split.
-       intro Ha.
-       unfold CoIn in Ha.
-       punfold Ha.
-       inversion Ha.
-       subst.
-       simpl in H0.
-       inversion H0.
-       rewrite(coseq_eq(actC (merge_bp_contB "q" (bp_receivea "p" "success" (I)) (siso_end)))).
-       unfold coseq_id. simpl.
-       pfold.
-       apply CoInSplit1A with (ys := (actC (siso_end))). simpl. easy.
-       subst.
-       simpl in H0.
-       inversion H0.
-       subst.
-       unfold upaco2 in H2.
-       destruct H2.
-       punfold H2.
-       inversion H2.
-       subst. simpl in H3. easy.
-       simpl in *.
-       easy.
-       apply CoIn_mon.
-       easy.
-       apply CoIn_mon.
-
-       intro Ha.
-       unfold CoIn in Ha.
-       punfold Ha.
-       inversion Ha.
-       subst.
-       simpl in H0.
-       inversion H0.
-       rewrite(coseq_eq((actC (siso_receive "p" ("success", I, siso_end))))).
-       unfold coseq_id. simpl.
-       pfold.
-       apply CoInSplit1A with (ys := (actC (siso_end))). simpl. easy.
-       subst.
-       simpl in H0.
-       inversion H0.
-       subst.
-       unfold upaco2 in H2.
-       destruct H2.
-       punfold H2.
-       inversion H2.
-       subst. simpl in H3. easy.
-       simpl in *.
-       easy.
-       apply CoIn_mon.
-       easy.
-       apply CoIn_mon.
-Qed.
-
 Lemma st1: subtype T' T.
 Proof. unfold subtype, T, T'.
        intros U.
@@ -406,24 +237,32 @@ Proof. unfold subtype, T, T'.
        unfold upaco2.
        right. easy.
 
-       exists(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]).
+       assert(singleton(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))])) as Hs1.
+       { pfold. constructor. left. pfold. constructor. }
+       
+       exists(mk_siso (st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]) Hs1).
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix H.
        pfold.
+       simpl in *.
        specialize(st2siso_snd (upaco2 st2siso r) "cont" sint 
                               (st_receive "p" [("success", sint, st_end)])
                               U
                               [("cont", sint, st_receive "p" [("success", sint, st_end)])]
                               "q"); intro H2.
+
        apply H2.
        simpl. left. easy.
        unfold upaco2.
        right. easy.
 
-       exists(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]).
+       assert(singleton(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))])) as Hs2.
+       { pfold. constructor. left. pfold. constructor. }
+       exists(mk_siso(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]) (Hs2)).
+
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix H.
        pfold.
        specialize(st2siso_rcv (upaco2 st2siso r) "success" sint 
@@ -525,12 +364,16 @@ Qed.
 CoFixpoint TS: st :=
   st_send "p" [("l3",sint,TS)].
 
+CoFixpoint TSso: so :=
+  so_send "p" ("l3",sint,TSso).
+
 CoFixpoint TB: st :=
   st_receive "p"
   [
    ("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,TB)])])]);
    ("l2",sint,TS)
   ].
+
 
 CoFixpoint TB': st :=
   st_receive "p"
@@ -539,8 +382,20 @@ CoFixpoint TB': st :=
    ("l2",sint,TS)
   ].
 
+
 CoFixpoint W3: st :=
   st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,W3)])])])].
+
+Lemma w3singleton: singleton W3.
+Proof. pcofix CIH.
+       pfold. 
+       rewrite(siso_eq W3). simpl.
+       constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
 
 Definition W4_gen (cont: st): st :=
   st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,(cont))])])])].
@@ -558,6 +413,18 @@ Proof. easy. Qed.
 Let EqW4 := (W4eq, W4eq2).
 
 CoFixpoint W1: st := st_receive "p" [("l1",sint,st_send "p" [("l3",sint,W1)])].
+
+Lemma w1singleton: singleton W1.
+Proof. pcofix CIH. pfold. 
+       rewrite(siso_eq W1). simpl.
+       constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
+CoFixpoint W1so: so := so_receive "p" [("l1",sint,so_send "p" ("l3",sint,W1so))].
+
+(* CoFixpoint W1siso: siso := siso_receive "p" ("l1",sint,siso_send "p" ("l3",sint,W1siso)). *)
 
 Inductive ev : nat -> Prop :=
   | ev_0 : ev 0
@@ -2031,11 +1898,11 @@ Proof. unfold subtype.
        unfold upaco2.
        right. easy.
 
-       exists W3.
+       exists (mk_siso W3 (w3singleton)).
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite (siso_eq W3).
        simpl.
        specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
@@ -2049,16 +1916,16 @@ Proof. unfold subtype.
        left. easy.
 
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite (siso_eq W3) in CIH.
        simpl in CIH.
        easy.
 
-       exists W1.
+       exists (mk_siso W1 (w1singleton)).
        split.
-       symmetry.
+(*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite (siso_eq W1).
        simpl.
        specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
@@ -2070,14 +1937,14 @@ Proof. unfold subtype.
        apply H. left. easy.
 
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite (siso_eq W1) in CIH.
        simpl in CIH.
        easy.
 
        specialize(W1W3UnfVar4R 0); intros.
        rewrite(siso_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
-       simpl in H.
+       simpl in H. simpl.
        rewrite(siso_eq W1).
        simpl.
        apply H.
