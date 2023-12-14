@@ -1,10 +1,11 @@
-From ST Require Import stream st so si siso.
+From ST Require Import stream st so si siso norefined.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
+Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts.
 
 Local Open Scope string_scope.
 
@@ -15,16 +16,16 @@ Local Open Scope string_scope.
   exists W', si2sisoC V' W' /\ W ~<A W'. *)
 
 Definition subtype (T T': st): Prop :=
-  forall U,  st2soC T U /\
+  forall U, st2soC T U /\ 
   forall V', st2siC T' V' /\
   exists (W: siso), st2sisoC U  (@und W) /\
   exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
 
-(* Definition nsubtype (T T': st): Prop :=
+Definition nsubtype (T T': st): Prop :=
   exists U,  st2soC T U /\
   exists V', st2siC T' V' /\
-  forall W,  st2sisoC U W /\
-  forall W', st2sisoC V' W' /\ W /~< W'.
+  forall W, st2sisoC U (@und W) /\ 
+  forall W', st2sisoC V' (@und W') /\ nRefinementN W W'.
 
 Lemma subneqL: forall T T', subtype T T' -> nsubtype T T' -> False.
 Proof. intros.
@@ -32,14 +33,12 @@ Proof. intros.
        destruct H0 as (U, (Ha, (V', (Hb, H0)))).
        specialize(H U).
        destruct H as (Ha1, H).
-       specialize(H V').
-       destruct H as (Hb1, (W, (Hc, (W', (Hd, He))))).
-       specialize(H0 (@und W)).
+       destruct (H V') as (Hb1, (W, (Hc, (W', (Hd, He))))).
+       specialize(H0 W).
        destruct H0 as (Hc1, H0).
-       specialize(H0 (@und W')).
-       destruct H0 as (Hd', He').
-       apply nrefL in He. easy. easy.
-Qed.  *)
+       destruct (H0 W') as (Hd', He').
+       apply nrefNLS in He. easy. easy.
+Qed.
 
 Definition T': st :=
   st_send "q" [
@@ -238,7 +237,7 @@ Proof. unfold subtype, T, T'.
        right. easy.
 
        assert(singleton(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))])) as Hs1.
-       { pfold. constructor. left. pfold. constructor. }
+       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
        
        exists(mk_siso (st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]) Hs1).
        split.
@@ -258,7 +257,7 @@ Proof. unfold subtype, T, T'.
        right. easy.
 
        assert(singleton(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))])) as Hs2.
-       { pfold. constructor. left. pfold. constructor. }
+       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
        exists(mk_siso(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]) (Hs2)).
 
        split.

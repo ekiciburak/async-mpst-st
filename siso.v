@@ -63,13 +63,20 @@ CoInductive si: Type :=
 *)
 
 Inductive singletonI (R: st -> Prop): st -> Prop :=
-  | ends  : singletonI R st_end
-  | sends1: forall p l s, singletonI R (st_send p [(l,s,st_end)])
-  | sends2: forall p l s w, R w -> singletonI R (st_send p [(l,s,w)])
-  | recvs1: forall p l s, singletonI R (st_receive p [(l,s,st_end)])
-  | recvs2: forall p l s w, R w -> singletonI R (st_receive p [(l,s,w)]).
+  | ends : singletonI R st_end
+  | sends: forall p l s w, R w -> singletonI R (st_send p [(l,s,w)])
+  | recvs: forall p l s w, R w -> singletonI R (st_receive p [(l,s,w)]).
 
 Definition singleton s := paco1 (singletonI) bot1 s.
+
+Lemma sI_mon: monotone1 singletonI.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - apply ends.
+       - apply sends, LE, H.
+       - apply recvs, LE, H.
+Qed.
 
 Class siso: Type := mk_siso 
 { und  : st; 
