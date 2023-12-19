@@ -4,7 +4,7 @@ From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
 Require Import Setoid.
-Require Import Morphisms.
+Require Import Morphisms JMeq.
 
 (* CoInductive so: Type :=
   | so_end    : so 
@@ -82,6 +82,13 @@ Class siso: Type := mk_siso
 { und  : st; 
   sprop: singleton und
 }.
+
+Lemma siso_same: forall s1 s2, @und s1 = @und s2 -> JMeq (@sprop s1) (@sprop s2) -> s1 = s2.
+Proof. intros.
+       destruct s1, s2. simpl in *.
+       subst.
+       easy.
+Qed.
 
 Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
   | st2siso_end: st2siso R st_end st_end
@@ -185,6 +192,13 @@ CoFixpoint act (t: st): coseq (participant * string) :=
     | _                       => Delay conil
   end.
 
+CoFixpoint acts (t: st): stream (participant * string) :=
+  match t with
+    | st_receive p [(l,s,w')] => (coconss (p, "?"%string) (acts w'))
+    | st_send p [(l,s,w')]    => (coconss (p, "!"%string) (acts w'))
+    | _                       => conils
+  end.
+  
 (* CoFixpoint actC (t: siso): coseq (participant * string) :=
   match t with
     | siso_receive p (l,s,w') => Delay (cocons (p, "?"%string) (actC w'))
@@ -890,6 +904,113 @@ Qed.
 #[export]
 Declare Instance Equivalence_ref_eqi: Equivalence refinement.
 
+
+Inductive refinementRN (seq: siso -> siso -> Prop): siso -> siso -> Prop :=
+  | _sref_inN : forall w w' p l s s' P Q,
+                       subsort s' s -> 
+                       seq w w' ->
+                       refinementRN seq 
+                       (mk_siso (st_receive p [(l,s,(@und w))]) P) (mk_siso (st_receive p [(l,s',(@und w'))]) Q)
+  | _sref_outN: forall w w' p l s s' P Q,
+                       subsort s s' ->
+                       seq w w' ->
+                       refinementRN seq (mk_siso (st_send p [(l,s,(@und w))]) P) (mk_siso (st_send p [(l,s',(@und w'))]) Q)
+  | _sref_aN  : forall w w' p l s s' a n P Q R,
+                       subsort s s' ->
+                       seq w (mk_siso (merge_ap_contn p a (@und w') n) P)  ->
+                       act_eq (@und w) (merge_ap_contn p a (@und w') n) ->
+                       refinementRN seq (mk_siso (st_receive p [(l,s',(@und w))]) Q)
+                                        (mk_siso (merge_ap_contn p a (st_receive p [(l,s,(@und w'))]) n) R)
+  | _sref_bN  : forall w w' p l s s' b n P Q R ,
+                       subsort s s' ->
+                       seq w (mk_siso (merge_bp_contn p b (@und w') n) P) ->
+                       act_eq (@und w) (merge_bp_contn p b (@und w') n) ->
+                       refinementRN seq (mk_siso (st_send p [(l,s,(@und w))]) Q)
+                                        (mk_siso (merge_bp_contn p b (st_send p [(l,s',(@und w'))]) n) R)
+  | _sref_endA: forall P, refinementRN seq (mk_siso st_end P) (mk_siso st_end P).
+
+Definition refinementN s1 s2 := paco2 refinementRN bot2 s1 s2.
+
+
+Lemma refinementRN_mon: monotone2 refinementRN.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor. exact H. apply LE. exact H0.
+       - constructor. exact H. apply LE. exact H0.
+       - specialize(_sref_aN r'); intro Ha. eapply Ha; try easy.
+         apply LE. exact H0.
+       - specialize(_sref_bN r'); intro Ha. eapply Ha; try easy.
+         apply LE. exact H0.
+       - constructor.
+Qed.
+
+Lemma sisoE: forall W W', refinementN W W' -> (@und W) ~< (@und W').
+Proof. intros (W, Pw) (W', Pw').
+       revert W W' Pw Pw'.
+       simpl.
+       pcofix CIH.
+       intros  W W' Pw Pw' H.
+       punfold H.
+       inversion H.
+       destruct w as (w, Pww).
+       destruct w' as (w', Pww').
+       simpl in *.
+       pfold.
+       apply _sref_in. easy.
+       right. simpl in *.
+       apply (CIH w w' Pww Pww').
+       pfold. simpl.
+       unfold upaco2 in H3.
+       destruct H3.
+       punfold H3.
+       apply refinementRN_mon.
+       easy.
+       destruct w as (w, Pww).
+       destruct w' as (w', Pww').
+       simpl in *.
+       pfold.
+       apply _sref_out. easy.
+       right. simpl in *.
+       apply (CIH w w' Pww Pww').
+       pfold. simpl.
+       unfold upaco2 in H3.
+       destruct H3.
+       punfold H3.
+       apply refinementRN_mon.
+       easy.
+       destruct w as (w, Pww).
+       destruct w' as (w', Pww').
+       simpl in *.
+       pfold. simpl.
+       apply _sref_a. easy.
+       right.
+       apply (CIH w (merge_ap_contn p a w' n) Pww P).
+       pfold. simpl.
+       unfold upaco2 in H3.
+       destruct H3.
+       punfold H3. 
+       apply refinementRN_mon.
+       easy.
+       easy.
+       destruct w as (w, Pww).
+       destruct w' as (w', Pww').
+       simpl in *.
+       pfold. simpl.
+       apply _sref_b. easy.
+       right.
+       apply (CIH w (merge_bp_contn p b w' n) Pww P).
+       pfold. simpl.
+       unfold upaco2 in H3.
+       destruct H3.
+       punfold H3. 
+       apply refinementRN_mon.
+       easy. 
+       easy.
+       pfold. constructor.
+       apply refinementRN_mon.
+Qed.
+
 (*
 forall w w' p l s s' a n,
                       subsort s s' ->
@@ -947,7 +1068,6 @@ forall w w' p l s s' a n,
 Definition refinementRAC: siso -> siso -> Prop := fun s1 s2 => paco2 refinementRA bot2 s1 s2.
 
 Notation "x '~<A' y" := (refinementRAC x y) (at level 50, left associativity). *)
-
 
 
 

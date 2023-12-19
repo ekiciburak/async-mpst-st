@@ -18,6 +18,13 @@ Arguments conil { _ _ } .
 Arguments cocons { _ _ } _ _.
 Arguments Delay {_} _.
 
+CoInductive stream (a : Type) :=
+  | conils : stream a
+  | coconss: a -> stream a -> stream a.
+
+Arguments conils { _ } .
+Arguments coconss { _ } _ _.
+
 Inductive optionF (a : Type) :=
   | none: optionF a
   | some: a -> optionF a.
@@ -46,6 +53,18 @@ Proof. intros A s.
        destruct s.
        simpl.
        destruct force0; easy.
+Qed.
+
+Definition stream_id {A: Type} (s: stream A): stream A :=
+  match s with
+    | conils       => conils
+    | coconss x xs => coconss x xs
+  end.
+
+Lemma stream_eq: forall {A} s, s = @stream_id A s.
+Proof. intros A s.
+       unfold stream_id.
+       destruct s; easy.
 Qed.
 
 Fixpoint conth {A: Type} (s: coseq A) (n: nat): option A :=
@@ -114,6 +133,10 @@ Proof. intros A xs.
        unfold coseq_id. simpl. easy.
 Qed.
 
+Inductive sin {A: Type}: A -> stream A -> Prop :=
+  | sin1 x xs y ys: xs = coconss y ys -> x = y  -> sin x xs 
+  | sin2 x xs y ys: xs = coconss y ys -> x <> y -> sin x ys -> sin x xs.
+
 Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
@@ -141,7 +164,7 @@ Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoNInSplit1A x: CoNInRA R x (Delay conil)
   | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
 
-Definition CoNIn {A} s1 s2 := paco2 (@CoNInRA A) bot2 s1 s2.
+(* Definition CoNIn {A} s1 s2 := paco2 (@CoNInRA A) bot2 s1 s2. *)
 
 Lemma inOutL: forall {A: Type} x xs, CoInR x xs -> (@CoNInR A x xs -> False).
 Proof. intros.
@@ -199,6 +222,57 @@ Proof. intros.
        easy.
        apply CoIn_mon.
 Qed.
+
+Lemma inOutLA_O: forall {A: Type} (Hdec: forall u v: A, u = v \/ u <> v) x xs, (@CoNInR A x xs -> False) -> CoIn x xs.
+Proof. intros.
+       revert xs H.
+       pcofix CIH. pfold.
+       destruct xs, force0.
+       intros.
+       destruct H0. constructor.
+       destruct (Hdec x a).
+       subst.
+       rewrite(coseq_eq( {| force := cocons a c |})).
+       unfold coseq_id. simpl.
+       intros.
+       apply CoInSplit1A with (ys := c). simpl. easy.
+       intros.
+       apply CoInSplit2A with (y := a) (ys := c). simpl. easy. easy.
+
+       right.
+       apply CIH.
+       intro H1.
+       apply H0.
+       apply CoNInSplit2 with (y := a) (ys := c). simpl. easy. easy. easy.
+Qed.
+
+
+(* Lemma inOutLA_dec: forall {A: Type} (Hdec: forall u v: A, u = v \/ u <> v) x xs, (@CoNInR A x xs) \/ (@CoNInR A x xs -> False).
+Proof. intros.
+       destruct xs, force0. left. constructor.
+
+       destruct (Hdec x a).
+       subst.
+       right.
+       apply inOutLA.
+       pfold.
+       rewrite(coseq_eq( {| force := cocons a c |})).
+       unfold coseq_id. simpl.
+       apply CoInSplit1A with (ys := c). simpl. easy.
+       intros.
+       right.
+       apply inOutLA.
+       pfold.
+       apply CoInSplit2A with (y := a) (ys := c). simpl. easy. easy.
+       left. pcofix CIH.
+       right.
+
+       right.
+       apply CIH.
+       intro H1.
+       apply H0.
+       apply CoNInSplit2 with (y := a) (ys := c). simpl. easy. easy. easy.
+Qed. *)
 
 Lemma inOutRA: forall {A: Type} x xs, @CoNInR A x xs -> (CoIn x xs -> False).
 Proof. intros. 

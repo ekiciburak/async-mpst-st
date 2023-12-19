@@ -21,6 +21,37 @@ Definition subtype (T T': st): Prop :=
   exists (W: siso), st2sisoC U  (@und W) /\
   exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
 
+Definition subtypeA (T T': st): Prop :=
+  forall U, st2soC T U /\ 
+  forall V', st2siC T' V' /\
+  exists (W: siso), st2sisoC U  (@und W) /\
+  exists (W':siso), st2sisoC V' (@und W') /\ refinementN W W'.
+
+Lemma equivLeft: forall T T', subtypeA T T' -> subtype T T'.
+Proof. unfold subtype, subtypeA.
+       intros.
+       split.
+       specialize(H U).
+       destruct H as (H1, H).
+       exact H1.
+       intro V'.
+       split.
+       specialize(H U).
+       destruct H as (H1, H).
+       specialize(H V').
+       destruct H as (H2, H).
+       exact H2.
+       specialize(H U).
+       destruct H as (H1, H).
+       specialize(H V').
+       destruct H as (H2, H).
+       destruct H as (W, (H4, (W', (H5, H6)))).
+       exists W. split. exact H4. exists W'. split. exact H5.
+       simpl.
+       apply sisoE in H6.
+       easy.
+Qed.
+
 Definition nsubtype (T T': st): Prop :=
   exists U,  st2soC T U /\
   exists V', st2siC T' V' /\
