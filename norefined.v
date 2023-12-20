@@ -2416,9 +2416,6 @@ Proof. intros.
        rewrite apend_ann. easy.
 Qed.
 
-Lemma sinv4': forall w p, singleton w -> (exists a n, (w = merge_ap_contn p a w n)).
-Admitted.
-
 Lemma sinv3: forall w p, singleton w ->
                        (exists n a, (w = merge_ap_contn p a w n)) \/
                        (exists n b, (w = merge_bp_contn p b w n)).
@@ -2565,70 +2562,6 @@ Proof. intros.
        easy.
 Qed.
 
-(*
-Lemma nrefNRS: forall w w', (nRefinementN w w' -> False) -> (@und w) ~< (@und w').
-Proof. destruct w as (w, Pw).
-       destruct w' as (w', Pw').
-       intro H.
-       generalize dependent w.
-       generalize dependent w'.
-       simpl. pcofix CIH.
-       intros.
-       specialize(sinv2 w "p" Pw); intros Hpw.
-       destruct Hpw as [Hpw | Hpw].
-       destruct Hpw as (n, (a, (w1, (Heq1, Hs1)))).
-       { pfold.
-         specialize(sinv2 w' "p" Pw'); intros Hpw'.
-         destruct Hpw' as [Hpw' | Hpw'].
-         destruct Hpw' as (m, (a', (w2, (Heq2, Hs2)))).
-         subst.
-         case_eq a; intros.
-         case_eq a'; intros.
-         subst.
-         case_eq n; intros.
-         subst. simpl in *.
-         case_eq m; intros.
-         subst. simpl in *.
-         
-         case_eq(eqb l l'); intro Heq2.
-         rewrite eqb_eq in Heq2.
-         specialize(sort_dec s s'); intro Heq3.
-         destruct Heq3 as [Heq3 | Heq3].
-         subst.
-         apply _sref_out. easy.
-         right.
-         specialize (CIH w2 Hs2 w1 Hs1). apply CIH.
-         simpl.
-         specialize (casen2 q l' s s' ({| und := w1; sprop := Hs1 |}) {| und := w2; sprop := Hs2 |} Pw Pw'); intros Hp.
-         intros Hp2.
-         apply Hp. easy. simpl. exact H0.
-         exact Hp2.
-         subst.
-         specialize (n_out_sN ({| und := w1; sprop := Hs1 |}) {| und := w2; sprop := Hs2 |} q l' s s' Pw Pw'); intro Hn.
-         destruct H0.
-         apply Hn. easy.
-         subst.
-         rewrite eqb_neq in Heq2.
-         specialize (n_out_lN ({| und := w1; sprop := Hs1 |}) {| und := w2; sprop := Hs2 |} q l l' s s' Pw Pw'); intro Hn.
-         destruct H0.
-         apply Hn. easy.
-         rewrite eqb_neq in Heq
-
-         admit.
-         destruct Hpw' as [Hpw' | Hpw'].
-         destruct Hpw' as (q, (l', (s', (w2, (Heq2, Hs2))))).
-         subst.
-         destruct H0.
-         admit.
-         subst.
-         destruct H0.
-         specialize(n_outN {| und := w1; sprop := Hs1 |} {| und := end; sprop := Pw' |} p l s Pw); intro Hn.
-         simpl in Hn.
-         apply Hn. 
-         rewrite(coseq_eq(act st_end)). unfold coseq_id. simpl.
-         constructor.
-       } *)
-
 Lemma hhact: forall p w ys, singleton w -> acts w = coconss (p, "?"%string) ys ->
   exists l s w', w = (p & [(l,s,w')]).
 Proof. intros.
@@ -2710,7 +2643,12 @@ Proof. intros.
        rewrite(siso_eq(merge_bp_cont p (bp_merge s H1 l1 s1 b) (p ! [(l2, s2, w3)]))). simpl. easy.
 Qed.
 
-
+Lemma n_b_actN: forall p l s s' w w' b P Q,
+  subsort s s' ->
+  (act_eq w (merge_bp_cont p b w') -> False) ->
+  nRefinementN (mk_siso (p ! [(l,s,w)]) P)
+               (mk_siso (merge_bp_cont p b (p ! [(l,s',w')])) Q).
+Admitted.
 
 Lemma nrefNRS: forall w w', (nRefinementN w w' -> False) -> (@und w) ~< (@und w').
 Proof. destruct w as (w, Pw).
@@ -2776,56 +2714,39 @@ Proof. destruct w as (w, Pw).
          specialize(sort_dec s s1); intro Heq3.
          destruct Heq3 as [Heq3 | Heq3].
          pfold.
-         specialize(LEM (refinementR (upaco2 refinementR r) w1 (merge_bp_cont p b w3))); intro Href.
-         destruct Href as [Href | Href].
          specialize(LEM (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
          specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1 Heq3); intro Hrb.
          simpl in Hrb. 
-         apply Hrb. left. pfold. easy. easy.
+         apply Hrb.
 
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw' H0.
-         assert(singleton (merge_bp_cont p b w3)) as Pw''.
-         assert(singleton (merge_bp_cont p b w3)) as Pw''.
-         { specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw'); intros Hss.
-           specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
-           specialize (@extbp p b w3 Hss2); intro Hss3. easy.
-         }
-(*          specialize(nrefNLS (mk_siso w1 Hs1) (mk_siso (merge_bp_cont p b w3) Pw'')); intro HHn.
-         simpl in HHn.
-         unfold refinement in HHn.
-         punfold HHn. *)
-         specialize(LEM (nRefinementN (mk_siso w1 Hs1) (mk_siso (merge_bp_cont p b w3) Pw''))); intros Hnref.
-         destruct Hnref as [Hnref | Hnref].
-         destruct H0.
-         assert(singleton w3) as Hs3. 
-         { specialize (@extbpR p b w3 Pw''); intros Hss. easy. }
-         specialize(n_b_wN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw'' Pw); intros HN. simpl in HN.
-         apply HN.
-         easy. easy. easy.
-
-         admit.
-
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw' H0.
-         assert(singleton (merge_bp_cont p b w3)) as Pw''.
-         { specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw'); intros Hss.
-           specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
-           specialize (@extbp p b w3 Hss2); intro Hss3. easy.
-         }
-         specialize(LEM (nRefinementN (mk_siso w1 Hs1) (mk_siso (merge_bp_cont p b w3) Pw''))); intros Hnref.
-         destruct Hnref as [Hnref | Hnref].
-         destruct H0.
          assert(singleton w3) as Hs3.
-         { specialize (@extbpR p b w3 Pw''); intros Hss. easy. }
+         { revert Pw' H0.
+           rewrite IHw3.
+           intros Pw'' H0.
+           specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw''); intros Hss.
+           specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
+           easy. 
+         }
+         assert(singleton (merge_bp_cont p b w3)) as Pw''.
+         { specialize(@extbp p b w3 Hs3); intros Hss. easy. }
+         specialize(CIH (merge_bp_cont p b w3) Pw'' w1 Hs1).
+         right.
+         apply CIH.
+         intro h.
+         apply H0.
+         generalize dependent Pw'.
+         rewrite IHw3.
+         intros Pw' H0.
          specialize(n_b_wN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw'' Pw); intros HN. simpl in HN.
-         apply HN.
-         easy. easy.
+         apply HN. easy. easy. easy.
 
-         admit.
+         generalize dependent Pw'.
+         rewrite IHw3.
+         intros Pw'' H0.
+         destruct H0.
+         specialize(n_b_actN p l1 s s1 w1 w3 b Pw Pw''); intros HN.
+         apply HN. easy. easy.
 
          generalize dependent Pw'.
          rewrite IHw3.
@@ -2834,7 +2755,7 @@ Proof. destruct w as (w, Pw).
          assert(singleton w3) as Hs3.
          { specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw''); intros Hss.
            specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
-          easy. 
+           easy. 
          }
          specialize (n_b_sN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw Pw'' Heq3); intros Hn.
          apply Hn.
@@ -2864,9 +2785,85 @@ Proof. destruct w as (w, Pw).
          destruct Hpw' as [Hpw' | Hpw'].
          destruct Hpw' as (q, (l', (s', (w2, (Heq2, Hs2))))).
          subst.
-         destruct H0.
 
-         admit.
+(*****)
+
+         specialize(LEM (CoNInR (p, "!"%string) (act (q & [(l', s', w2)])))); intro Hclass.
+         destruct Hclass as [Hclass | Hclass].
+         destruct H0.
+         specialize (n_outN {| und := w1; sprop := Hs1 |} {| und := q & [(l', s', w2)]; sprop := Pw' |} p l s ); intros HH.
+         simpl in HH. apply HH. easy.
+
+         unfold not in Hclass.
+         apply inOutLA_O in Hclass.
+         unfold CoIn in Hclass.
+         punfold Hclass.
+         assert(CoInRA (upaco2 CoInRA bot2) (p, "!"%string) (act (q & [(l', s', w2)])) -> CoInR (p, "!"%string) (act (q & [(l', s', w2)]))) as Hpr by admit.
+         apply Hpr in Hclass.
+         specialize(inSend (q & [(l', s', w2)]) p Pw' Hclass); intros.
+         destruct H as (b,(l1,(s1,(w3,IHw3)))).
+         generalize dependent Pw'.
+         rewrite IHw3.
+         intros Pw' H0.
+
+         case_eq(eqb l l1); intro Heq2.
+         rewrite eqb_eq in Heq2. subst.
+         specialize(sort_dec s s1); intro Heq3.
+         destruct Heq3 as [Heq3 | Heq3].
+         pfold.
+         specialize(LEM (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
+         destruct Hact as [Hact | Hact].
+         specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1 Heq3); intro Hrb.
+         simpl in Hrb.
+         apply Hrb.
+
+         assert(singleton w3) as Hs3.
+         { 
+            specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw'); intros Hss2.
+            specialize (@extsR p l1 s1 w3 Hss2); intros Hss3. easy.
+         }
+         assert(singleton (merge_bp_cont p b w3)) as Pw''.
+         { specialize(@extbp p b w3 Hs3); intros Hss. easy. }
+         specialize(CIH (merge_bp_cont p b w3) Pw'' w1 Hs1).
+         right.
+         apply CIH.
+         intro h.
+         apply H0.
+
+         specialize(n_b_wN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw'' Pw); intros HN. simpl in HN.
+         apply HN. easy. easy. easy.
+
+         destruct H0.
+         specialize(n_b_actN p l1 s s1 w1 w3 b Pw Pw'); intros HN.
+         apply HN. easy. easy.
+
+         destruct H0.
+         assert(singleton w3) as Hs3.
+         { specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw'); intros Hss.
+           specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
+           easy. 
+         }
+         specialize (n_b_sN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw Pw' Heq3); intros Hn.
+         apply Hn.
+
+         rewrite eqb_neq in Heq2.
+         destruct H0.
+         assert(singleton w3) as Hs3.
+         { specialize (@extbpR p b (p ! [(l1, s1, w3)]) Pw'); intros Hss.
+           specialize (@extsR p l1 s1 w3 Hss); intros Hss2.
+           easy. 
+         }
+         specialize (n_b_lN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l l1 s s1 b 1 Pw Pw'); intros Hn.
+         apply Hn. easy.
+         apply CoIn_mon.
+         intros (u1,u2) (v1,v2).
+         specialize (string_dec u1 v1); intro Hstr.
+         destruct Hstr. subst.
+         specialize (string_dec u2 v2); intro Hstr.
+         destruct Hstr. subst.
+         left. easy. 
+         right. unfold not in *. intro Hss. apply n. inversion Hss. easy.
+         right. unfold not in *. intro Hss. apply n. inversion Hss. easy.
 
          subst.
          destruct H0.
