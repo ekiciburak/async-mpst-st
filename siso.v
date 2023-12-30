@@ -374,6 +374,58 @@ Arguments bp_mergea {_} _ _ _ _.
 Arguments bp_merge {_} _ _ _ _ _.
 Arguments bp_end {_}.
 
+Inductive Cp (p: participant): Type :=
+  | cp_receive: forall q, p <> q -> label -> st.sort -> Cp p
+  | cp_mergea : forall q, p <> q -> label -> st.sort -> Cp p -> Cp p
+  | cp_send   : participant -> label -> st.sort -> Cp p
+  | cp_merge  : participant -> label -> st.sort -> Cp p -> Cp p
+  | cp_end    : Cp p.
+
+Arguments cp_receive {_} _ _ _ _.
+Arguments cp_merge {_} _ _ _ _.
+Arguments cp_end {_}.
+Arguments cp_send {_} _ _ _.
+Arguments cp_mergea {_} _ _ _ _.
+
+CoFixpoint merge_cp_cont (p: participant) (c: Cp p) (w: st): st :=
+  match c with 
+    | cp_receive q H l s  => st_receive q [(l,s,w)]
+    | cp_send q l s       => st_send q [(l,s,w)]
+    | cp_mergea q H l s c => st_receive q [(l,s,(merge_cp_cont p c w))]
+    | cp_merge q l s c    => st_send q [(l,s,(merge_cp_cont p c w))]
+    | cp_end              => w
+  end.
+
+Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
+  end.
+
+Lemma Ap2Cp: forall p, Ap p -> Cp p.
+Proof. intros p a.
+       induction a; intros.
+       exact (cp_receive q n s s0).
+       exact (cp_mergea q n s s0 IHa).
+       exact (cp_end).
+Defined.
+
+Lemma Ap2CpCont: forall p a w, merge_ap_cont p a w = merge_cp_cont p (Ap2Cp p a) w.
+Proof. intros.
+       induction a; intros.
+       simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q n s s0) w)). simpl. easy.
+       simpl.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 (Ap2Cp p a)) w)). 
+       simpl. rewrite IHa. easy.
+       simpl.
+       rewrite(siso_eq(merge_ap_cont p ap_end w)).
+       rewrite(siso_eq(merge_cp_cont p cp_end w)).
+       simpl. easy.
+Qed.
+
 (* 
 From Equations Require Import Equations.
 
@@ -483,6 +535,41 @@ Fixpoint listBp (p: participant) (l: list (Bp p)): Bp p :=
 Definition BpnA (p: participant) (b: Bp p) (n: nat): Bp p :=
   listBp p (napp n (bpList p b)).
 
+Fixpoint cpList (p: participant) (c: Cp p): list (Cp p) :=
+  match c with
+    | cp_receive q H l s  => [c]
+    | cp_mergea q H l s c => cp_receive q H l s :: (cpList p c)
+    | cp_send q l s       => [c]
+    | cp_merge q l s c    => cp_send q l s :: (cpList p c)
+    | cp_end              => nil
+  end.
+
+Fixpoint listCp (p: participant) (l: list (Cp p)): Cp p :=
+  match l with
+    | nil   => cp_end
+    | x::xs => 
+      match x with
+        | cp_receive q H l s => cp_mergea q H l s (listCp p xs)
+        | cp_send q l s      => cp_merge q l s (listCp p xs)
+        | _                  => x
+      end
+  end.
+
+(* Lemma cplisteq: forall p a, listCp p (cpList p a) = a.
+Proof. intros p a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+ *)
+
+Definition CpnA (p: participant) (c: Cp p) (n: nat): Cp p :=
+  listCp p (napp n (cpList p c)).
+
 Lemma bpend_ann: forall n p w, merge_bp_contn p (bp_end) w n = w.
 Proof. intro n.
        induction n; intros.
@@ -510,6 +597,21 @@ Qed.
 Lemma bpend_an: forall p w, merge_bp_cont p (bp_end) w = w.
 Proof. intros.
        rewrite(siso_eq(merge_bp_cont p bp_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma cpend_ann: forall n p w, merge_cp_contn p (cp_end) w n = w.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. simpl.
+       rewrite(siso_eq(merge_cp_cont p cp_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma cpend_an: forall p w, merge_cp_cont p (cp_end) w = w.
+Proof. intros.
+       rewrite(siso_eq(merge_cp_cont p cp_end w)). simpl.
        destruct w; easy.
 Qed.
 
@@ -604,6 +706,39 @@ Proof. intros p b.
        simpl. rewrite bpend_an. easy.
 Qed.
 
+Lemma mergeSw4: forall p a l w,
+merge_cp_cont p (listCp p (cpList p a ++ l)) w =
+merge_cp_cont p a (merge_cp_cont p (listCp p l) w).
+Proof. intros p a.
+       induction a; intros.
+       simpl.
+       case_eq l; intros.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 cp_end) w)). simpl.
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q n s s0) (merge_cp_cont p cp_end w))).
+       simpl. rewrite cpend_an. easy.
+
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 (listCp p (c :: l0))) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q n s s0) (merge_cp_cont p (listCp p (c :: l0)) w))).
+       simpl. easy.
+
+       rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_mergea q n s s0 a) ++ l)) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 a) (merge_cp_cont p (listCp p l) w))).
+       simpl. rewrite IHa. easy.
+
+       rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_send s s0 s1) ++ l)) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (merge_cp_cont p (listCp p l) w))).
+       simpl. easy.
+       
+       setoid_rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_merge s s0 s1 a) ++ l)) w )) at 1.
+       rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 a) (merge_cp_cont p (listCp p l) w))).
+       simpl. rewrite IHa. easy.
+       simpl.
+       rewrite cpend_an.
+        easy.
+Qed.
+
+
 Lemma mergeeq: forall n p a w,
   merge_ap_cont p (ApnA p a n) w = merge_ap_contn p a w n.
 Proof. intro n.
@@ -645,6 +780,21 @@ Proof. intro n.
 
        unfold BpnA. simpl.
        rewrite mergeSw3. 
+       easy.
+Qed.
+
+Lemma mergeeq4: forall n p a w,
+  merge_cp_cont p (CpnA p a n) w = merge_cp_contn p a w n.
+Proof. intro n.
+       induction n; intros.
+       simpl. unfold CpnA. simpl.
+       rewrite(siso_eq(merge_cp_cont p cp_end w)). simpl.
+       destruct w; easy.
+       simpl.
+       rewrite <- IHn.
+
+       unfold CpnA. simpl.
+       rewrite mergeSw4. 
        easy.
 Qed.
 
@@ -852,6 +1002,7 @@ Inductive cosetIncR: list (participant * string) -> coseq (participant * string)
             cosetIncR (x::xs) ys.
 
 Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
+Definition act_eqA (w w': st) := forall a, CoInR a (act w) <-> CoInR a (act w').
 
 (* Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w'). *)
 

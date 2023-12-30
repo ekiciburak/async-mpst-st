@@ -246,34 +246,6 @@ Proof. intros.
        apply CoNInSplit2 with (y := a) (ys := c). simpl. easy. easy. easy.
 Qed.
 
-
-(* Lemma inOutLA_dec: forall {A: Type} (Hdec: forall u v: A, u = v \/ u <> v) x xs, (@CoNInR A x xs) \/ (@CoNInR A x xs -> False).
-Proof. intros.
-       destruct xs, force0. left. constructor.
-
-       destruct (Hdec x a).
-       subst.
-       right.
-       apply inOutLA.
-       pfold.
-       rewrite(coseq_eq( {| force := cocons a c |})).
-       unfold coseq_id. simpl.
-       apply CoInSplit1A with (ys := c). simpl. easy.
-       intros.
-       right.
-       apply inOutLA.
-       pfold.
-       apply CoInSplit2A with (y := a) (ys := c). simpl. easy. easy.
-       left. pcofix CIH.
-       right.
-
-       right.
-       apply CIH.
-       intro H1.
-       apply H0.
-       apply CoNInSplit2 with (y := a) (ys := c). simpl. easy. easy. easy.
-Qed. *)
-
 Lemma inOutRA: forall {A: Type} x xs, @CoNInR A x xs -> (CoIn x xs -> False).
 Proof. intros. 
        induction H.
@@ -292,7 +264,6 @@ Proof. intros.
        easy.
        apply CoIn_mon.
 Qed.
-
 
 (* 
 Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=

@@ -9,11 +9,13 @@ Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts.
 
 Local Open Scope string_scope.
 
-(* Definition subtypeA (T T': st): Prop :=
+(* 
+Definition subtypeA (T T': st): Prop :=
   forall U,  st2soCA T U /\
   forall V', st2siCA T' V' /\
   exists W,  so2sisoC U W /\
-  exists W', si2sisoC V' W' /\ W ~<A W'. *)
+  exists W', si2sisoC V' W' /\ W ~<A W'. 
+*)
 
 Definition subtype (T T': st): Prop :=
   forall U, st2soC T U /\ 
