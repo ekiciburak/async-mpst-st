@@ -337,6 +337,7 @@ CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
     | ap_end              => w
   end.
  *)
+
 Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
     | O    => w
@@ -348,7 +349,7 @@ Fixpoint merge_ap_contn (p: participant) (a: Ap p) (w: st) (n: nat): st :=
     | O    => w
     | S k  => merge_ap_contB p a (merge_ap_contnB p a w k)
   end. *)
-  
+
 Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   match n with
     | O    => w
@@ -359,7 +360,6 @@ Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
         | ap_end              => w
       end
   end.
-
 
 Inductive Bp (p: participant): Type :=
   | bp_receivea: participant -> label -> st.sort -> Bp p
@@ -400,6 +400,28 @@ Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
   match n with
     | O    => w
     | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
+  end.
+
+Fixpoint actC (p: participant) (c: Cp p): list (participant * string) :=
+  match c with
+    | cp_receive q x l s  => cons (q, "?"%string) nil
+    | cp_mergea q x l s c => cons (q, "?"%string) (actC p c)
+    | cp_send q l s       => cons (q, "!"%string) nil
+    | cp_merge q l s c    => cons (q, "!"%string) (actC p c)
+    | _                   => nil
+  end.
+
+Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * string) :=
+  match n with
+    | O   => nil
+    | S k =>
+      match c with
+        | cp_receive q x l s    => cons (q, "?"%string) (actCn p c k)
+        | cp_mergea q x l s cnt => (cons (q, "?"%string) (actC p cnt)) ++ (actCn p c k)
+        | cp_send q l s         => cons (q, "!"%string) (actCn p c k)
+        | cp_merge q l s cnt    => (cons (q, "!"%string) (actC p cnt)) ++ (actCn p c k)
+        | _                     => nil
+      end
   end.
 
 Lemma Ap2Cp: forall p, Ap p -> Cp p.
@@ -633,6 +655,15 @@ Proof. intro n.
        - simpl. rewrite IHn. easy.
 Qed.
 
+Lemma mcomm3: forall n p c w,
+             merge_cp_contn p c (merge_cp_cont p c w) n =
+             merge_cp_cont p c (merge_cp_contn p c w n).
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - simpl. rewrite IHn. easy.
+Qed.
+
 Lemma mergeSw: forall p a l w,
 merge_ap_cont p (listAp p (apList p a ++ l)) w =
 merge_ap_cont p a (merge_ap_cont p (listAp p l) w).
@@ -729,13 +760,13 @@ Proof. intros p a.
        rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_send s s0 s1) ++ l)) w)).
        rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (merge_cp_cont p (listCp p l) w))).
        simpl. easy.
-       
-       setoid_rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_merge s s0 s1 a) ++ l)) w )) at 1.
+
+       setoid_rewrite(siso_eq(merge_cp_cont p (listCp p (cpList p (cp_merge s s0 s1 a) ++ l)) w)) at 1.
        rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 a) (merge_cp_cont p (listCp p l) w))).
        simpl. rewrite IHa. easy.
        simpl.
        rewrite cpend_an.
-        easy.
+       easy.
 Qed.
 
 
@@ -845,6 +876,33 @@ Proof. intros p a.
        destruct w; easy.
 Qed.
 
+Lemma hm1c: forall p c w, act (merge_cp_cont p c w) = appendL (actC p c) (act w).
+Proof. intros p c.
+       induction c; intros.
+       rewrite(coseq_eq(act (merge_cp_cont p (cp_receive q n s s0) w))).
+       rewrite(coseq_eq(appendL (actC p (cp_receive q n s s0)) (act w))).
+       unfold coseq_id.
+       simpl. rewrite anl2. easy.
+       
+       rewrite(coseq_eq(act (merge_cp_cont p (cp_mergea q n s s0 c) w))).
+       rewrite(coseq_eq(appendL (actC p (cp_mergea q n s s0 c)) (act w))).
+       unfold coseq_id.
+       simpl. rewrite IHc. easy.
+       
+       rewrite(coseq_eq(act (merge_cp_cont p (cp_send s s0 s1) w))).
+       rewrite(coseq_eq(appendL (actC p (cp_send s s0 s1)) (act w))).
+       unfold coseq_id.
+       simpl. rewrite anl2. easy.
+       
+       rewrite(coseq_eq(act (merge_cp_cont p (cp_merge s s0 s1 c) w))).
+       rewrite(coseq_eq(appendL (actC p (cp_merge s s0 s1 c)) (act w))).
+       unfold coseq_id. simpl.
+       rewrite IHc. easy.
+
+       rewrite cpend_an. simpl. rewrite anl2.
+       easy.
+Qed.
+
 Lemma unfcs: forall n p b, (actBn p b n ++ actB p b) = (actBn p b n.+1).
 Proof. intro n.
        induction n; intros.
@@ -898,6 +956,40 @@ Proof. intro n.
        simpl. easy.
 Qed.
 
+Lemma unfcsc: forall n p c, (actCn p c n ++ actC p c) = (actCn p c n.+1).
+Proof. intro n.
+       induction n; intros.
+       destruct c; simpl; try easy.
+       rewrite app_comm_cons.
+       rewrite app_nil_r. easy.
+       rewrite app_comm_cons.
+       rewrite app_nil_r. easy.
+
+       specialize(IHn p c).
+       simpl in *.
+       destruct c.
+       simpl in *. rewrite IHn. easy.
+
+       simpl in *.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite <- IHn. easy.
+
+       rewrite <- app_comm_cons.
+       rewrite IHn. easy.
+
+       simpl in *.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite <- IHn. easy.
+
+       simpl. easy.
+Qed.
+
 Lemma hm2: forall n p, actBn p bp_end n = [].
 Proof. intro n.
        induction n; intros.
@@ -906,6 +998,13 @@ Proof. intro n.
 Qed.
 
 Lemma hm2a: forall n p, actAn p ap_end n = [].
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. easy.
+Qed.
+
+Lemma hm2c: forall n p, actCn p cp_end n = [].
 Proof. intro n.
        induction n; intros.
        simpl. easy.
@@ -967,6 +1066,62 @@ Proof. intro n.
 
        simpl.
        rewrite hm2a.
+       easy. 
+Qed.
+
+Lemma hh2: forall n p s s0 s1, actCn p (cp_send s s0 s1) n ++ actC p (cp_send s s0 s1) = ((s, "!"%string) :: actCn p (cp_send s s0 s1) n)%SEQ.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. f_equal.
+       rewrite IHn. easy.
+Qed.
+
+Lemma hh3: forall n p c s s0 s1, 
+actCn p (cp_merge s s0 s1 c) n ++ ((s, "!"%string) :: actC p c)%SEQ =
+((s, "!"%string) :: actC p c)%SEQ ++ actCn p (cp_merge s s0 s1 c) n.
+Proof. intro n.
+       induction n; intros.
+       simpl.
+       rewrite app_nil_r. easy.
+
+       simpl. f_equal.
+       rewrite <- List.app_assoc.
+       rewrite app_comm_cons.
+       f_equal.
+       rewrite IHn. easy.
+Qed.
+
+Lemma h2: forall (n: nat) p c w, 
+act (merge_cp_contn p c w n) = appendL (actCn p c n) (act w).
+Proof. intro n.
+       induction n; intros.
+       simpl. rewrite anl2. easy.
+       simpl.
+       pose proof IHn as IHnn.
+       specialize(IHn p c (merge_cp_contn p c w 1)).
+       simpl in IHn.
+       rewrite mcomm3 in IHn.
+       rewrite IHn.
+       rewrite hm1c.
+       rewrite stream.app_assoc.
+       f_equal.
+       destruct c; try easy.
+       rewrite unfcsc.
+       simpl. easy.
+
+       rewrite unfcsc.
+       simpl. easy.
+
+       simpl.
+       rewrite hh2. easy.
+
+       rewrite hh3. simpl.
+       rewrite app_comm_cons.
+       easy.
+
+       simpl.
+       rewrite hm2c.
        easy. 
 Qed.
 
@@ -1054,6 +1209,65 @@ Qed.
 (* rewriting issues *)
 #[export]
 Declare Instance Equivalence_ref_eqi: Equivalence refinement.
+
+
+Inductive refinementRC (seq: st -> st -> Prop): st -> st -> Prop :=
+  | _sref_inC : forall w w' p l s s',
+                       subsort s' s -> 
+                       seq w w' ->
+                       refinementRC seq (st_receive p [(l,s,w)]) (st_receive p [(l,s',w')])
+
+  | _sref_outC: forall w w' p l s s',
+                       subsort s s' ->
+                       seq w w' ->
+                       refinementRC seq (st_send p [(l,s,w)]) (st_send p [(l,s',w')])
+
+  | _sref_aC  : forall w w' p l s s' c n,
+                       subsort s' s ->
+                       seq w (merge_cp_contn p c w' n)  ->
+                       act_eq w (merge_cp_contn p c w' n) ->
+                       refinementRC seq (st_receive p [(l,s',w)]) (merge_cp_contn p c (st_receive p [(l,s,w')]) n)
+
+  | _sref_bC  : forall w w' p l s s' b n,
+                       subsort s s' ->
+                       seq w (merge_bp_contn p b w' n) ->
+                       act_eq w (merge_bp_contn p b w' n) ->
+                       refinementRC seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
+
+(*   | _sref_cC  : forall w w' p l s s' c n,
+                       subsort s' s ->
+                       seq w (merge_cp_contn p c w' n) ->
+                       act_eq w (merge_cp_contn p c w' n) ->
+                       refinementRC seq (st_send p [(l,s,w)]) (merge_cp_contn p c (st_send p [(l,s',w')]) n) *)
+
+  | _sref_endC: refinementRC seq st_end st_end.
+
+(* rewriting issues *)
+#[export]
+Declare Instance Equivalence_seq_genRC (r: st -> st -> Prop): Equivalence r -> Equivalence (refinementRC r).
+
+Definition refinementC: st -> st -> Prop := fun s1 s2 => paco2 refinementRC bot2 s1 s2.
+
+Notation "x '~~<' y" := (refinementC x y) (at level 50, left associativity).
+
+Lemma refinementRC_mon: monotone2 refinementRC.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor. exact H. apply LE. exact H0.
+       - constructor. exact H. apply LE. exact H0.
+       - specialize(_sref_aC r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H0.
+       - specialize(_sref_bC r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H0.
+(*        - specialize(_sref_cC r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H0. *)
+       - constructor.
+Qed.
+
+(* rewriting issues *)
+#[export]
+Declare Instance Equivalence_ref_eqic: Equivalence refinementC.
 
 
 Inductive refinementRN (seq: siso -> siso -> Prop): siso -> siso -> Prop :=

@@ -5,6 +5,7 @@ si.v
 siso.v
 norefined.v
 newN.v
+newN2.v
 subtyping.v
 batchproc.v
 typesystem.v
