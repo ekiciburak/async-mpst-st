@@ -5,6 +5,7 @@ Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
+Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 Require Import ProofIrrelevance.
 
 Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p [(l,s,w)]).
@@ -2657,7 +2658,7 @@ Proof. intros w w' H.
          rewrite <- mergeeq2 in H5.
          rewrite <- mergeeq5 in H5.
          apply case12_2d in H5. easy.
-       }
+       } 
        {
          inversion H.
          subst. easy.
@@ -2747,7 +2748,6 @@ Proof. intros w w' H.
          apply refinementR_mon.
          easy.
 
-
          subst.
          rewrite <- mergeeq3 in H6.
          rewrite <- mergeeq3 in H6.
@@ -2822,7 +2822,7 @@ Proof. intros w w' H.
        }
 Qed.
 
-Axiom LEM: forall (p: Prop), p \/ ~p.
+(* Axiom LEM: forall (p: Prop), p \/ ~p. *)
 
 Lemma nrefLSV: forall w w',  (w ~< w' /\ w /~< w') -> False.
 Proof. intros.
@@ -3020,10 +3020,10 @@ Proof. intros.
 Qed.
 
 Lemma casen2: forall p l s1 s2 w1 w2 P Q,
-subsort s1 s2 ->
-(nRefinementN (mk_siso (st_send p [(l, s1, (@und w1))]) P)
-              (mk_siso (st_send p [(l, s2, (@und w2))]) Q) -> False) ->
-(nRefinementN w1 w2 -> False).
+  subsort s1 s2 ->
+  (nRefinementN (mk_siso (st_send p [(l, s1, (@und w1))]) P)
+                (mk_siso (st_send p [(l, s2, (@und w2))]) Q) -> False) ->
+  (nRefinementN w1 w2 -> False).
 Proof. intros.
        apply H0.
        apply n_out_wN.
@@ -3247,10 +3247,75 @@ Proof. intros w p Hs Hin Hout.
        specialize (Hout H1). easy.
 Qed.
 
+Lemma inReceive_wsE: forall w p (Hs: singleton w) (* (Hin: CoInR (p, "?"%string) (act w)) *),
+  (forall q, p <> q) ->
+  (exists q, CoInR (q, "!"%string) (act w)) ->
+  exists d q l s w2, w = merge_dp_cont p d (q ! [(l,s,w2)]).
+Proof. intros w p Hs Hdiff (q, Hout).
+       remember (q, "!"%string) as v.
+       remember (act w) as u.
+       generalize dependent w.
+       induction Hout; intros.
+
+       case_eq w; intros. subst. easy.
+       subst.
+       specialize(invsingl s l Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       inversion H.
+       subst.
+
+       specialize(invsingl2 s l Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       inversion H.
+       subst.
+       exists dp_end. exists q. exists l1. exists s1. exists w1.
+       rewrite dpend_an. easy.
+
+       subst.
+       case_eq w; intros. subst. easy.
+       subst.
+       specialize(invsingl s l Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       subst. inversion H. subst.
+
+       assert((q, "!"%string) = (q, "!"%string)) by easy.
+       assert(singleton w1).
+       { apply extrR in Hs. easy.  }
+       assert((act w1) = (act w1)) by easy.
+       specialize(IHHout H1 w1 H2 H3).
+       destruct IHHout as (d,(q1,(l2,(s2,(w3,IHw3))))).
+       rewrite IHw3.
+       assert (p <> s).
+       { easy. }
+       exists (dp_mergea s H4 l1 s1 d). exists q1. exists l2. exists s2. exists w3.
+       rewrite(siso_eq(merge_dp_cont p (dp_mergea s H4 l1 s1 d) (q1 ! [(l2, s2, w3)]))).
+       simpl. easy.
+
+       subst.
+       specialize(invsingl2 s l Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       subst. inversion H. subst.
+       assert((q, "!"%string) = (q, "!"%string)) by easy.
+       assert(singleton w1).
+       { apply extsR in Hs. easy. }
+       assert((act w1) = (act w1)) by easy.
+       specialize(IHHout H1 w1 H2 H3).
+       destruct IHHout as (d,(q1,(l2,(s2,(w3,IHw3))))).
+       rewrite IHw3.
+       assert (p <> s). (* unfold not in *. intros. apply H0. subst. easy. *)
+       { easy. }
+       exists (dp_merge s H4 l1 s1 d). exists q1. exists l2. exists s2. exists w3.
+       rewrite(siso_eq(merge_dp_cont p (dp_merge s H4 l1 s1 d) (q1 ! [(l2, s2, w3)]))). simpl. easy.
+Qed.
+
 Lemma inReceive_ws: forall w p (Hs: singleton w) (* (Hin: CoInR (p, "?"%string) (act w)) *),
   (forall q, p <> q) ->
   (forall q, CoInR (q, "!"%string) (act w)) ->
-  exists a l s w2, w = merge_dp_cont p a (p ! [(l,s,w2)]).
+  exists d l s w2, w = merge_dp_cont p d (p ! [(l,s,w2)]).
 Proof. intros w p Hs Hdiff Hout.
        specialize(Hout p).
        remember (p, "!"%string) as v.
@@ -3314,9 +3379,9 @@ Proof. intros w p Hs Hdiff Hout.
 Qed.
 
 Lemma splitFalse: forall a b, ((a <-> b) -> False) -> (((a -> b) -> False) \/ ((b -> a) -> False)).
-Proof. intros. 
-       specialize(LEM (a -> b)); intro Ha.
-       specialize(LEM (b -> a)); intro Hb.
+Proof. intros.
+       specialize(classic (a -> b)); intro Ha.
+       specialize(classic (b -> a)); intro Hb.
        destruct Ha as [Ha | Ha].
        destruct Hb as [Hb | Hb].
        assert(a <-> b). split; easy.
@@ -3336,9 +3401,6 @@ Lemma n_a_actN: forall p l s s' w w' a P Q,
   nRefinementN (mk_siso (p & [(l,s,w)]) P)
                (mk_siso (merge_ap_cont p a (p & [(l,s',w')])) Q).
 Admitted.
-
-
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
 Lemma nrefNRS: forall w w', (nRefinementN w w' -> False) -> (@und w) ~< (@und w').
 Proof. destruct w as (w, Pw).
@@ -3383,7 +3445,7 @@ Proof. destruct w as (w, Pw).
          apply Hn. easy.
          rewrite eqb_neq in Heq.
 
-         specialize(LEM (CoNInR (p, "!"%string) (act (q ! [(l', s', w2)])))); intro Hclass.
+         specialize(classic (CoNInR (p, "!"%string) (act (q ! [(l', s', w2)])))); intro Hclass.
          destruct Hclass as [Hclass | Hclass].
          destruct H0.
          specialize (n_outN {| und := w1; sprop := Hs1 |} {| und := q ! [(l', s', w2)]; sprop := Pw' |} p l s ); intros HH.
@@ -3404,7 +3466,7 @@ Proof. destruct w as (w, Pw).
          specialize(sort_dec s s1); intro Heq3.
          destruct Heq3 as [Heq3 | Heq3].
          pfold.
-         specialize(LEM (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
+         specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
          specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1 Heq3); intro Hrb.
          simpl in Hrb. 
@@ -3477,8 +3539,7 @@ Proof. destruct w as (w, Pw).
          subst.
 
 (*****)
-
-         specialize(LEM (CoNInR (p, "!"%string) (act (q & [(l', s', w2)])))); intro Hclass.
+         specialize(classic (CoNInR (p, "!"%string) (act (q & [(l', s', w2)])))); intro Hclass.
          destruct Hclass as [Hclass | Hclass].
          destruct H0.
          specialize (n_outN {| und := w1; sprop := Hs1 |} {| und := q & [(l', s', w2)]; sprop := Pw' |} p l s ); intros HH.
@@ -3501,7 +3562,7 @@ Proof. destruct w as (w, Pw).
          specialize(sort_dec s s1); intro Heq3.
          destruct Heq3 as [Heq3 | Heq3].
          pfold.
-         specialize(LEM (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
+         specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
          specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1 Heq3); intro Hrb.
          simpl in Hrb.
@@ -3602,7 +3663,7 @@ Proof. destruct w as (w, Pw).
          apply Hn. easy.
          rewrite eqb_neq in Heq.
 
-         specialize(LEM (CoNInR (p, "?"%string) (act (q & [(l', s', w2)])))); intro Hclass.
+         specialize(classic (CoNInR (p, "?"%string) (act (q & [(l', s', w2)])))); intro Hclass.
          destruct Hclass as [Hclass | Hclass].
          destruct H0.
          specialize (n_inpN {| und := w1; sprop := Hs1 |} {| und := q & [(l', s', w2)]; sprop := Pw' |} p l s ); intros HH.
@@ -3615,9 +3676,35 @@ Proof. destruct w as (w, Pw).
          assert(CoInRA (upaco2 CoInRA bot2) (p, "?"%string) (act (q & [(l', s', w2)])) -> CoInR (p, "?"%string) (act (q & [(l', s', w2)]))) as Hpr by admit.
          apply Hpr in Hclass.
 
-         specialize(LEM(forall q0 : participant, (CoInR (q0, "!"%string) (act (q & [(l', s', w2)])) -> False))); intros Hee.
+         specialize(classic(exists q0 : participant, (CoInR (q0, "!"%string) (act (q & [(l', s', w2)]))))); intros Hee.
          destruct Hee as [Hee | Hee].
-         specialize(inReceive_wos (q & [(l', s', w2)]) p Pw' Hclass Hee); intros.
+(***)
+         unfold not in Hee.
+
+         assert(forall q : participant, p <> q) as H by admit.
+         specialize(inReceive_wsE (q & [(l', s', w2)]) p Pw' H Hee); intros HH.
+         destruct HH as (d,(q1,(l2,(s2,(w3,IHw3))))).
+         destruct H0.
+         generalize dependent Pw'.
+         rewrite IHw3.
+         intros Pw'.
+         assert(singleton w3) as Hs3.
+         { specialize (@extdpnR 1 p d (q1 ! [(l2, s2, w3)]) Pw'); intros Hs3.
+           apply extsR in Hs3.
+           easy.
+         }
+         specialize (n_i_o_2N (mk_siso w1 Hs1) (mk_siso w3 Hs3) p q1 l l2 s s2 d 1 Pw Pw'); intro HHNN.
+         apply HHNN.
+
+(***)
+         assert((forall q0 : participant, CoInR (q0, "!"%string) (act (q & [(l', s', w2)])) -> False)) as He1.
+         {
+           intros.
+           unfold not in Hee.
+           apply Hee.
+           exists q0. easy.
+         }
+         specialize(inReceive_wos (q & [(l', s', w2)]) p Pw' Hclass He1); intros.
          destruct H as (a,(l1,(s1,(w3,IHw3)))).
          rewrite IHw3.
 
@@ -3626,7 +3713,7 @@ Proof. destruct w as (w, Pw).
          specialize(sort_dec s1 s); intro Heq3.
          destruct Heq3 as [Heq3 | Heq3].
          pfold.
-         specialize(LEM (act_eq w1 ((merge_ap_cont p a w3)))); intro Hact.
+         specialize(classic (act_eq w1 ((merge_ap_cont p a w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
          specialize(_sref_a (upaco2 refinementR r) w1 w3 p l1 s1 s a 1 Heq3); intro Hrb.
          simpl in Hrb.
@@ -3688,22 +3775,8 @@ Proof. destruct w as (w, Pw).
          }
          specialize (n_a_lN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l l1 s s1 a 1 Pw Pw'); intros Hn.
          apply Hn. easy.
-         unfold not in Hee.
-         assert(forall q0 : participant, CoInR (q0, "!"%string) (act (q & [(l', s', w2)]))) by admit.
-         assert((forall q : participant, p <> q)) by admit.
-         specialize(inReceive_ws (q & [(l', s', w2)]) p Pw' H1 H); intros HH.
-         destruct HH as (d,(l2,(s2,(w3,IHw3)))).
-         destruct H0.
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw'.
-         assert(singleton w3) as Hs3.
-         { specialize (@extdpnR 1 p d (p ! [(l2, s2, w3)]) Pw'); intros Hs3.
-           apply extsR in Hs3.
-           easy.
-         }
-         specialize (n_i_o_2N (mk_siso w1 Hs1) (mk_siso w3 Hs3) p p l l2 s s2 d 1 Pw Pw'); intro HHNN.
-         apply HHNN.
+
+(***********)
 
          apply CoIn_mon.
          intros (u1,u2) (v1,v2).

@@ -2,6 +2,7 @@
 From Paco Require Import paco.
 Require Import Setoid.
 Require Import Morphisms.
+Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
 Inductive colistF (a : Type) (x : Type) :=
   | conil : colistF a x
@@ -163,6 +164,20 @@ Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
 Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoNInSplit1A x: CoNInRA R x (Delay conil)
   | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
+
+Lemma asd: forall {A: Type} x xs,
+CoInRA (upaco2 CoInRA bot2) x xs -> @CoInR A x xs.
+Proof. intros.
+       remember (upaco2 CoInRA bot2) as v.
+       induction H; intros.
+       simpl in *.
+       subst.
+       apply CoInSplit1 with (y := x) (ys := ys). easy. easy.
+       subst.
+       apply CoInSplit2 with (y := y) (ys := ys). easy. easy.
+       inversion H1.
+       punfold H2.
+Admitted.
 
 (* Definition CoNIn {A} s1 s2 := paco2 (@CoNInRA A) bot2 s1 s2. *)
 
