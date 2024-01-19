@@ -1350,7 +1350,7 @@ Proof. intros p q a1.
 Qed.
 
 
-Lemma nrefNLS: forall w w',  (@und w) ~< (@und w') -> (nRefinementN w w' -> False).
+Lemma refneqL: forall w w',  (@und w) ~< (@und w') -> (nRefinementN w w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
        punfold H; [ | apply refinementR_mon].
@@ -1934,5 +1934,5 @@ Qed.
 
 Lemma nrefL: forall w w', w /~< w' -> ((@und w) ~< (@und w') -> False).
 Proof. intros.
-       apply (nrefNLS w w'); easy.
+       apply (refneqL w w'); easy.
 Qed.

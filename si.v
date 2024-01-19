@@ -24,17 +24,6 @@ Definition si_id (s: si): si :=
 Lemma si_eq: forall s, s = si_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-(* Inductive st2siA (R: st -> si -> Prop) : st -> si -> Prop :=
-  | st2siA_end: st2siA R st_end si_end
-  | st2siA_snd: forall p l s x t xs,
-                List.In (l,s,x) xs ->
-                R x t ->
-                st2siA R (st_send p xs) t
-  | st2siA_rcv: forall l s x t xs p,
-                List.In (l,s,x) xs ->
-                R (st_receive p [(l,s,x)]) t ->
-                st2siA R (st_receive p xs) t. *)
-
 Inductive st2si (R: st -> st -> Prop) : st -> st -> Prop :=
   | st2si_end: st2si R st_end st_end
   | st2si_rcv: forall l s x t xs p,
@@ -68,9 +57,6 @@ Proof. unfold monotone2.
 Qed.
 
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2.
-(* Definition st2siCA s1 s2 := paco2 (st2siA) bot2 s1 s2. *)
 
-#[export]
-Declare Instance Equivalence_st2si : Equivalence st2siC.
 
 

@@ -23,5 +23,5 @@ Proof. intros.
        specialize(H0 W).
        destruct H0 as (Hc1, H0).
        destruct (H0 W') as (Hd', He').
-       apply nrefNLS in He. easy. easy.
+       apply refneqL in He. easy. easy.
 Qed.
