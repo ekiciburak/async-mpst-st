@@ -2,13 +2,16 @@ stream.v
 st.v
 so.v
 si.v
+reordering.v
 siso.v
-norefined.v
-newN.v
-newN2.v
+refinement.v
+reorderingfacts.v
 subtyping.v
+example1.v
+example2.v
 batchproc.v
-typesystem.v
+nsubtyping.v
+nrefinement.v
 
 -Q . ST
 

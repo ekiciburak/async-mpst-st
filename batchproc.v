@@ -1,4 +1,4 @@
-From ST Require Import stream st so si siso subtyping.
+From ST Require Import stream st so si reordering siso refinement reorderingfacts subtyping.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
@@ -12,7 +12,6 @@ CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b1",sunit,st_send "sk" [("b1",sunit,
                                   st_send "src" [("b2",sunit,st_receive "src" [("b2",sunit,
                                   st_receive "sk" [("b2",sunit,st_send "sk" [("b2",sunit,Tctl)])])])])])])])].
-Print Tctl.
 
 Lemma singletonTctl: singleton Tctl.
 Proof. pcofix CIH.
@@ -32,10 +31,8 @@ CoFixpoint TR := st_receive "src" [("b1",sunit,st_receive "sk" [("b1",sunit,
                                    st_send "sk" [("b1",sunit,st_send "src" [("b1",sunit,
                                    st_receive "src" [("b2",sunit,st_receive "sk" [("b2",sunit,
                                    st_send "sk" [("b2",sunit,st_send "src" [("b2",sunit,TR)])])])])])])])].
-Print TR.
 
 Definition Tctl' := st_send "src" [("b1",sunit,st_send "src" [("b2",sunit,TR)])].
-Print Tctl'.
 
 Lemma singletonTctl': singleton Tctl'.
 Proof. pfold. rewrite(siso_eq(Tctl')). simpl.
