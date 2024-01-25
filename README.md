@@ -20,5 +20,6 @@ The library succesfully compiles with the Coq compiler `coqc 8.18.0`.
 11. `example2.v` - contains a proof of Example 3.10 in Ghilezan et al. -- the one presented in this paper
 12. `batchproc.v` -  contains a proof of the subtyping that appears in batch processing optimization example in Section 6 in Ghilezan et al.
 13. `nrefinement.v` - defines the negation of the SISO refinement relation inductively proves the absurdity of having both $T \not\lesssim T'$ and $T \not\lesssim T'$ under the same context 
+14. `nsubtyping.v` -  defines the negation of subtyping $\not\leqslant$ relation and proves the absurdity of having both $T \leqslant T'$ and $T \not\leqslant T'$ under the same context
 
 `Ghilezan et al.` $\to$ `Precise Subtyping for Asynchronous Multiparty Sessions [POPL 2021]`
