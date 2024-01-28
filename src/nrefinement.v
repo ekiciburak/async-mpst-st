@@ -1,4 +1,4 @@
-From ST Require Import stream st so si reordering siso refinement reorderingfacts.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.refinement ST.src.reorderingfacts.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.

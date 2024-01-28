@@ -1,4 +1,4 @@
-From ST Require Import stream st so si reordering siso refinement reorderingfacts subtyping nrefinement.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.refinement ST.src.reorderingfacts ST.src.subtyping ST.src.nrefinement.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.

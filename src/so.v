@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
-From ST Require Import stream st.
+Require Import ST.src.stream ST.src.st.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.

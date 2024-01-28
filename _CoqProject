@@ -1,17 +1,18 @@
-stream.v
-st.v
-so.v
-si.v
-reordering.v
-siso.v
-refinement.v
-reorderingfacts.v
-subtyping.v
-example1.v
-example2.v
-batchproc.v
-nsubtyping.v
-nrefinement.v
+-R . ST
 
--Q . ST
+src/stream.v
+src/st.v
+src/so.v
+src/si.v
+src/reordering.v
+src/siso.v
+src/refinement.v
+src/reorderingfacts.v
+src/subtyping.v
+examples/example1.v
+examples/example2.v
+examples/batchproc.v
+src/nsubtyping.v
+src/nrefinement.v
+
 
