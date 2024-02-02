@@ -225,6 +225,13 @@ Arguments ap_receive {_} _ _ _ _.
 Arguments ap_merge {_} _ _ _ _.
 Arguments ap_end {_}.
 
+Inductive Ap2 (p: participant): Type :=
+  | ap_receive2: forall q, p <> q -> label -> st.sort -> Ap2 p
+  | ap_merge2  : forall q, p <> q -> label -> st.sort -> Ap2 p -> Ap2 p.
+
+Arguments ap_receive2 {_} _ _ _ _.
+Arguments ap_merge2 {_} _ _ _ _.
+
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
   match n with
     | O   => ap_end
@@ -298,6 +305,31 @@ Fixpoint napp {A: Type} (n: nat) (l: list A): list A :=
 
 Definition ApnA (p: participant) (a: Ap p) (n: nat): Ap p :=
   listAp p (napp n (apList p a)).
+
+Fixpoint Apn2 (p: participant) (a: Ap2 p) (n: nat): Ap2 p :=
+  match n with
+    | 0   => a
+    | S k => 
+      match a with
+        | ap_receive2 q H l s => ap_merge2 q H l s (Apn2 p a k)
+        | ap_merge2 q H l s c => ap_merge2 q H l s (ap_merge2 q H l s (Apn2 p a k))
+      end
+  end.
+
+(* Parameters (p q: participant) (l: label) (s: st.sort) (H: p <> q).
+Compute Apn2 p (ap_merge2 q H l s (ap_receive2 q H l s)) 2. *)
+
+CoFixpoint merge_ap_cont2 (p: participant) (a: Ap2 p) (w: st): st :=
+  match a with
+    | ap_receive2 q H l s  => st_receive q [(l,s,w)]
+    | ap_merge2 q H l s w' => st_receive q [(l,s,(merge_ap_cont2 p w' w))]
+  end.
+
+Definition merge_ap_contn2 (p: participant) (a: Ap2 p) (w: st) (n: nat): st :=
+  merge_ap_cont2 p (Apn2 p a n) w.
+
+(* Parameters (p q: participant) (l: label) (s: st.sort) (H: p <> q).
+Compute merge_ap_cont2 p (Apn2 p ( ap_receive2 q H l s) 4) (st_end). *)
 
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
@@ -887,7 +919,6 @@ Proof. intros p a.
        rewrite dpend_an.
        easy.
 Qed.
-
 
 Lemma mergeeq: forall n p a w,
   merge_ap_cont p (ApnA p a n) w = merge_ap_contn p a w n.
@@ -1702,4 +1733,99 @@ Definition refinementRAC: siso -> siso -> Prop := fun s1 s2 => paco2 refinementR
 Notation "x '~<A' y" := (refinementRAC x y) (at level 50, left associativity). *)
 
 
+(* Lemma mergeeqB2: forall n p a w,
+  merge_ap_cont2 p (Apn2 p a n) w = merge_ap_contn2 p a w n.
+Proof. intros.
+       unfold merge_ap_contn2. easy.
+Qed.
+
+Lemma merge_eqB2: forall p a1 a2 l1 l2 s1 s2 w1 w2,
+  merge_ap_cont2 p a1 (p & [(l1, s1, w1)]) =
+  merge_ap_cont2 p a2 (p & [(l2, s2, w2)]) -> (p & [(l1, s1, w1)]) = (p & [(l2, s2, w2)]).
+Proof. intros p a.
+       induction a; intros.
+       simpl.
+       case_eq a2; intros.
+       subst. 
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q n s s0) (p & [(l1, s1, w1)]))) in H.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q0 n0 s3 s4) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q n s s0) (p & [(l1, s1, w1)]))) in H.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_merge2 q0 n0 s3 s4 a) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H. subst. *)
+
+(* Lemma merge_eqB2: forall p a1 a2 l1 l2 s1 s2 w1 w2,
+  merge_ap_cont2 p a1 (p & [(l1, s1, w1)]) =
+  merge_ap_cont2 p a2 (p & [(l2, s2, w2)]) -> (p & [(l1, s1, w1)]) = (p & [(l2, s2, w2)]).
+Proof. intros p a1.
+       induction a1; intros.
+       simpl.
+       case_eq a2; intros.  
+       subst. 
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q n s s0) (p & [(l1, s1, w1)]))) in H.
+       simpl in H.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q0 n0 s3 s4) (p & [(l2, s2, w2)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q n s s0) (p & [(l1, s1, w1)]))) in H.
+       simpl in H.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_merge2 q0 n0 s3 s4 a) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H.
+       subst.
+       case_eq a; intros.
+       subst.
+       inversion H.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q n1 s s0) (p & [(l2, s2, w2)]))) in H1.
+       simpl in H1. inversion H1. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_merge2 q n1 s s0 a0) (p & [(l2, s2, w2)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       
+       rewrite(siso_eq(merge_ap_cont2 p (ap_merge2 q n s s0 a1) (p & [(l1, s1, w1)]))) in H.
+       simpl in H.
+       case_eq a2; intros. subst.
+       rewrite(siso_eq(merge_ap_cont2 p (ap_receive2 q0 n0 s3 s4) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       rewrite H4.
+       specialize(IHa ((ap_receive2 q0 n0 s3 s4)) l1 l2 s1 s2 w1 w2).
+       apply IHa. easy.
+       
+       subst. rewrite apend_an in H. inversion H. subst. easy.
+       subst. rewrite apend_an in H.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l1, s1, w1)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l1, s1, w1)]))) in H.
+       simpl in H.
+       case_eq a2; intros. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s3 s4) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H. rewrite H4.
+       specialize(IHa (ap_end) l1 l2 s1 s2 w1 w2).
+       apply IHa.
+       rewrite apend_an. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s3 s4 a0) (p & [(l2, s2, w2)]))) in H.
+       simpl in H.
+       inversion H.
+       specialize(IHa a0 l1 l2 s1 s2 w1 w2).
+       apply IHa. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l2, s2, w2)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       rewrite apend_an in H.
+       destruct a2.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l2, s2, w2)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a2) (p & [(l2, s2, w2)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       rewrite apend_an in H.
+       easy.
+Qed.
+ *)
+ 
 

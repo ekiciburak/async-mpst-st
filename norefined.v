@@ -82,6 +82,36 @@ Proof. intros n.
        apply IHn. easy.
 Qed.
 
+
+Lemma extcpR: forall {p c} w, singleton (merge_cp_cont p c w) -> singleton w.
+Proof. intros p c.
+       induction c; intros.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q n s s0) w)) in H.
+       simpl in H. apply extrR in H. easy.
+       rewrite(siso_eq((merge_cp_cont p (cp_mergea q n s s0 c) w))) in H.
+       simpl in H.
+       apply IHc. apply extrR in H. easy.
+       rewrite(siso_eq((merge_cp_cont p (cp_send s s0 s1) w))) in H.
+       simpl in H. apply extsR in H. easy.
+       rewrite(siso_eq((merge_cp_cont p (cp_merge s s0 s1 c) w))) in H.
+       simpl in H. 
+       apply IHc. apply extsR in H. easy.
+       rewrite cpend_an in H. easy.
+Qed.
+
+Lemma extdcnR: forall {n p c} w, singleton ((merge_cp_contn p c w n)) -> singleton w.
+Proof. intros n.
+       induction n; intros.
+       simpl. easy.
+       simpl.
+       apply (@extcpR p c w).
+       apply (IHn p c (merge_cp_cont p c w)).
+       simpl in H.
+       rewrite mcomm3. exact H.
+Qed.
+
+
 Lemma extdpR: forall {p d} w, singleton ((merge_dp_cont p d w)) -> singleton w.
 Proof. intros p d.
        induction d; intros.
@@ -198,6 +228,41 @@ Proof. intros.
 Qed.
 
 
+Fixpoint isInCp (p: participant) (c: Cp p): bool :=
+  match c with
+    | cp_send q l s       => true
+    | cp_merge q l s c    => true
+    | cp_mergea q H l s c => isInCp p c
+    | _                   => false
+  end.
+
+Lemma cpap: forall p c w,
+  isInCp p c = false ->
+  exists a, merge_cp_cont p c w = merge_ap_cont p a w.
+Proof. intros p c.
+       induction c; intros.
+       - simpl in *. 
+         exists (ap_receive q n s s0).
+         rewrite(siso_eq(merge_cp_cont p (cp_receive q n s s0) w)).
+         rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) w)).
+         simpl. easy.
+       - simpl in *.
+         specialize(IHc w H).
+         destruct IHc as (a,IHc).
+         exists(ap_merge q n s s0 a).
+         rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 c) w)).
+         rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) w)).
+         simpl.
+         rewrite IHc. easy.
+       - simpl in *. easy.
+       - simpl in *. easy.
+       - simpl in *. exists ap_end. 
+         rewrite(siso_eq( merge_ap_cont p ap_end w)).
+         rewrite(siso_eq(merge_cp_cont p cp_end w )).
+         simpl. easy.
+Qed.
+
+
 Inductive nRefinementN: siso -> siso -> Prop :=
   | n_outN  : forall w w' p l s P, 
               CoNInR (p,"!"%string) (act (@und w')) -> 
@@ -234,8 +299,11 @@ Inductive nRefinementN: siso -> siso -> Prop :=
                            (mk_siso (merge_ap_contn p a (st_receive p [(l,s',(@und w'))]) n) R)
   | n_i_o_1N: forall w w' p q l l' s s' P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
                                                           (mk_siso (st_send q [(l',s',(@und w'))]) Q)
-  | n_i_o_2N: forall w w' p q l l' s s' d n P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
-                                                              (mk_siso (merge_dp_contn p d (st_send q [(l',s',(@und w'))]) n) Q)
+  | n_i_o_2N: forall w w' p l l' s s' c P Q, isInCp p c = true ->
+                                               nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
+                                                            (mk_siso (merge_cp_cont p c (st_receive p [(l',s',(@und w'))])) Q)
+(*   | n_i_o_2N: forall w w' p q l l' s s' c n P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
+                                                              (mk_siso (merge_cp_contn p c (st_send q [(l',s',(@und w'))]) n) Q) *)
   | n_out_lN: forall w w' p l l' s s' P Q,
               l <> l' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
                                       (mk_siso (st_send p [(l',s',(@und w'))]) Q)
@@ -1173,6 +1241,115 @@ Proof. intros p a.
        subst. rewrite cpend_an in H. easy.
 Qed.
 
+Lemma merge_eqac: forall p a c l s w,
+ merge_ap_cont p a (p & [(l, s, w)]) =
+ merge_cp_cont p c (p & [(l, s, w)]) ->
+ merge_ap_cont p a w =
+ merge_cp_cont p c w.
+Proof. intros p a.
+       induction a; intros.
+       case_eq c; intros.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q0 n0 s2 s3) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n s2 s3) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q0 n0 s2 s3) w)).
+       simpl. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q0 n0 s2 s3 c0) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n s2 s3) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q0 n0 s2 s3 c0) w)).
+       simpl.
+       case_eq c0; intros.
+       subst.
+       rewrite(siso_eq( merge_cp_cont p (cp_receive q n1 s s0) (p & [(l, s1, w)]))) in H4.
+       simpl in H4.
+       inversion H4. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n1 s s0 c) (p & [(l, s1, w)]))) in H4.
+       simpl in H4. inversion H4. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s4) (p & [(l, s1, w)]))) in H4.
+       simpl in H4.
+       easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s4 c) (p & [(l, s1, w)]))) in H4.
+       simpl in H4. easy.
+       subst. rewrite cpend_an. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_send s2 s3 s4) (p & [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_merge s2 s3 s4 c0) (p & [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l, s1, w)]))) in H.
+       rewrite cpend_an in H.
+       simpl in H.
+       inversion H. subst. easy.
+       
+       case_eq c; intros.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q0 n0 s2 s3) (p & [(l, s1, w)]))) in H.
+       simpl in H. inversion H.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s2 s3 a) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q0 n0 s2 s3) w)).
+       simpl.
+       subst.
+       specialize(IHa (cp_end) l s1 w).
+       rewrite IHa. rewrite cpend_an. easy.
+       rewrite cpend_an. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q0 n0 s2 s3 c0) (p & [(l, s1, w)]))) in H.
+       simpl in H.
+       inversion H. subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n s2 s3 a) w)).
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q0 n0 s2 s3 c0) w)).
+       simpl.
+       specialize(IHa c0 l s1 w).
+       rewrite IHa. easy. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_send s2 s3 s4) (p & [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst. 
+       rewrite(siso_eq( merge_ap_cont p (ap_merge q n s s0 a) (p & [(l, s1, w)]))) in H.
+       rewrite(siso_eq(merge_cp_cont p (cp_merge s2 s3 s4 c0) (p & [(l, s1, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l, s1, w)]))) in H.
+       rewrite cpend_an in H.
+       simpl in H.
+       inversion H. subst. easy.
+       rewrite apend_an in H.
+       rewrite apend_an.
+       
+       case_eq c; intros.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_receive q n s0 s1) (p & [(l, s, w)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s0 s1 c0) (p & [(l, s, w)]))) in H.
+       simpl in H.
+       inversion H. subst. easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_send s0 s1 s2) (p & [(l, s, w)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(siso_eq(merge_cp_cont p (cp_merge s0 s1 s2 c0) (p & [(l, s, w)]))) in H. 
+       simpl in H. easy.
+       rewrite cpend_an. easy.
+Qed.
+     
 Lemma merge_eq3: forall p b1 b2 l1 l2 s1 s2 w1 w2,
   merge_bp_cont p b1 (p ! [(l1, s1, w1)]) =
   merge_bp_cont p b2 (p ! [(l2, s2, w2)]) -> (p ! [(l1, s1, w1)]) = (p ! [(l2, s2, w2)]).
@@ -2013,6 +2190,24 @@ Proof. intros.
        apply (nrefLS w w'); easy.
 Qed.
 
+
+Lemma case12_1c2: forall p c l l' s s' w w',
+isInCp p c = true ->
+p & [(l, s, w)] = merge_cp_cont p c (p & [(l', s', w')]) ->  False.
+Proof. intros p c.
+       induction c; intros.
+       - simpl in *. easy.
+       - simpl in *.
+         rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [(l', s', w')]))) in H0.
+         simpl in H0.
+         inversion H0. subst. easy.
+       - rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (p & [(l', s', w')]))) in H0.
+         simpl in H0. easy.
+       - rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l', s', w')]))) in H0.
+         simpl in H0. easy.
+       - simpl in *. easy.
+Qed.
+
 Lemma case12_1c: forall n p q a l l' s s' w w',
 p & [(l, s, w)] = merge_cp_contn p a (q ! [(l', s', w')]) n ->  False.
 Proof. intro n.
@@ -2061,6 +2256,64 @@ Proof. intro n.
        subst.
        rewrite dpend_ann in H.
        rewrite dpend_an in H. easy.
+Qed.
+
+
+Lemma case12_2c2: forall p c a l1 s1 l2 s2 w1 w2,
+isInCp p c = true ->
+merge_ap_cont p a (p & [(l1, s1, w1)]) = merge_cp_cont p c (p & [(l2, s2, w2)]) -> False.
+Proof. intros p c.
+       induction c; intros.
+       - simpl in *. easy.
+       - simpl in *.
+         rewrite(siso_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [(l2, s2, w2)]))) in H0.
+         simpl in H0.
+         case_eq a; intros.
+         + subst. 
+           rewrite(siso_eq(merge_ap_cont p (ap_receive q0 n0 s3 s4) (p & [(l1, s1, w1)]))) in H0.
+           simpl in H0.
+           inversion H0.
+           subst.
+           apply (IHc (ap_end) l1 s1 l2 s2 w1 w2).
+           easy. rewrite apend_an. easy.
+        + subst.
+          rewrite(siso_eq(merge_ap_cont p (ap_merge q0 n0 s3 s4 a0) (p & [(l1, s1, w1)]))) in H0.
+          simpl in H0.
+          inversion H0.
+          subst.
+          apply (IHc a0 l1 s1 l2 s2 w1 w2).
+          easy. easy.
+        + subst.
+          rewrite(siso_eq(merge_ap_cont p ap_end (p & [(l1, s1, w1)]))) in H0.
+          simpl in H0.
+          inversion H0. subst. easy.
+       - case_eq a; intros.
+         + subst. 
+           rewrite(siso_eq(merge_ap_cont p (ap_receive q n s4 s5) (p & [(l1, s2, w1)]))) in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+         + subst. 
+           rewrite(siso_eq(merge_ap_cont p (ap_merge q n s4 s5 a0) (p & [(l1, s2, w1)]))) in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+         + subst.
+           rewrite apend_an in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_send s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+       - case_eq a; intros.
+         + subst.
+           rewrite(siso_eq(merge_ap_cont p (ap_receive q n s4 s5) (p & [(l1, s2, w1)]))) in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+         + subst.
+           rewrite(siso_eq(merge_ap_cont p (ap_merge q n s4 s5 a0) (p & [(l1, s2, w1)]))) in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+         + subst.
+           rewrite apend_an in H0.
+           rewrite(siso_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l2, s3, w2)]))) in H0.
+           simpl in H0. easy.
+       - simpl in *. easy.
 Qed.
 
 Lemma case12_2c: forall p q a1 a2 l l' s s' w w',
@@ -2652,12 +2905,12 @@ Proof. intros w w' H.
        }
        { inversion H.
          subst. 
-         apply case12_1d in H5.
-         easy.
+         apply case12_1c2 in H6.
+         easy. easy.
          subst.
-         rewrite <- mergeeq2 in H5.
-         rewrite <- mergeeq5 in H5.
-         apply case12_2d in H5. easy.
+         rewrite <- mergeeq2 in H6.
+         apply case12_2c2 in H6. easy.
+         easy.
        } 
        {
          inversion H.
@@ -3178,6 +3431,38 @@ Proof. intros.
        rewrite(siso_eq(merge_bp_cont p (bp_merge s H1 l1 s1 b) (p ! [(l2, s2, w3)]))). simpl. easy.
 Qed.
 
+Inductive Ep: Type :=
+  | ep_send   : participant -> label -> st.sort -> Ep
+  | ep_merge  : participant -> label -> st.sort -> Ep -> Ep
+  | ep_end    : Ep.
+
+CoFixpoint merge_ep_cont (e: Ep) (w: st): st :=
+  match e with 
+    | ep_send q l s    => st_send q [(l,s,w)]
+    | ep_merge q l s c => st_send q [(l,s,(merge_ep_cont c w))]
+    | ep_end           => w
+  end.
+
+Fixpoint merge_ep_contn (e: Ep) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_ep_cont e (merge_ep_contn e w k)
+  end.
+
+CoFixpoint merge_ape_cont (p: participant) (a: Ap p) (e: Ep) (w: st): st :=
+  match a with
+    | ap_receive q H l s  => st_receive q [(l,s,merge_ep_cont e w)]
+    | ap_merge q H l s w' => st_receive q [(l,s,(merge_ape_cont p w' e w))]
+    | ap_end              => w
+  end.
+
+Fixpoint merge_ape_contn (p: participant) (a: Ap p) (e: Ep) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_ape_cont p a e (merge_ape_contn p a e w k)
+  end.
+  
+
 Lemma inReceive_wos: forall w p (Hs: singleton w) (Hin: CoInR (p, "?"%string) (act w)),
   (forall q, CoInR (q, "!"%string) (act w) -> False) ->
   exists a l s w2, w = merge_ap_cont p a (p & [(l,s,w2)]).
@@ -3202,7 +3487,7 @@ Proof. intros w p Hs Hin Hout.
        specialize(invsingl2 s l Hs); intros Hl.
        destruct Hl as (l1,(s1,(w1, Heqw1))).
        rewrite Heqw1 in H.
-       inversion H. 
+       inversion H.
 
        case_eq w; intros. subst. easy.
        subst.
@@ -3388,6 +3673,15 @@ Proof. intros.
        apply H in H0. easy. right. easy. left. easy.
 Qed.
 
+(* Lemma indp: forall (p: participant) a w (Hs: singleton w) (i: Ap p -> st -> Prop),
+ (forall q l s w (Hs: singleton w) (Hneq: p <> q), i a w -> i (ap_merge q Hneq l s a) w) ->
+ (forall q l s w (Hs: singleton w) (Hneq: p <> q), i (ap_receive q Hneq l s) w) ->
+ (forall q l s w (Hs: singleton w) (Hneq: p <> q), i (ap_send q Hneq l s) w) ->
+ i a w.
+Admitted.
+  
+ *)
+  
 Lemma n_b_actN: forall p l s s' w w' b P Q,
   subsort s s' ->
   (act_eq w (merge_bp_cont p b w') -> False) ->
@@ -3413,7 +3707,7 @@ Proof. destruct w as (w, Pw).
        specialize(sinv w Pw); intros Hpw.
        destruct Hpw as [Hpw | Hpw].
        destruct Hpw as (p, (l, (s, (w1, (Heq1, Hs1))))).
-       { 
+       {
          specialize(sinv w' Pw'); intros Hpw'.
          destruct Hpw' as [Hpw' | Hpw'].
          destruct Hpw' as (q, (l', (s', (w2, (Heq2, Hs2))))).
@@ -3661,8 +3955,9 @@ Proof. destruct w as (w, Pw).
          destruct H0.
          specialize(n_inp_lN {| und := w1; sprop := Hs1 |} {| und := w2; sprop := Hs2 |} q l l' s s' Pw Pw'); intro Hn.
          apply Hn. easy.
-         rewrite eqb_neq in Heq.
 
+         rewrite eqb_neq in Heq.
+       
          specialize(classic (CoNInR (p, "?"%string) (act (q & [(l', s', w2)])))); intro Hclass.
          destruct Hclass as [Hclass | Hclass].
          destruct H0.
@@ -3676,37 +3971,26 @@ Proof. destruct w as (w, Pw).
          assert(CoInRA (upaco2 CoInRA bot2) (p, "?"%string) (act (q & [(l', s', w2)])) -> CoInR (p, "?"%string) (act (q & [(l', s', w2)]))) as Hpr by admit.
          apply Hpr in Hclass.
 
-         specialize(classic(exists q0 : participant, (CoInR (q0, "!"%string) (act (q & [(l', s', w2)]))))); intros Hee.
-         destruct Hee as [Hee | Hee].
-(***)
-         unfold not in Hee.
-
-         assert(forall q : participant, p <> q) as H by admit.
-         specialize(inReceive_wsE (q & [(l', s', w2)]) p Pw' H Hee); intros HH.
-         destruct HH as (d,(q1,(l2,(s2,(w3,IHw3))))).
-         destruct H0.
+         specialize(inReceive (q & [(l', s', w2)]) p Pw' Hclass); intros.
+         destruct H as (c,(l1,(s1,(w3,IHw3)))).
          generalize dependent Pw'.
          rewrite IHw3.
-         intros Pw'.
+         intros Pw' H0.
+
+         case_eq(isInCp p c); intros.
+         destruct H0.
          assert(singleton w3) as Hs3.
-         { specialize (@extdpnR 1 p d (q1 ! [(l2, s2, w3)]) Pw'); intros Hs3.
-           apply extsR in Hs3.
+         { apply extcpR, extrR in Pw'.
            easy.
          }
-         specialize (n_i_o_2N (mk_siso w1 Hs1) (mk_siso w3 Hs3) p q1 l l2 s s2 d 1 Pw Pw'); intro HHNN.
-         apply HHNN.
-
-(***)
-         assert((forall q0 : participant, CoInR (q0, "!"%string) (act (q & [(l', s', w2)])) -> False)) as He1.
-         {
-           intros.
-           unfold not in Hee.
-           apply Hee.
-           exists q0. easy.
-         }
-         specialize(inReceive_wos (q & [(l', s', w2)]) p Pw' Hclass He1); intros.
-         destruct H as (a,(l1,(s1,(w3,IHw3)))).
-         rewrite IHw3.
+         specialize(n_i_o_2N (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l l1 s s1 c Pw Pw'); intros HN2.
+         apply HN2. easy.
+         
+         specialize(cpap p c (p & [(l1, s1, w3)]) H); intros Hpc.
+         destruct Hpc as (a, Hpc).
+         generalize dependent Pw'.
+         rewrite Hpc.
+         intros Pw' H0.
 
          case_eq(eqb l l1); intro Heq2.
          rewrite eqb_eq in Heq2. subst.
@@ -3719,9 +4003,6 @@ Proof. destruct w as (w, Pw).
          simpl in Hrb.
          apply Hrb.
 
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw' H0.
          assert(singleton (merge_ap_cont p a w3)) as Pw''.
          { specialize(@extapR p a (p & [(l1, s1, w3)]) Pw'); intros Hss.
            specialize(@extrR p l1 s1 w3 Hss); intros Hss2.
@@ -3743,16 +4024,10 @@ Proof. destruct w as (w, Pw).
          apply HN. easy. easy. easy.
 
          destruct H0.
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw'.
 
          specialize(n_a_actN p l1 s s1 w1 w3 a Pw Pw'); intros HN.
          apply HN. easy. easy.
 
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw' H0.
          assert(singleton w3) as Hs3.
          { specialize(@extapR p a (p & [(l1, s1, w3)]) Pw'); intros Hss.
            specialize(@extrR p l1 s1 w3 Hss); intros Hss2.
@@ -3765,9 +4040,6 @@ Proof. destruct w as (w, Pw).
 
          rewrite eqb_neq in Heq2.
          destruct H0.
-         generalize dependent Pw'.
-         rewrite IHw3.
-         intros Pw'.
          assert(singleton w3) as Hs3.
          { specialize (@extapR p a (p & [(l1, s1, w3)]) Pw'); intros Hss.
            specialize (@extrR p l1 s1 w3 Hss); intros Hss2.
@@ -3775,7 +4047,6 @@ Proof. destruct w as (w, Pw).
          }
          specialize (n_a_lN (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l l1 s s1 a 1 Pw Pw'); intros Hn.
          apply Hn. easy.
-
 (***********)
 
          apply CoIn_mon.
