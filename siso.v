@@ -186,17 +186,52 @@ Declare Instance Proper_siso : Proper (siso_eq_i ==> siso_eq_i) siso_id.
 Check coseq.
 Check conil.
 
-CoFixpoint act (t: st): coseq (participant * string) :=
+Inductive actT: Type :=
+  | rcv: actT
+  | snd: actT.
+
+Definition actTeqb (a1 a2: actT): bool :=
+  match (a1, a2) with
+    | (rcv,rcv)
+    | (snd,snd) => true
+    | _         => false
+  end.
+
+Lemma act_dec: forall a1 a2, actTeqb a1 a2 = true \/ actTeqb a1 a2 = false.
+Proof. intros a1 a2.
+       case_eq a1; case_eq a2; intros.
+       - left. easy.
+       - right. easy.
+       - right. easy.
+       - left. easy.
+Qed.
+
+Lemma act_eqb_eq: forall a1 a2, actTeqb a1 a2 = true -> a1 = a2.
+Proof. intros a1 a2 Ha.
+       case_eq a1; case_eq a2; intros; try easy.
+       - subst. easy.
+       - subst. easy.
+Qed.
+
+Lemma act_neqb_neq: forall a1 a2, actTeqb a1 a2 = false -> a1 <> a2.
+Proof. intros a1 a2 Ha.
+       case_eq a1; case_eq a2; intros; try easy.
+       - subst. easy.
+       - subst. easy.
+Qed.
+
+
+CoFixpoint act (t: st): coseq (participant * actT) :=
   match t with
-    | st_receive p [(l,s,w')] => Delay (cocons (p, "?"%string) (act w'))
-    | st_send p [(l,s,w')]    => Delay (cocons (p, "!"%string) (act w'))
+    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv) (act w'))
+    | st_send p [(l,s,w')]    => Delay (cocons (p, snd) (act w'))
     | _                       => Delay conil
   end.
 
-CoFixpoint acts (t: st): stream (participant * string) :=
+CoFixpoint acts (t: st): stream (participant * actT) :=
   match t with
-    | st_receive p [(l,s,w')] => (coconss (p, "?"%string) (acts w'))
-    | st_send p [(l,s,w')]    => (coconss (p, "!"%string) (acts w'))
+    | st_receive p [(l,s,w')] => (coconss (p, rcv) (acts w'))
+    | st_send p [(l,s,w')]    => (coconss (p, snd) (acts w'))
     | _                       => conils
   end.
   
@@ -207,14 +242,14 @@ CoFixpoint acts (t: st): stream (participant * string) :=
     | _                       => Delay conil
   end. *)
 
-CoInductive action: st -> coseq (participant * string) -> Prop :=
+CoInductive action: st -> coseq (participant * actT) -> Prop :=
   | a_end: action st_end (Delay conil)
   | a_rcv: forall (p:participant) l s w a,
            action w a ->
-           action (st_receive p [(l,s,w)]) (Delay (cocons (p, "?"%string) a))
+           action (st_receive p [(l,s,w)]) (Delay (cocons (p, rcv) a))
   | a_snd: forall (p: (participant)) l s w a,
            action w a ->
-           action (st_send p [(l,s,w)]) (Delay (cocons (p, "!"%string) a)).
+           action (st_send p [(l,s,w)]) (Delay (cocons (p, snd) a)).
 
 Inductive Ap (p: participant): Type :=
   | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
@@ -338,20 +373,20 @@ CoFixpoint fromAp (p: participant) (a: Ap p): st :=
     | ap_end             => st_end
   end.
 
-Fixpoint actA (p: participant) (a: Ap p): list (participant * string) :=
+Fixpoint actA (p: participant) (a: Ap p): list (participant * actT) :=
   match a with
-    | ap_receive q x l s => cons (q, "?"%string) nil
-    | ap_merge q x l s c => cons (q, "?"%string) (actA p c)
+    | ap_receive q x l s => cons (q, rcv) nil
+    | ap_merge q x l s c => cons (q, rcv) (actA p c)
     | _                  => nil
   end.
 
-Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * string) :=
+Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * actT) :=
   match n with
     | O   => nil
     | S k =>
       match a with
-        | ap_receive q x l s => cons (q, "?"%string) (actAn p a k)
-        | ap_merge q x l s c => (cons (q, "?"%string) (actA p c)) ++ (actAn p a k)
+        | ap_receive q x l s => cons (q, rcv) (actAn p a k)
+        | ap_merge q x l s c => (cons (q, rcv) (actA p c)) ++ (actAn p a k)
         | _                  => nil
       end
   end.
@@ -435,24 +470,24 @@ Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
     | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
   end.
 
-Fixpoint actC (p: participant) (c: Cp p): list (participant * string) :=
+Fixpoint actC (p: participant) (c: Cp p): list (participant * actT) :=
   match c with
-    | cp_receive q x l s  => cons (q, "?"%string) nil
-    | cp_mergea q x l s c => cons (q, "?"%string) (actC p c)
-    | cp_send q l s       => cons (q, "!"%string) nil
-    | cp_merge q l s c    => cons (q, "!"%string) (actC p c)
+    | cp_receive q x l s  => cons (q, rcv) nil
+    | cp_mergea q x l s c => cons (q, rcv) (actC p c)
+    | cp_send q l s       => cons (q, snd) nil
+    | cp_merge q l s c    => cons (q, snd) (actC p c)
     | _                   => nil
   end.
 
-Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * string) :=
+Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * actT) :=
   match n with
     | O   => nil
     | S k =>
       match c with
-        | cp_receive q x l s    => cons (q, "?"%string) (actCn p c k)
-        | cp_mergea q x l s cnt => (cons (q, "?"%string) (actC p cnt)) ++ (actCn p c k)
-        | cp_send q l s         => cons (q, "!"%string) (actCn p c k)
-        | cp_merge q l s cnt    => (cons (q, "!"%string) (actC p cnt)) ++ (actCn p c k)
+        | cp_receive q x l s    => cons (q, rcv) (actCn p c k)
+        | cp_mergea q x l s cnt => (cons (q, rcv) (actC p cnt)) ++ (actCn p c k)
+        | cp_send q l s         => cons (q, snd) (actCn p c k)
+        | cp_merge q l s cnt    => (cons (q, snd) (actC p cnt)) ++ (actCn p c k)
         | _                     => nil
       end
   end.
@@ -515,24 +550,24 @@ CoFixpoint fromBp (p: participant) (b: Bp p): st :=
     | bp_end             => st_end
   end.
 
-Fixpoint actB (p: participant) (b: Bp p): list (participant * string) :=
+Fixpoint actB (p: participant) (b: Bp p): list (participant * actT) :=
   match b with
-    | bp_receivea q l s  => cons (q, "?"%string) nil
-    | bp_send q x l s    => cons (q, "!"%string) nil
-    | bp_mergea q l s c  => cons (q, "?"%string) (actB p c)
-    | bp_merge q x l s c => cons (q, "!"%string) (actB p c)
+    | bp_receivea q l s  => cons (q, rcv) nil
+    | bp_send q x l s    => cons (q, snd) nil
+    | bp_mergea q l s c  => cons (q, rcv) (actB p c)
+    | bp_merge q x l s c => cons (q, snd) (actB p c)
     | _                  => nil
   end.
 
-Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * string) :=
+Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * actT) :=
   match n with
     | O   => nil
     | S k =>
       match b with
-        | bp_receivea q l s  => cons (q, "?"%string) (actBn p b k)
-        | bp_send q x l s    => cons (q, "!"%string) (actBn p b k)
-        | bp_mergea q l s c  => (cons (q, "?"%string) (actB p c)) ++ (actBn p b k)
-        | bp_merge q x l s c => (cons (q, "!"%string) (actB p c)) ++ (actBn p b k)
+        | bp_receivea q l s  => cons (q, rcv) (actBn p b k)
+        | bp_send q x l s    => cons (q, snd) (actBn p b k)
+        | bp_mergea q l s c  => (cons (q, rcv) (actB p c)) ++ (actBn p b k)
+        | bp_merge q x l s c => (cons (q, snd) (actB p c)) ++ (actBn p b k)
         | _                  => nil
       end
   end.
@@ -642,24 +677,24 @@ Fixpoint merge_dp_contn (p: participant) (d: Dp p) (w: st) (n: nat): st :=
     | S k  => merge_dp_cont p d (merge_dp_contn p d w k)
   end.
 
-Fixpoint actD (p: participant) (d: Dp p): list (participant * string) :=
+Fixpoint actD (p: participant) (d: Dp p): list (participant * actT) :=
   match d with
-    | dp_receive q x l s  => cons (q, "?"%string) nil
-    | dp_mergea q x l s c => cons (q, "?"%string) (actD p c)
-    | dp_send q x l s     => cons (q, "!"%string) nil
-    | dp_merge q x l s c  => cons (q, "!"%string) (actD p c)
+    | dp_receive q x l s  => cons (q, rcv) nil
+    | dp_mergea q x l s c => cons (q, rcv) (actD p c)
+    | dp_send q x l s     => cons (q, snd) nil
+    | dp_merge q x l s c  => cons (q, snd) (actD p c)
     | _                   => nil
   end.
 
-Fixpoint actDn (p: participant) (d: Dp p) (n: nat): list (participant * string) :=
+Fixpoint actDn (p: participant) (d: Dp p) (n: nat): list (participant * actT) :=
   match n with
     | O   => nil
     | S k =>
       match d with
-        | dp_receive q x l s    => cons (q, "?"%string) (actDn p d k)
-        | dp_mergea q x l s cnt => (cons (q, "?"%string) (actD p cnt)) ++ (actDn p d k)
-        | dp_send q x l s       => cons (q, "!"%string) (actDn p d k)
-        | dp_merge q x l s cnt  => (cons (q, "!"%string) (actD p cnt)) ++ (actDn p d k)
+        | dp_receive q x l s    => cons (q, rcv) (actDn p d k)
+        | dp_mergea q x l s cnt => (cons (q, rcv) (actD p cnt)) ++ (actDn p d k)
+        | dp_send q x l s       => cons (q, snd) (actDn p d k)
+        | dp_merge q x l s cnt  => (cons (q, snd) (actD p cnt)) ++ (actDn p d k)
         | _                     => nil
       end
   end.
@@ -1004,7 +1039,7 @@ Proof. intros p b.
 
        rewrite(coseq_eq(act (merge_bp_cont p (bp_send q n s s0) w))).
        unfold coseq_id. simpl.
-       rewrite(coseq_eq(appendL [(q, "!"%string)] (act w))).
+       rewrite(coseq_eq(appendL [(q, snd)] (act w))).
        unfold coseq_id.
        simpl. rewrite anl2. easy.
 
@@ -1304,7 +1339,7 @@ Proof. intro n.
        easy. 
 Qed.
 
-Lemma hh2: forall n p s s0 s1, actCn p (cp_send s s0 s1) n ++ actC p (cp_send s s0 s1) = ((s, "!"%string) :: actCn p (cp_send s s0 s1) n)%SEQ.
+Lemma hh2: forall n p s s0 s1, actCn p (cp_send s s0 s1) n ++ actC p (cp_send s s0 s1) = ((s, snd) :: actCn p (cp_send s s0 s1) n)%SEQ.
 Proof. intro n.
        induction n; intros.
        simpl. easy.
@@ -1312,7 +1347,7 @@ Proof. intro n.
        rewrite IHn. easy.
 Qed.
 
-Lemma hh2d: forall n p q s s0 n0, actDn p (dp_send q n0 s s0) n ++ [(q, "!"%string)] = ((q, "!"%string) :: actDn p (dp_send q n0 s s0) n)%SEQ.
+Lemma hh2d: forall n p q s s0 n0, actDn p (dp_send q n0 s s0) n ++ [(q, snd)] = ((q, snd) :: actDn p (dp_send q n0 s s0) n)%SEQ.
 Proof. intro n.
        induction n; intros.
        simpl. easy.
@@ -1321,8 +1356,8 @@ Proof. intro n.
 Qed.
 
 Lemma hh3: forall n p c s s0 s1, 
-actCn p (cp_merge s s0 s1 c) n ++ ((s, "!"%string) :: actC p c)%SEQ =
-((s, "!"%string) :: actC p c)%SEQ ++ actCn p (cp_merge s s0 s1 c) n.
+actCn p (cp_merge s s0 s1 c) n ++ ((s, snd) :: actC p c)%SEQ =
+((s, snd) :: actC p c)%SEQ ++ actCn p (cp_merge s s0 s1 c) n.
 Proof. intro n.
        induction n; intros.
        simpl.
@@ -1337,7 +1372,7 @@ Qed.
 
 Lemma hh3d: forall n p q c s s0 n0, 
 actDn p (dp_merge q n0 s s0 c) n ++ actD p (dp_merge q n0 s s0 c) =
-((q, "!"%string) :: actD p c ++ actDn p (dp_merge q n0 s s0 c) n)%SEQ.
+((q, snd) :: actD p c ++ actDn p (dp_merge q n0 s s0 c) n)%SEQ.
 Proof. intro n.
        induction n; intros.
        simpl.
@@ -1424,8 +1459,8 @@ Qed.
 Definition merge_bp_contnA (p: participant) (b: Bp p) (w: st) (n: nat): st :=
 merge_bp_cont p (Bpn p b n) w.
 
-Inductive cosetIncL (R: coseq (participant * string) -> list (participant * string) -> Prop):
-                        coseq (participant * string) -> list (participant * string) -> Prop :=
+Inductive cosetIncL (R: coseq (participant * actT) -> list (participant * actT) -> Prop):
+                        coseq (participant * actT) -> list (participant * actT) -> Prop :=
   | c_nil : forall ys, cosetIncL R (Delay conil) ys
   | c_incl: forall x xs ys,
             List.In x ys ->
@@ -1445,7 +1480,7 @@ Proof. unfold monotone2.
          apply LE, H0.
 Qed.
 
-Inductive cosetIncR: list (participant * string) -> coseq (participant * string) -> Prop :=
+Inductive cosetIncR: list (participant * actT) -> coseq (participant * actT) -> Prop :=
   | l_nil : forall ys, cosetIncR nil ys
   | l_incl: forall x xs ys,
             CoInR x ys ->
@@ -1455,7 +1490,7 @@ Inductive cosetIncR: list (participant * string) -> coseq (participant * string)
 Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
 Definition act_eqA (w w': st) := forall a, CoInR a (act w) <-> CoInR a (act w').
 
-Definition act_neq (w w': st) := (exists a, CoIn a (act w) -> CoNInR a (act w')) \/ (exists a, CoIn a (act w') -> CoNInR a (act w)).
+Definition act_neq (w w': st) := (exists a, CoInR a (act w) /\ CoNInR a (act w') \/ CoInR a (act w') /\ CoNInR a (act w)).
 
 (* Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w'). *)
 

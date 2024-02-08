@@ -139,7 +139,7 @@ Inductive sin {A: Type}: A -> stream A -> Prop :=
   | sin2 x xs y ys: xs = coconss y ys -> x <> y -> sin x ys -> sin x xs.
 
 Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
-  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs 
+  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
 
 Inductive CoInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
@@ -164,20 +164,6 @@ Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
 Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoNInSplit1A x: CoNInRA R x (Delay conil)
   | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
-
-Lemma asd: forall {A: Type} x xs,
-CoInRA (upaco2 CoInRA bot2) x xs -> @CoInR A x xs.
-Proof. intros.
-       remember (upaco2 CoInRA bot2) as v.
-       induction H; intros.
-       simpl in *.
-       subst.
-       apply CoInSplit1 with (y := x) (ys := ys). easy. easy.
-       subst.
-       apply CoInSplit2 with (y := y) (ys := ys). easy. easy.
-       inversion H1.
-       punfold H2.
-Admitted.
 
 (* Definition CoNIn {A} s1 s2 := paco2 (@CoNInRA A) bot2 s1 s2. *)
 
@@ -217,6 +203,21 @@ Proof. intros.
          apply IHCoNInR.
          specialize(IHCoInR H4). easy.
          easy. easy. easy.
+Qed.
+
+Lemma inOutLCP: forall {A: Type} x xs, CoInRA (bot2) x xs -> @CoInR A x xs.
+Proof. intros.
+       
+       inversion H.
+       subst.
+       case_eq xs; intros.
+       - subst. destruct force0. easy. 
+         simpl in H0. inversion H0. subst.
+         apply CoInSplit1 with (y := x) (ys := ys). simpl. easy. easy.
+       - subst. 
+         case_eq xs; intros.
+         + subst. destruct force0. easy.
+           simpl in H0. inversion H0. subst. easy.
 Qed.
 
 Lemma inOutLA: forall {A: Type} x xs, CoIn x xs -> (@CoNInR A x xs -> False).

@@ -85,7 +85,7 @@ Definition T: st :=
                   ("error",  sbool,st_send "q" [("cont",sint,st_end);("stop",sunit,st_end)])
                  ].
 
-Definition ListT := [("q","!");("p","?")]. 
+Definition ListT := [("q",snd);("p",rcv)]. 
 
 Definition TW  := st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))].
 Definition TW' := st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))].
@@ -151,9 +151,9 @@ Proof. rewrite(coseq_eq(act TW)).
        unfold coseq_id.
        simpl.
        constructor.
-       specialize(CoInSplit2 ("q", "!")
-       (Delay(cocons ("p", "?") (act ("q" ! [("cont", I, end)]))))
-       ("p", "?") (act ("q" ! [("cont", I, end)]))
+       specialize(CoInSplit2 ("q", snd)
+       (Delay(cocons ("p", rcv) (act ("q" ! [("cont", I, end)]))))
+       ("p", rcv) (act ("q" ! [("cont", I, end)]))
        ); intro Ha.
        apply Ha.
        simpl. easy. easy.
@@ -161,16 +161,16 @@ Proof. rewrite(coseq_eq(act TW)).
        rewrite(coseq_eq(act ("q" ! [("cont", I, end)]))).
        unfold coseq_id.
        simpl.
-       specialize(CoInSplit1 ("q", "!")
-       (Delay(cocons ("q", "!") (act (end))))
-       ("q", "!") (act (end))
+       specialize(CoInSplit1 ("q", snd)
+       (Delay(cocons ("q", snd) (act (end))))
+       ("q", snd) (act (end))
        ); intro Hb.
        apply Hb.
        simpl. easy. easy.
 
-       specialize(CoInSplit1 ("p", "?")
-       (Delay(cocons ("p", "?") (act ("q" ! [("cont", I, end)]))))
-       ("p", "?") (act ("q" ! [("cont", I, end)]))
+       specialize(CoInSplit1 ("p", rcv)
+       (Delay(cocons ("p", rcv) (act ("q" ! [("cont", I, end)]))))
+       ("p", rcv) (act ("q" ! [("cont", I, end)]))
        ); intro Hb.
        constructor.
        apply Hb.
@@ -183,17 +183,17 @@ Proof. rewrite(coseq_eq(act TW')).
        unfold coseq_id.
        simpl.
        constructor.
-       specialize(CoInSplit1 ("q", "!")
-       (Delay(cocons ("q", "!") (act ("p" & [("success", I, end)]))))
-       ("q", "!") (act ("p" & [("success", I, end)]))
+       specialize(CoInSplit1 ("q", snd)
+       (Delay(cocons ("q", snd) (act ("p" & [("success", I, end)]))))
+       ("q", snd) (act ("p" & [("success", I, end)]))
        ); intro Hb.
        apply Hb.
        simpl. easy. easy.
 
        constructor.
-       specialize(CoInSplit2 ("p", "?")
-       (Delay(cocons ("q", "!")(act ("p" & [("success", I, end)]))))
-       ("q", "!") (act ("p" & [("success", I, end)]))
+       specialize(CoInSplit2 ("p", rcv)
+       (Delay(cocons ("q", snd)(act ("p" & [("success", I, end)]))))
+       ("q", snd) (act ("p" & [("success", I, end)]))
        ); intro Ha. 
        apply Ha.
        simpl. easy. easy.
@@ -201,9 +201,9 @@ Proof. rewrite(coseq_eq(act TW')).
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.
-       specialize(CoInSplit1 ("p", "?")
-       (Delay(cocons ("p", "?") (act (end))))
-       ("p", "?") (act (end))
+       specialize(CoInSplit1 ("p", rcv)
+       (Delay(cocons ("p", rcv) (act (end))))
+       ("p", rcv) (act (end))
        ); intro Hb.
        apply Hb.
        simpl. easy. easy.
@@ -462,7 +462,7 @@ Inductive ev : nat -> Prop :=
   | ev_0 : ev 0
   | ev_SS: forall n : nat, ev n -> ev (S (S n)).
 
-Definition listW3 := [("p","?"); ("p","!")].
+Definition listW3 := [("p",rcv); ("p",snd)].
 
 Lemma W3EqList: cosetIncLC (act W3) listW3.
 Proof. pcofix CIH.
@@ -626,9 +626,9 @@ Proof. rewrite(coseq_eq (act W3)).
        constructor.
        simpl.
 
-       specialize(CoInSplit1 ("p", "?")
-       (Delay (cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
-       ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+       specialize(CoInSplit1 ("p", rcv)
+       (Delay (cocons ("p", rcv) (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+       ("p", rcv) (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
        ); intro Ha.
        apply Ha.
        simpl. easy.
@@ -637,9 +637,9 @@ Proof. rewrite(coseq_eq (act W3)).
        simpl.
        constructor.
        simpl.
-       specialize(CoInSplit2 ("p", "!")
-       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
-       ("p", "?") (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
+       specialize(CoInSplit2 ("p", snd)
+       (Delay(cocons ("p", rcv) (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))))
+       ("p", rcv) (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))
        ); intro Ha.
        simpl in Ha.
        simpl.
@@ -650,9 +650,9 @@ Proof. rewrite(coseq_eq (act W3)).
        unfold coseq_id.
        simpl.
 
-       specialize(CoInSplit1 ("p", "!")
-       (Delay (cocons ("p", "!") (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))))
-       ("p", "!") (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))
+       specialize(CoInSplit1 ("p", snd)
+       (Delay (cocons ("p", snd) (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))))
+       ("p", snd) (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))
        ); intro Hb.
        simpl in Hb.
        apply Hb.
@@ -665,16 +665,16 @@ Lemma W1EqListR: cosetIncR listW3 (act W1).
 Proof. rewrite(coseq_eq (act W1)).
        unfold coseq_id. simpl.
        constructor.
-       specialize(CoInSplit1 ("p", "?")
-       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
-       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       specialize(CoInSplit1 ("p", rcv)
+       (Delay(cocons ("p", rcv) (act ("p" ! [("l3", I, W1)]))))
+       ("p", rcv) (act ("p" ! [("l3", I, W1)]))
        ); intro Ha.
        apply Ha.
        simpl. easy. easy.
 
-       specialize(CoInSplit2 ("p", "!")
-       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
-       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       specialize(CoInSplit2 ("p", snd)
+       (Delay(cocons ("p", rcv) (act ("p" ! [("l3", I, W1)]))))
+       ("p", rcv) (act ("p" ! [("l3", I, W1)]))
        ); intro Ha.
        constructor.
        simpl in Ha.
@@ -684,32 +684,32 @@ Proof. rewrite(coseq_eq (act W1)).
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
        unfold coseq_id.
        simpl.
-       specialize(CoInSplit1 ("p", "!")
-       (Delay(cocons ("p", "!") (act W1)))
-       ("p", "!") (act W1)
+       specialize(CoInSplit1 ("p", snd)
+       (Delay(cocons ("p", snd) (act W1)))
+       ("p", snd) (act W1)
        ); intro Hb.
        apply Hb.
        simpl. easy. easy.
        constructor.
 Qed.
 
-Lemma inW1ns: forall n l s, CoInR ("p", "!") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
+Lemma inW1ns: forall n l s, CoInR ("p", snd) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
 Proof. intro n.
        induction n; intros.
        simpl.
        rewrite(coseq_eq (act W1)).
        unfold coseq_id. simpl.
-       specialize(CoInSplit2 ("p", "!")
-       (Delay(cocons ("p", "?") (act ("p" ! [("l3", I, W1)]))))
-       ("p", "?") (act ("p" ! [("l3", I, W1)]))
+       specialize(CoInSplit2 ("p", snd)
+       (Delay(cocons ("p", rcv) (act ("p" ! [("l3", I, W1)]))))
+       ("p", rcv) (act ("p" ! [("l3", I, W1)]))
        ); intro Ha.
        apply Ha. simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
        unfold coseq_id.
        simpl.
-       specialize(CoInSplit1 ("p", "!")
-       (Delay(cocons ("p", "!") (act W1)))
-       ("p", "!") (act W1)
+       specialize(CoInSplit1 ("p", snd)
+       (Delay(cocons ("p", snd) (act W1)))
+       ("p", snd) (act W1)
        ); intro Ha'.
        apply Ha'. simpl. easy. easy.
 
@@ -719,22 +719,22 @@ Proof. intro n.
        rewrite(coseq_eq(act ("p" & [(l, s, merge_bp_contn "p" (bp_receivea "p" l s) W1 n)]))).
        unfold coseq_id.
        simpl.
-       specialize(CoInSplit2 ("p", "!")
-       (Delay(cocons ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))))
-       ("p", "?") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))
+       specialize(CoInSplit2 ("p", snd)
+       (Delay(cocons ("p", rcv) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))))
+       ("p", rcv) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))
        ); intro Ha.
        apply Ha. simpl. easy. easy.
        apply IHn.
 Qed.
 
-Lemma inW1nsA: forall n r l s, paco2 CoInRA r ("p", "!") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
+Lemma inW1nsA: forall n r l s, paco2 CoInRA r ("p", snd) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
 Proof. intro n.
        induction n; intros.
        simpl.
        rewrite(coseq_eq (act W1)).
        unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
        unfold coseq_id.
        simpl.
@@ -748,20 +748,20 @@ Proof. intro n.
        unfold coseq_id.
        simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))). simpl. easy. easy.
        unfold upaco2. left. 
        unfold CoIn in IHn.
        apply IHn.
 Qed.
 
-Lemma inW1nsA2: forall n l s, CoIn ("p", "!") (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
+Lemma inW1nsA2: forall n l s, CoIn ("p", snd) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
 Proof. intro n.
        induction n; intros.
        simpl.
        rewrite(coseq_eq (act W1)).
        unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
        unfold coseq_id.
        simpl.
@@ -775,7 +775,7 @@ Proof. intro n.
        unfold coseq_id.
        simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n))). simpl. easy. easy.
        unfold upaco2. left. 
        unfold CoIn in IHn.
        apply IHn.
@@ -824,17 +824,17 @@ Proof. unfold act_eq.
              rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
              unfold coseq_id. simpl.
              pfold.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              simpl. easy. easy.
              unfold upaco2. left. pfold.
              rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)).
              simpl. easy. easy.
              unfold upaco2. left. pfold.
              rewrite(coseq_eq(act W1)).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))).
              simpl. easy. easy.
              unfold upaco2. left. pfold.
              simpl. rewrite(coseq_eq (act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
@@ -845,24 +845,24 @@ Proof. unfold act_eq.
              pfold.
              rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              simpl. easy. easy.
              unfold upaco2. left. pfold.
              rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)).
              simpl. easy. easy.
              unfold upaco2. left.
              pcofix CIH.
              pfold.
              rewrite(coseq_eq(act W1)).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))).
+             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))).
              simpl. easy. easy.
              unfold upaco2. left. pfold.
              rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", "!")) (ys := (act W1)). simpl. easy. easy.
+             apply CoInSplit2A with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
              unfold upaco2. right. exact CIH.
              apply CoIn_mon.
            }
@@ -914,24 +914,24 @@ Proof. unfold act_eq.
                    inversion H3.
                    subst. simpl in H5. inversion H5. subst. clear H5.
                    rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
-                   apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+                   apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
                    unfold upaco2. left. pfold.
                    rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
                    unfold coseq_id. simpl.
                    apply CoInSplit1A with (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy.
                    subst. simpl in H5. inversion H5. subst. clear H5.
                    rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
-                   apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+                   apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
                    unfold upaco2. left. pfold.
                    rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
                    unfold coseq_id. simpl.
-                   apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
+                   apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
                    unfold upaco2. left. pfold.
                    rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
-                   apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+                   apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
                    unfold upaco2. left. pfold.
                    rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-                   apply CoInSplit2A with (y := ("p", "!")) (ys := act W3). simpl. easy. easy.
+                   apply CoInSplit2A with (y := ("p", snd)) (ys := act W3). simpl. easy. easy.
                    unfold upaco2. right. apply CIH.
                    apply CoIn_mon.
                  }
@@ -961,10 +961,10 @@ Proof. unfold act_eq.
        punfold Hp. inversion Hp. subst. simpl in H. inversion H. subst. clear H.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
        apply CoInSplit1A with (ys := (act W1)). simpl. easy.
@@ -976,15 +976,15 @@ Proof. unfold act_eq.
        subst. simpl in H1. inversion H1. subst. clear H1.
        pfold.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2. left.
        pcofix CIH.
        pfold.
        rewrite(coseq_eq (act W1)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -994,7 +994,7 @@ Proof. unfold act_eq.
        punfold Hp. inversion Hp. subst. simpl in H. inversion H. subst. clear H.
        pfold.
        rewrite(coseq_eq (act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
        apply CoInSplit1A with (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy.
@@ -1009,16 +1009,16 @@ Proof. unfold act_eq.
        pcofix CIH.
        pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -1062,7 +1062,7 @@ Proof. intro n.
        punfold H.
        inversion H. subst. simpl in H1. inversion H1. subst. clear H1.
        simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=(act
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=(act
            (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
               (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
        simpl. easy. easy.
@@ -1071,29 +1071,29 @@ Proof. intro n.
             (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))))).
        unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act W1)).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act W1)).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act W1)).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act ("p" ! [("l3", I, W1)]))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act ("p" ! [("l3", I, W1)]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))).
        unfold coseq_id. simpl.
        apply CoInSplit1A with (ys :=  (act W1)). simpl. easy.
        subst. simpl in H1. inversion H1. subst. clear H1.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act
            (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
               (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
        simpl. easy. easy.
@@ -1102,25 +1102,25 @@ Proof. intro n.
           (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))))).
        unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        simpl. easy. easy.
        rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
        unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)).
        simpl. easy. easy.
        unfold upaco2. left.
        pcofix CIH.
        pfold. 
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))).
        simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W1)).
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W1)).
        simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
@@ -1154,7 +1154,7 @@ Proof. intro n.
        punfold H.
        inversion H. subst. simpl in H1. inversion H1. subst.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := act
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := act
           (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
              (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                 (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1163,7 +1163,7 @@ Proof. intro n.
        unfold upaco2. left. apply IHn.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
@@ -1172,7 +1172,7 @@ Proof. intro n.
        simpl. easy.
        subst. simpl in H1. inversion H1. subst.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := act
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := act
          (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
             (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1215,7 +1215,7 @@ Proof. intro n.
        destruct H10. punfold H8. inversion H8. subst. simpl in H10. 
        inversion H10. subst. 
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold. 
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
@@ -1225,22 +1225,22 @@ Proof. intro n.
        subst. simpl in H10. inversion H10. subst. clear H10.
        pcofix CIH.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys :=(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
+       apply CoInSplit2A with (y := ("p", snd)) (ys :=(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))).
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))).
        unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)).
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)).
        simpl. easy. easy.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        unfold upaco2. right. exact CIH.
@@ -1292,19 +1292,19 @@ Proof. intro n.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
        unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        simpl. easy. easy.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
        simpl. easy. easy.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq (act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
        apply CoInSplit1A with (ys := (act W1)). simpl. easy.
@@ -1320,21 +1320,21 @@ Proof. intro n.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
        unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))). simpl. easy. easy.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        unfold coseq_id. simpl. unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
        unfold coseq_id. simpl. unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2. left.
        pcofix CIH.
        pfold.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys :=  (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys :=  (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -1345,7 +1345,7 @@ Proof. intro n.
        inversion Hp. subst. simpl in H. inversion H. subst. clear H.
        rewrite(coseq_eq (act W3)). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])) ).
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])) ).
        simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))).
@@ -1366,7 +1366,7 @@ Proof. intro n.
        inversion H. subst. simpl in H0. inversion H0. subst. clear H0.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
        apply CoInSplit1A with (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy.
@@ -1393,16 +1393,16 @@ Proof. intro n.
        pcofix CIH.
        pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        rewrite(coseq_eq (act W3)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -1420,7 +1420,7 @@ Proof. intro n.
        simpl in H0. inversion H0. subst. clear H0.
        rewrite (coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). 
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). 
        simpl. easy. easy.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
@@ -1465,13 +1465,13 @@ Proof. intro n.
        inversion Hp. subst. simpl in H. inversion H. subst. clear H.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        apply CoInSplit1A with (ys := (act W1)). simpl. easy.
@@ -1487,19 +1487,19 @@ Proof. intro n.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
        unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2.
        left.
        pcofix CIH.
        pfold.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W1)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -1526,10 +1526,10 @@ Proof. intro n.
        punfold H. inversion H. subst. simpl in H0. inversion H0. subst. clear H0.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq (act W3)). unfold coseq_id. simpl.
        apply CoInSplit1A with (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy.
@@ -1546,16 +1546,16 @@ Proof. intro n.
        pcofix CIH.
        pfold. 
        rewrite(coseq_eq (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
@@ -1575,32 +1575,32 @@ Proof. intro n.
        inversion H2. subst. clear H2.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
        unfold upaco2. left. pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        unfold upaco2. left. pfold. exact H0.
        subst. simpl in H2. inversion H2. subst. clear H2.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3)). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3)). simpl. easy. easy.
        unfold upaco2. left.
        pcofix CIH.
        rewrite(coseq_eq(act W3)). unfold coseq_id. simpl.
        pfold.
-       apply CoInSplit2A with (y := ("p", "?")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act ("p" ! [("l3", I, W3)])) ). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)])) ). simpl. easy. easy.
        unfold upaco2. left. pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W3)]))). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := ("p", "!")) (ys := (act W3) ). simpl. easy. easy.
+       apply CoInSplit2A with (y := ("p", snd)) (ys := (act W3) ). simpl. easy. easy.
        unfold upaco2. right. exact CIH.
        apply CoIn_mon.
        easy.
