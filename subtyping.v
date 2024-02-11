@@ -29,7 +29,7 @@ Definition subtypeA (T T': st): Prop :=
   exists (W: siso), st2sisoC U  (@und W) /\
   exists (W':siso), st2sisoC V' (@und W') /\ refinementN W W'.
 
-Lemma equivLeft: forall T T', subtypeA T T' -> subtype T T'.
+(* Lemma equivLeft: forall T T', subtypeA T T' -> subtype T T'.
 Proof. unfold subtype, subtypeA.
        intros.
        split.
@@ -52,7 +52,7 @@ Proof. unfold subtype, subtypeA.
        simpl.
        apply sisoE in H6.
        easy.
-Qed.
+Qed. *)
 
 Definition nsubtype (T T': st): Prop :=
   exists U,  st2soC T U /\

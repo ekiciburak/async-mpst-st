@@ -1495,7 +1495,7 @@ Definition act_neq (w w': st) := (exists a, CoInR a (act w) /\ CoNInR a (act w')
 (* Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w'). *)
 
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
-  | _sref_in : forall w w' p l s s',
+(*   | _sref_in : forall w w' p l s s',
                       subsort s' s -> 
                       seq w w' ->
                       refinementR seq (st_receive p [(l,s,w)]) (st_receive p [(l,s',w')])
@@ -1503,7 +1503,7 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_out: forall w w' p l s s',
                       subsort s s' ->
                       seq w w' ->
-                      refinementR seq (st_send p [(l,s,w)]) (st_send p [(l,s',w')])
+                      refinementR seq (st_send p [(l,s,w)]) (st_send p [(l,s',w')]) *)
 
   | _sref_a  : forall w w' p l s s' a n,
                       subsort s s' ->
@@ -1530,8 +1530,8 @@ Lemma refinementR_mon: monotone2 refinementR.
 Proof. unfold monotone2.
        intros.
        induction IN; intros.
-       - constructor. exact H. apply LE. exact H0.
-       - constructor. exact H. apply LE. exact H0.
+(*        - constructor. exact H. apply LE. exact H0.
+       - constructor. exact H. apply LE. exact H0. *)
        - specialize(_sref_a r'); intro Ha. apply Ha; try easy.
          apply LE. exact H0.
        - specialize(_sref_b r'); intro Ha. apply Ha; try easy.
@@ -1643,7 +1643,7 @@ Proof. unfold monotone2.
        - constructor.
 Qed.
 
-Lemma sisoE: forall W W', refinementN W W' -> (@und W) ~< (@und W').
+(* Lemma sisoE: forall W W', refinementN W W' -> (@und W) ~< (@und W').
 Proof. intros (W, Pw) (W', Pw').
        revert W W' Pw Pw'.
        simpl.
@@ -1707,7 +1707,7 @@ Proof. intros (W, Pw) (W', Pw').
        easy.
        pfold. constructor.
        apply refinementRN_mon.
-Qed.
+Qed. *)
 
 (*
 forall w w' p l s s' a n,
