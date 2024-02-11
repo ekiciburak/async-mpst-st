@@ -3100,6 +3100,31 @@ Proof. intros p c.
        - rewrite cpend_an in H0. inversion H0. subst. easy.
 Qed.
 
+Lemma helperBp: forall p b q l1 l2 s1 s2 w1 w2, 
+p <> q ->
+q & [(l1, s1, w1)] = merge_bp_cont p b (p & [(l2, s2, w2)]) ->
+CoIn (p,rcv) (act w1).
+Proof. intros p b.
+       induction b; intros.
+       - rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+         simpl in H0. inversion H0. subst. 
+         pfold. 
+         rewrite(coseq_eq((act (p & [(l2, s3, w2)])))).
+         unfold coseq_id.
+         simpl.
+         apply CoInSplit1A with (ys := (act w2)). simpl. easy.
+       - rewrite(siso_eq(merge_bp_cont p (bp_send q n s s0) (p & [(l2, s2, w2)]))) in H0.
+         simpl in H0. inversion H0. 
+       - rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (p & [(l2, s3, w2)]))) in H0.
+         simpl in H0.
+         inversion H0. rewrite hm1. pfold. apply eq0A. right.
+         apply CoInSplit1A with (ys := (act w2)). simpl. easy.
+       - rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 b) (p & [(l2, s2, w2)]))) in H0.
+         simpl in H0. easy.
+       - rewrite bpend_an in H0. inversion H0. subst. easy.
+Qed.
+
+
 Lemma helperCp2: forall p c q l1 l2 s1 s2 w1 w2, 
 q ! [(l1, s1, w1)] = merge_cp_cont p c (p & [(l2, s2, w2)]) ->
 CoIn (p,rcv) (act w1).
@@ -3125,6 +3150,33 @@ Proof. intros p c.
          simpl.
          apply CoInSplit1A with (ys := (act w2)). simpl. easy.
        - rewrite cpend_an in H. easy. 
+Qed.
+
+Lemma helperBp2: forall p b q l1 l2 s1 s2 w1 w2, 
+q ! [(l1, s1, w1)] = merge_bp_cont p b (p & [(l2, s2, w2)]) ->
+CoIn (p,rcv) (act w1).
+Proof. intros p c.
+       induction c; intros.
+       - rewrite(siso_eq(merge_bp_cont p (bp_receivea s s0 s1) (p & [(l2, s3, w2)]))) in H.
+         simpl in H. easy.
+       - rewrite(siso_eq(merge_bp_cont p (bp_send q n s s0) (p & [(l2, s2, w2)]))) in H.
+         simpl in H.
+         inversion H. subst. 
+         pfold. 
+         rewrite(coseq_eq((act (p & [(l2, s2, w2)])))).
+         unfold coseq_id.
+         simpl.
+         apply CoInSplit1A with (ys := (act w2)). simpl. easy.
+       - rewrite(siso_eq(merge_bp_cont p (bp_mergea s s0 s1 c) (p & [(l2, s3, w2)]))) in H.
+         simpl in H. easy.
+       - rewrite(siso_eq(merge_bp_cont p (bp_merge q n s s0 c) (p & [(l2, s2, w2)]))) in H.
+         simpl in H. inversion H. subst.
+         rewrite hm1. pfold. apply eq0A. right.
+         rewrite(coseq_eq((act (p & [(l2, s2, w2)])))).
+         unfold coseq_id.
+         simpl.
+         apply CoInSplit1A with (ys := (act w2)). simpl. easy.
+       - rewrite bpend_an in H. easy. 
 Qed.
 
 Lemma helperApCp: forall q a p c l1 l2 s1 s2 w1 w2, 
@@ -3988,7 +4040,7 @@ Proof. intros w w' H.
          apply refinementR_mon.
          easy.
        }
-Admitted.
+Qed.
 
 (* Axiom LEM: forall (p: Prop), p \/ ~p. *)
 
