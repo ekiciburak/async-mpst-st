@@ -3819,7 +3819,7 @@ Proof. intros p b1.
          apply bsd3 in H0. easy. easy.
 Qed.
 
-Lemma nrefNLS: forall w w',  (@und w) ~< (@und w') -> (nRefinementN w w' -> False).
+Lemma nrefNL: forall w w',  (@und w) ~< (@und w') -> (nRefinementN w w' -> False).
 Proof. intros w w' H.
        unfold refinement in H.
        punfold H; [ | apply refinementR_mon].
@@ -5804,5 +5804,24 @@ Proof. destruct w as (w, Pw).
          pfold. constructor.
        }
 Admitted.
+
+Lemma contrpositive: forall (a b: Prop), (a -> b) <-> ((b -> False) -> (a -> False)).
+Proof. split.
+       - intros.
+         apply H0, H, H1.
+       - intros.
+         specialize (classic b); intros.
+         destruct H1 as [H1 | H1].
+         + easy.
+         + specialize(H H1 H0). easy.
+Qed.
+
+Lemma nrefNR: forall w w', ((@und w) ~< (@und w') -> False) -> nRefinementN w w'.
+Proof. intros.
+       specialize(nrefNRS w w'); intro HS.
+       rewrite contrpositive in HS.
+       intros Hb Hc.
+       specialize(Hc Hb). easy.
+Qed.
 
 
