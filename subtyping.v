@@ -210,6 +210,40 @@ Proof. rewrite(coseq_eq(act TW')).
        constructor.
 Qed.
 
+Lemma _sref_in: forall w w' p l s s',
+                act_eq w w' ->
+                subsort s' s -> 
+                refinement w w' ->
+                refinement (st_receive p [(l,s,w)]) (st_receive p [(l,s',w')]).
+Proof. intros.
+       unfold refinement.
+       pfold.
+       specialize(_sref_a (upaco2 refinementR bot2) w w' p l s' s (ap_end) 1 H0); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
+       left. exact H1.
+       exact H.
+Qed.
+
+Lemma _sref_out: forall w w' p l s s',
+                act_eq w w' ->
+                subsort s s' -> 
+                refinement w w' ->
+                refinement (st_send p [(l,s,w)]) (st_send p [(l,s',w')]).
+Proof. intros.
+       unfold refinement.
+       pfold.
+       specialize(_sref_b (upaco2 refinementR bot2) w w' p l s s' (bp_end) 1 H0); intros HSA.
+       simpl in HSA.
+       rewrite bpend_an in HSA.
+       rewrite bpend_an in HSA.
+       apply HSA.
+       left. exact H1.
+       exact H.
+Qed.
+
 Lemma st1: subtype T' T.
 Proof. unfold subtype, T, T'.
        intros U.
@@ -328,7 +362,11 @@ Proof. unfold subtype, T, T'.
        unfold upaco2.
        left.
        pfold.
-       apply _sref_in.
+       specialize(_sref_a (upaco2 refinementR r)  (end) (end) "p" "success" (I) (I) (ap_end) 1); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
 
        apply srefl. (*subsort*)
 
@@ -336,6 +374,8 @@ Proof. unfold subtype, T, T'.
        left.
        pfold.
        apply _sref_end.
+
+       admit.
 
        unfold act_eq.
        intros (p, s).
@@ -391,7 +431,7 @@ Proof. unfold subtype, T, T'.
        apply CoIn_mon.
        easy.
        apply CoIn_mon.
-Qed.
+Admitted.
 
 CoFixpoint TS: st :=
   st_send "p" [("l3",sint,TS)].
@@ -1622,12 +1662,29 @@ Proof. intros.
          pfold.
          rewrite(siso_eq W3).
          simpl.
-         apply _sref_in.
+
+         specialize(_sref_a (upaco2 refinementR r) ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])  
+                                                   ("p" ! [("l3", I, W1)]) "p" "l1" (I) (I) (ap_end) 1); intros HSA.
+         simpl in HSA.
+         rewrite apend_an in HSA.
+         rewrite apend_an in HSA.
+         apply HSA.
+
+(*          apply _sref_in. *)
          apply srefl.
          unfold upaco2.
          left.
          pfold.
-         apply _sref_out.
+         
+         specialize(_sref_b (upaco2 refinementR r) ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])  
+                                                   (W1) "p" "l3" (I) (I) (bp_end) 1); intros HSB.
+         simpl in HSB.
+         rewrite bpend_an in HSB.
+         rewrite bpend_an in HSB.
+         apply HSB.
+
+         
+(*          apply _sref_out. *)
          apply srefl.
          unfold upaco2.
          left.
@@ -1693,6 +1750,8 @@ Proof. intros.
         apply acteq1.
         apply acteq2.
 
+        admit.
+        admit.
         rename CIH into Hn.
         simpl. simpl in Hn.
 
@@ -1703,9 +1762,17 @@ Proof. intros.
         simpl.
 
         pfold.
-         rewrite(siso_eq W3).
-         simpl.
-         apply _sref_in.
+        rewrite(siso_eq W3).
+        simpl.
+         
+        specialize(_sref_a (upaco2 refinementR r) ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])  
+                                                  ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]) "p" "l1" (I) (I) (ap_end) 1); intros HSA.
+        simpl in HSA.
+        rewrite apend_an in HSA.
+        rewrite apend_an in HSA.
+        apply HSA.
+         
+(*          apply _sref_in. *)
          apply srefl.
          unfold upaco2.
          left.
@@ -1828,7 +1895,8 @@ Proof. intros.
          apply acteq3.
          apply acteq4.
          apply acteq5.
-Qed.
+         admit.
+Admitted.
 
 Lemma st2: forall n: nat, subtype TB TB'.
 Proof. unfold subtype.

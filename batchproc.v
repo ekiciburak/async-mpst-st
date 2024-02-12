@@ -1583,8 +1583,24 @@ Proof. unfold subtype.
        rewrite(siso_eq Tctl').
        rewrite(siso_eq Tctl). simpl.
        pfold.
-       constructor.
+       
+       specialize(_sref_b (upaco2 refinementR bot2) ("src" ! [("b2", (), TR)])  
+                                                 ("src" &
+       [("b1", (),
+         "sk" &
+         [("b1", (),
+           "sk"
+           ! [("b1", (),
+               "src"
+               ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+       "src" "b1" (()) (()) (bp_end) 1); intros HSB.
+       simpl in HSB.
+       rewrite bpend_an in HSB.
+       rewrite bpend_an in HSB.
+       apply HSB.
+       clear HSB.
        apply srefl.
+       
        unfold upaco2.
        left.
        pcofix CIH.
@@ -1628,19 +1644,60 @@ Proof. unfold subtype.
        unfold upaco2.
        left. 
        pfold.
-       apply _sref_in.
+       
+       specialize(_sref_a (upaco2 refinementR r) ("sk" & [("b1", (),
+        "sk"
+        ! [("b1", (),
+            "src"
+            ! [("b1", (),
+                "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])  
+       ("sk" & [("b1", (),
+        "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]) 
+        "src" "b1" (()) (()) (ap_end) 1); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
+       clear HSA.
+(*        apply _sref_in. *)
        apply srefl.
        
        unfold upaco2.
        left. 
        pfold.
-       apply _sref_in.
+       clear HSA.
+       specialize(_sref_a (upaco2 refinementR r) ("sk"
+        ! [("b1", (),
+            "src"
+            ! [("b1", (),
+                "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])  
+       ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]) 
+        "sk" "b1" (()) (()) (ap_end) 1); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
+       clear HSA.
+(*        apply _sref_in. *)
        apply srefl.
 
        unfold upaco2.
        left. 
        pfold.
-       apply _sref_out.
+
+       clear HSB.
+       specialize(_sref_b (upaco2 refinementR r) ("src"
+       ! [("b1", (),
+           "src" &
+           [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])  
+       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]) 
+        "sk" "b1" (()) (()) (bp_end) 1); intros HSB.
+       simpl in HSB.
+       rewrite bpend_an in HSB.
+       rewrite bpend_an in HSB.
+       apply HSB.
+       clear HSB.
+(*        apply _sref_out. *)
        apply srefl.
 
        rewrite(siso_eq Tctl).
@@ -1719,25 +1776,90 @@ Proof. unfold subtype.
          unfold upaco2.
          left.
          pfold.
-         apply _sref_in.
+         clear HSA HSB.
+
+        specialize(_sref_a (upaco2 refinementR r) ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])  
+        ("sk" &
+     [("b2", (),
+       "sk"
+       ! [("b2", (),
+           "src" &
+           [("b1", (),
+             "sk" &
+             [("b1", (),
+               "sk"
+               ! [("b1", (),
+                   "src"
+                   ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]) 
+         "src" "b2" (()) (()) (ap_end) 1); intros HSA.
+        simpl in HSA.
+        rewrite apend_an in HSA.
+        rewrite apend_an in HSA.
+        apply HSA.
+        clear HSA.
+       
+(*          apply _sref_in. *)
          apply srefl.
 
          unfold upaco2.
          left.
          pfold.
-         apply _sref_in.
+
+         clear HSA.
+         specialize(_sref_a (upaco2 refinementR r) ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])  
+          ("sk"
+          ! [("b2", (),
+            "src" &
+            [("b1", (),
+              "sk" &
+              [("b1", (),
+                "sk"
+                ! [("b1", (),
+                    "src"
+                    ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]) 
+          "sk" "b2" (()) (()) (ap_end) 1); intros HSA.
+         simpl in HSA.
+         rewrite apend_an in HSA.
+         rewrite apend_an in HSA.
+         apply HSA.
+         clear HSA.
+(*          apply _sref_in. *)
          apply srefl.
 
          unfold upaco2.
          left.
          pfold.
-         apply _sref_out.
+         
+         clear HSA.
+         specialize(_sref_b (upaco2 refinementR r) ("src" ! [("b2", (), TR)])  
+          ("src" &
+            [("b1", (),
+              "sk" &
+              [("b1", (),
+                "sk"
+                ! [("b1", (),
+                    "src"
+                    ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]) 
+          "sk" "b2" (()) (()) (bp_end) 1); intros HSB.
+         simpl in HSB.
+         rewrite bpend_an in HSB.
+         rewrite bpend_an in HSB.
+         apply HSB.
+         clear HSB.
+         
+(*          apply _sref_out. *)
          apply srefl.
          
          unfold upaco2.
          right.
          apply CIH.
-         
+         admit. 
+         admit.
+         admit.
          apply acteqT1.
-         apply acteqT2.
-Qed.
+         admit.
+         admit.
+         admit.
+         apply acteqT2. 
+         admit.
+Admitted.
