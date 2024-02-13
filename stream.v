@@ -192,36 +192,6 @@ Proof. intros.
          easy. easy. easy.
 Qed.
 
-Lemma inOutLD: forall {A: Type} x xs, CoInR x xs -> (@CoIn A x xs -> False).
-Proof. intros.
-       induction H.
-       subst.
-       - unfold CoIn in H0.
-         punfold H0. inversion H0.
-         subst.
-         destruct xs, force0. simpl in *.
-         easy.
-         simpl in *. rewrite H1 in H0.
-         
-         subst. 
-         destruct xs, force0. simpl in *.
-         easy. 
-         simpl in *. rewrite H1 in H. inversion H. subst. easy.
-         apply CoIn_mon.
-       - apply IHCoInR.
-         unfold CoIn in H0.
-         punfold H0.
-         inversion H0.
-         subst.
-         destruct xs, force0. simpl in *.
-         easy. simpl in *.
-         rewrite H in H3. inversion H3. subst. easy.
-         subst.
-         rewrite H in H3. inversion H3. subst.
-         unfold upaco2 in H5. destruct H5; easy.
-         apply CoIn_mon.
-Qed.
-
 Lemma inOutR: forall {A: Type} x xs, (CoNInR x xs) -> (@CoInR A x xs -> False).
 Proof. intros.
        induction H0. 

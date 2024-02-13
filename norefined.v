@@ -5300,7 +5300,19 @@ Proof. intros.
 Qed.
 
 Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
-Admitted.
+Proof. intros.
+       unfold act_eq, act_neq in *.
+       apply not_all_ex_not in H.
+       destruct H as (a, H).
+       exists a.
+       unfold iff in H.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       apply imply_to_and in H.
+       left. easy.
+       apply imply_to_and in H.
+       right. easy.
+Qed.
 
 Inductive Fp: Type :=
   | fp_receive: participant -> label -> st.sort -> Fp
