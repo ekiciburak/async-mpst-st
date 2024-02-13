@@ -1487,10 +1487,10 @@ Inductive cosetIncR: list (participant * actT) -> coseq (participant * actT) -> 
             cosetIncR xs ys ->
             cosetIncR (x::xs) ys.
 
-Definition act_eq (w w': st) := forall a, CoIn a (act w) <-> CoIn a (act w').
+Definition act_eq (w w': st) := forall a, CoInR a (act w) <-> CoInR a (act w').
 Definition act_eqA (w w': st) := forall a, CoInR a (act w) <-> CoInR a (act w').
 
-Definition act_neq (w w': st) := (exists a, CoInR a (act w) /\ CoNInR a (act w') \/ CoInR a (act w') /\ CoNInR a (act w)).
+Definition act_neq (w w': st) := (exists a, CoInR a (act w) /\ (CoInR a (act w') -> False) \/ CoInR a (act w') /\ (CoInR a (act w) -> False)).
 
 (* Definition act_eqB (w w': siso) := forall a, CoIn a (actC w) <-> CoIn a (actC w'). *)
 

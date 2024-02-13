@@ -9,118 +9,6 @@ Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic
 
 Local Open Scope string_scope.
 
-(* 
-Definition subtypeA (T T': st): Prop :=
-  forall U,  st2soCA T U /\
-  forall V', st2siCA T' V' /\
-  exists W,  so2sisoC U W /\
-  exists W', si2sisoC V' W' /\ W ~<A W'. 
-*)
-
-Definition subtype (T T': st): Prop :=
-  forall U, st2soC T U /\ 
-  forall V', st2siC T' V' /\
-  exists (W: siso), st2sisoC U  (@und W) /\
-  exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
-
-Definition subtypeA (T T': st): Prop :=
-  forall U, st2soC T U /\ 
-  forall V', st2siC T' V' /\
-  exists (W: siso), st2sisoC U  (@und W) /\
-  exists (W':siso), st2sisoC V' (@und W') /\ refinementN W W'.
-
-(* Lemma equivLeft: forall T T', subtypeA T T' -> subtype T T'.
-Proof. unfold subtype, subtypeA.
-       intros.
-       split.
-       specialize(H U).
-       destruct H as (H1, H).
-       exact H1.
-       intro V'.
-       split.
-       specialize(H U).
-       destruct H as (H1, H).
-       specialize(H V').
-       destruct H as (H2, H).
-       exact H2.
-       specialize(H U).
-       destruct H as (H1, H).
-       specialize(H V').
-       destruct H as (H2, H).
-       destruct H as (W, (H4, (W', (H5, H6)))).
-       exists W. split. exact H4. exists W'. split. exact H5.
-       simpl.
-       apply sisoE in H6.
-       easy.
-Qed. *)
-
-Definition nsubtype (T T': st): Prop :=
-  exists U,  (st2soC T U -> False) \/
-  exists V', (st2siC T' V' -> False) \/
-  forall W, (st2sisoC U (@und W) -> False) \/ 
-  forall W', (st2sisoC V' (@und W') -> False) \/ nRefinementN W W'.
-
-Lemma subneqL: forall T T', subtype T T' -> nsubtype T T' -> False.
-Proof. intros.
-       unfold subtype, nsubtype in *.
-       destruct H0 as (U, H0).
-       specialize(H U).
-       destruct H0 as [H0 | H0].
-       destruct H as (H, Ha).
-       easy.
-       destruct H as (Ha, H).
-       destruct H0 as (V', H0).
-       specialize(H V').
-       destruct H as (Hb, H).
-       destruct H0 as [H0 | H0].
-       easy.
-       destruct H as (W, H).
-       specialize(H0 W).
-       destruct H as (Hc, H).
-       destruct H0 as [H0 | H0].
-       easy.
-       destruct H as (W', H).
-       destruct H as (Hd, H).
-       specialize(H0 W').
-       destruct H0 as [H0 | H0].
-       easy.
-       apply (nrefNL W W'); easy.
-Qed.
-
-Lemma subneqR: forall T T', (subtype T T' -> False) -> nsubtype T T'.
-Proof. intros.
-       unfold subtype, nsubtype in *.
-       apply not_all_ex_not in H.
-       destruct H as (U, H).
-       exists U.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       left. easy.
-       apply not_all_ex_not in H.
-       destruct H as (V', H).
-       right. exists V'. 
-       apply not_and_or in H.
-       destruct H as [H | H].
-       left. easy.
-       right. intro W.
-       apply not_ex_all_not with (n := W) in H.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       left. easy.
-       right. intro W'.
-       apply not_ex_all_not with (n := W') in H.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       left. easy.
-       right. apply nrefNR. easy.
-Qed.
-
-Theorem completeness: forall T T', (subtype T T' -> False) <-> nsubtype T T'.
-Proof. split.
-       apply (subneqR T T').
-       intros. apply (subneqL T T'); easy.
-Qed.
-
 Definition T': st :=
   st_send "q" [
                ("cont",sint ,st_receive "p" [("success",sint,st_end);("error",sbool,st_end)]);
@@ -423,63 +311,65 @@ Proof. unfold subtype, T, T'.
        pfold.
        apply _sref_end.
 
-       admit.
+       unfold act_eq.
+       intros (p,s).
+       easy.
 
        unfold act_eq.
        intros (p, s).
        split.
        intro Ha.
-       unfold CoIn in Ha.
-       punfold Ha.
+(*        unfold CoIn in Ha. *)
+(*        punfold Ha. *)
        inversion Ha.
        subst.
        simpl in H0.
        inversion H0.
        rewrite(coseq_eq(act (merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end)))).
        unfold coseq_id. simpl.
-       pfold.
-       apply CoInSplit1A with (ys := (act (end))). simpl. easy.
+(*        pfold. *)
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (end))). simpl. easy. easy.
        subst.
        simpl in H0.
        inversion H0.
        subst.
-       unfold upaco2 in H2.
+(*        unfold upaco2 in H2.
        destruct H2.
-       punfold H2.
+       punfold H2. *)
        inversion H2.
        subst. simpl in H3. easy.
        simpl in *.
        easy.
-       apply CoIn_mon.
+(*        apply CoIn_mon.
        easy.
-       apply CoIn_mon.
+       apply CoIn_mon. *)
 
        intro Ha.
-       unfold CoIn in Ha.
-       punfold Ha.
+(*        unfold CoIn in Ha.
+       punfold Ha. *)
        inversion Ha.
        subst.
        simpl in H0.
        inversion H0.
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id. simpl.
-       pfold.
-       apply CoInSplit1A with (ys := (act (end))). simpl. easy.
+(*        pfold. *)
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (end))). simpl. easy. easy.
        subst.
        simpl in H0.
        inversion H0.
        subst.
-       unfold upaco2 in H2.
+(*        unfold upaco2 in H2.
        destruct H2.
-       punfold H2.
+       punfold H2. *)
        inversion H2.
        subst. simpl in H3. easy.
        simpl in *.
        easy.
-       apply CoIn_mon.
+(*        apply CoIn_mon.
        easy.
-       apply CoIn_mon.
-Admitted.
+       apply CoIn_mon. *)
+Qed.
 
 CoFixpoint TS: st :=
   st_send "p" [("l3",sint,TS)].
@@ -889,44 +779,44 @@ Proof. unfold act_eq.
        destruct a as (p, s).
        split.
        { intro Hp.
-         unfold CoIn in Hp.
-         punfold Hp.
+(*          unfold CoIn in Hp.
+         punfold Hp. *)
          inversion Hp.
          { subst.
            simpl in H. inversion H.
            rewrite(coseq_eq((act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))))).
            unfold coseq_id. simpl.
-           pfold.
-           apply CoInSplit1A with (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
-           simpl. easy.
+(*            pfold. *)
+           apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+           simpl. easy. easy.
          }
          { subst.
            simpl in H.
            inversion H.
            subst; clear H.
-           unfold upaco2 in H1.
+(*            unfold upaco2 in H1. *)
            destruct H1.
-           { punfold H.
+           {(*  punfold H. *)
              inversion H. subst.
-             inversion H1. subst.
+(*              inversion H1. subst. *)
              rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)))).
              unfold coseq_id. simpl.
-             pfold.
-             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
+(*              pfold. *)
+             apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              simpl. easy. easy.
-             unfold upaco2. left. pfold.
+(*              unfold upaco2. left. pfold. *)
              rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act W1)).
+             apply CoInSplit2 with (y := ("p", rcv)) (ys := (act W1)).
              simpl. easy. easy.
-             unfold upaco2. left. pfold.
+(*              unfold upaco2. left. pfold. *)
              rewrite(coseq_eq(act W1)).
              unfold coseq_id. simpl.
-             apply CoInSplit2A with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))).
+             apply CoInSplit2 with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))).
              simpl. easy. easy.
-             unfold upaco2. left. pfold.
+(*              unfold upaco2. left. pfold. *)
              simpl. rewrite(coseq_eq (act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
-             apply CoInSplit1A with (ys := (act W1)). simpl. easy.
+             apply CoInSplit1 with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
              subst.
              simpl in H1. inversion H1. subst.
              clear H1.
