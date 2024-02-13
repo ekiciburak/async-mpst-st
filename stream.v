@@ -2,7 +2,7 @@
 From Paco Require Import paco.
 Require Import Setoid.
 Require Import Morphisms.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
+Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Inductive colistF (a : Type) (x : Type) :=
   | conil : colistF a x
@@ -161,6 +161,12 @@ Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
   | CoNInSplit1 x: CoNInR x (Delay conil)
   | CoNInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoNInR x ys -> CoNInR x xs.
 
+Lemma In_ind (a : Type) (x : a) (P : coseq a -> Prop)
+    (H : forall xs (y : a) (ys : coseq a),
+         force xs = cocons y ys -> x = y \/ (CoNInR x ys /\ P ys) -> P xs)
+  : forall xs, CoNInR x xs -> P xs.
+Admitted.
+
 Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoNInSplit1A x: CoNInRA R x (Delay conil)
   | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
@@ -207,7 +213,7 @@ Qed.
 
 Lemma inOutLCP: forall {A: Type} x xs, CoInRA (bot2) x xs -> @CoInR A x xs.
 Proof. intros.
-       
+
        inversion H.
        subst.
        case_eq xs; intros.
@@ -219,6 +225,7 @@ Proof. intros.
          + subst. destruct force0. easy.
            simpl in H0. inversion H0. subst. easy.
 Qed.
+
 
 Lemma inOutLA: forall {A: Type} x xs, CoIn x xs -> (@CoNInR A x xs -> False).
 Proof. intros.
@@ -280,6 +287,9 @@ Proof. intros.
        easy.
        apply CoIn_mon.
 Qed.
+
+
+
 
 (* 
 Inductive CoInR {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=

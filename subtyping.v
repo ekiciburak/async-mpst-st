@@ -5,7 +5,7 @@ Require Import String List Coq.Arith.Even.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
-Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts.
+Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Local Open Scope string_scope.
 
@@ -55,22 +55,70 @@ Proof. unfold subtype, subtypeA.
 Qed. *)
 
 Definition nsubtype (T T': st): Prop :=
-  exists U,  st2soC T U /\
-  exists V', st2siC T' V' /\
-  forall W, st2sisoC U (@und W) /\ 
-  forall W', st2sisoC V' (@und W') /\ nRefinementN W W'.
+  exists U,  (st2soC T U -> False) \/
+  exists V', (st2siC T' V' -> False) \/
+  forall W, (st2sisoC U (@und W) -> False) \/ 
+  forall W', (st2sisoC V' (@und W') -> False) \/ nRefinementN W W'.
 
 Lemma subneqL: forall T T', subtype T T' -> nsubtype T T' -> False.
 Proof. intros.
        unfold subtype, nsubtype in *.
-       destruct H0 as (U, (Ha, (V', (Hb, H0)))).
+       destruct H0 as (U, H0).
        specialize(H U).
-       destruct H as (Ha1, H).
-       destruct (H V') as (Hb1, (W, (Hc, (W', (Hd, He))))).
+       destruct H0 as [H0 | H0].
+       destruct H as (H, Ha).
+       easy.
+       destruct H as (Ha, H).
+       destruct H0 as (V', H0).
+       specialize(H V').
+       destruct H as (Hb, H).
+       destruct H0 as [H0 | H0].
+       easy.
+       destruct H as (W, H).
        specialize(H0 W).
-       destruct H0 as (Hc1, H0).
-       destruct (H0 W') as (Hd', He').
-       apply nrefNLS in He. easy. easy.
+       destruct H as (Hc, H).
+       destruct H0 as [H0 | H0].
+       easy.
+       destruct H as (W', H).
+       destruct H as (Hd, H).
+       specialize(H0 W').
+       destruct H0 as [H0 | H0].
+       easy.
+       apply (nrefNL W W'); easy.
+Qed.
+
+Lemma subneqR: forall T T', (subtype T T' -> False) -> nsubtype T T'.
+Proof. intros.
+       unfold subtype, nsubtype in *.
+       apply not_all_ex_not in H.
+       destruct H as (U, H).
+       exists U.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       left. easy.
+       apply not_all_ex_not in H.
+       destruct H as (V', H).
+       right. exists V'. 
+       apply not_and_or in H.
+       destruct H as [H | H].
+       left. easy.
+       right. intro W.
+       apply not_ex_all_not with (n := W) in H.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       left. easy.
+       right. intro W'.
+       apply not_ex_all_not with (n := W') in H.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       left. easy.
+       right. apply nrefNR. easy.
+Qed.
+
+Theorem completeness: forall T T', (subtype T T' -> False) <-> nsubtype T T'.
+Proof. split.
+       apply (subneqR T T').
+       intros. apply (subneqL T T'); easy.
 Qed.
 
 Definition T': st :=

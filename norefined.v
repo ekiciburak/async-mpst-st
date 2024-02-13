@@ -5094,8 +5094,6 @@ Proof. intros.
        apply H in H0. easy. right. easy. left. easy.
 Qed.
 
-
-
 Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
 Admitted.
 
@@ -5431,6 +5429,7 @@ Proof. destruct w as (w, Pw).
          apply inOutLA_O in Hclass.
          unfold CoIn in Hclass.
          punfold Hclass.
+
          assert(CoInRA (upaco2 CoInRA bot2) (p, snd) (act (q ! [(l', s', w2)])) -> CoInR (p, snd) (act (q ! [(l', s', w2)]))) as Hpr by admit.
          apply Hpr in Hclass.
          specialize(inSend (q ! [(l', s', w2)]) p Pw' Hclass); intros.
