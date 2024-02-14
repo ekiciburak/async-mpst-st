@@ -7,6 +7,7 @@ Require Import Setoid.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 Require Import ProofIrrelevance.
+(* Require dpdgraph.dpdgraph. *)
 
 Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p [(l,s,w)]).
 Proof. intros p l s w H.
@@ -291,15 +292,6 @@ Inductive nRefinementN: siso -> siso -> Prop :=
 (*   | n_inp_rN: forall w w' p l s P,
               CoNInR (p,rcv) (act (@und w)) -> 
               nRefinementN w (mk_siso (st_receive p [(l,s,(@und w'))]) P) *)
-  | n_inp_lN: forall w w' p l l' s s' P Q,
-             l <> l' -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
-                                     (mk_siso (st_receive p [(l',s',(@und w'))]) Q)
-  | n_inp_sN: forall w w' p l s s' P Q,
-              nsubsort s' s -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P)
-                                            (mk_siso (st_receive p [(l,s',(@und w'))]) Q)
-  | n_inp_wN: forall w w' p l s s' P Q,
-              subsort s' s -> nRefinementN w w' -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
-                                                                (mk_siso (st_receive p [(l,s',(@und w'))]) Q)
   | n_a_lN  : forall w w' p l l' s s' a n P Q,
               l <> l' -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
                                       (mk_siso (merge_ap_contn p a (st_receive p [(l',s',(@und w'))]) n) Q)
@@ -319,15 +311,6 @@ Inductive nRefinementN: siso -> siso -> Prop :=
                                                           (mk_siso (merge_cp_cont p c (st_receive p [(l',s',(@und w'))])) Q)
 (*   | n_i_o_2N: forall w w' p q l l' s s' c n P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
                                                               (mk_siso (merge_cp_contn p c (st_send q [(l',s',(@und w'))]) n) Q) *)
-  | n_out_lN: forall w w' p l l' s s' P Q,
-              l <> l' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
-                                      (mk_siso (st_send p [(l',s',(@und w'))]) Q)
-  | n_out_sN: forall w w' p l s s' P Q,
-              nsubsort s s' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
-                                            (mk_siso (st_send p [(l,s',(@und w'))]) Q)
-  | n_out_wN: forall w w' p l s s' P Q,
-              subsort s s' -> nRefinementN w w' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
-                                                                (mk_siso (st_send p [(l,s',(@und w'))]) Q)
   | n_b_lN  : forall w w' p l l' s s' b n P Q,
               l <> l' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
                                       (mk_siso (merge_bp_contn p b (st_send p [(l',s',(@und w'))]) n) Q)
@@ -340,6 +323,76 @@ Inductive nRefinementN: siso -> siso -> Prop :=
               nRefinementN w (mk_siso (merge_bp_contn p b (@und w') n) P) ->
               nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) Q) 
                            (mk_siso (merge_bp_contn p b (st_send p [(l,s',(@und w'))]) n) R).
+
+Lemma n_inp_lN: forall w w' p l l' s s' P Q,
+                l <> l' -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
+                (mk_siso (st_receive p [(l',s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_a_lN w w' p l l' s s' (ap_end) 1); intros Hnal.
+       simpl in Hnal.
+       rewrite apend_an in Hnal.
+       apply Hnal.
+       easy.
+Qed.
+
+Lemma n_inp_sN: forall w w' p l s s' P Q,
+                nsubsort s' s -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P)
+                                              (mk_siso (st_receive p [(l,s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_a_sN w w' p l s s' (ap_end) 1); intros Hnas.
+       simpl in Hnas.
+       rewrite apend_an in Hnas.
+       apply Hnas.
+       easy.
+Qed.
+
+Lemma n_inp_wN: forall w w' p l s s' P Q,
+                subsort s' s -> nRefinementN w w' -> nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
+                                                                  (mk_siso (st_receive p [(l,s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_a_wN w w' p l s s' (ap_end) 1); intros Hnaw.
+       simpl in Hnaw.
+       rewrite apend_an in Hnaw.
+       rewrite apend_an in Hnaw.
+       destruct w'.
+       apply Hnaw with (P := sprop).
+       easy. easy.
+Qed.
+
+Lemma n_out_lN: forall w w' p l l' s s' P Q,
+                l <> l' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
+                                        (mk_siso (st_send p [(l',s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_b_lN w w' p l l' s s' (bp_end) 1); intros Hnbl.
+       simpl in Hnbl.
+       rewrite bpend_an in Hnbl.
+       apply Hnbl.
+       easy.
+Qed.
+
+Lemma n_out_sN: forall w w' p l s s' P Q,
+                nsubsort s s' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
+                                              (mk_siso (st_send p [(l,s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_b_sN w w' p l s s' (bp_end) 1); intros Hnbs.
+       simpl in Hnbs.
+       rewrite bpend_an in Hnbs.
+       apply Hnbs.
+       easy.
+Qed.
+
+Lemma n_out_wN: forall w w' p l s s' P Q,
+                subsort s s' -> nRefinementN w w' -> nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) P) 
+                                                                 (mk_siso (st_send p [(l,s',(@und w'))]) Q).
+Proof. intros.
+       specialize(n_b_wN w w' p l s s' (bp_end) 1); intros Hnbw.
+       simpl in Hnbw.
+       rewrite bpend_an in Hnbw.
+       rewrite bpend_an in Hnbw.
+       destruct w'.
+       apply Hnbw with (P := sprop).
+       easy. easy.
+Qed.
 
 Definition eqbp (a b: (participant*string)) :=
   andb (eqb a.1 b.1) (eqb a.2 b.2).
@@ -4418,7 +4471,7 @@ Proof. intros w w' H.
          simpl in H3. easy.
          subst. rewrite cpend_an in H3. easy.
        }
-       {
+(*        {
          inversion H.
          subst.
          case_eq n; intros.
@@ -4431,8 +4484,8 @@ Proof. intros w w' H.
          subst. inversion H6. 
          subst. easy.
          subst. rewrite apend_ann in H6. inversion H6. subst. easy.
-       }
-       { inversion H.
+       } *)
+(*        { inversion H.
          subst. apply ssnssL in H0. easy.
          subst.
          case_eq n; intros.
@@ -4448,8 +4501,8 @@ Proof. intros w w' H.
          inversion H6.
          subst.
          apply ssnssR in H4. easy. easy.
-       }
-       {
+       } *)
+(*        {
          apply IHHa.
          inversion H. subst.
 
@@ -4470,7 +4523,7 @@ Proof. intros w w' H.
          rewrite apend_ann in H1. easy.
          apply refinementR_mon.
          easy.
-       }
+       } *)
        {
          inversion H.
          subst.
@@ -4537,7 +4590,7 @@ Proof. intros w w' H.
          apply case12_2c2 in H6. easy.
          easy.
        } 
-       {
+      (*  {
          inversion H.
          subst.
          case_eq n; intros.
@@ -4594,7 +4647,7 @@ Proof. intros w w' H.
          rewrite bpend_ann in H1. easy.
          apply refinementR_mon.
          easy.
-       }
+       } *)
        {
          inversion H.
          subst.
@@ -6066,4 +6119,6 @@ Proof. split.
        apply (subneqR T T').
        intros. apply (subneqL T T'); easy.
 Qed.
+
+(* Print DependGraph completeness. *)
 
