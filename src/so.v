@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
-From ST Require Import stream st.
+Require Import ST.src.stream ST.src.st.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
@@ -15,17 +15,6 @@ CoInductive so: Type :=
   | so_send   : participant -> (label*sort*so)      -> so.
 
 Local Open Scope list_scope.
-
-(* Inductive st2soA (R: st -> so -> Prop): st -> so -> Prop :=
-  | st2soA_end: st2soA R st_end so_end
-  | st2soA_snd: forall l s x t xs p,
-                List.In (l,s,x) xs ->
-                R (st_send p [(l,s,x)]) t ->
-                st2soA R (st_send p xs) t
-  | st2soA_rcv: forall p l s x t xs,
-                List.In (l,s,x) xs -> 
-                R x t ->
-                st2soA R (st_receive p xs) t. *)
 
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end
@@ -60,8 +49,3 @@ Proof. unfold monotone2.
 Qed.
 
 Definition st2soC (s1 s2: st) := paco2 (st2so) bot2 s1 s2.
-(* Definition st2soCA (s1: st) (s2: so) := paco2 (st2soA) bot2 s1 s2. *)
-
-#[export]
-Declare Instance Equivalence_st2so : Equivalence st2soC.
-

@@ -1,12 +1,16 @@
-stream.v
-st.v
-so.v
-si.v
-siso.v
-norefined.v
-subtyping.v
-batchproc.v
-typesystem.v
+-R . ST
 
--Q . ST
+src/stream.v
+src/st.v
+src/so.v
+src/si.v
+src/reordering.v
+src/siso.v
+src/refinement.v
+src/reorderingfacts.v
+src/subtyping.v
+src/nsubtyping.v
+src/nrefinement.v
+src/completeness.v
+
 

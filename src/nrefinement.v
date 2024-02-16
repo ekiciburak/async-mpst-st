@@ -1,4 +1,4 @@
-From ST Require Import stream st so si siso.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.refinement ST.src.reorderingfacts.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -82,7 +82,6 @@ Proof. intros n.
        apply extap.
        apply IHn. easy.
 Qed.
-
 
 Lemma extcpR: forall {p c} w, singleton (merge_cp_cont p c w) -> singleton w.
 Proof. intros p c.
@@ -225,7 +224,6 @@ Proof. intros.
        pfold. constructor.
        unfold singleton in H. left. easy.
 Qed.
-
 
 Fixpoint isInCp (p: participant) (c: Cp p): bool :=
   match c with
