@@ -16,8 +16,8 @@ The library succesfully compiles with the Coq compiler `coqc 8.18.0`.
 7. `src/refinement.v` - defines the SISO refinement relation based on the greatest fixed point of least fixed point technique employing the `paco` library 
 8. `src/reorderingfacts.v` - contains some facts about the action reorderings $A^{(p)}$ and  $B^{(p)}$
 9. `src/subtyping.v` - defines the subtyping relation 
-10. `src/nrefinement.v` - defines the negation of the SISO refinement relation inductively proves the absurdity of having both $T \not\lesssim T'$ and $T \not\lesssim T'$ under the same context 
-11. `src/nsubtyping.v` -  defines the negation of subtyping $\not\leqslant$ relation and proves the absurdity of having both $T \leqslant T'$ and $T \not\leqslant T'$ under the same context
-13. `src/nsubtyping.v` - proves completeness of subtyping with respect to negations
+10. `src/nrefinement.v` - defines the negation of the SISO refinement relation $\not\lessism$ inductively proves $\neg (w \lesssim w') \iff \not\lesssim w'$ 
+11. `src/nsubtyping.v` -  defines the negation of subtyping relation $\not\leqslant$ 
+12. `src/completeness.v` - proves completeness of subtyping with respect to negations: $\neg (T \leqslant T') iff T \not\leqslant T'$
 
 `Ghilezan et al.` $\to$ `Precise Subtyping for Asynchronous Multiparty Sessions [POPL 2021]`
