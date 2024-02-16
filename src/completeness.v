@@ -61,3 +61,9 @@ Proof. split.
        apply (subneqR T T').
        intros. apply (subneqL T T'); easy.
 Qed.
+
+Theorem completenessA: forall T T', (subtype T T' -> False) <-> nsubtypeA T T'.
+Proof. split.
+       apply (subneqRA T T').
+       intros. apply (subneqLA T T'); easy.
+Qed.
