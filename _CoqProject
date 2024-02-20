@@ -6,11 +6,11 @@ src/so.v
 src/si.v
 src/reordering.v
 src/siso.v
-src/refinement.v
+subtyping/refinement.v
 src/reorderingfacts.v
-src/subtyping.v
-src/nsubtyping.v
-src/nrefinement.v
-src/completeness.v
+subtyping/subtyping.v
+negations/nsubtyping.v
+negations/nrefinement.v
+completeness/completeness.v
 
 
