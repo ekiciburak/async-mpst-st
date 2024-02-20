@@ -8,9 +8,7 @@ src/reordering.v
 src/siso.v
 src/refinement.v
 src/reorderingfacts.v
-src/subtyping.v
-src/nsubtyping.v
-src/nrefinement.v
-src/completeness.v
+examples/subtyping.v
+examples/batchproc.v
 
 

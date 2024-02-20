@@ -1,6 +1,6 @@
 
 From Paco Require Import paco.
-Require Import Setoid.
+Require Import Setoid List.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
@@ -376,3 +376,43 @@ Proof. intros.
        easy.
        apply CoIn_mon.
 Qed.
+
+
+Inductive cosetIncL {A: Type} (R: coseq A -> list A -> Prop): coseq A -> list A -> Prop :=
+  | c_nil : forall ys, cosetIncL R (Delay conil) ys
+  | c_incl: forall x xs ys,
+            List.In x ys ->
+            R xs ys ->
+            cosetIncL R (Delay (cocons x xs)) ys.
+
+Definition cosetIncLC {A: Type} := fun s1 s2 => paco2 (@cosetIncL A) bot2 s1 s2.
+
+(* 
+Parameter p: participant.
+CoFixpoint WW := Delay (cocons (p,snd) WW).
+
+Lemma unsound: cosetIncLC WW [(p,rcv)].
+Proof. pcofix CIH.
+       pfold.
+       rewrite(coseq_eq(WW)). unfold coseq_id. simpl.
+       constructor. simpl. admit.
+       right. easy.
+Fail Qed. *)
+
+Lemma cosetIncL_mon {A}: monotone2 (@cosetIncL A).
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - specialize (c_incl r'); intro HS.
+         apply HS.
+         apply H.
+         apply LE, H0.
+Qed.
+
+Inductive cosetIncR {A: Type}: list A -> coseq A -> Prop :=
+  | l_nil : forall ys, cosetIncR nil ys
+  | l_incl: forall x xs ys,
+            CoInR x ys ->
+            cosetIncR xs ys ->
+            cosetIncR (x::xs) ys.
