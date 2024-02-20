@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.refinement ST.src.reorderingfacts.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
@@ -7,12 +7,6 @@ Require Import Setoid.
 Require Import Morphisms.
 
 Local Open Scope string_scope.
-
-Definition subtype (T T': st): Prop :=
-  forall U,  st2soC T U /\
-  forall V', st2siC T' V' /\
-  exists W,  st2sisoC U W /\
-  exists W', st2sisoC V' W' /\ W ~< W'.
 
 Definition T': st :=
   st_send "q" [
@@ -210,7 +204,10 @@ Proof. unfold subtype, T, T'.
        unfold upaco2.
        right. easy.
 
-       exists(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]).
+       assert(singleton(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))])) as Hs1.
+       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
+
+       exists(mk_siso (st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]) Hs1).
        split.
 (*        symmetry. *)
        pcofix H.
@@ -225,7 +222,9 @@ Proof. unfold subtype, T, T'.
        unfold upaco2.
        right. easy.
 
-       exists(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]).
+       assert(singleton(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))])) as Hs2.
+       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
+       exists(mk_siso(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]) (Hs2)).
        split.
 (*        symmetry. *)
        pcofix H.
@@ -366,6 +365,17 @@ CoFixpoint TB': st :=
 CoFixpoint W3: st :=
   st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,W3)])])])].
 
+Lemma w3singleton: singleton W3.
+Proof. pcofix CIH.
+       pfold. 
+       rewrite(siso_eq W3). simpl.
+       constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
 Definition W4_gen (cont: st): st :=
   st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,(cont))])])])].
 
@@ -382,6 +392,15 @@ Proof. easy. Qed.
 Let EqW4 := (W4eq, W4eq2).
 
 CoFixpoint W1: st := st_receive "p" [("l1",sint,st_send "p" [("l3",sint,W1)])].
+
+Lemma w1singleton: singleton W1.
+Proof. pcofix CIH. pfold. 
+       rewrite(siso_eq W1). simpl.
+       constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
 
 Inductive ev : nat -> Prop :=
   | ev_0 : ev 0
@@ -1710,11 +1729,10 @@ Proof. unfold subtype.
        unfold upaco2.
        right. easy.
 
-       exists W3.
+       exists (mk_siso W3 (w3singleton)).
        split.
-(*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite (siso_eq W3).
        simpl.
        specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
@@ -1728,16 +1746,16 @@ Proof. unfold subtype.
        left. easy.
 
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite (siso_eq W3) in CIH.
        simpl in CIH.
        easy.
 
-       exists W1.
+       exists (mk_siso W1 (w1singleton)).
        split.
 (*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite (siso_eq W1).
        simpl.
        specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
@@ -1749,14 +1767,14 @@ Proof. unfold subtype.
        apply H. left. easy.
 
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite (siso_eq W1) in CIH.
        simpl in CIH.
        easy.
 
        specialize(W1W3UnfVar4R 0); intros.
        rewrite(siso_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
-       simpl in H.
+       simpl in H. simpl.
        rewrite(siso_eq W1).
        simpl.
        apply H.

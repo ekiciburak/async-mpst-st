@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.refinement ST.src.reorderingfacts ST.examples.subtyping.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
@@ -14,6 +14,20 @@ CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b2",sunit,st_send "sk" [("b2",sunit,Tctl)])])])])])])])].
 Print Tctl.
 
+Lemma singletonTctl: singleton Tctl.
+Proof. pcofix CIH.
+       pfold. rewrite(siso_eq(Tctl)). simpl.
+       constructor. 
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
 CoFixpoint TR := st_receive "src" [("b1",sunit,st_receive "sk" [("b1",sunit,
                                    st_send "sk" [("b1",sunit,st_send "src" [("b1",sunit,
                                    st_receive "src" [("b2",sunit,st_receive "sk" [("b2",sunit,
@@ -22,6 +36,25 @@ Print TR.
 
 Definition Tctl' := st_send "src" [("b1",sunit,st_send "src" [("b2",sunit,TR)])].
 Print Tctl'.
+
+Lemma singletonTctl': singleton Tctl'.
+Proof. pfold. rewrite(siso_eq(Tctl')). simpl.
+       constructor. 
+       left. pfold. constructor.
+       left.
+       pcofix CIH.
+       rewrite(siso_eq TR). simpl.
+       pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       left. pfold. constructor.
+       right. exact CIH.
+Qed.
+
 
 Definition listTctl := [("src",snd);("src",rcv);("sk",snd);("sk",rcv)].
 
@@ -1373,11 +1406,11 @@ Proof. unfold subtype.
        right.
        apply CIH.
 
-       exists Tctl'.
+       exists (mk_siso Tctl' (singletonTctl')).
        split.
 (*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite(siso_eq Tctl'). simpl.
        specialize(st2siso_snd (upaco2 st2siso r) 
                               "b1" sunit
@@ -1389,15 +1422,15 @@ Proof. unfold subtype.
        apply Ha.
        simpl. left. easy.
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite(siso_eq Tctl') in CIH. simpl in CIH.
        apply CIH.
        
-       exists Tctl.
+       exists (mk_siso Tctl (singletonTctl)).
        split.
 (*        symmetry. *)
        pcofix CIH.
-       pfold.
+       pfold. simpl.
        rewrite(siso_eq Tctl). simpl.
        specialize(st2siso_snd (upaco2 st2siso r) 
                               "b1" sunit
@@ -1409,9 +1442,9 @@ Proof. unfold subtype.
        apply Ha.
        simpl. left. easy.
        unfold upaco2.
-       right.
+       right. simpl in CIH.
        rewrite(siso_eq Tctl) in CIH. simpl in CIH.
-       apply CIH.
+       apply CIH. simpl.
 
        rewrite(siso_eq Tctl').
        rewrite(siso_eq Tctl). simpl.

@@ -6,9 +6,10 @@ src/so.v
 src/si.v
 src/reordering.v
 src/siso.v
-src/refinement.v
+subtyping/refinement.v
 src/reorderingfacts.v
-examples/subtyping.v
+subtyping/subtyping.v
+examples/example1_2.v
 examples/batchproc.v
 
 
