@@ -48,13 +48,6 @@ CoFixpoint act (t: st): coseq (participant * actT) :=
     | _                       => Delay conil
   end.
 
-CoFixpoint acts (t: st): stream (participant * actT) :=
-  match t with
-    | st_receive p [(l,s,w')] => (coconss (p, rcv) (acts w'))
-    | st_send p [(l,s,w')]    => (coconss (p, snd) (acts w'))
-    | _                       => conils
-  end.
-
 Inductive Ap (p: participant): Type :=
   | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
   | ap_merge  : forall q, p <> q -> label -> st.sort -> Ap p -> Ap p
@@ -74,33 +67,6 @@ Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
         | ap_end             => ap_end
       end 
   end.
-
-Fixpoint apListA (p: participant) (a: Ap p): list (Ap p) :=
-  match a with
-    | ap_receive q H l s => [a]
-    | ap_merge q H l s c => ap_receive q H l s :: (apListA p c)
-    | ap_end             => nil
-  end.
-
-Fixpoint listApA (p: participant) (l: list (Ap p)): Ap p :=
-  match l with
-    | nil   => ap_end
-    | x::xs => 
-      match x with
-        | ap_receive q H l s      => ap_merge q H l s (listApA p xs)
-        | _                       => x
-      end
-  end.
-
-Fixpoint nappA {A: Type} (n: nat) (l: list A): list A :=
-  match n with
-    | O   => nil
-    | S k => l ++ nappA k l
-  end.
-
-Definition ApnA2 (p: participant) (a: Ap p) (n: nat): Ap p :=
-  listApA p (nappA n (apListA p a)).
-
 
 Fixpoint apList (p: participant) (a: Ap p): list (Ap p) :=
   match a with
@@ -138,6 +104,33 @@ Fixpoint napp {A: Type} (n: nat) (l: list A): list A :=
 Definition ApnA (p: participant) (a: Ap p) (n: nat): Ap p :=
   listAp p (napp n (apList p a)).
 
+
+Fixpoint apListA (p: participant) (a: Ap p): list (Ap p) :=
+  match a with
+    | ap_receive q H l s => [a]
+    | ap_merge q H l s c => ap_receive q H l s :: (apListA p c)
+    | ap_end             => nil
+  end.
+
+Fixpoint listApA (p: participant) (l: list (Ap p)): Ap p :=
+  match l with
+    | nil   => ap_end
+    | x::xs => 
+      match x with
+        | ap_receive q H l s      => ap_merge q H l s (listApA p xs)
+        | _                       => x
+      end
+  end.
+
+Fixpoint nappA {A: Type} (n: nat) (l: list A): list A :=
+  match n with
+    | O   => nil
+    | S k => l ++ nappA k l
+  end.
+
+Definition ApnA2 (p: participant) (a: Ap p) (n: nat): Ap p :=
+  listApA p (nappA n (apListA p a)).
+
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
     | ap_receive q x l s => st_receive q [(l,s,st_end)]
@@ -145,7 +138,7 @@ CoFixpoint fromAp (p: participant) (a: Ap p): st :=
     | ap_end             => st_end
   end.
 
-Fixpoint actA (p: participant) (a: Ap p): list (participant * actT) :=
+ Fixpoint actA (p: participant) (a: Ap p): list (participant * actT) :=
   match a with
     | ap_receive q x l s => cons (q, rcv) nil
     | ap_merge q x l s c => cons (q, rcv) (actA p c)
@@ -199,64 +192,6 @@ Arguments bp_send {_} _ _ _ _.
 Arguments bp_mergea {_} _ _ _ _.
 Arguments bp_merge {_} _ _ _ _ _.
 Arguments bp_end {_}.
-
-Inductive Cp (p: participant): Type :=
-  | cp_receive: forall q, p <> q -> label -> st.sort -> Cp p
-  | cp_mergea : forall q, p <> q -> label -> st.sort -> Cp p -> Cp p
-  | cp_send   : participant -> label -> st.sort -> Cp p
-  | cp_merge  : participant -> label -> st.sort -> Cp p -> Cp p
-  | cp_end    : Cp p.
-
-Arguments cp_receive {_} _ _ _ _.
-Arguments cp_merge {_} _ _ _ _.
-Arguments cp_end {_}.
-Arguments cp_send {_} _ _ _.
-Arguments cp_mergea {_} _ _ _ _.
-
-CoFixpoint merge_cp_cont (p: participant) (c: Cp p) (w: st): st :=
-  match c with 
-    | cp_receive q H l s  => st_receive q [(l,s,w)]
-    | cp_send q l s       => st_send q [(l,s,w)]
-    | cp_mergea q H l s c => st_receive q [(l,s,(merge_cp_cont p c w))]
-    | cp_merge q l s c    => st_send q [(l,s,(merge_cp_cont p c w))]
-    | cp_end              => w
-  end.
-
-Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
-  match n with
-    | O    => w
-    | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
-  end.
-
-Fixpoint actC (p: participant) (c: Cp p): list (participant * actT) :=
-  match c with
-    | cp_receive q x l s  => cons (q, rcv) nil
-    | cp_mergea q x l s c => cons (q, rcv) (actC p c)
-    | cp_send q l s       => cons (q, snd) nil
-    | cp_merge q l s c    => cons (q, snd) (actC p c)
-    | _                   => nil
-  end.
-
-Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * actT) :=
-  match n with
-    | O   => nil
-    | S k =>
-      match c with
-        | cp_receive q x l s    => cons (q, rcv) (actCn p c k)
-        | cp_mergea q x l s cnt => (cons (q, rcv) (actC p cnt)) ++ (actCn p c k)
-        | cp_send q l s         => cons (q, snd) (actCn p c k)
-        | cp_merge q l s cnt    => (cons (q, snd) (actC p cnt)) ++ (actCn p c k)
-        | _                     => nil
-      end
-  end.
-
-Lemma Ap2Cp: forall p, Ap p -> Cp p.
-Proof. intros p a.
-       induction a; intros.
-       exact (cp_receive q n s s0).
-       exact (cp_mergea q n s s0 IHa).
-       exact (cp_end).
-Defined.
 
 Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
   match n with
@@ -340,6 +275,64 @@ Fixpoint listBp (p: participant) (l: list (Bp p)): Bp p :=
 Definition BpnA (p: participant) (b: Bp p) (n: nat): Bp p :=
   listBp p (napp n (bpList p b)).
 
+Inductive Cp (p: participant): Type :=
+  | cp_receive: forall q, p <> q -> label -> st.sort -> Cp p
+  | cp_mergea : forall q, p <> q -> label -> st.sort -> Cp p -> Cp p
+  | cp_send   : participant -> label -> st.sort -> Cp p
+  | cp_merge  : participant -> label -> st.sort -> Cp p -> Cp p
+  | cp_end    : Cp p.
+
+Arguments cp_receive {_} _ _ _ _.
+Arguments cp_merge {_} _ _ _ _.
+Arguments cp_end {_}.
+Arguments cp_send {_} _ _ _.
+Arguments cp_mergea {_} _ _ _ _.
+
+CoFixpoint merge_cp_cont (p: participant) (c: Cp p) (w: st): st :=
+  match c with 
+    | cp_receive q H l s  => st_receive q [(l,s,w)]
+    | cp_send q l s       => st_send q [(l,s,w)]
+    | cp_mergea q H l s c => st_receive q [(l,s,(merge_cp_cont p c w))]
+    | cp_merge q l s c    => st_send q [(l,s,(merge_cp_cont p c w))]
+    | cp_end              => w
+  end.
+
+Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
+  end.
+
+Fixpoint actC (p: participant) (c: Cp p): list (participant * actT) :=
+  match c with
+    | cp_receive q x l s  => cons (q, rcv) nil
+    | cp_mergea q x l s c => cons (q, rcv) (actC p c)
+    | cp_send q l s       => cons (q, snd) nil
+    | cp_merge q l s c    => cons (q, snd) (actC p c)
+    | _                   => nil
+  end.
+
+Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * actT) :=
+  match n with
+    | O   => nil
+    | S k =>
+      match c with
+        | cp_receive q x l s    => cons (q, rcv) (actCn p c k)
+        | cp_mergea q x l s cnt => (cons (q, rcv) (actC p cnt)) ++ (actCn p c k)
+        | cp_send q l s         => cons (q, snd) (actCn p c k)
+        | cp_merge q l s cnt    => (cons (q, snd) (actC p cnt)) ++ (actCn p c k)
+        | _                     => nil
+      end
+  end.
+
+Lemma Ap2Cp: forall p, Ap p -> Cp p.
+Proof. intros p a.
+       induction a; intros.
+       exact (cp_receive q n s s0).
+       exact (cp_mergea q n s s0 IHa).
+       exact (cp_end).
+Defined.
+
 Fixpoint cpList (p: participant) (c: Cp p): list (Cp p) :=
   match c with
     | cp_receive q H l s  => [c]
@@ -363,76 +356,37 @@ Fixpoint listCp (p: participant) (l: list (Cp p)): Cp p :=
 Definition CpnA (p: participant) (c: Cp p) (n: nat): Cp p :=
   listCp p (napp n (cpList p c)).
 
-Inductive Dp (p: participant): Type :=
-  | dp_receive: forall q, p <> q -> label -> st.sort -> Dp p
-  | dp_mergea : forall q, p <> q -> label -> st.sort -> Dp p -> Dp p
-  | dp_send   : forall q, p <> q -> label -> st.sort -> Dp p
-  | dp_merge  : forall q, p <> q -> label -> st.sort -> Dp p -> Dp p
-  | dp_end    : Dp p.
-
-Arguments dp_receive {_} _ _ _ _.
-Arguments dp_merge {_} _ _ _ _.
-Arguments dp_end {_}.
-Arguments dp_send {_} _ _ _.
-Arguments dp_mergea {_} _ _ _ _.
-
-CoFixpoint merge_dp_cont (p: participant) (d: Dp p) (w: st): st :=
-  match d with 
-    | dp_receive q H l s  => st_receive q [(l,s,w)]
-    | dp_send q H l s     => st_send q [(l,s,w)]
-    | dp_mergea q H l s c => st_receive q [(l,s,(merge_dp_cont p c w))]
-    | dp_merge q H l s c  => st_send q [(l,s,(merge_dp_cont p c w))]
-    | dp_end              => w
+Fixpoint isInCp (p: participant) (c: Cp p): bool :=
+  match c with
+    | cp_send q l s       => true
+    | cp_merge q l s c    => true
+    | cp_mergea q H l s c => isInCp p c
+    | _                   => false
   end.
 
-Fixpoint merge_dp_contn (p: participant) (d: Dp p) (w: st) (n: nat): st :=
-  match n with
-    | O    => w
-    | S k  => merge_dp_cont p d (merge_dp_contn p d w k)
-  end.
-
-Fixpoint actD (p: participant) (d: Dp p): list (participant * actT) :=
-  match d with
-    | dp_receive q x l s  => cons (q, rcv) nil
-    | dp_mergea q x l s c => cons (q, rcv) (actD p c)
-    | dp_send q x l s     => cons (q, snd) nil
-    | dp_merge q x l s c  => cons (q, snd) (actD p c)
-    | _                   => nil
-  end.
-
-Fixpoint actDn (p: participant) (d: Dp p) (n: nat): list (participant * actT) :=
-  match n with
-    | O   => nil
-    | S k =>
-      match d with
-        | dp_receive q x l s    => cons (q, rcv) (actDn p d k)
-        | dp_mergea q x l s cnt => (cons (q, rcv) (actD p cnt)) ++ (actDn p d k)
-        | dp_send q x l s       => cons (q, snd) (actDn p d k)
-        | dp_merge q x l s cnt  => (cons (q, snd) (actD p cnt)) ++ (actDn p d k)
-        | _                     => nil
-      end
-  end.
-
-Fixpoint dpList (p: participant) (d: Dp p): list (Dp p) :=
-  match d with
-    | dp_receive q H l s  => [d]
-    | dp_mergea q H l s c => dp_receive q H l s :: (dpList p c)
-    | dp_send q H l s     => [d]
-    | dp_merge q H l s c  => dp_send q H l s :: (dpList p c)
-    | dp_end              => nil
-  end.
-
-Fixpoint listDp (p: participant) (l: list (Dp p)): Dp p :=
-  match l with
-    | nil   => dp_end
-    | x::xs => 
-      match x with
-        | dp_receive q H l s => dp_mergea q H l s (listDp p xs)
-        | dp_send q H l s    => dp_merge q H l s (listDp p xs)
-        | _                  => x
-      end
-  end.
-
-Definition DpnA (p: participant) (d: Dp p) (n: nat): Dp p :=
-  listDp p (napp n (dpList p d)).
+Lemma Cp2Ap: forall p c w,
+  isInCp p c = false ->
+  exists a, merge_cp_cont p c w = merge_ap_cont p a w.
+Proof. intros p c.
+       induction c; intros.
+       - simpl in *. 
+         exists (ap_receive q n s s0).
+         rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) w)).
+         rewrite(st_eq(merge_ap_cont p (ap_receive q n s s0) w)).
+         simpl. easy.
+       - simpl in *.
+         specialize(IHc w H).
+         destruct IHc as (a,IHc).
+         exists(ap_merge q n s s0 a).
+         rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) w)).
+         rewrite(st_eq(merge_ap_cont p (ap_merge q n s s0 a) w)).
+         simpl.
+         rewrite IHc. easy.
+       - simpl in *. easy.
+       - simpl in *. easy.
+       - simpl in *. exists ap_end. 
+         rewrite(st_eq( merge_ap_cont p ap_end w)).
+         rewrite(st_eq(merge_cp_cont p cp_end w )).
+         simpl. easy.
+Qed.
 

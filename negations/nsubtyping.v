@@ -21,7 +21,7 @@ Definition nsubtypeA (T T': st): Prop :=
   forall W,  (st2sisoC U (@und W)) ->
   forall W', (st2sisoC V' (@und W')) -> nRefinementN W W'.
 
-Lemma subneqLA: forall T T', subtype T T' -> nsubtypeA T T' -> False.
+Lemma subNeqLA: forall T T', subtype T T' -> nsubtypeA T T' -> False.
 Proof. intros.
        unfold subtype, nsubtypeA in *.
        destruct H0 as (U, H0).
@@ -38,10 +38,10 @@ Proof. intros.
        destruct Ha as (W', Ha).
        destruct Ha as (s, Ha).
        specialize(H0 W' s).
-       apply (nrefNL W W'); easy.
+       apply (nRefL W W'); easy.
 Qed.
 
-Lemma subneqRA: forall T T', (subtype T T' -> False) -> nsubtypeA T T'.
+Lemma subNeqRA: forall T T', (subtype T T' -> False) -> nsubtypeA T T'.
 Proof. intros.
        unfold subtype, nsubtypeA in *.
        apply not_all_ex_not in H.
@@ -70,5 +70,5 @@ Proof. intros.
        destruct H as [H | H].
        intro Hd. easy.
        intro Hd.
-       apply nrefNR. easy.
+       apply nRefR. easy.
 Qed.

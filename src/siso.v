@@ -63,15 +63,35 @@ Qed.
 
 Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s2 s1.
 
-Definition siso_id (t: st): st :=
-  match t with
-    | st_receive p l => st_receive p l
-    | st_send p l    => st_send p l
-    | st_end         => st_end
-  end.
+Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p [(l,s,w)]).
+Proof. intros p l s w H.
+       pfold. constructor. left.
+       punfold H.
+       apply sI_mon.
+Qed.
 
-Lemma siso_eq: forall t, t = siso_id t.
-Proof. intro t.
-       destruct t; try easy.
-Defined.
+Lemma extsR: forall {p l s} w, singleton (st_send p [(l,s,w)]) -> singleton w .
+Proof. intros.
+       punfold H.
+       inversion H.
+       subst.
+       unfold upaco1 in H1. destruct H1; easy.
+       apply sI_mon.
+Qed.
+
+Lemma extr: forall {p l s} w, singleton w -> singleton (st_receive p [(l,s,w)]).
+Proof. intros.
+       pfold. constructor. left.
+       punfold H.
+       apply sI_mon.
+Qed.
+
+Lemma extrR: forall {p l s} w, singleton (st_receive p [(l,s,w)]) -> singleton w .
+Proof. intros.
+       punfold H.
+       inversion H.
+       subst.
+       unfold upaco1 in H1. destruct H1; easy.
+       apply sI_mon.
+Qed.
 
