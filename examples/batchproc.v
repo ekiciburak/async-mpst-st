@@ -1464,7 +1464,7 @@ Proof. unfold subtype.
        simpl in HSB.
        rewrite bpend_an in HSB.
        rewrite bpend_an in HSB.
-       apply HSB with (L := listTctl).
+       apply HSB.
        clear HSB.
        apply srefl.
        
@@ -1483,7 +1483,7 @@ Proof. unfold subtype.
                           sunit
                           (bp_mergea "src" "b1" sunit (bp_mergea "sk" "b1" sunit (bp_send "sk" Hdeq "b1" sunit)))
                           1
-                          listTctl
+(*                           listTctl *)
                  ); intro Ha.
        simpl in Ha.
        rewrite(siso_eq((merge_bp_cont "src"
@@ -1525,7 +1525,7 @@ Proof. unfold subtype.
        simpl in HSA.
        rewrite apend_an in HSA.
        rewrite apend_an in HSA.
-       apply HSA with (L := listTctl).
+       apply HSA.
        clear HSA.
 
 (*        apply _sref_in. *)
@@ -1546,7 +1546,7 @@ Proof. unfold subtype.
        simpl in HSA.
        rewrite apend_an in HSA.
        rewrite apend_an in HSA.
-       apply HSA with (L := listTctl).
+       apply HSA.
        clear HSA.
 
 (*        apply _sref_in. *)
@@ -1566,7 +1566,7 @@ Proof. unfold subtype.
        simpl in HSB.
        rewrite bpend_an in HSB.
        rewrite bpend_an in HSB.
-       apply HSB with (L := listTctl).
+       apply HSB.
        clear HSB.
        
 (*        apply _sref_out. *)
@@ -1587,7 +1587,7 @@ Proof. unfold subtype.
        sunit
        (bp_mergea "src" "b2" sunit (bp_mergea "sk" "b2" sunit (bp_send "sk" Hdeq "b2" sunit)))
        1
-       listTctl
+(*        listTctl *)
        ); intro Hb.
        simpl in Hb.
        rewrite(siso_eq( (merge_bp_cont "src"
@@ -1668,7 +1668,7 @@ Proof. unfold subtype.
         simpl in HSA.
         rewrite apend_an in HSA.
         rewrite apend_an in HSA.
-        apply HSA with (L := listTctl).
+        apply HSA.
         clear HSA.
         
 (*          apply _sref_in. *)
@@ -1694,7 +1694,7 @@ Proof. unfold subtype.
          simpl in HSA.
          rewrite apend_an in HSA.
          rewrite apend_an in HSA.
-         apply HSA with (L := listTctl).
+         apply HSA.
          clear HSA.
          
 (*          apply _sref_in. *)
@@ -1717,7 +1717,7 @@ Proof. unfold subtype.
          simpl in HSB.
          rewrite bpend_an in HSB.
          rewrite bpend_an in HSB.
-         apply HSB with (L := listTctl).
+         apply HSB.
          clear HSB.
 
 (*          apply _sref_out. *)
@@ -1726,19 +1726,32 @@ Proof. unfold subtype.
          unfold upaco2.
          right.
          apply CIH.
-
+         exists listTctl.
+         split.
 apply action_eq11.
+split.
 apply action_eq36.
+split.
 apply action_eq13.
 apply action_eq14.
+exists listTctl.
+split.
 apply action_eq15.
+split.
 apply action_eq16.
+split.
 apply action_eq17.
 apply action_eq18.
+exists listTctl.
+split.
 apply action_eq19.
+split.
 apply action_eq20.
+split.
 apply action_eq21.
 apply action_eq22.
+exists listTctl.
+split.
          pfold.
          unfold listTctl.
          rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
@@ -1771,6 +1784,7 @@ apply action_eq22.
          unfold upaco2.
          left.
          apply listTREq.
+         split.
 
          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
                                               ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
@@ -1830,22 +1844,35 @@ apply action_eq22.
          simpl. right. right. left. easy.
          unfold upaco2. left.
          apply listTctlEq.
-
+         split.
          apply action1.
          apply action2.
-
+         exists listTctl.
+         split.
 apply action_eq23.
+split.
 apply action_eq24.
+split.
 apply action_eq25.
 apply action_eq26.
+exists listTctl.
+split.
 apply action_eq27.
+split.
 apply action_eq28.
+split.
 apply action_eq29.
 apply action_eq30.
+exists listTctl.
+split.
 apply action_eq31.
+split.
 apply action_eq32.
+split.
 apply action_eq33.
 apply action_eq34.
+exists listTctl.
+split.
          pfold.
          rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
          unfold coseq_id.
@@ -1881,6 +1908,7 @@ apply action_eq34.
          simpl. left. easy.
          unfold upaco2. left.
          apply listTREq.
+         split.
 
          rewrite(siso_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
                                        ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
@@ -1919,11 +1947,15 @@ apply action_eq34.
          unfold upaco2.
          left.
          apply listTctlEq.
-
+         split.
          apply action3.
          apply action4.
+         exists listTctl.
+         split.
 apply action_eq11.
+split.
 apply action_eq36.
+split.
 apply action_eq37.
 apply action_eq38.
 Qed.

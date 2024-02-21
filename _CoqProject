@@ -11,5 +11,7 @@ src/reorderingfacts.v
 subtyping/subtyping.v
 examples/example1_2.v
 examples/batchproc.v
-
+negations/nsubtyping.v
+negations/nrefinement.v
+completeness/completeness.v
 

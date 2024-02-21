@@ -416,3 +416,5 @@ Inductive cosetIncR {A: Type}: list A -> coseq A -> Prop :=
             CoInR x ys ->
             cosetIncR xs ys ->
             cosetIncR (x::xs) ys.
+
+
