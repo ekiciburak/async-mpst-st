@@ -7,28 +7,28 @@ Require Import Setoid.
 Require Import Morphisms JMeq.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
-Definition act_eq (w w': st) := forall a, CoInR a (act w) <-> CoInR a (act w').
+Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
 
-Definition act_neq (w w': st) := (exists a, CoInR a (act w) /\ (CoInR a (act w') -> False) \/ CoInR a (act w') /\ (CoInR a (act w) -> False)).
+Definition act_neq (w w': st) := (exists a, coseqIn a (act w) /\ (coseqIn a (act w') -> False) \/ coseqIn a (act w') /\ (coseqIn a (act w) -> False)).
 
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | _sref_a  : forall w w' p l s s' a n,   subsort s' s ->
                                            seq w (merge_ap_contn p a w' n)  ->
                                            ( exists L,
-                                             cosetIncLC (act w) L /\
-                                             cosetIncLC (act (merge_ap_contn p a w' n)) L /\
-                                             cosetIncR L (act w) /\
-                                             cosetIncR L (act (merge_ap_contn p a w' n))
+                                             coseqInLC (act w) L /\
+                                             coseqInLC (act (merge_ap_contn p a w' n)) L /\
+                                             coseqInR L (act w) /\
+                                             coseqInR L (act (merge_ap_contn p a w' n))
                                            ) ->
                                            refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
 
   | _sref_b  : forall w w' p l s s' b n,   subsort s s' ->
                                            seq w (merge_bp_contn p b w' n) ->
                                            ( exists L,
-                                             cosetIncLC (act w) L /\
-                                             cosetIncLC (act (merge_bp_contn p b w' n)) L /\
-                                             cosetIncR L (act w) /\
-                                             cosetIncR L (act (merge_bp_contn p b w' n))
+                                             coseqInLC (act w) L /\
+                                             coseqInLC (act (merge_bp_contn p b w' n)) L /\
+                                             coseqInR L (act w) /\
+                                             coseqInR L (act (merge_bp_contn p b w' n))
                                            ) ->
                                            refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
   | _sref_end: refinementR seq st_end st_end.
@@ -50,11 +50,14 @@ Proof. unfold monotone2.
        - constructor.
 Qed.
 
+(* coinductive extensionality axiom *)
 Axiom mem_ext: forall w1 w2,
 ( exists L,
-  cosetIncLC (act w1) L /\
-  cosetIncLC (act w2) L /\
-  cosetIncR L (act w1) /\
-  cosetIncR L (act w2)
+  coseqInLC (act w1) L /\
+  coseqInLC (act w2) L /\
+  coseqInR L (act w1) /\
+  coseqInR L (act w2)
 ) <-> act_eq w1 w2.
+
+
 

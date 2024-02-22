@@ -133,18 +133,20 @@ Proof. intros A xs.
        unfold coseq_id. simpl. easy.
 Qed.
 
-Inductive CoInR {A: Type}: A -> coseq A -> Prop :=
-  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> CoInR x xs
-  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoInR x ys -> CoInR x xs.
+(* inductive membership check *)
+Inductive coseqIn {A: Type}: A -> coseq A -> Prop :=
+  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
+  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
 
 (* unsound coinductive membership check *)
-Inductive CoInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
-  | CoInSplit1A x xs {ys}: force xs = cocons x ys -> CoInRA R x xs 
-  | CoInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoInRA R x xs.
+Inductive coseqInC {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
+  | CoInSplit1A x xs {ys}: force xs = cocons x ys -> coseqInC R x xs 
+  | CoInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> coseqInC R x xs.
 
-Definition CoIn {A}:= paco2 (@CoInRA A) bot2.
+Definition coseqCoIn {A}:= paco2 (@coseqInC A) bot2.
 
-Lemma CoIn_mon: forall {A: Type}, monotone2 (@CoInRA A).
+Lemma coseqCoIn_mon: forall {A: Type}, monotone2 (@coseqInC A).
+
 Proof. unfold monotone2.
        intros.
        induction IN; intros.
@@ -153,89 +155,29 @@ Proof. unfold monotone2.
          apply Ha, LE, H1.
 Qed.
 
-CoFixpoint WW {A: Type} (a: A): coseq A := Delay (cocons a (WW a)).
+CoFixpoint cA {A: Type} (a: A): coseq A := Delay (cocons a (cA a)).
 
-Lemma asd: forall A a y, y <> a -> @CoIn A y (WW a).
+Lemma unsound_coseqCoIn: forall A a y, y <> a -> @coseqCoIn A y (cA a).
 Proof. intros.
        pcofix CIH.
        pfold.
-       rewrite(coseq_eq(WW a)). unfold coseq_id. simpl.
-       apply CoInSplit2A with (y := a) (ys := (WW a)). simpl. easy. easy.
+       rewrite(coseq_eq(cA a)). unfold coseq_id. simpl.
+       apply CoInSplit2A with (y := a) (ys := (cA a)). simpl. easy. easy.
        right. easy.
 Qed.
 (**)
 
-Inductive CoNInR {A: Type}: A -> coseq A -> Prop :=
-  | CoNInSplit1 x: CoNInR x (Delay conil)
-  | CoNInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> CoNInR x ys -> CoNInR x xs.
-
-Inductive CoNInRA {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
-  | CoNInSplit1A x: CoNInRA R x (Delay conil)
-  | CoNInSplit2A x xs y ys: force xs = cocons y ys -> x <> y -> R x ys -> CoNInRA R x xs.
-
-Lemma inOutL: forall {A: Type} x xs, CoInR x xs -> (@CoNInR A x xs -> False).
-Proof. intros.
-       induction H.
-       subst.
-       - induction H0.
-         simpl in *. easy.
-         rewrite H0 in H. inversion H.
-         subst. easy.
-       - apply IHCoInR.
-         induction H0.
-         simpl in *. easy.
-         rewrite H0 in H.
-         inversion H.
-         subst.
-         apply IHCoNInR.
-         specialize(IHCoInR H4). easy.
-         easy. easy. easy.
-Qed.
-
-Lemma inOutR: forall {A: Type} x xs, (CoNInR x xs) -> (@CoInR A x xs -> False).
-Proof. intros.
-       induction H0. 
-       subst.
-       - induction H.
-         simpl in *. easy.
-         rewrite H0 in H. inversion H.
-         subst. easy.
-       - apply IHCoInR.
-         induction H.
-         simpl in *. easy.
-         rewrite H0 in H.
-         inversion H.
-         subst.
-         apply IHCoNInR.
-         specialize(IHCoInR H4). easy.
-         easy. easy. easy.
-Qed.
-
-Lemma inOutLCP: forall {A: Type} x xs, CoInRA (bot2) x xs -> @CoInR A x xs.
-Proof. intros.
-       inversion H.
-       subst.
-       case_eq xs; intros.
-       - subst. destruct force0. easy. 
-         simpl in H0. inversion H0. subst.
-         apply CoInSplit1 with (y := x) (ys := ys). simpl. easy. easy.
-       - subst. 
-         case_eq xs; intros.
-         + subst. destruct force0. easy.
-           simpl in H0. inversion H0. subst. easy.
-Qed.
-
-(* alternative membership check measures *)
-Inductive cosetIncL {A: Type} (R: coseq A -> list A -> Prop): coseq A -> list A -> Prop :=
-  | c_nil : forall ys, cosetIncL R (Delay conil) ys
+(* alternative coinductive membership check measures *)
+Inductive coseqInL {A: Type} (R: coseq A -> list A -> Prop): coseq A -> list A -> Prop :=
+  | c_nil : forall ys, coseqInL R (Delay conil) ys
   | c_incl: forall x xs ys,
             List.In x ys ->
             R xs ys ->
-            cosetIncL R (Delay (cocons x xs)) ys.
+            coseqInL R (Delay (cocons x xs)) ys.
 
-Definition cosetIncLC {A: Type} := fun s1 s2 => paco2 (@cosetIncL A) bot2 s1 s2.
+Definition coseqInLC {A: Type} := fun s1 s2 => paco2 (@coseqInL A) bot2 s1 s2.
 
-Lemma cosetIncL_mon {A}: monotone2 (@cosetIncL A).
+Lemma coseqInLC_mon {A}: monotone2 (@coseqInL A).
 Proof. unfold monotone2.
        intros.
        induction IN; intros.
@@ -246,11 +188,13 @@ Proof. unfold monotone2.
          apply LE, H0.
 Qed.
 
-Inductive cosetIncR {A: Type}: list A -> coseq A -> Prop :=
-  | l_nil : forall ys, cosetIncR nil ys
+Inductive coseqInR {A: Type}: list A -> coseq A -> Prop :=
+  | l_nil : forall ys, coseqInR nil ys
   | l_incl: forall x xs ys,
-            CoInR x ys ->
-            cosetIncR xs ys ->
-            cosetIncR (x::xs) ys.
+            coseqIn x ys ->
+            coseqInR xs ys ->
+            coseqInR (x::xs) ys.
+
+
 
 

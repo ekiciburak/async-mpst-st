@@ -58,7 +58,7 @@ Qed.
 
 Definition listTctl := [("src",snd);("src",rcv);("sk",snd);("sk",rcv)].
 
-Lemma listTctlEq: forall r, paco2 cosetIncL r (act Tctl) listTctl.
+Lemma listTctlEq: forall r, paco2 coseqInL r (act Tctl) listTctl.
 Proof. pcofix CIH.
        pfold.
        rewrite(coseq_eq(act Tctl)).
@@ -131,7 +131,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma listTREq: forall r, paco2 cosetIncL r (act TR) listTctl.
+Lemma listTREq: forall r, paco2 coseqInL r (act TR) listTctl.
 Proof. intros.
        pcofix CIH.
        unfold listTctl.
@@ -204,7 +204,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma listTctlEq': forall r, paco2 cosetIncL r (act Tctl') listTctl.
+Lemma listTctlEq': forall r, paco2 coseqInL r (act Tctl') listTctl.
 Proof. intros.
        unfold listTctl.
        rewrite(coseq_eq(act Tctl')).
@@ -226,7 +226,7 @@ Proof. intros.
        apply listTREq.
 Qed.
 
-Lemma action1: cosetIncR listTctl (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])).
+Lemma action1: coseqInR listTctl (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])).
 Proof. unfold listTctl.
        rewrite(coseq_eq(act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])]))).
        unfold coseq_id. simpl.
@@ -305,7 +305,7 @@ Proof. unfold listTctl.
 Qed.
 
 Lemma action2: forall (Hdeq: "src" <> "sk"),
-cosetIncR listTctl
+coseqInR listTctl
   (act
      (merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
         ("src" &
@@ -437,7 +437,7 @@ Proof. intros.
 Qed.
 
 Lemma action3:
-cosetIncR listTctl
+coseqInR listTctl
   (act
      ("src" &
       [("b1", (),
@@ -533,7 +533,7 @@ Proof. unfold listTctl.
 Qed.
 
 Lemma action4: forall (Hdeq: "src" <> "sk"),
-cosetIncR listTctl
+coseqInR listTctl
   (act
      (merge_bp_cont "src"
         (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
@@ -662,7 +662,7 @@ Proof. intros.
 Qed.
 
 
-Lemma actTRC: cosetIncLC (act TR) listTctl.
+Lemma actTRC: coseqInLC (act TR) listTctl.
 Proof. pcofix CIH.
        unfold listTctl.
        rewrite(coseq_eq(act TR)). unfold coseq_id. simpl.
@@ -691,7 +691,7 @@ Proof. pcofix CIH.
        right. exact CIH.
 Qed.
 
-Lemma actTctlC: cosetIncLC (act Tctl) listTctl.
+Lemma actTctlC: coseqInLC (act Tctl) listTctl.
 Proof. pcofix CIH.
        unfold listTctl.
        rewrite(coseq_eq(act Tctl)). unfold coseq_id. simpl.
@@ -720,7 +720,7 @@ Proof. pcofix CIH.
        right. exact CIH.
 Qed.
 
-Lemma actTR: cosetIncR listTctl (act TR).
+Lemma actTR: coseqInR listTctl (act TR).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act TR)). unfold coseq_id. simpl.
@@ -751,14 +751,14 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq11: cosetIncLC (act ("src" ! [("b2", (), TR)])) listTctl.
+Lemma action_eq11: coseqInLC (act ("src" ! [("b2", (), TR)])) listTctl.
 Proof. unfold listTctl.
        rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))). unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. apply actTRC.
 Qed.
 
-Lemma action_eq13: cosetIncR listTctl (act ("src" ! [("b2", (), TR)])).
+Lemma action_eq13: coseqInR listTctl (act ("src" ! [("b2", (), TR)])).
 Proof. unfold listTctl.
        rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))). unfold coseq_id. simpl.
        constructor.
@@ -786,7 +786,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq14: cosetIncR listTctl (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])).
+Lemma action_eq14: coseqInR listTctl (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])).
 Proof. unfold listTctl.
        rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))). unfold coseq_id. simpl.
        constructor.
@@ -815,7 +815,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq15: cosetIncLC (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])) listTctl.
+Lemma action_eq15: coseqInLC (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. left. easy.
@@ -825,7 +825,7 @@ Proof. pfold.
        left. apply actTRC.
 Qed.
 
-Lemma action_eq16: cosetIncLC (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])) listTctl.
+Lemma action_eq16: coseqInLC (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. left. easy.
@@ -854,7 +854,7 @@ Proof. pfold.
        apply actTctlC.
 Qed.
 
-Lemma action_eq17: cosetIncR listTctl (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])).
+Lemma action_eq17: coseqInR listTctl (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])).
 Proof. unfold listTctl.
        rewrite(coseq_eq (act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])]))). unfold coseq_id. simpl.
        constructor.
@@ -883,7 +883,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq18: cosetIncR listTctl (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])).
+Lemma action_eq18: coseqInR listTctl (act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])).
 Proof. unfold listTctl.
        rewrite(coseq_eq(act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))). unfold coseq_id. simpl.
        constructor.
@@ -914,7 +914,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq19: cosetIncLC (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])) listTctl.
+Lemma action_eq19: coseqInLC (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. right. left. easy.
@@ -927,14 +927,14 @@ Proof. pfold.
        left. apply actTRC.
 Qed.
 
-Lemma action_eq20: cosetIncLC (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])) listTctl.
+Lemma action_eq20: coseqInLC (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. right. left. easy.
        left. apply action_eq16.
 Qed.
 
-Lemma action_eq21: cosetIncR listTctl (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])).
+Lemma action_eq21: coseqInR listTctl (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])).
 Proof. unfold listTctl.
        rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))). unfold coseq_id. simpl.
        constructor.
@@ -963,7 +963,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq22: cosetIncR listTctl (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])).
+Lemma action_eq22: coseqInR listTctl (act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]))). unfold coseq_id. simpl.
@@ -999,7 +999,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq23: cosetIncLC (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])) listTctl.
+Lemma action_eq23: coseqInLC (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. left. easy.
@@ -1012,7 +1012,7 @@ Proof. pfold.
        left. apply action_eq15.
 Qed.
 
-Lemma action_eq24: cosetIncLC (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])) listTctl.
+Lemma action_eq24: coseqInLC (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
@@ -1025,7 +1025,7 @@ Proof. pfold.
        left. apply actTctlC.
 Qed.
 
-Lemma action_eq25: cosetIncR listTctl (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])).
+Lemma action_eq25: coseqInR listTctl (act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]))). unfold coseq_id. simpl.
@@ -1057,7 +1057,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq26: cosetIncR listTctl (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])).
+Lemma action_eq26: coseqInR listTctl (act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))). unfold coseq_id. simpl.
@@ -1089,21 +1089,21 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq27: cosetIncLC (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])) listTctl.
+Lemma action_eq27: coseqInLC (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. left. easy.
        left. apply action_eq23.
 Qed.
 
-Lemma action_eq28: cosetIncLC (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])) listTctl.
+Lemma action_eq28: coseqInLC (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. left. easy.
        left. apply action_eq24.
 Qed.
 
-Lemma action_eq29: cosetIncR listTctl (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])).
+Lemma action_eq29: coseqInR listTctl (act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]))). unfold coseq_id. simpl.
@@ -1135,7 +1135,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq30: cosetIncR listTctl (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])).
+Lemma action_eq30: coseqInR listTctl (act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))). unfold coseq_id. simpl.
@@ -1169,21 +1169,21 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq31: cosetIncLC (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])) listTctl.
+Lemma action_eq31: coseqInLC (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. right. left. easy.
        left. apply action_eq27.
 Qed.
 
-Lemma action_eq32: cosetIncLC (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])) listTctl.
+Lemma action_eq32: coseqInLC (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. right. right. left. easy.
        left. apply action_eq28.
 Qed.
 
-Lemma action_eq33: cosetIncR listTctl (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])).
+Lemma action_eq33: coseqInR listTctl (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]))). unfold coseq_id. simpl.
@@ -1215,7 +1215,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq34: cosetIncR listTctl (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])).
+Lemma action_eq34: coseqInR listTctl (act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]))). unfold coseq_id. simpl.
@@ -1251,7 +1251,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq36: cosetIncLC (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])) listTctl.
+Lemma action_eq36: coseqInLC (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])) listTctl.
 Proof. pfold.
        rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
@@ -1276,7 +1276,7 @@ Proof. pfold.
        left. apply actTctlC.
 Qed.
 
-Lemma action_eq37: cosetIncR listTctl (act ("src" ! [("b2", (), TR)])).
+Lemma action_eq37: coseqInR listTctl (act ("src" ! [("b2", (), TR)])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))). unfold coseq_id. simpl.
@@ -1308,7 +1308,7 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma action_eq38: cosetIncR listTctl (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])).
+Lemma action_eq38: coseqInR listTctl (act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])).
 Proof. unfold listTctl.
        constructor.
        rewrite(coseq_eq(act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))). unfold coseq_id. simpl.

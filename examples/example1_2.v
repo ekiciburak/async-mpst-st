@@ -25,7 +25,7 @@ Definition ListT := [("q",snd);("p",rcv)].
 Definition TW  := st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))].
 Definition TW' := st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))].
 
-Lemma TWEqList: cosetIncLC (act TW) ListT.
+Lemma TWEqList: coseqInLC (act TW) ListT.
 Proof. pfold.
        unfold TW, ListT.
        simpl.
@@ -53,7 +53,7 @@ Proof. pfold.
        constructor.
 Qed.
 
-Lemma TW'EqList: cosetIncLC (act TW') ListT.
+Lemma TW'EqList: coseqInLC (act TW') ListT.
 Proof. pfold.
        unfold TW', ListT.
        simpl.
@@ -81,7 +81,7 @@ Proof. pfold.
        constructor.
 Qed.
 
-Lemma TWEqListR: cosetIncR ListT (act TW).
+Lemma TWEqListR: coseqInR ListT (act TW).
 Proof. rewrite(coseq_eq(act TW)).
        unfold coseq_id.
        simpl.
@@ -113,7 +113,7 @@ Proof. rewrite(coseq_eq(act TW)).
        constructor.
 Qed.
 
-Lemma TWEqListR': cosetIncR ListT (act TW').
+Lemma TWEqListR': coseqInR ListT (act TW').
 Proof. rewrite(coseq_eq(act TW')).
        unfold coseq_id.
        simpl.
@@ -415,7 +415,7 @@ Inductive ev : nat -> Prop :=
 
 Definition listW3 := [("p",rcv); ("p",snd)].
 
-Lemma W3EqList: cosetIncLC (act W3) listW3.
+Lemma W3EqList: coseqInLC (act W3) listW3.
 Proof. pcofix CIH.
        pfold.
 (*        rewrite 2! EqW4. *)
@@ -460,7 +460,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma W3EqList2: forall r, paco2 cosetIncL r (act W3) listW3.
+Lemma W3EqList2: forall r, paco2 coseqInL r (act W3) listW3.
 Proof. intros.
        pcofix CIH.
        pfold.
@@ -504,7 +504,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma W1EqList: cosetIncLC (act W1) listW3.
+Lemma W1EqList: coseqInLC (act W1) listW3.
 Proof. pcofix CIH.
        pfold.
        rewrite(st_eq W1).
@@ -529,7 +529,7 @@ Proof. pcofix CIH.
        apply CIH.
 Qed.
 
-Lemma W1EqList2: forall r, paco2 cosetIncL r (act W1) listW3.
+Lemma W1EqList2: forall r, paco2 coseqInL r (act W1) listW3.
 Proof. intros.
        pcofix CIH.
        pfold.
@@ -555,7 +555,7 @@ Proof. intros.
        apply CIH.
 Qed.
 
-Lemma W1EqList3: forall n r, paco2 cosetIncL r (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)) listW3.
+Lemma W1EqList3: forall n r, paco2 coseqInL r (act (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)) listW3.
 Proof. pcofix CIH.
        intros n.
        induction n; intros.
@@ -571,7 +571,7 @@ Proof. pcofix CIH.
        apply IHn.
 Qed.
 
-Lemma W3EqListR: cosetIncR listW3 (act W3).
+Lemma W3EqListR: coseqInR listW3 (act W3).
 Proof. rewrite(coseq_eq (act W3)).
        unfold coseq_id. simpl.
        constructor.
@@ -612,7 +612,7 @@ Proof. rewrite(coseq_eq (act W3)).
        constructor.
 Qed.
 
-Lemma W1EqListR: cosetIncR listW3 (act W1).
+Lemma W1EqListR: coseqInR listW3 (act W1).
 Proof. rewrite(coseq_eq (act W1)).
        unfold coseq_id. simpl.
        constructor.
@@ -644,7 +644,7 @@ Proof. rewrite(coseq_eq (act W1)).
        constructor.
 Qed.
 
-Lemma inW1ns: forall n l s, CoInR ("p", snd) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
+Lemma inW1ns: forall n l s, coseqIn ("p", snd) (act (merge_bp_contn "p" (bp_receivea "p" l s) W1 n)).
 Proof. intro n.
        induction n; intros.
        simpl.
@@ -739,7 +739,7 @@ Proof. intro n.
        simpl. easy.
 Qed.
 
-Lemma action_eq1: cosetIncLC (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])) listW3.
+Lemma action_eq1: coseqInLC (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])) listW3.
 Proof. unfold listW3.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        pfold.
@@ -765,7 +765,7 @@ Proof. unfold listW3.
        exact CIH.
 Qed.
 
-Lemma action_eq2: cosetIncLC (act W1) listW3.
+Lemma action_eq2: coseqInLC (act W1) listW3.
 Proof. pcofix CIH.
        unfold listW3.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
@@ -778,7 +778,7 @@ Proof. pcofix CIH.
        exact CIH.
 Qed.
 
-Lemma action_eq3: cosetIncR listW3 (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])).
+Lemma action_eq3: coseqInR listW3 (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])).
 Proof. constructor.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). unfold coseq_id. simpl.
        apply CoInSplit2 with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, W3)]))). simpl. easy. easy.
@@ -791,7 +791,7 @@ Proof. constructor.
        constructor.
 Qed.
 
-Lemma action_eq4: cosetIncR listW3 (act W1).
+Lemma action_eq4: coseqInR listW3 (act W1).
 Proof. constructor.
        rewrite(coseq_eq(act W1)). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("p", rcv)) (ys := (act ("p" ! [("l3", I, W1)]))). simpl. easy. easy.
@@ -803,7 +803,7 @@ Proof. constructor.
        constructor.
 Qed.
 
-Lemma action_eq5: cosetIncLC (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])) listW3.
+Lemma action_eq5: coseqInLC (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])) listW3.
 Proof. unfold listW3.
        pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
@@ -812,7 +812,7 @@ Proof. unfold listW3.
        apply action_eq1.
 Qed.
 
-Lemma action_eq6: cosetIncLC (act ("p" ! [("l3", I, W1)])) listW3.
+Lemma action_eq6: coseqInLC (act ("p" ! [("l3", I, W1)])) listW3.
 Proof. unfold listW3.
        pfold.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
@@ -821,7 +821,7 @@ Proof. unfold listW3.
        apply action_eq2.
 Qed.
 
-Lemma action_eq7: cosetIncR listW3 (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])).
+Lemma action_eq7: coseqInR listW3 (act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])).
 Proof. constructor.
        rewrite(coseq_eq(act ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])]))). unfold coseq_id. simpl.
        apply CoInSplit2 with (y := ("p", snd)) (ys := (act ("p" ! [("l3", I, "p" ! [("l3", I, W3)])]))). simpl. easy. easy.
@@ -837,7 +837,7 @@ Proof. constructor.
        constructor.
 Qed.
 
-Lemma action_eq8: cosetIncR listW3 (act ("p" ! [("l3", I, W1)])).
+Lemma action_eq8: coseqInR listW3 (act ("p" ! [("l3", I, W1)])).
 Proof. constructor.
        rewrite(coseq_eq(act ("p" ! [("l3", I, W1)]))). unfold coseq_id. simpl.
        apply CoInSplit2 with (y := ("p", snd)) (ys := (act W1)). simpl. easy. easy.
@@ -849,7 +849,7 @@ Proof. constructor.
        constructor.
 Qed.
 
-Lemma action_eq9: forall n, cosetIncLC (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)])) listW3.
+Lemma action_eq9: forall n, coseqInLC (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)])) listW3.
 Proof. intro n.
        induction n; intros.
        - simpl. pfold. 
@@ -865,7 +865,7 @@ Proof. intro n.
          left. exact IHn.
 Qed.
 
-Lemma action_eq10: forall n, cosetIncR listW3 (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)])).
+Lemma action_eq10: forall n, coseqInR listW3 (act ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)])).
 Proof. intro n.
        induction n; intros.
        - simpl. constructor.
