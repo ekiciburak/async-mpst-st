@@ -5,7 +5,7 @@ Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
+Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
 
@@ -73,4 +73,6 @@ Proof. intros.
        apply imply_to_and in H.
        right. easy.
 Qed.
+
+
 

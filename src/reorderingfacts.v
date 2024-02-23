@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -3422,6 +3422,7 @@ Proof. intros p b1.
          apply bsd3new in H0. easy. easy.
 Qed.
 
+
 Lemma actNeq: forall w1 w2, act_neq w1 w2 -> w1 ~< w2 -> False.
 Proof. intros.
        unfold act_neq in H.
@@ -3614,4 +3615,31 @@ Proof. intros.
             inversion Ha. subst. easy. subst. easy.
             apply refinementR_mon.
 Qed.
+(* 
+Lemma actEq: forall w1 w2, w1 ~< w2 -> act_eq w1 w2.
+Proof. intros. punfold H.
+       inversion H.
+       apply mem_ext in H2.
+       unfold act_eq.
+       intros (q, ac).
+       case_eq ac; intros.
+       - subst. 
+        *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
