@@ -59,5 +59,18 @@ Axiom mem_ext: forall w1 w2,
   coseqInR L (act w2)
 ) <-> act_eq w1 w2.
 
-
+Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
+Proof. intros.
+       unfold act_eq, act_neq in *.
+       apply not_all_ex_not in H.
+       destruct H as (a, H).
+       exists a.
+       unfold iff in H.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       apply imply_to_and in H.
+       left. easy.
+       apply imply_to_and in H.
+       right. easy.
+Qed.
 
