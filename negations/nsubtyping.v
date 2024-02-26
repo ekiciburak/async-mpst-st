@@ -13,13 +13,13 @@ Definition nsubtype (T T': st): Prop :=
   exists U,  (st2soC T U -> False) \/
   exists V', (st2siC T' V' -> False) \/
   forall W,  (st2sisoC U (@und W) -> False) \/ 
-  forall W', (st2sisoC V' (@und W') -> False) \/ nRefinementN W W'.
+  forall W', (st2sisoC V' (@und W') -> False) \/ nRefinement W W'.
 
 Definition nsubtypeA (T T': st): Prop :=
   exists U,  (st2soC T U) ->
   exists V', (st2siC T' V') ->
   forall W,  (st2sisoC U (@und W)) ->
-  forall W', (st2sisoC V' (@und W')) -> nRefinementN W W'.
+  forall W', (st2sisoC V' (@und W')) -> nRefinement W W'.
 
 Lemma subNeqLA: forall T T', subtype T T' -> nsubtypeA T T' -> False.
 Proof. intros.
