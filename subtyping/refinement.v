@@ -21,7 +21,6 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                                              coseqInR L (act (merge_ap_contn p a w' n))
                                            ) ->
                                            refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
-
   | _sref_b  : forall w w' p l s s' b n,   subsort s s' ->
                                            seq w (merge_bp_contn p b w' n) ->
                                            ( exists L,

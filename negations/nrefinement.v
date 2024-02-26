@@ -26,8 +26,6 @@ Inductive nRefinementN: siso -> siso -> Prop :=
               nRefinementN w (mk_siso (merge_ap_contn p a (@und w') n) P) ->
               nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) Q) 
                            (mk_siso (merge_ap_contn p a (st_receive p [(l,s',(@und w'))]) n) R)
-  | n_i_o_1N: forall w w' p q l l' s s' P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
-                                                          (mk_siso (st_send q [(l',s',(@und w'))]) Q)
   | n_i_o_2N: forall w w' p l l' s s' c P Q, isInCp p c = true ->
                                              nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
                                                           (mk_siso (merge_cp_cont p c (st_receive p [(l',s',(@und w'))])) Q)
@@ -43,6 +41,38 @@ Inductive nRefinementN: siso -> siso -> Prop :=
               nRefinementN w (mk_siso (merge_bp_contn p b (@und w') n) P) ->
               nRefinementN (mk_siso (st_send p [(l,s,(@und w))]) Q) 
                            (mk_siso (merge_bp_contn p b (st_send p [(l,s',(@und w'))]) n) R).
+
+Lemma n_i_o_1N: forall w w' p q l l' s s' P Q, nRefinementN (mk_siso (st_receive p [(l,s,(@und w))]) P) 
+                                                            (mk_siso (st_send q [(l',s',(@und w'))]) Q).
+Proof. intros.
+       destruct w' as (w', Hw').
+       specialize(classic(coseqIn (p,rcv) (act w'))); intro Hin.
+       destruct Hin as [Hin | Hnin].
+       - specialize(inReceive w' p Hw' Hin); intros.
+         destruct H as (c,(l1,(s1,(w1,Hw1)))).
+         simpl. subst.
+         assert(q ! [(l', s', merge_cp_cont p c (p & [(l1, s1, w1)]))] = merge_cp_cont p (cp_merge q l' s' c) (p & [(l1, s1, w1)])).
+         { rewrite(st_eq(merge_cp_cont p (cp_merge q l' s' c) (p & [(l1, s1, w1)]))). simpl. easy. }
+         generalize dependent Hw'.
+         rewrite H. intros Hw' Q.
+         assert(singleton w1) as Hw1.
+         { apply extcpR, extrR in Q. easy. }
+         specialize(n_i_o_2N w (mk_siso w1 Hw1) p l l1 s s1 (cp_merge q l' s' c) P); intro Hn. simpl in Hn.
+         apply Hn. easy.
+       - specialize(n_actN (p & [(l, s, und)]) (q ! [(l', s', und)]) P Q); intro Hn.
+         apply Hn.
+         unfold act_neq.
+         exists (p, rcv).
+         left.
+         split.
+         + rewrite(coseq_eq(act (p & [(l, s, und)]))). unfold coseq_id. simpl.
+           apply CoInSplit1 with (y := (p, rcv)) (ys:= (act und)). simpl. easy. easy.
+         + intro Ha.
+           apply Hnin.
+           rewrite(coseq_eq(act (q ! [(l', s', und)]))) in Ha. unfold coseq_id in Ha. simpl in Ha.
+           inversion Ha. subst. simpl in H. easy.
+           subst. simpl in H. inversion H. subst. easy. 
+Qed.
 
 Lemma n_outN: forall w w' p b l s P, 
               (coseqIn (p,snd) (act (@und w')) -> False) -> 
@@ -411,11 +441,6 @@ Proof. intros w w' H.
          rewrite <- H2.
          easy.
          apply refinementR_mon.
-         easy.
-       }
-       { inversion H.
-         subst.
-         specialize(case11 n p q a l l' s'0 s' w'0 und H5); intros H11.
          easy.
        }
        { inversion H.

@@ -157,7 +157,7 @@ Qed.
 
 CoFixpoint cA {A: Type} (a: A): coseq A := Delay (cocons a (cA a)).
 
-Lemma unsound_coseqCoIn: forall A a y, y <> a -> @coseqCoIn A y (cA a).
+Lemma unsound_coseqCoIn: forall A (a b: A), a <> b -> coseqCoIn b (cA a).
 Proof. intros.
        pcofix CIH.
        pfold.
