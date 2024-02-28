@@ -216,8 +216,9 @@ Proof. intros.
        easy. easy.
 Qed.
 
-Lemma nRefL: forall w w',  (@und w) ~< (@und w') -> (nRefinement w w' -> False).
-Proof. intros w w' H.
+Lemma nRefR: forall w w', nRefinement w w' -> ((@und w) ~< (@und w') -> False).
+Proof. intros w w' Ha H.
+       revert Ha.
        unfold refinement in H.
        punfold H; [ | apply refinementR_mon].
        intro Ha.
@@ -761,7 +762,7 @@ Proof. intros.
          easy. easy. easy.
 Qed.
 
-Lemma nRefRH: forall w w', (nRefinement w w' -> False) -> (@und w) ~< (@und w').
+Lemma nRefLH: forall w w', (nRefinement w w' -> False) -> (@und w) ~< (@und w').
 Proof. destruct w as (w, Pw).
        destruct w' as (w', Pw').
        intro H.
@@ -1172,9 +1173,9 @@ Proof. split.
          + specialize(H H1 H0). easy.
 Qed.
 
-Lemma nRefR: forall w w', ((@und w) ~< (@und w') -> False) -> nRefinement w w'.
+Lemma nRefL: forall w w', ((@und w) ~< (@und w') -> False) -> nRefinement w w'.
 Proof. intros.
-       specialize(nRefRH w w'); intro HS.
+       specialize(nRefLH w w'); intro HS.
        rewrite contraposition in HS.
        intros Hb Hc.
        specialize(Hc Hb). easy.
