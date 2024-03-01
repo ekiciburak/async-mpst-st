@@ -511,7 +511,7 @@ Qed.
 Lemma casen1: forall p l s1 s2 w1 w2 P Q,
 subsort s2 s1 ->
 (nRefinement (mk_siso (st_receive p [(l, s1, (@und w1))]) P) 
-              (mk_siso (st_receive p [(l, s2, (@und w2))]) Q) -> False) ->
+             (mk_siso (st_receive p [(l, s2, (@und w2))]) Q) -> False) ->
 (nRefinement w1 w2 -> False).
 Proof. intros.
        apply H0.
@@ -993,54 +993,10 @@ Proof. destruct w as (w, Pw).
          specialize(n_i_o_1 {| und := w1; sprop := Hs1 |} {| und := w2; sprop := Hs2 |} p q l l' s s' Pw Pw'); intro Hn.
          destruct H0.
          apply Hn.
-
+(*case in the paper*)
          destruct Hpw' as [Hpw' | Hpw'].
          destruct Hpw' as (q, (l', (s', (w2, (Heq2, Hs2))))).
          subst.
-         case_eq(eqb p q); intro Heq.
-         rewrite eqb_eq in Heq.
-         case_eq(eqb l l'); intro Heq2.
-         rewrite eqb_eq in Heq2.
-         specialize(sort_dec s' s); intro Heq3.
-         destruct Heq3 as [Heq3 | Heq3].
-         subst.
-         pfold.
-
-         specialize(classic(act_eq w1 w2)); intros Hact.
-         destruct Hact as [Hact | Hact].
-         specialize(_sref_a (upaco2 refinementR r) w1 w2 q l' s s' (ap_end) 1); intros HSR.
-         rewrite apend_ann in HSR.
-         rewrite apend_ann in HSR.
-         simpl in HSR.
-         eapply HSR. easy.
-
-         right. 
-         apply (CIH w2 Hs2 w1 Hs1).
-         intro Hs.
-         specialize(casen1 q l' s s' {| und := w1; sprop := Hs1 |} {| und := w2; sprop := Hs2 |} Pw Pw'); intro Hn.
-         apply Hn. easy. exact H0. exact Hs.
-         subst.
-         apply mem_ext. easy.
-
-         specialize(n_a_act q (ap_end) l' s s' w1 w2); intros HNA.
-         destruct H0.
-         rewrite apend_an in HNA.
-         apply HNA.
-         easy. rewrite apend_an.
-         apply act_eq_neq.
-         intro Hb. apply Hact. easy.
-
-         subst.
-         destruct H0.
-         specialize(n_inp_s {| und := w1; sprop := Hs1 |} {| und := w2; sprop := Hs2 |} q l' s s' Pw Pw'); intro Hn.
-         apply Hn. easy.
-         subst.
-         rewrite eqb_neq in Heq2.
-         destruct H0.
-         specialize(n_inp_l {| und := w1; sprop := Hs1 |} {| und := w2; sprop := Hs2 |} q l l' s s' Pw Pw'); intro Hn.
-         apply Hn. easy.
-
-         rewrite eqb_neq in Heq.
 
          specialize(classic (coseqIn (p, rcv) (act (q & [(l', s', w2)])) -> False)); intro Hclass.
          destruct Hclass as [Hclass | Hclass].
@@ -1136,6 +1092,7 @@ Proof. destruct w as (w, Pw).
          rewrite(coseq_eq(act st_end)). unfold coseq_id. simpl.
          intro Hf. inversion Hf; subst; easy. 
        }
+      (**)
        subst.
        { specialize(sinv w' Pw'); intros Hpw'.
          destruct Hpw' as [Hpw' | Hpw'].

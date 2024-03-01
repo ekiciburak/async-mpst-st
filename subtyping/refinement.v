@@ -4,7 +4,7 @@ From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
 Require Import Setoid.
-Require Import Morphisms JMeq.
+Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
