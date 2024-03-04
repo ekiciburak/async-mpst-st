@@ -12,7 +12,7 @@ CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b1",sunit,st_send "sk" [("b1",sunit,
                                   st_send "src" [("b2",sunit,st_receive "src" [("b2",sunit,
                                   st_receive "sk" [("b2",sunit,st_send "sk" [("b2",sunit,Tctl)])])])])])])])].
-Print Tctl.
+(* Print Tctl. *)
 
 Lemma singletonTctl: singleton Tctl.
 Proof. pcofix CIH.
@@ -32,10 +32,10 @@ CoFixpoint TR := st_receive "src" [("b1",sunit,st_receive "sk" [("b1",sunit,
                                    st_send "sk" [("b1",sunit,st_send "src" [("b1",sunit,
                                    st_receive "src" [("b2",sunit,st_receive "sk" [("b2",sunit,
                                    st_send "sk" [("b2",sunit,st_send "src" [("b2",sunit,TR)])])])])])])])].
-Print TR.
+(* Print TR. *)
 
 Definition Tctl' := st_send "src" [("b1",sunit,st_send "src" [("b2",sunit,TR)])].
-Print Tctl'.
+(* Print Tctl'. *)
 
 Lemma singletonTctl': singleton Tctl'.
 Proof. pfold. rewrite(st_eq(Tctl')). simpl.
@@ -1450,7 +1450,7 @@ Proof. unfold subtype.
        rewrite(st_eq Tctl). simpl.
        pfold.
 
-       specialize(_sref_b (upaco2 refinementR bot2) ("src" ! [("b2", (), TR)])  
+       specialize(ref_b (upaco2 refinementR bot2) ("src" ! [("b2", (), TR)])  
                                                  ("src" &
        [("b1", (),
          "sk" &
@@ -1473,7 +1473,7 @@ Proof. unfold subtype.
        pcofix CIH.
        pfold.
        assert("src" <> "sk") as Hdeq by easy.
-       specialize(_sref_b (upaco2 refinementR r)
+       specialize(ref_b (upaco2 refinementR r)
                           ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (),
                            "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])
                           ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])
@@ -1513,7 +1513,7 @@ Proof. unfold subtype.
        left. 
        pfold.
 
-       specialize(_sref_a (upaco2 refinementR r) ("sk" & [("b1", (),
+       specialize(ref_a (upaco2 refinementR r) ("sk" & [("b1", (),
         "sk"
         ! [("b1", (),
             "src"
@@ -1536,7 +1536,7 @@ Proof. unfold subtype.
        pfold.
        clear HSA.
 
-       specialize(_sref_a (upaco2 refinementR r) ("sk"
+       specialize(ref_a (upaco2 refinementR r) ("sk"
         ! [("b1", (),
             "src"
             ! [("b1", (),
@@ -1557,7 +1557,7 @@ Proof. unfold subtype.
        pfold.
 
        clear HSB.
-       specialize(_sref_b (upaco2 refinementR r) ("src"
+       specialize(ref_b (upaco2 refinementR r) ("src"
        ! [("b1", (),
            "src" &
            [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])  
@@ -1578,7 +1578,7 @@ Proof. unfold subtype.
        unfold upaco2.
        left.
        pfold.
-       specialize(_sref_b (upaco2 refinementR r)
+       specialize(ref_b (upaco2 refinementR r)
        ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])
        ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
        "src"
@@ -1651,7 +1651,7 @@ Proof. unfold subtype.
          pfold.
          clear HSA HSB.
 
-        specialize(_sref_a (upaco2 refinementR r) ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])  
+        specialize(ref_a (upaco2 refinementR r) ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])  
         ("sk" &
          [("b2", (),
           "sk"
@@ -1679,7 +1679,7 @@ Proof. unfold subtype.
          pfold.
 
          clear HSA.
-         specialize(_sref_a (upaco2 refinementR r) ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])  
+         specialize(ref_a (upaco2 refinementR r) ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])  
           ("sk"
           ! [("b2", (),
             "src" &
@@ -1704,7 +1704,7 @@ Proof. unfold subtype.
          left.
          pfold.
          clear HSA.
-         specialize(_sref_b (upaco2 refinementR r) ("src" ! [("b2", (), TR)])  
+         specialize(ref_b (upaco2 refinementR r) ("src" ! [("b2", (), TR)])  
           ("src" &
             [("b1", (),
               "sk" &

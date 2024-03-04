@@ -789,7 +789,7 @@ Proof. destruct w as (w, Pw).
 
          specialize(classic(act_eq w1 w2)); intros Hact.
          destruct Hact as [Hact | Hact].
-         specialize(_sref_b (upaco2 refinementR r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
+         specialize(ref_b (upaco2 refinementR r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
          rewrite bpend_ann in HSR.
          rewrite bpend_ann in HSR.
          simpl in HSR.
@@ -843,7 +843,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -927,7 +927,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(_sref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -1034,7 +1034,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_ap_cont p a w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(_sref_a (upaco2 refinementR r) w1 w3 p l1 s s1 a 1); intro Hrb.
+         specialize(ref_a (upaco2 refinementR r) w1 w3 p l1 s s1 a 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 

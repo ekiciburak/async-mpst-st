@@ -174,7 +174,7 @@ Proof. unfold subtype.
        simpl.
        pcofix CIH. pfold.
        rewrite(st_eq w2). rewrite(st_eq w1). simpl.
-       specialize(_sref_b (upaco2 refinementR r) ("A" & [("add", I, w2)]) (w1)
+       specialize(ref_b (upaco2 refinementR r) ("A" & [("add", I, w2)]) (w1)
                           "C" "add" (I) (I) (@bp_receivea "C" "A" "add" (I)) 1
                           ); intro Hb.
        simpl in Hb.
@@ -185,7 +185,7 @@ Proof. unfold subtype.
        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1)). simpl.
        clear Hb.
 
-       specialize(_sref_a (upaco2 refinementR r) (w2) (w1)
+       specialize(ref_a (upaco2 refinementR r) (w2) (w1)
                           "A" "add" (I) (I) (ap_end) 1
                           ); intro Ha.
        simpl in Ha.
