@@ -50,13 +50,35 @@ Proof. unfold monotone2.
 Qed.
 
 (* coinductive extensionality axiom *)
-Axiom mem_ext: forall w1 w2,
+Axiom cind_ext: forall w1 w2,
+( exists L,
+  coseqInLC (act w1) L /\
+  coseqInLC (act w2) L /\
+  coseqInR L (act w1) /\
+  coseqInR L (act w2)
+) -> act_eq w1 w2.
+
+Axiom finiteST:
+forall w1 w2,
+act_eq w1 w2 ->
+( exists L,
+  coseqInLC (act w1) L /\
+  coseqInLC (act w2) L /\
+  coseqInR L (act w1) /\
+  coseqInR L (act w2)
+).
+
+Lemma mem_ext: forall w1 w2,
 ( exists L,
   coseqInLC (act w1) L /\
   coseqInLC (act w2) L /\
   coseqInR L (act w1) /\
   coseqInR L (act w2)
 ) <-> act_eq w1 w2.
+Proof. split.
+       apply cind_ext.
+       apply finiteST.
+Qed.
 
 Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
 Proof. intros.
