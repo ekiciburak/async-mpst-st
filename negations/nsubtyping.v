@@ -16,5 +16,5 @@ Definition nsubtype (T T': st): Prop :=
   forall W', (st2sisoC V' (@und W')) -> nRefinement W W'.
 
 Definition nsubtypeA (T T': st): Prop :=
-  forall W,  (st2sisoCA T (@und W)) ->
-  forall W', (st2sisoCA T' (@und W')) -> nRefinement W W'.
+  forall W,  (st2sisoCA (@und W) T) ->
+  forall W', (st2sisoCA (@und W') T') -> nRefinement W W'.

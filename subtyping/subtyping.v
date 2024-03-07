@@ -15,5 +15,5 @@ Definition subtype (T T': st): Prop :=
   exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
 
 Definition subtypeA (T T': st): Prop :=
-  exists (W: siso), st2sisoCA T  (@und W) /\
-  exists (W':siso), st2sisoCA T' (@und W') /\ (@und W) ~< (@und W').
+  exists (W: siso), st2sisoCA (@und W) T /\
+  exists (W':siso), st2sisoCA (@und W') T' /\ (@und W) ~< (@und W').

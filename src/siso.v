@@ -46,25 +46,6 @@ Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
                  R (st_send p [(l,s,x)]) t ->
                  st2siso R (st_send p xs) t.
 
-Fixpoint dropst (u: label) (l: list (label*st.sort*st)): st :=
-  match l with
-    | (lbl,s,x)::xs => if eqb u lbl then x else dropst u xs
-    | nil           => st_end
-  end.
-
-Inductive st2sisoA (R: st -> st -> Prop): st -> st -> Prop :=
-  | st2siso_endA: st2sisoA R st_end st_end
-  | st2siso_rcvA: forall l s x xs p,
-(*                  List.In (l,s,x) xs -> *)
-                 R x (dropst l xs) ->
-                 st2sisoA R (st_receive p [(l,s,x)]) (st_receive p xs) 
-  | st2siso_sndA: forall l s x xs p,
-(*                  List.In (l,s,x) xs -> *)
-                 R x (dropst l xs) ->
-                 st2sisoA R (st_send p [(l,s,x)]) (st_send p xs).
-
-Definition st2sisoCA s1 s2 := paco2 (st2sisoA) bot2 s2 s1.
-
 Lemma st2siso_mon: monotone2 st2siso.
 Proof. unfold monotone2.
        intros.
@@ -81,6 +62,73 @@ Proof. unfold monotone2.
 Qed.
 
 Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s2 s1.
+
+(* direct st -> siso -- omits the middle men so and si decompositions *)
+
+Fixpoint pathsel (u: label) (l: list (label*st.sort*st)): st :=
+  match l with
+    | (lbl,s,x)::xs => if eqb u lbl then x else pathsel u xs
+    | nil           => st_end
+  end.
+
+Inductive st2sisoA (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2siso_endA: st2sisoA R st_end st_end
+  | st2siso_rcvA: forall l s x xs p,
+                  R x (pathsel l xs) ->
+                  st2sisoA R (st_receive p [(l,s,x)]) (st_receive p xs) 
+  | st2siso_sndA: forall l s x xs p,
+                  R x (pathsel l xs) ->
+                  st2sisoA R (st_send p [(l,s,x)]) (st_send p xs) .
+
+Definition st2sisoCA s1 s2 := paco2 (st2sisoA) bot2 s1 s2.
+
+Lemma st2sisoA_mon: monotone2 st2sisoA.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - apply st2siso_endA.
+       - specialize (st2siso_rcvA r'); intro HS.
+         apply HS.
+         apply LE, H.
+       - specialize (st2siso_sndA r'); intro HS.
+         apply HS.
+         apply LE, H.
+Qed.
+
+Local Open Scope string_scope.
+
+CoFixpoint exst := st_send "C" [("add", I, st_receive "A" [("add", I, exst); ("X",I,st_send "C" [("Y",I,exst);("Z",I,exst)])]); 
+                                ("sub", I, st_receive "A" [("add", I, exst)]);
+                                ("mul", I, st_receive "A" [("add", I, exst)]);
+                                ("add", I, "A" & [("X", I, exst)]); 
+                                ("X", I, exst)].
+
+CoFixpoint exsiso := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I,exsiso)]))])].
+
+Lemma example_ns: st2sisoCA exsiso exst.
+Proof. pcofix CIH. pfold.
+       rewrite(st_eq exst).
+       rewrite(st_eq exsiso).
+       simpl.
+       apply st2siso_sndA.
+       left. simpl.
+       pfold.
+       apply st2siso_rcvA.
+       left. simpl.
+       pfold. apply st2siso_sndA. 
+       setoid_rewrite(st_eq exst) at 1. simpl.
+       setoid_rewrite(st_eq exsiso) at 1. simpl.
+       left. pfold.
+       apply st2siso_sndA.
+       left. pfold. simpl.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       right.
+       exact CIH.
+Qed.
+
+(**)
 
 Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p [(l,s,w)]).
 Proof. intros p l s w H.
