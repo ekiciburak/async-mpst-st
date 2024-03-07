@@ -195,6 +195,39 @@ Inductive coseqInR {A: Type}: list A -> coseq A -> Prop :=
             coseqInR xs ys ->
             coseqInR (x::xs) ys.
 
+Inductive triv: Type :=
+  | const_a: triv
+  | const_b: triv
+  | const_c: triv.
 
+CoFixpoint Wtriv := Delay (cocons const_a (Delay (cocons const_b (Delay (cocons const_c Wtriv))))).
+
+Definition Ltriv := const_b :: const_a :: const_c :: nil. 
+
+Example smallexL: coseqInLC Wtriv Ltriv.
+Proof. pcofix CIH.
+       pfold.
+       rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+       apply c_incl. simpl. right. left. easy.
+       left. pfold.
+       apply c_incl. simpl. left. easy.
+       left. pfold.
+       apply c_incl. simpl. right. right. left. easy.
+       right. exact CIH.
+Qed. 
+
+Example smallexR: coseqInR Ltriv Wtriv.
+Proof. rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+       apply l_incl. simpl.
+       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |} )). simpl. easy. easy.
+       apply CoInSplit1 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
+       apply l_incl. simpl.
+       apply CoInSplit1 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
+       apply l_incl. simpl.
+       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
+       apply CoInSplit2 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
+       apply CoInSplit1 with (y := const_c) (ys := (Wtriv)). simpl. easy. easy.
+       apply l_nil.
+Qed.
 
 
