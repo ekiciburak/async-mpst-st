@@ -1138,5 +1138,11 @@ Proof. intros.
        specialize(Hc Hb). easy.
 Qed.
 
+Lemma refComplete: forall w w', ((@und w) ~< (@und w') -> False) <-> nRefinement w w'.
+Proof. split.
+       apply nRefL.
+       apply nRefR.
+Qed.
+
 (* Print DependGraph completeness. *)
 
