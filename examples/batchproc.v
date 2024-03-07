@@ -1340,112 +1340,59 @@ Proof. unfold listTctl.
        constructor.
 Qed.
 
-Lemma stb: subtype Tctl' Tctl.
-Proof. unfold subtype.
-       intro U.
-       split.
-       pcofix CIH.
-       pfold.
-       rewrite(st_eq Tctl'). simpl.
-       specialize(st2so_snd (upaco2 st2so r)
-                            "b1" sunit
-                            ("src" ! [("b2", (), TR)])
-                            U
-                            ([("b1", (), "src" ! [("b2", (), TR)])])
-                            "src"
-                            ); intro Ha.
-       apply Ha.
-       simpl. left. easy.
-       unfold upaco2.
-       right.
-       rewrite(st_eq Tctl') in CIH. simpl in CIH.
-       apply CIH.
-
-       intro V'.
-       split.
-       pcofix CIH.
-       pfold.
-       rewrite(st_eq Tctl). simpl.
-       specialize(st2si_snd (upaco2 st2si r) 
-                            "src" 
-                            ["b1";"b1";"b1";"b1";"b2";"b2";"b2";"b2"]
-                            [sunit;sunit;sunit;sunit;sunit;sunit;sunit;sunit]
-                            V'
-                            ([("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
-                            ([("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
-                            ); intro Ha.
-       simpl in Ha.
-       apply Ha.
-       simpl.
-       apply Forall_forall.
-       intros(x1,x2) Hc.
-       simpl.
-       simpl in Hc.
-       destruct Hc as [Hc | Hc].
-       inversion Hc.
-       unfold upaco2.
-       left.
-       pcofix CIH2.
-       pfold.
-       specialize(st2si_rcv (upaco2 st2si r0)
-                            "b1" 
-                            sunit
-                            ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])] )
-                            ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
-                            ([("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
-                            "src"
-                            ); intros Hd.
-       apply Hd.
-       simpl. left. easy.
-       unfold upaco2.
-       right.
-       apply CIH2.
-       easy.
-       rewrite(st_eq Tctl) in CIH. simpl in CIH.
-       unfold upaco2.
-       right.
-       apply CIH.
-
+Lemma stbA: subtypeA Tctl' Tctl.
+Proof. unfold subtypeA.
        exists (mk_siso Tctl' (singletonTctl')).
        split.
-(*        symmetry. *)
-       pcofix CIH.
        pfold. simpl.
        rewrite(st_eq Tctl'). simpl.
-       specialize(st2siso_snd (upaco2 st2siso r) 
-                              "b1" sunit
-                              ("src" ! [("b2", (), TR)])
-                              U
-                              ([("b1", (), "src" ! [("b2", (), TR)])])
-                              "src"
-                              ); intro Ha.
-       apply Ha.
-       simpl. left. easy.
-       unfold upaco2.
-       right. simpl in CIH.
-       rewrite(st_eq Tctl') in CIH. simpl in CIH.
-       apply CIH.
-       
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pcofix CIH.
+       pfold.
+       rewrite(st_eq TR). simpl.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       right. exact CIH.
+
        exists (mk_siso Tctl (singletonTctl)).
        split.
-(*        symmetry. *)
+       simpl.
        pcofix CIH.
-       pfold. simpl.
+       pfold. 
        rewrite(st_eq Tctl). simpl.
-       specialize(st2siso_snd (upaco2 st2siso r) 
-                              "b1" sunit
-                              ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
-                              V'
-                              ([("b1", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
-                              "src"
-                              ); intro Ha.
-       apply Ha.
-       simpl. left. easy.
-       unfold upaco2.
-       right. simpl in CIH.
-       rewrite(st_eq Tctl) in CIH. simpl in CIH.
-       apply CIH. simpl.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       right. exact CIH.
 
+       simpl.
        rewrite(st_eq Tctl').
        rewrite(st_eq Tctl). simpl.
        pfold.
@@ -1467,7 +1414,7 @@ Proof. unfold subtype.
        apply HSB.
        clear HSB.
        apply srefl.
-       
+
        unfold upaco2.
        left.
        pcofix CIH.
@@ -1483,7 +1430,6 @@ Proof. unfold subtype.
                           sunit
                           (bp_mergea "src" "b1" sunit (bp_mergea "sk" "b1" sunit (bp_send "sk" Hdeq "b1" sunit)))
                           1
-(*                           listTctl *)
                  ); intro Ha.
        simpl in Ha.
        rewrite(st_eq((merge_bp_cont "src"
@@ -1508,7 +1454,7 @@ Proof. unfold subtype.
        simpl.
        rewrite(st_eq( merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (())) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
        simpl.
-       
+
        unfold upaco2.
        left. 
        pfold.
@@ -1528,7 +1474,6 @@ Proof. unfold subtype.
        apply HSA.
        clear HSA.
 
-(*        apply _sref_in. *)
        apply srefl.
 
        unfold upaco2.
@@ -1549,7 +1494,6 @@ Proof. unfold subtype.
        apply HSA.
        clear HSA.
 
-(*        apply _sref_in. *)
        apply srefl.
 
        unfold upaco2.
@@ -1568,10 +1512,8 @@ Proof. unfold subtype.
        rewrite bpend_an in HSB.
        apply HSB.
        clear HSB.
-       
-(*        apply _sref_out. *)
+
        apply srefl.
-       
        rewrite(st_eq Tctl).
        simpl.
 
@@ -1587,7 +1529,6 @@ Proof. unfold subtype.
        sunit
        (bp_mergea "src" "b2" sunit (bp_mergea "sk" "b2" sunit (bp_send "sk" Hdeq "b2" sunit)))
        1
-(*        listTctl *)
        ); intro Hb.
        simpl in Hb.
        rewrite(st_eq( (merge_bp_cont "src"
@@ -1670,8 +1611,7 @@ Proof. unfold subtype.
         rewrite apend_an in HSA.
         apply HSA.
         clear HSA.
-        
-(*          apply _sref_in. *)
+
          apply srefl.
 
          unfold upaco2.
@@ -1696,8 +1636,7 @@ Proof. unfold subtype.
          rewrite apend_an in HSA.
          apply HSA.
          clear HSA.
-         
-(*          apply _sref_in. *)
+
          apply srefl.
 
          unfold upaco2.
@@ -1720,7 +1659,617 @@ Proof. unfold subtype.
          apply HSB.
          clear HSB.
 
-(*          apply _sref_out. *)
+         apply srefl.
+
+         unfold upaco2.
+         right.
+         apply CIH.
+         exists listTctl.
+         split.
+apply action_eq11.
+split.
+apply action_eq36.
+split.
+apply action_eq13.
+apply action_eq14.
+exists listTctl.
+split.
+apply action_eq15.
+split.
+apply action_eq16.
+split.
+apply action_eq17.
+apply action_eq18.
+exists listTctl.
+split.
+apply action_eq19.
+split.
+apply action_eq20.
+split.
+apply action_eq21.
+apply action_eq22.
+exists listTctl.
+split.
+         pfold.
+         unfold listTctl.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
+         unfold coseq_id.
+         simpl.
+         constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))).
+         unfold coseq_id.
+         simpl.
+         unfold upaco2.
+         left.
+         pfold.
+         constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold.
+         constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b2", (), TR)])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold.
+         constructor.
+         simpl. left. easy.
+         unfold upaco2.
+         left.
+         apply listTREq.
+         split.
+
+         rewrite(st_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+                                              ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+         simpl.
+         rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+                                      ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(st_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+                                      ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(coseq_eq((act ("src" & [("b2", (),
+                                "sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         pfold.
+         constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl.
+         left.
+         pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))).
+         unfold upaco2, coseq_id.
+         simpl.
+         left. pfold.
+         constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. left. easy.
+         unfold upaco2. left.
+         apply listTctlEq.
+         split.
+         apply action1.
+         apply action2.
+         exists listTctl.
+         split.
+apply action_eq23.
+split.
+apply action_eq24.
+split.
+apply action_eq25.
+apply action_eq26.
+exists listTctl.
+split.
+apply action_eq27.
+split.
+apply action_eq28.
+split.
+apply action_eq29.
+apply action_eq30.
+exists listTctl.
+split.
+apply action_eq31.
+split.
+apply action_eq32.
+split.
+apply action_eq33.
+apply action_eq34.
+exists listTctl.
+split.
+         pfold.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])))).
+         unfold coseq_id.
+         simpl. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])))).
+         unfold coseq_id, upaco2.
+         left. pfold. simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])))).
+         unfold upaco2, coseq_id.
+         left. simpl. pfold. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])))).
+         unfold upaco2, coseq_id.
+         simpl. left. pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq(act ("src" ! [("b2", (), TR)]))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. left. easy.
+         unfold upaco2. left.
+         apply listTREq.
+         split.
+
+         rewrite(st_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
+                                       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         simpl.
+         rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (())))
+                                      ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+         simpl.
+         rewrite(st_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (())) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+         simpl.
+         pfold.
+         rewrite(coseq_eq((act ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. constructor. 
+         simpl. right. left. easy.
+         left. pfold.
+         rewrite(coseq_eq((act ("sk" & [("b1", (), "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])))).
+         unfold coseq_id.
+         simpl. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         rewrite(coseq_eq((act ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+         unfold coseq_id, upaco2.
+         left. simpl. pfold. constructor.
+         simpl. right. left. easy.
+         rewrite(coseq_eq((act ("sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])))).
+         unfold coseq_id, upaco2.
+         simpl. left. pfold. constructor.
+         simpl. right. right. right. left. easy.
+         rewrite(coseq_eq((act ("sk" ! [("b2", (), Tctl)])))).
+         unfold coseq_id, upaco2. 
+         simpl. left. pfold. constructor.
+         simpl. right. right. left. easy.
+         unfold upaco2.
+         left.
+         apply listTctlEq.
+         split.
+         apply action3.
+         apply action4.
+         exists listTctl.
+         split.
+apply action_eq11.
+split.
+apply action_eq36.
+split.
+apply action_eq37.
+apply action_eq38.
+Qed.
+
+Lemma stb: subtype Tctl' Tctl.
+Proof. unfold subtype.
+       intro U.
+       split.
+       pcofix CIH.
+       pfold.
+       rewrite(st_eq Tctl'). simpl.
+       specialize(st2so_snd (upaco2 st2so r)
+                            "b1" sunit
+                            ("src" ! [("b2", (), TR)])
+                            U
+                            ([("b1", (), "src" ! [("b2", (), TR)])])
+                            "src"
+                            ); intro Ha.
+       apply Ha.
+       simpl. left. easy.
+       unfold upaco2.
+       right.
+       rewrite(st_eq Tctl') in CIH. simpl in CIH.
+       apply CIH.
+
+       intro V'.
+       split.
+       pcofix CIH.
+       pfold.
+       rewrite(st_eq Tctl). simpl.
+       specialize(st2si_snd (upaco2 st2si r) 
+                            "src" 
+                            ["b1";"b1";"b1";"b1";"b2";"b2";"b2";"b2"]
+                            [sunit;sunit;sunit;sunit;sunit;sunit;sunit;sunit]
+                            V'
+                            ([("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
+                            ([("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
+                            ); intro Ha.
+       simpl in Ha.
+       apply Ha.
+       simpl.
+       apply Forall_forall.
+       intros(x1,x2) Hc.
+       simpl.
+       simpl in Hc.
+       destruct Hc as [Hc | Hc].
+       inversion Hc.
+       unfold upaco2.
+       left.
+       pcofix CIH2.
+       pfold.
+       specialize(st2si_rcv (upaco2 st2si r0)
+                            "b1" 
+                            sunit
+                            ("sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])] )
+                            ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+                            ([("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+                            "src"
+                            ); intros Hd.
+       apply Hd.
+       simpl. left. easy.
+       unfold upaco2.
+       right.
+       apply CIH2.
+       easy.
+       rewrite(st_eq Tctl) in CIH. simpl in CIH.
+       unfold upaco2.
+       right.
+       apply CIH.
+
+       exists (mk_siso Tctl' (singletonTctl')).
+       split.
+
+       pcofix CIH.
+       pfold. simpl.
+       rewrite(st_eq Tctl'). simpl.
+       specialize(st2siso_snd (upaco2 st2siso r) 
+                              "b1" sunit
+                              ("src" ! [("b2", (), TR)])
+                              U
+                              ([("b1", (), "src" ! [("b2", (), TR)])])
+                              "src"
+                              ); intro Ha.
+       apply Ha.
+       simpl. left. easy.
+       unfold upaco2.
+       right. simpl in CIH.
+       rewrite(st_eq Tctl') in CIH. simpl in CIH.
+       apply CIH.
+
+       exists (mk_siso Tctl (singletonTctl)).
+       split.
+
+       pcofix CIH.
+       pfold. simpl.
+       rewrite(st_eq Tctl). simpl.
+       specialize(st2siso_snd (upaco2 st2siso r) 
+                              "b1" sunit
+                              ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+                              V'
+                              ([("b1", (), "src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])
+                              "src"
+                              ); intro Ha.
+       apply Ha.
+       simpl. left. easy.
+       unfold upaco2.
+       right. simpl in CIH.
+       rewrite(st_eq Tctl) in CIH. simpl in CIH.
+       apply CIH. simpl.
+
+       rewrite(st_eq Tctl').
+       rewrite(st_eq Tctl). simpl.
+       pfold.
+
+       specialize(ref_b (upaco2 refinementR bot2) ("src" ! [("b2", (), TR)])  
+                                                 ("src" &
+       [("b1", (),
+         "sk" &
+         [("b1", (),
+           "sk"
+           ! [("b1", (),
+               "src"
+               ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+       "src" "b1" (()) (()) (bp_end) 1); intros HSB.
+       simpl in HSB.
+       simpl in HSB.
+       rewrite bpend_an in HSB.
+       rewrite bpend_an in HSB.
+       apply HSB.
+       clear HSB.
+       apply srefl.
+
+       unfold upaco2.
+       left.
+       pcofix CIH.
+       pfold.
+       assert("src" <> "sk") as Hdeq by easy.
+       specialize(ref_b (upaco2 refinementR r)
+                          ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (),
+                           "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])])
+                          ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])
+                          "src"
+                          "b2"
+                          sunit
+                          sunit
+                          (bp_mergea "src" "b1" sunit (bp_mergea "sk" "b1" sunit (bp_send "sk" Hdeq "b1" sunit)))
+                          1
+                 ); intro Ha.
+       simpl in Ha.
+       rewrite(st_eq((merge_bp_cont "src"
+          (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
+          ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])))) in Ha.
+       simpl in Ha.
+       rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (())))
+            ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))) in Ha.
+       simpl in Ha.
+       rewrite(st_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (()))
+              ("src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]))) in Ha.
+       simpl in Ha.
+       rewrite(st_eq TR).
+       simpl.
+       apply Ha.
+       apply srefl.
+       rewrite(st_eq((merge_bp_cont "src" (bp_mergea "src" "b1" (()) (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (()))))
+                       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])))).
+       simpl.
+       rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b1" (()) (bp_send "sk" Hdeq "b1" (())))
+       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+       simpl.
+       rewrite(st_eq( merge_bp_cont "src" (bp_send "sk" Hdeq "b1" (())) ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]))).
+       simpl.
+       
+       unfold upaco2.
+       left. 
+       pfold.
+
+       specialize(ref_a (upaco2 refinementR r) ("sk" & [("b1", (),
+        "sk"
+        ! [("b1", (),
+            "src"
+            ! [("b1", (),
+                "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])])  
+       ("sk" & [("b1", (),
+        "sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]) 
+        "src" "b1" (()) (()) (ap_end) 1); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
+       clear HSA.
+
+       apply srefl.
+
+       unfold upaco2.
+       left. 
+       pfold.
+       clear HSA.
+
+       specialize(ref_a (upaco2 refinementR r) ("sk"
+        ! [("b1", (),
+            "src"
+            ! [("b1", (),
+                "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])  
+       ("sk" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]) 
+        "sk" "b1" (()) (()) (ap_end) 1); intros HSA.
+       simpl in HSA.
+       rewrite apend_an in HSA.
+       rewrite apend_an in HSA.
+       apply HSA.
+       clear HSA.
+
+       apply srefl.
+
+       unfold upaco2.
+       left. 
+       pfold.
+
+       clear HSB.
+       specialize(ref_b (upaco2 refinementR r) ("src"
+       ! [("b1", (),
+           "src" &
+           [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])  
+       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]) 
+        "sk" "b1" (()) (()) (bp_end) 1); intros HSB.
+       simpl in HSB.
+       rewrite bpend_an in HSB.
+       rewrite bpend_an in HSB.
+       apply HSB.
+       clear HSB.
+
+       apply srefl.
+       rewrite(st_eq Tctl).
+       simpl.
+
+       unfold upaco2.
+       left.
+       pfold.
+       specialize(ref_b (upaco2 refinementR r)
+       ("src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])
+       ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])
+       "src"
+       "b1"
+       sunit
+       sunit
+       (bp_mergea "src" "b2" sunit (bp_mergea "sk" "b2" sunit (bp_send "sk" Hdeq "b2" sunit)))
+       1
+       ); intro Hb.
+       simpl in Hb.
+       rewrite(st_eq( (merge_bp_cont "src"
+          (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+          ("src"
+           ! [("b1", (),
+               "src" &
+               [("b1", (),
+                 "sk" &
+                 [("b1", (),
+                   "sk"
+                   ! [("b1", (),
+                       "src"
+                       ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])))) in Hb.
+        simpl in Hb.
+        rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+            ("src"
+             ! [("b1", (),
+                 "src" &
+                 [("b1", (),
+                   "sk" &
+                   [("b1", (),
+                     "sk"
+                     ! [("b1", (),
+                         "src"
+                         ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))) in Hb.
+         simpl in Hb.
+         rewrite(st_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+              ("src"
+               ! [("b1", (),
+                   "src" &
+                   [("b1", (),
+                     "sk" &
+                     [("b1", (),
+                       "sk"
+                       ! [("b1", (),
+                           "src"
+                           ! [("b2", (),
+                               "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]))) in Hb.
+          simpl in Hb.
+          apply Hb.
+          apply srefl.
+          rewrite(st_eq((merge_bp_cont "src" (bp_mergea "src" "b2" (()) (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (()))))
+                          ("src" & [("b1", (), "sk" & [("b1", (), "sk" ! [("b1", (), 
+                           "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])))).
+          simpl.
+          rewrite(st_eq(merge_bp_cont "src" (bp_mergea "sk" "b2" (()) (bp_send "sk" Hdeq "b2" (())))
+                         ("src" & [("b1", (), "sk" & [("b1", (),
+                          "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+         rewrite(st_eq(merge_bp_cont "src" (bp_send "sk" Hdeq "b2" (()))
+         ("src" &
+          [("b1", (),
+            "sk" &
+            [("b1", (),
+              "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]))).
+         simpl.
+
+         unfold upaco2.
+         left.
+         pfold.
+         clear HSA HSB.
+
+        specialize(ref_a (upaco2 refinementR r) ("sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])  
+        ("sk" &
+         [("b2", (),
+          "sk"
+          ! [("b2", (),
+           "src" &
+           [("b1", (),
+             "sk" &
+             [("b1", (),
+               "sk"
+               ! [("b1", (),
+                   "src"
+                   ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])])]) 
+         "src" "b2" (()) (()) (ap_end) 1); intros HSA.
+        simpl in HSA.
+        rewrite apend_an in HSA.
+        rewrite apend_an in HSA.
+        apply HSA.
+        clear HSA.
+
+         apply srefl.
+
+         unfold upaco2.
+         left.
+         pfold.
+
+         clear HSA.
+         specialize(ref_a (upaco2 refinementR r) ("sk" ! [("b2", (), "src" ! [("b2", (), TR)])])  
+          ("sk"
+          ! [("b2", (),
+            "src" &
+            [("b1", (),
+              "sk" &
+              [("b1", (),
+                "sk"
+                ! [("b1", (),
+                    "src"
+                    ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])])]) 
+          "sk" "b2" (()) (()) (ap_end) 1); intros HSA.
+         simpl in HSA.
+         rewrite apend_an in HSA.
+         rewrite apend_an in HSA.
+         apply HSA.
+         clear HSA.
+
+         apply srefl.
+
+         unfold upaco2.
+         left.
+         pfold.
+         clear HSA.
+         specialize(ref_b (upaco2 refinementR r) ("src" ! [("b2", (), TR)])  
+          ("src" &
+            [("b1", (),
+              "sk" &
+              [("b1", (),
+                "sk"
+                ! [("b1", (),
+                    "src"
+                    ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]) 
+          "sk" "b2" (()) (()) (bp_end) 1); intros HSB.
+         simpl in HSB.
+         rewrite bpend_an in HSB.
+         rewrite bpend_an in HSB.
+         apply HSB.
+         clear HSB.
+
          apply srefl.
 
          unfold upaco2.

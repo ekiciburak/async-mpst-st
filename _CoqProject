@@ -12,6 +12,7 @@ subtyping/subtyping.v
 examples/ringChoice.v
 examples/example1.v
 examples/example2.v
+examples/example3.v
 examples/batchproc.v
 negations/nsubtyping.v
 negations/nrefinement.v

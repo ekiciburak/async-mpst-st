@@ -16,6 +16,17 @@ CoInductive so: Type :=
 
 Local Open Scope list_scope.
 
+(* Inductive st2soA (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2so_endA: st2soA R st_end st_end
+  | st2so_sndA: forall l s x xs p,
+               List.In (l,s,x) xs ->
+               R x (st_send p [(l,s,x)]) ->
+               st2soA R (st_send p [(l,s,x)]) (st_send p xs) 
+  | st2so_rcvA: forall p l s t xs ys,
+               List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
+               R (st_receive p (zip (zip l s) ys)) t ->
+               st2soA R (st_receive p (zip (zip l s) xs)) t.
+ *)
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end
   | st2so_snd: forall l s x t xs p,

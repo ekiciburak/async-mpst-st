@@ -1323,9 +1323,48 @@ apply action_eq7.
 apply action_eq10.
 Qed.
 
-Lemma st2: forall n: nat, subtype TB TB'.
+Lemma st2A: subtypeA TB TB'.
+Proof. unfold subtypeA.
+       exists (mk_siso W3 (w3singleton)).
+       split.
+       pcofix CIH.
+       pfold. simpl.
+       rewrite (st_eq W3).
+       rewrite (st_eq TB).
+       simpl.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       right. exact CIH.
+
+       exists (mk_siso W1 (w1singleton)).
+       split.
+       pcofix CIH.
+       pfold. simpl.
+       rewrite (st_eq W1).
+       rewrite (st_eq TB').
+       simpl.
+       apply st2siso_rcvA. simpl.
+       left. pfold.
+       apply st2siso_sndA. simpl.
+       right. exact CIH.
+
+       specialize(W1W3UnfVar4R 0); intros.
+       rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
+       simpl in H. simpl.
+       rewrite(st_eq W1).
+       simpl.
+       apply H.
+       constructor.
+Qed.
+
+Lemma st2: subtype TB TB'.
 Proof. unfold subtype.
-       intros n U.
+       intro U.
        split.
        pcofix CIH.
        pfold.
@@ -1384,8 +1423,8 @@ Proof. unfold subtype.
        right.
        setoid_rewrite (st_eq TS) at 2.
        simpl. easy.
-
        easy.
+
        setoid_rewrite (st_eq TB) in CIH.
        simpl in CIH.
        unfold upaco2.
@@ -1394,11 +1433,11 @@ Proof. unfold subtype.
 
        intro V'.
        split.
-       pcofix CIH.
+
        pfold.
        rewrite (st_eq TB').
        simpl.
-       specialize (st2si_rcv (upaco2 st2si r) "l1" sint
+       specialize (st2si_rcv (upaco2 st2si bot2) "l1" sint
        (st_send "p" [("l3", sint, TB')])
        V'
        ([("l1", sint, st_send "p" [("l3", sint, TB')]); ("l2", sint, TS)])
@@ -1409,9 +1448,9 @@ Proof. unfold subtype.
 
        unfold upaco2.
        left.
-       pcofix CIH2.
+       pcofix CIH.
        pfold.
-       specialize (st2si_rcv (upaco2 st2si r0) "l1" sint
+       specialize (st2si_rcv (upaco2 st2si r) "l1" sint
        (st_send "p" [("l3", sint, TB')])
        V'
        [("l1", sint, st_send "p" [("l3", sint, TB')])]
@@ -1447,7 +1486,7 @@ Proof. unfold subtype.
 
        exists (mk_siso W1 (w1singleton)).
        split.
-(*        symmetry. *)
+
        pcofix CIH.
        pfold. simpl.
        rewrite (st_eq W1).

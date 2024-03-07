@@ -46,6 +46,25 @@ Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
                  R (st_send p [(l,s,x)]) t ->
                  st2siso R (st_send p xs) t.
 
+Fixpoint dropst (u: label) (l: list (label*st.sort*st)): st :=
+  match l with
+    | (lbl,s,x)::xs => if eqb u lbl then x else dropst u xs
+    | nil           => st_end
+  end.
+
+Inductive st2sisoA (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2siso_endA: st2sisoA R st_end st_end
+  | st2siso_rcvA: forall l s x xs p,
+(*                  List.In (l,s,x) xs -> *)
+                 R x (dropst l xs) ->
+                 st2sisoA R (st_receive p [(l,s,x)]) (st_receive p xs) 
+  | st2siso_sndA: forall l s x xs p,
+(*                  List.In (l,s,x) xs -> *)
+                 R x (dropst l xs) ->
+                 st2sisoA R (st_send p [(l,s,x)]) (st_send p xs).
+
+Definition st2sisoCA s1 s2 := paco2 (st2sisoA) bot2 s2 s1.
+
 Lemma st2siso_mon: monotone2 st2siso.
 Proof. unfold monotone2.
        intros.
