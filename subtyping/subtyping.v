@@ -9,11 +9,5 @@ Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts.
 
 Definition subtype (T T': st): Prop :=
-  forall U, st2soC T U /\ 
-  forall V', st2siC T' V' /\
-  exists (W: siso), st2sisoC U  (@und W) /\
-  exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
-
-Definition subtypeA (T T': st): Prop :=
-  exists (W: siso), st2sisoCA (@und W) T /\
-  exists (W':siso), st2sisoCA (@und W') T' /\ (@und W) ~< (@und W').
+  exists (W: siso), st2sisoC (@und W) T /\
+  exists (W':siso), st2sisoC (@und W') T' /\ (@und W) ~< (@und W').

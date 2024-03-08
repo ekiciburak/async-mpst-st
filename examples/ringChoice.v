@@ -116,8 +116,8 @@ Proof. unfold actL.
        constructor.
 Qed.
 
-Lemma st_rcpA: subtypeA rcop rcp.
-Proof. unfold subtypeA.
+Lemma st_rcp: subtype rcop rcp.
+Proof. unfold subtype.
        assert (singleton w2) as Hw2.
        { pcofix CIH. rewrite(st_eq w2). simpl.
          pfold. constructor. left. pfold. constructor.
@@ -128,9 +128,9 @@ Proof. unfold subtypeA.
        pcofix CIH. pfold.
        rewrite(st_eq w2). simpl.
        rewrite(st_eq rcop). simpl.
-       apply st2siso_sndA.
+       apply st2siso_snd.
        left. pfold. simpl.
-       apply st2siso_rcvA.
+       apply st2siso_rcv.
        simpl. right. apply CIH.
 
        assert (singleton w1) as Hw1.
@@ -143,9 +143,9 @@ Proof. unfold subtypeA.
        pcofix CIH. pfold. 
        rewrite(st_eq w1). simpl.
        rewrite(st_eq rcp). simpl.
-       apply st2siso_rcvA. simpl.
+       apply st2siso_rcv. simpl.
        left. pfold.
-       apply st2siso_sndA. simpl.
+       apply st2siso_snd. simpl.
        right. exact CIH.
 
        simpl.
@@ -192,104 +192,3 @@ Proof. unfold subtypeA.
        apply acteqr7.
        apply acteqr8.
 Qed.
-
-Lemma st_rcp: subtype rcop rcp.
-Proof. unfold subtype.
-       intros U. split.
-       pfold. rewrite(st_eq rcop). simpl.
-       specialize(st2so_snd (upaco2 st2so bot2) "add" (I) ("A" & [("add", I, rcop)]) U
-                            ([("add", I, "A" & [("add", I, rcop)]); ("sub", I, "A" & [("add", I, rcop)])])
-                            "C"
-                            ); intro Hs.
-       apply Hs. simpl. left. easy. clear Hs.
-       left. pcofix CIH.
-       pfold. (* ("C" ! [("add", I, "A" & [("add", I, rcop)])]) *)
-       specialize(st2so_snd (upaco2 st2so r) "add" (I) ("A" & [("add", I, rcop)]) U
-                            ([("add", I, "A" & [("add", I, rcop)])])
-                            "C"
-                            ); intro Hs.
-       apply Hs. simpl. left. easy.
-       right. exact CIH.
-
-       intro V'.
-       split. pcofix CIH. pfold.
-       rewrite(st_eq rcp). simpl.
-       specialize(st2si_rcv (upaco2 st2si r) "add" (I) ("C" ! [("add", I, rcp); ("sub", I, rcp)]) V'
-                            ([("add", I, "C" ! [("add", I, rcp); ("sub", I, rcp)])]) "A"); intro Hr.
-       apply Hr. simpl. left. easy.
-       right. rewrite(st_eq rcp) in CIH. simpl in CIH.
-       exact CIH.
-
-       assert (singleton w2) as Hw2.
-       { pcofix CIH. rewrite(st_eq w2). simpl.
-         pfold. constructor. left. pfold. constructor.
-         right. exact CIH.
-       }
-       exists (mk_siso w2 Hw2).
-       split. simpl.
-       pcofix CIH. pfold.
-       rewrite(st_eq w2). simpl.
-       specialize(st2siso_snd (upaco2 st2siso r) "add" (I) ("A" & [("add", I, w2)]) U
-                              ([("add", I, "A" & [("add", I, w2)])]) "C"); intro Hs.
-       apply Hs. simpl. left. easy.
-       right. rewrite(st_eq w2) in CIH. simpl in CIH. exact CIH.
-
-       assert (singleton w1) as Hw1.
-       { pcofix CIH. rewrite(st_eq w1). simpl.
-         pfold. constructor. left. pfold. constructor.
-         right. exact CIH.
-       }
-       exists (mk_siso w1 Hw1).
-       split. simpl.
-       pcofix CIH. pfold. 
-       rewrite(st_eq w1). simpl.
-       specialize(st2siso_rcv (upaco2 st2siso r) "add" (I) ("C" ! [("add", I, w1)]) V'
-                              ([("add", I, "C" ! [("add", I, w1)])]) "A"); intro Hr.
-       apply Hr. simpl. left. easy.
-       right. rewrite(st_eq w1) in CIH. simpl in CIH. exact CIH.
-
-       simpl.
-       pcofix CIH. pfold.
-       rewrite(st_eq w2). rewrite(st_eq w1). simpl.
-       specialize(ref_b (upaco2 refinementR r) ("A" & [("add", I, w2)]) (w1)
-                          "C" "add" (I) (I) (@bp_receivea "C" "A" "add" (I)) 1
-                          ); intro Hb.
-       simpl in Hb.
-       rewrite(st_eq (merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("add", I, w1)]))) in Hb. simpl in Hb.
-       apply Hb.
-       constructor.
-       left. pfold.
-       rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1)). simpl.
-       clear Hb.
-
-       specialize(ref_a (upaco2 refinementR r) (w2) (w1)
-                          "A" "add" (I) (I) (ap_end) 1
-                          ); intro Ha.
-       simpl in Ha.
-       rewrite(st_eq(merge_ap_cont "A" ap_end ("A" & [("add", I, w1)]))) in Ha. simpl in Ha.
-       apply Ha. constructor.
-       rewrite apend_an.
-       right. exact CIH.
-       clear Ha.
-
-       exists actL.
-       split.
-       apply acteqr1.
-       split. rewrite apend_an.
-       apply acteqr2.
-       split.
-       apply acteqr3.
-       rewrite apend_an.
-       apply acteqr4.
-
-       clear Hb.
-       exists actL.
-       split.
-       apply acteqr5.
-       split.
-       apply acteqr6.
-       split.
-       apply acteqr7.
-       apply acteqr8.
-Qed.
-

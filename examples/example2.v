@@ -577,23 +577,16 @@ Proof. intros.
          rewrite apend_an in HSA.
          rewrite apend_an in HSA.
          apply HSA.
-         
-(*          apply _sref_in. *)
          apply srefl.
          unfold upaco2.
          left.
          pfold.
-         
-         
-(*          apply _sref_out. *)
-
          specialize(ref_b (upaco2 refinementR r) ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])  
                                                    (W1) "p" "l3" (I) (I) (bp_end) 1); intros HSB.
          simpl in HSB.
          rewrite bpend_an in HSB.
          rewrite bpend_an in HSB.
          apply HSB.
-         
          apply srefl.
          unfold upaco2.
          left.
@@ -607,7 +600,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" (I))
                             1
-(*                             listW3 *)
                    ); intro Hb.
          simpl in Hb.
          rewrite(st_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I)) ("p" ! [("l3", I, W1)])))) in Hb.
@@ -628,7 +620,6 @@ Proof. intros.
                             (I)
                             (bp_receivea "p" "l1" sint)
                             2
-(*                             listW3 *)
                    ); intro Hc.
         simpl in Hc.
         rewrite(st_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -848,30 +839,29 @@ apply action_eq8.
         pfold.
          rewrite(st_eq W3).
          simpl.
-(*          apply _sref_in. *)
         specialize(ref_a (upaco2 refinementR r) ("p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, W3)])])])  
                                                   ("p" & [("l1", I, merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)]) "p" "l1" (I) (I) (ap_end) 1); intros HSA.
         simpl in HSA.
         rewrite apend_an in HSA.
         rewrite apend_an in HSA.
         apply HSA.
-        
-         apply srefl.
-         unfold upaco2.
-         left.
-         pfold.
-         rewrite(st_eq W1).
-         simpl.
-         specialize(ref_b (upaco2 refinementR r)
-                            ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
-                            W1
-                            "p"
-                            "l3"
-                            (I)
-                            (I)
-                            (bp_receivea "p" "l1" (I)) 
-                            (n.+2)
-(*                             listW3 *)
+
+        apply srefl.
+        unfold upaco2.
+        left.
+        pfold.
+        rewrite(st_eq W1).
+        simpl.
+        specialize(ref_b (upaco2 refinementR r)
+                           ("p" ! [("l3", I, "p" ! [("l3", I, W3)])])
+                           W1
+                           "p"
+                           "l3"
+                           (I)
+                           (I)
+                           (bp_receivea "p" "l1" (I)) 
+                           (n.+2)
+
                    ); intro Hb.
          simpl in Hb.
          rewrite(st_eq((merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -898,7 +888,6 @@ apply action_eq8.
                             (I)
                             (bp_receivea "p" "l1" (I)) 
                             (n.+3)
-(*                             listW3 *)
                    ); intro Hc.
          simpl in Hc.
          rewrite(st_eq W1).
@@ -931,7 +920,6 @@ apply action_eq8.
                             (I)
                             (bp_receivea "p" "l1" (I)) 
                             (n.+4)
-(*                             listW3 *)
                    ); intro Hd.
          simpl in Hd.
          unfold upaco2.
@@ -1027,8 +1015,7 @@ apply action_eq8.
          unfold coseq_id.
          simpl.
          constructor.
-         
-         
+
          specialize(CoInSplit1 ("p", rcv)
          (Delay (cocons ("p", rcv)
                         (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1168,7 +1155,7 @@ apply action_eq8.
          unfold coseq_id.
          simpl.
          constructor.
-         
+
          specialize(CoInSplit1 ("p", rcv)
          (Delay (cocons ("p", rcv)
                         (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1323,187 +1310,35 @@ apply action_eq7.
 apply action_eq10.
 Qed.
 
-Lemma st2A: subtypeA TB TB'.
-Proof. unfold subtypeA.
-       exists (mk_siso W3 (w3singleton)).
-       split.
-       pcofix CIH.
-       pfold. simpl.
-       rewrite (st_eq W3).
-       rewrite (st_eq TB).
-       simpl.
-       apply st2siso_rcvA. simpl.
-       left. pfold.
-       apply st2siso_sndA. simpl.
-       left. pfold.
-       apply st2siso_sndA. simpl.
-       left. pfold.
-       apply st2siso_sndA. simpl.
-       right. exact CIH.
-
-       exists (mk_siso W1 (w1singleton)).
-       split.
-       pcofix CIH.
-       pfold. simpl.
-       rewrite (st_eq W1).
-       rewrite (st_eq TB').
-       simpl.
-       apply st2siso_rcvA. simpl.
-       left. pfold.
-       apply st2siso_sndA. simpl.
-       right. exact CIH.
-
-       specialize(W1W3UnfVar4R 0); intros.
-       rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
-       simpl in H. simpl.
-       rewrite(st_eq W1).
-       simpl.
-       apply H.
-       constructor.
-Qed.
-
 Lemma st2: subtype TB TB'.
 Proof. unfold subtype.
-       intro U.
-       split.
-       pcofix CIH.
-       pfold.
-       rewrite (st_eq TB).
-       simpl.
-       specialize (st2so_rcv (upaco2 st2so r) "p"
-                             (["l1";"l2"])
-                             ([sint;sint])
-                             U
-                             ([st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, TB)])])]; TS])
-                             [(st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, TB)])])]); TS ] 
-       ); intro H.
-       simpl in H.
-       apply H.
-       apply Forall_forall.
-       intros (x,y).
-       simpl. intro Ha.
-       destruct Ha as [Ha | Ha].
-       inversion Ha.
-
-       unfold upaco2.
-       left.
-       pcofix CIH2.
-       pfold.
-       specialize (st2so_snd (upaco2 st2so r0) 
-                             "l3" sint
-                             (st_send "p" [("l3", sint, st_send "p" [("l3", sint, TB)])])
-                             (st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, TB)])])])
-                             [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, TB)])])]
-                             "p"
-       ); intro Hb.
-       simpl in Hb.
-       apply Hb.
-       left. easy.
-       unfold upaco2.
-       right. easy.
-       destruct Ha as [Ha | Ha].
-       inversion Ha.
-       rewrite (st_eq TS).
-       simpl.
-       unfold upaco2.
-       left.
-       pcofix CIH2.
-       specialize (st2so_snd (upaco2 st2so r0) "l3" sint
-                             TS
-                             TS
-                             ([("l3", sint, TS)])
-                             "p"
-       ); intro Hb.
-       setoid_rewrite (st_eq TS) at 6 in Hb.
-       simpl in Hb.
-       pfold.
-       apply Hb.
-       left. easy.
-       unfold upaco2.
-       right.
-       setoid_rewrite (st_eq TS) at 2.
-       simpl. easy.
-       easy.
-
-       setoid_rewrite (st_eq TB) in CIH.
-       simpl in CIH.
-       unfold upaco2.
-       right.
-       apply CIH.
-
-       intro V'.
-       split.
-
-       pfold.
-       rewrite (st_eq TB').
-       simpl.
-       specialize (st2si_rcv (upaco2 st2si bot2) "l1" sint
-       (st_send "p" [("l3", sint, TB')])
-       V'
-       ([("l1", sint, st_send "p" [("l3", sint, TB')]); ("l2", sint, TS)])
-       "p"
-       ); intro H.
-       apply H.
-       simpl. left. easy.
-
-       unfold upaco2.
-       left.
-       pcofix CIH.
-       pfold.
-       specialize (st2si_rcv (upaco2 st2si r) "l1" sint
-       (st_send "p" [("l3", sint, TB')])
-       V'
-       [("l1", sint, st_send "p" [("l3", sint, TB')])]
-       ); intro Ha.
-       simpl in H.
-       apply Ha. 
-       simpl. left. easy.
-
-       unfold upaco2.
-       right. easy.
-
        exists (mk_siso W3 (w3singleton)).
        split.
        pcofix CIH.
        pfold. simpl.
        rewrite (st_eq W3).
+       rewrite (st_eq TB).
        simpl.
-       specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
-       (st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])])
-       U
-       [("l1", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, st_send "p" [("l3", sint, W3)])])])]
-       "p"
-       ); intro H.
-       simpl in H.
-       apply H.
-       left. easy.
-
-       unfold upaco2.
-       right. simpl in CIH.
-       rewrite (st_eq W3) in CIH.
-       simpl in CIH.
-       easy.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
 
        exists (mk_siso W1 (w1singleton)).
        split.
-
        pcofix CIH.
        pfold. simpl.
        rewrite (st_eq W1).
+       rewrite (st_eq TB').
        simpl.
-       specialize (st2siso_rcv (upaco2 st2siso r) "l1" sint
-       (st_send "p" [("l3", sint, W1)])
-       V'
-       ([("l1", sint, st_send "p" [("l3", sint, W1)])])
-       "p"
-       ); intro H.
-       apply H. left. easy.
-
-       unfold upaco2.
-       right. simpl in CIH.
-       rewrite (st_eq W1) in CIH.
-       simpl in CIH.
-       easy.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
 
        specialize(W1W3UnfVar4R 0); intros.
        rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
@@ -1513,3 +1348,4 @@ Proof. unfold subtype.
        apply H.
        constructor.
 Qed.
+

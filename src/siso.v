@@ -35,34 +35,6 @@ Proof. intros.
        easy.
 Qed.
 
-Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
-  | st2siso_end: st2siso R st_end st_end
-  | st2siso_rcv: forall l s x t xs p,
-                 List.In (l,s,x) xs ->
-                 R (st_receive p [(l,s,x)]) t ->
-                 st2siso R (st_receive p xs) t
-  | st2siso_snd: forall l s x t xs p,
-                 List.In (l,s,x) xs ->
-                 R (st_send p [(l,s,x)]) t ->
-                 st2siso R (st_send p xs) t.
-
-Lemma st2siso_mon: monotone2 st2siso.
-Proof. unfold monotone2.
-       intros.
-       induction IN; intros.
-       - apply st2siso_end.
-       - specialize (st2siso_rcv r'); intro HS.
-         apply HS with (l := l) (s := s) (x := x).
-         apply H.
-         apply LE, H0.
-       - specialize (st2siso_snd r'); intro HS.
-         apply HS with (l := l) (s := s) (x := x).
-         apply H.
-         apply LE, H0.
-Qed.
-
-Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s2 s1.
-
 (* direct st -> siso -- omits the middle men so and si decompositions *)
 
 Fixpoint pathsel (u: label) (l: list (label*st.sort*st)): st :=
@@ -71,26 +43,26 @@ Fixpoint pathsel (u: label) (l: list (label*st.sort*st)): st :=
     | nil           => st_end
   end.
 
-Inductive st2sisoA (R: st -> st -> Prop): st -> st -> Prop :=
-  | st2siso_endA: st2sisoA R st_end st_end
-  | st2siso_rcvA: forall l s x xs p,
+Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2siso_end: st2siso R st_end st_end
+  | st2siso_rcv: forall l s x xs p,
                   R x (pathsel l xs) ->
-                  st2sisoA R (st_receive p [(l,s,x)]) (st_receive p xs) 
-  | st2siso_sndA: forall l s x xs p,
+                  st2siso R (st_receive p [(l,s,x)]) (st_receive p xs) 
+  | st2siso_snd: forall l s x xs p,
                   R x (pathsel l xs) ->
-                  st2sisoA R (st_send p [(l,s,x)]) (st_send p xs) .
+                  st2siso R (st_send p [(l,s,x)]) (st_send p xs) .
 
-Definition st2sisoCA s1 s2 := paco2 (st2sisoA) bot2 s1 s2.
+Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s1 s2.
 
-Lemma st2sisoA_mon: monotone2 st2sisoA.
+Lemma st2siso_mon: monotone2 st2siso.
 Proof. unfold monotone2.
        intros.
        induction IN; intros.
-       - apply st2siso_endA.
-       - specialize (st2siso_rcvA r'); intro HS.
+       - apply st2siso_end.
+       - specialize (st2siso_rcv r'); intro HS.
          apply HS.
          apply LE, H.
-       - specialize (st2siso_sndA r'); intro HS.
+       - specialize (st2siso_snd r'); intro HS.
          apply HS.
          apply LE, H.
 Qed.
@@ -105,25 +77,25 @@ CoFixpoint exst := st_send "C" [("add", I, st_receive "A" [("add", I, exst); ("X
 
 CoFixpoint exsiso := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I,exsiso)]))])].
 
-Lemma example_ns: st2sisoCA exsiso exst.
+Lemma example_ns: st2sisoC exsiso exst.
 Proof. pcofix CIH. pfold.
        rewrite(st_eq exst).
        rewrite(st_eq exsiso).
        simpl.
-       apply st2siso_sndA.
+       apply st2siso_snd.
        left. simpl.
        pfold.
-       apply st2siso_rcvA.
+       apply st2siso_rcv.
        left. simpl.
-       pfold. apply st2siso_sndA. 
+       pfold. apply st2siso_snd. 
        setoid_rewrite(st_eq exst) at 1. simpl.
        setoid_rewrite(st_eq exsiso) at 1. simpl.
        left. pfold.
-       apply st2siso_sndA.
+       apply st2siso_snd.
        left. pfold. simpl.
-       apply st2siso_rcvA. simpl.
+       apply st2siso_rcv. simpl.
        left. pfold.
-       apply st2siso_sndA. simpl.
+       apply st2siso_snd. simpl.
        right.
        exact CIH.
 Qed.
