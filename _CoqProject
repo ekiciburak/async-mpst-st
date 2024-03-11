@@ -9,10 +9,10 @@ src/siso.v
 subtyping/refinement.v
 src/reorderingfacts.v
 subtyping/subtyping.v
-examples/ringChoice.v
-examples/example1.v
-examples/example2.v
-examples/batchproc.v
+examples/ring_choice.v
+examples/Example3_17.v
+examples/Example3_19.v
+examples/Example4_14.v
 negations/nsubtyping.v
 negations/nrefinement.v
 completeness/completeness.v
