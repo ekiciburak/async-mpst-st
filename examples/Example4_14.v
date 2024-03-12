@@ -1665,13 +1665,16 @@ Proof. unfold subtype.
          right.
          apply CIH.
          exists listTctl.
+         exists listTctl.
          split.
 apply action_eq11.
 split.
 apply action_eq36.
 split.
 apply action_eq13.
-apply action_eq14.
+split.
+apply action_eq14. easy.
+exists listTctl.
 exists listTctl.
 split.
 apply action_eq15.
@@ -1679,7 +1682,9 @@ split.
 apply action_eq16.
 split.
 apply action_eq17.
-apply action_eq18.
+split.
+apply action_eq18. easy.
+exists listTctl.
 exists listTctl.
 split.
 apply action_eq19.
@@ -1687,7 +1692,9 @@ split.
 apply action_eq20.
 split.
 apply action_eq21.
-apply action_eq22.
+split.
+apply action_eq22. easy.
+exists listTctl.
 exists listTctl.
 split.
          pfold.
@@ -1783,8 +1790,9 @@ split.
          unfold upaco2. left.
          apply listTctlEq.
          split.
-         apply action1.
-         apply action2.
+         apply action1. split.
+         apply action2. easy.
+         exists listTctl.
          exists listTctl.
          split.
 apply action_eq23.
@@ -1792,7 +1800,9 @@ split.
 apply action_eq24.
 split.
 apply action_eq25.
-apply action_eq26.
+split.
+apply action_eq26. easy.
+exists listTctl.
 exists listTctl.
 split.
 apply action_eq27.
@@ -1800,7 +1810,9 @@ split.
 apply action_eq28.
 split.
 apply action_eq29.
-apply action_eq30.
+split.
+apply action_eq30. easy.
+exists listTctl.
 exists listTctl.
 split.
 apply action_eq31.
@@ -1808,7 +1820,9 @@ split.
 apply action_eq32.
 split.
 apply action_eq33.
-apply action_eq34.
+split.
+apply action_eq34. easy.
+exists listTctl.
 exists listTctl.
 split.
          pfold.
@@ -1886,8 +1900,9 @@ split.
          left.
          apply listTctlEq.
          split.
-         apply action3.
-         apply action4.
+         apply action3. split.
+         apply action4. easy.
+         exists listTctl.
          exists listTctl.
          split.
 apply action_eq11.
@@ -1895,5 +1910,6 @@ split.
 apply action_eq36.
 split.
 apply action_eq37.
-apply action_eq38.
+split.
+apply action_eq38. easy.
 Qed.

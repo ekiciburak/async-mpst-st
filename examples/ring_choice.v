@@ -173,6 +173,7 @@ Proof. unfold subtype.
        clear Ha.
 
        exists actL.
+       exists actL.
        split.
        apply acteqr1.
        split. rewrite apend_an.
@@ -180,9 +181,12 @@ Proof. unfold subtype.
        split.
        apply acteqr3.
        rewrite apend_an.
+       split.
        apply acteqr4.
+       easy.
 
        clear Hb.
+       exists actL.
        exists actL.
        split.
        apply acteqr5.
@@ -190,5 +194,7 @@ Proof. unfold subtype.
        apply acteqr6.
        split.
        apply acteqr7.
+       split.
        apply acteqr8.
+       easy.
 Qed.

@@ -12,8 +12,8 @@ Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.
 (* Require dpdgraph.dpdgraph. *)
 
 Inductive nRefinement: siso -> siso -> Prop :=
-  | n_act  : forall w w' P Q,
-             act_neq w w' -> nRefinement (mk_siso w P) (mk_siso w' Q)
+  | n_act  : forall w w',
+             act_neq (@und w) (@und w') -> nRefinement w w'
   | n_a_l  : forall w w' p l l' s s' a n P Q,
              l <> l' -> nRefinement (mk_siso (st_receive p [(l,s,(@und w))]) P) 
                                      (mk_siso (merge_ap_contn p a (st_receive p [(l',s',(@und w'))]) n) Q)
@@ -59,7 +59,7 @@ Proof. intros.
          { apply extcpR, extrR in Q. easy. }
          specialize(n_i_o_2 w (mk_siso w1 Hw1) p l l1 s s1 (cp_merge q l' s' c) P); intro Hn. simpl in Hn.
          apply Hn. easy.
-       - specialize(n_act (p & [(l, s, und)]) (q ! [(l', s', und)]) P Q); intro Hn.
+       - specialize(n_act (mk_siso (p & [(l, s, und)]) P) (mk_siso (q ! [(l', s', und)]) Q)); intro Hn.
          apply Hn.
          unfold act_neq.
          exists (p, rcv).
@@ -81,7 +81,7 @@ Proof. intros.
        destruct w' as (w', Q).
        simpl in *.
        simpl.
-       specialize(n_act (merge_bp_cont p b (p ! [(l, s, und)])) w' P Q); intro Hneq.
+       specialize(n_act (mk_siso (merge_bp_cont p b (p ! [(l, s, und)])) P) (mk_siso w' Q)); intro Hneq.
        apply Hneq.
        unfold act_neq.
        exists (p, snd).
@@ -99,7 +99,7 @@ Proof. intros.
        destruct w' as (w', Q).
        simpl in *.
        simpl.
-       specialize(n_act (merge_cp_cont p c (p & [(l, s, und)])) w' P Q); intro Hneq.
+       specialize(n_act (mk_siso (merge_cp_cont p c (p & [(l, s, und)])) P) (mk_siso w' Q)); intro Hneq.
        apply Hneq.
        unfold act_neq.
        exists (p, rcv).
@@ -117,7 +117,7 @@ Proof. intros.
        destruct w as (w, Q).
        simpl in *.
        simpl.
-       specialize(n_act w (merge_bp_cont p b (p ! [(l, s, und)])) Q P); intro Hneq.
+       specialize(n_act (mk_siso w Q) (mk_siso (merge_bp_cont p b (p ! [(l, s, und)])) P)); intro Hneq.
        apply Hneq.
        unfold act_neq.
        exists (p, snd).
@@ -135,7 +135,7 @@ Proof. intros.
        destruct w as (w, Q).
        simpl in *.
        simpl.
-       specialize(n_act w (merge_cp_cont p c (p & [(l, s, und)])) Q P); intro Hneq.
+       specialize(n_act (mk_siso w Q) (mk_siso (merge_cp_cont p c (p & [(l, s, und)])) P)); intro Hneq.
        apply Hneq.
        unfold act_neq.
        exists (p, rcv).
@@ -225,13 +225,13 @@ Proof. intros w w' Ha H.
        induction Ha; intros.
        { simpl in H.
          inversion H.
-         apply mem_ext in H3.
-         rewrite <- H4, <- H5 in H0.
+         apply mem_ext in H5.
+         rewrite <- H1, <- H2 in H0.
          unfold act_neq in H0.
          destruct H0 as ((q, ac), [(Ha, Hb) | (Ha, Hb)]).
          apply Hb.
          rewrite actApLcomb. apply eq0.
-         unfold act_eq in H3. rewrite actApLcomb in H3.
+         unfold act_eq in H5. rewrite actApLcomb in H5.
          case_eq ac; intros.
          + subst. 
            case_eq (eqb p q); intros.
@@ -242,11 +242,11 @@ Proof. intros w w' Ha H.
            ++ rewrite eqb_neq in H0.
               rewrite(coseq_eq (act (p & [(l, s, w0)]))) in Ha. unfold coseq_id in Ha. simpl in Ha.
               inversion Ha.
-              subst. simpl in H4. inversion H4. subst. easy.
-              subst. simpl in H4. inversion H4. subst.
-              apply H3 in H6.
-              apply eqscsrcv in H6.
-              destruct H6. left. easy.
+              subst. simpl in H6. inversion H6. subst. easy.
+              subst. simpl in H6. inversion H6. subst.
+              apply H5 in H8.
+              apply eqscsrcv in H8.
+              destruct H8. left. easy.
               right.
               rewrite(coseq_eq(act (p & [(l, s', w'0)]))). unfold coseq_id. simpl.
               apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w'0)). simpl. easy. easy. easy.
@@ -255,9 +255,9 @@ Proof. intros w w' Ha H.
            inversion Ha.
            subst. simpl in H0. inversion H0.
            subst. simpl in H0. inversion H0. subst.
-           apply H3 in H5.
-           apply eqscssnd in H5.
-           destruct H5. left. easy.
+           apply H5 in H7.
+           apply eqscssnd in H7.
+           destruct H7. left. easy.
            right.
            rewrite(coseq_eq(act (p & [(l, s', w'0)]))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w'0)). simpl. easy. easy. easy.
@@ -274,15 +274,15 @@ Proof. intros w w' Ha H.
               assert(In (q, rcv) (actAn p a n) \/ coseqIn (q, rcv) (act w'0)).
               { destruct Ha. left. easy.
                 right.
-                rewrite(coseq_eq(act (p & [(l, s', w'0)]))) in H4. unfold coseq_id in H4. simpl in H4.
-                inversion H4. subst.
-                simpl in H5. inversion H5. easy.
-                subst. simpl in H5. inversion H5. subst. easy.
+                rewrite(coseq_eq(act (p & [(l, s', w'0)]))) in H6. unfold coseq_id in H6. simpl in H6.
+                inversion H6. subst.
+                simpl in H7. inversion H7. easy.
+                subst. simpl in H7. inversion H7. subst. easy.
               }
-              apply eqscs in H4.
-              unfold act_eq in H3.
-              rewrite actApLcomb in H3.
-              apply H3 in H4.
+              apply eqscs in H6.
+              unfold act_eq in H5.
+              rewrite actApLcomb in H5.
+              apply H5 in H6.
               rewrite(coseq_eq(act (p & [(l, s, w0)]))). unfold coseq_id. simpl.
               apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w0)). simpl. easy.
               intro Hx. apply H0. inversion Hx. easy. easy.
@@ -292,19 +292,19 @@ Proof. intros w w' Ha H.
            assert(In (q, snd) (actAn p a n) \/ coseqIn (q, snd) (act w'0)).
            { destruct Ha. left. easy.
              right. rewrite(coseq_eq(act (p & [(l, s', w'0)]))) in H0. unfold coseq_id in H0. simpl in H0.
-             inversion H0. subst. simpl in H4. easy.
-             subst. inversion H4. subst.
+             inversion H0. subst. simpl in H6. easy.
+             subst. inversion H6. subst.
              easy.
            }
            apply eqscs in H0.
-           unfold act_eq in H3.
-           rewrite actApLcomb in H3.
-           apply H3 in H0.
+           unfold act_eq in H5.
+           rewrite actApLcomb in H5.
+           apply H5 in H0.
            rewrite(coseq_eq(act (p & [(l, s, w0)]))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w0)). simpl. easy. easy. easy.
 
-         apply mem_ext in H3.
-         rewrite <- H4, <- H5 in H0.
+         apply mem_ext in H5.
+         rewrite <- H1, <- H2 in H0.
          unfold act_neq in H0.
          destruct H0 as ((q, ac), [(Ha, Hb) | (Ha, Hb)]).
          apply Hb.
@@ -315,11 +315,11 @@ Proof. intros w w' Ha H.
            inversion Ha.
            subst. simpl in H0. inversion H0.
            subst. simpl in H0. inversion H0. subst.
-           apply H3 in H5.
-           rewrite actBpLcomb in H5.
-           apply eqscsrcv in H5.
+           apply H5 in H7.
+           rewrite actBpLcomb in H7.
+           apply eqscsrcv in H7.
            apply eq0.
-           destruct H5. left. easy.
+           destruct H7. left. easy.
            right.
            rewrite(coseq_eq(act (p ! [(l, s', w'0)]))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, snd)) (ys:= (act w'0)). simpl. easy. easy. easy.
@@ -333,12 +333,12 @@ Proof. intros w w' Ha H.
               rewrite actBpLcomb. apply eq0.
               rewrite(coseq_eq(act (p ! [(l, s, w0)]))) in Ha. unfold coseq_id in Ha. simpl in Ha.
               inversion Ha. subst.
-              simpl in H4. inversion H4. easy.
-              subst. simpl in H4. inversion H4. subst.
-              apply H3 in H6.
-              rewrite actBpLcomb in H6.
-              apply eqscssnd in H6.
-              destruct H6. left. easy.
+              simpl in H6. inversion H6. easy.
+              subst. simpl in H6. inversion H6. subst.
+              apply H5 in H8.
+              rewrite actBpLcomb in H8.
+              apply eqscssnd in H8.
+              destruct H8. left. easy.
               right.
               rewrite(coseq_eq(act (p ! [(l, s', w'0)]))). unfold coseq_id. simpl.
               apply CoInSplit2 with (y := (p, snd)) (ys:= (act w'0)). simpl. easy. easy. easy.
@@ -352,13 +352,13 @@ Proof. intros w w' Ha H.
            { destruct Ha. left. easy.
              right. 
              rewrite(coseq_eq(act (p ! [(l, s', w'0)]))) in H0. unfold coseq_id in H0. simpl in H0.
-             inversion H0. subst. simpl in H4. easy.
-             subst. simpl in H4. inversion H4. subst.
+             inversion H0. subst. simpl in H6. easy.
+             subst. simpl in H6. inversion H6. subst.
              easy.
            }
            apply eqscs in H0.
-           unfold act_eq in H3. rewrite actBpLcomb in H3.
-           apply H3 in H0.
+           unfold act_eq in H5. rewrite actBpLcomb in H5.
+           apply H5 in H0.
            rewrite(coseq_eq(act (p ! [(l, s, w0)]))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, snd)) (ys:= (act w0)). simpl. easy. easy. easy.
          + subst.
@@ -371,24 +371,22 @@ Proof. intros w w' Ha H.
               apply eqscssnd in Ha.
               assert(In (q, snd) (actBn p b n) \/ coseqIn (q, snd) (act w'0)).
               { destruct Ha. left. easy.
-                right. rewrite(coseq_eq(act (p ! [(l, s', w'0)]))) in H4. unfold coseq_id in H4. simpl in H4.
-                inversion H4. subst. simpl in H5.
-                inversion H5. easy.
-                subst. simpl in H5. inversion H5. subst. easy.
+                right. rewrite(coseq_eq(act (p ! [(l, s', w'0)]))) in H6. unfold coseq_id in H6. simpl in H6.
+                inversion H6. subst. simpl in H7.
+                inversion H7. easy.
+                subst. simpl in H7. inversion H7. subst. easy.
              }
-             apply eqscs in H4.
-             unfold act_eq in H3. rewrite actBpLcomb in H3.
-             apply H3 in H4.
+             apply eqscs in H6.
+             unfold act_eq in H5. rewrite actBpLcomb in H5.
+             apply H5 in H6.
              rewrite(coseq_eq(act (p ! [(l, s, w0)]))). unfold coseq_id. simpl.
              apply CoInSplit2 with (y := (p, snd)) (ys:= (act w0)). simpl. easy.
              intro Hx. apply H0. inversion Hx. easy. easy.
          subst.
          unfold act_neq in H0.
          destruct H0 as ((q, ac), [(Ha, Hb) | (Ha, Hb)]).
-         inversion Ha. subst. easy.
-         subst. easy.
-         inversion Ha. subst. easy.
-         subst. easy.
+         apply Hb. rewrite <- H3. rewrite <- H2 in Ha. easy.
+         apply Hb. rewrite <- H2. rewrite <- H3 in Ha. easy.
        }
        {
          inversion H.

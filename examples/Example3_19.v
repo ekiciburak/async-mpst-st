@@ -650,6 +650,7 @@ Proof. intros.
         constructor.
         constructor.
         exists listW3.
+        exists listW3.
         split.
         apply W3EqList.
         split.
@@ -666,8 +667,8 @@ Proof. intros.
         unfold upaco2. left.
         apply W1EqList2.
         split.
-
         apply W3EqListR.
+        split.
         rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1))).
         simpl.
         rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
@@ -719,7 +720,8 @@ Proof. intros.
         ); intro Ha'''.
         apply Ha'''.
         simpl. easy. easy.
-        constructor.
+        constructor. easy.
+        exists listW3.
         exists listW3.
         split.
 
@@ -767,7 +769,7 @@ Proof. intros.
         constructor.
         apply Ha''.
         simpl. easy. easy.
-        constructor.
+        constructor. split.
 
         unfold listW3.
         rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) W1)).
@@ -808,7 +810,8 @@ Proof. intros.
         ); intro Ha'''.
         apply Ha'''.
         simpl. easy. easy.
-        constructor.
+        constructor. easy.
+        exists listW3.
         exists listW3.
         split.
 
@@ -817,7 +820,9 @@ split.
 apply action_eq2.
 split.
 apply action_eq3.
-apply action_eq4.
+split.
+apply action_eq4. easy.
+exists listW3.
 exists listW3.
 split.
 apply action_eq5.
@@ -825,7 +830,8 @@ split.
 apply action_eq6.
 split.
 apply action_eq7.
-apply action_eq8.
+split.
+apply action_eq8. easy.
 
         rename CIH into Hn.
         simpl. simpl in Hn.
@@ -967,6 +973,7 @@ apply action_eq8.
          constructor.
          easy.
          exists listW3.
+         exists listW3.
          split.
          apply W3EqList.
          split.
@@ -1006,6 +1013,7 @@ apply action_eq8.
          split.
 
          apply W3EqListR.
+         split.
          unfold listW3.
          rewrite(coseq_eq (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
                                (merge_bp_cont "p" (bp_receivea "p" "l1" (I))
@@ -1085,7 +1093,8 @@ apply action_eq8.
          apply Ha'''.
          simpl. easy. easy.
          apply inW1ns.
-         constructor.
+         constructor. easy.
+         exists listW3.
          exists listW3.
          split.
 
@@ -1146,7 +1155,7 @@ apply action_eq8.
          ("p", snd) (act W3)
          ); intro Ha''.
          apply Ha''. simpl. easy. easy.
-         constructor.
+         constructor. split.
 
          unfold listW3.
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))))).
@@ -1206,7 +1215,8 @@ apply action_eq8.
          apply Ha'''.
          simpl. easy. easy.
          apply inW1ns.
-         constructor.
+         constructor. easy.
+         exists listW3.
          exists listW3.
          split.
 
@@ -1269,7 +1279,8 @@ apply action_eq8.
          ); intro Ha'''.
          constructor.
          apply Ha'''. simpl. easy. easy.
-         constructor.
+         constructor. split.
+
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n)))).
          simpl.
          rewrite(coseq_eq(act ("p" & [("l1", I, merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 n))]))).
@@ -1299,7 +1310,8 @@ apply action_eq8.
          ); intro Ha'.
          apply Ha'. simpl. easy. easy.
          apply inW1ns.
-         constructor.
+         constructor. easy.
+         exists listW3.
          exists listW3.
          split.
 apply action_eq5.
@@ -1307,7 +1319,8 @@ split.
 apply action_eq9.
 split.
 apply action_eq7.
-apply action_eq10.
+split.
+apply action_eq10. easy.
 Qed.
 
 Lemma st2: subtype TB TB'.

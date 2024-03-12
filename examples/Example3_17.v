@@ -210,6 +210,7 @@ Proof. unfold subtype.
        pfold.
        apply ref_end.
        exists nil.
+       exists nil.
        split.
        pfold.
        rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
@@ -222,11 +223,12 @@ Proof. unfold subtype.
        rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
        constructor.
        rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
-       constructor.
+       constructor. constructor. easy.
        
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.
+       exists [("p",rcv)].
        exists [("p",rcv)].
        split.
        pfold.
@@ -265,7 +267,7 @@ Proof. unfold subtype.
        ); intro Ha.
        apply Ha.
        simpl. easy. easy.
-       constructor.
+       constructor. split.
 
        rewrite(st_eq(merge_bp_cont "q" (bp_receivea "p" "success" (I)) (end))).
        simpl.
@@ -280,5 +282,6 @@ Proof. unfold subtype.
        apply Ha.
        simpl. easy. easy.
        constructor.
+       easy.
 Qed.
 

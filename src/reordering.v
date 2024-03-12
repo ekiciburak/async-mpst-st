@@ -52,7 +52,7 @@ CoFixpoint act (t: st): coseq (participant * dir) :=
 Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
-  
+
 (* alternative coinductive membership check measures *)
 Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
                     coseq (participant * dir) -> list (participant * dir) -> Prop :=
@@ -75,6 +75,13 @@ Proof. unfold monotone2.
          apply LE, H0.
 Qed.
 
+Inductive coseqInLI: coseq (participant * dir) -> list (participant * dir) -> Prop :=
+  | ci_nil : forall ys, coseqInLI (Delay conil) ys
+  | ci_incl: forall x xs ys,
+             List.In x ys ->
+             coseqInLI xs ys ->
+             coseqInLI (Delay (cocons x xs)) ys.
+
 Inductive coseqInR: list (participant * dir) -> coseq (participant * dir) -> Prop :=
   | l_nil : forall ys, coseqInR nil ys
   | l_incl: forall x xs ys,
@@ -82,12 +89,12 @@ Inductive coseqInR: list (participant * dir) -> coseq (participant * dir) -> Pro
             coseqInR xs ys ->
             coseqInR (x::xs) ys.
 
+(*
 Inductive triv: Type :=
   | const_a: triv
   | const_b: triv
-  | const_c: triv.
+  | const_c: triv
 
-(*
 CoFixpoint Wtriv := Delay (cocons const_a (Delay (cocons const_b (Delay (cocons const_c Wtriv))))).
 
 Definition Ltriv := const_b :: const_a :: const_c :: nil. 
