@@ -7,18 +7,16 @@ Require Import Setoid.
 Require Import Morphisms JMeq.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
-Inductive actT: Type :=
-  | rcv: actT
-  | snd: actT.
+Inductive dir: Type := rcv: dir | snd: dir.
 
-Definition actTeqb (a1 a2: actT): bool :=
+Definition direqb (a1 a2: dir): bool :=
   match (a1, a2) with
     | (rcv,rcv)
     | (snd,snd) => true
     | _         => false
   end.
 
-Lemma act_dec: forall a1 a2, actTeqb a1 a2 = true \/ actTeqb a1 a2 = false.
+Lemma act_dec: forall a1 a2, direqb a1 a2 = true \/ direqb a1 a2 = false.
 Proof. intros a1 a2.
        case_eq a1; case_eq a2; intros.
        - left. easy.
@@ -27,26 +25,102 @@ Proof. intros a1 a2.
        - left. easy.
 Qed.
 
-Lemma act_eqb_eq: forall a1 a2, actTeqb a1 a2 = true -> a1 = a2.
+Lemma act_eqb_eq: forall a1 a2, direqb a1 a2 = true -> a1 = a2.
 Proof. intros a1 a2 Ha.
        case_eq a1; case_eq a2; intros; try easy.
        - subst. easy.
        - subst. easy.
 Qed.
 
-Lemma act_neqb_neq: forall a1 a2, actTeqb a1 a2 = false -> a1 <> a2.
+Lemma act_neqb_neq: forall a1 a2, direqb a1 a2 = false -> a1 <> a2.
 Proof. intros a1 a2 Ha.
        case_eq a1; case_eq a2; intros; try easy.
        - subst. easy.
        - subst. easy.
 Qed.
 
-CoFixpoint act (t: st): coseq (participant * actT) :=
+CoFixpoint act (t: st): coseq (participant * dir) :=
   match t with
     | st_receive p [(l,s,w')] => Delay (cocons (p, rcv) (act w'))
     | st_send p [(l,s,w')]    => Delay (cocons (p, snd) (act w'))
     | _                       => Delay conil
   end.
+
+(***********************)
+
+(* inductive membership check *)
+Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
+  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
+  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
+  
+(* alternative coinductive membership check measures *)
+Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
+                    coseq (participant * dir) -> list (participant * dir) -> Prop :=
+  | c_nil : forall ys, coseqInL R (Delay conil) ys
+  | c_incl: forall x xs ys,
+            List.In x ys ->
+            R xs ys ->
+            coseqInL R (Delay (cocons x xs)) ys.
+
+Definition coseqInLC := fun s1 s2 => paco2 (coseqInL) bot2 s1 s2.
+
+Lemma coseqInLC_mon: monotone2 (coseqInL).
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - specialize (c_incl r'); intro HS.
+         apply HS.
+         apply H.
+         apply LE, H0.
+Qed.
+
+Inductive coseqInR: list (participant * dir) -> coseq (participant * dir) -> Prop :=
+  | l_nil : forall ys, coseqInR nil ys
+  | l_incl: forall x xs ys,
+            coseqIn x ys ->
+            coseqInR xs ys ->
+            coseqInR (x::xs) ys.
+
+Inductive triv: Type :=
+  | const_a: triv
+  | const_b: triv
+  | const_c: triv.
+
+(*
+CoFixpoint Wtriv := Delay (cocons const_a (Delay (cocons const_b (Delay (cocons const_c Wtriv))))).
+
+Definition Ltriv := const_b :: const_a :: const_c :: nil. 
+
+Example smallexL: coseqInLC Wtriv Ltriv.
+Proof. pcofix CIH.
+       pfold.
+       rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+       apply c_incl. simpl. right. left. easy.
+       left. pfold.
+       apply c_incl. simpl. left. easy.
+       left. pfold.
+       apply c_incl. simpl. right. right. left. easy.
+       right. exact CIH.
+Qed. 
+
+Example smallexR: coseqInR Ltriv Wtriv.
+Proof. rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+       apply l_incl. simpl.
+       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |} )). simpl. easy. easy.
+       apply CoInSplit1 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
+       apply l_incl. simpl.
+       apply CoInSplit1 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
+       apply l_incl. simpl.
+       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
+       apply CoInSplit2 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
+       apply CoInSplit1 with (y := const_c) (ys := (Wtriv)). simpl. easy. easy.
+       apply l_nil.
+Qed.
+*)
+
+ 
+(***********************)
 
 Inductive Ap (p: participant): Type :=
   | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
@@ -138,14 +212,14 @@ CoFixpoint fromAp (p: participant) (a: Ap p): st :=
     | ap_end             => st_end
   end.
 
- Fixpoint actA (p: participant) (a: Ap p): list (participant * actT) :=
+ Fixpoint actA (p: participant) (a: Ap p): list (participant * dir) :=
   match a with
     | ap_receive q x l s => cons (q, rcv) nil
     | ap_merge q x l s c => cons (q, rcv) (actA p c)
     | _                  => nil
   end.
 
-Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * actT) :=
+Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * dir) :=
   match n with
     | O   => nil
     | S k =>
@@ -215,7 +289,7 @@ CoFixpoint fromBp (p: participant) (b: Bp p): st :=
     | bp_end             => st_end
   end.
 
-Fixpoint actB (p: participant) (b: Bp p): list (participant * actT) :=
+Fixpoint actB (p: participant) (b: Bp p): list (participant * dir) :=
   match b with
     | bp_receivea q l s  => cons (q, rcv) nil
     | bp_send q x l s    => cons (q, snd) nil
@@ -224,7 +298,7 @@ Fixpoint actB (p: participant) (b: Bp p): list (participant * actT) :=
     | _                  => nil
   end.
 
-Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * actT) :=
+Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * dir) :=
   match n with
     | O   => nil
     | S k =>
@@ -303,7 +377,7 @@ Fixpoint merge_cp_contn (p: participant) (c: Cp p) (w: st) (n: nat): st :=
     | S k  => merge_cp_cont p c (merge_cp_contn p c w k)
   end.
 
-Fixpoint actC (p: participant) (c: Cp p): list (participant * actT) :=
+Fixpoint actC (p: participant) (c: Cp p): list (participant * dir) :=
   match c with
     | cp_receive q x l s  => cons (q, rcv) nil
     | cp_mergea q x l s c => cons (q, rcv) (actC p c)
@@ -312,7 +386,7 @@ Fixpoint actC (p: participant) (c: Cp p): list (participant * actT) :=
     | _                   => nil
   end.
 
-Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * actT) :=
+Fixpoint actCn (p: participant) (c: Cp p) (n: nat): list (participant * dir) :=
   match n with
     | O   => nil
     | S k =>

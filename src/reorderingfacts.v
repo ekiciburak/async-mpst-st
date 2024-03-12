@@ -1026,10 +1026,10 @@ Qed.
 Definition eqbp (a b: (participant*string)) :=
   andb (eqb a.1 b.1) (eqb a.2 b.2).
 
-Definition eqbp2 (a b: (participant*actT)) :=
-  andb (eqb a.1 b.1) (actTeqb a.2 b.2).
+Definition eqbp2 (a b: (participant*dir)) :=
+  andb (eqb a.1 b.1) (direqb a.2 b.2).
 
-Lemma eq0: forall l (a: (participant*actT)) xs, List.In a l \/ coseqIn a xs ->
+Lemma eq0: forall l (a: (participant*dir)) xs, List.In a l \/ coseqIn a xs ->
            coseqIn a (appendL l xs).
 Proof. intros l.
        induction l; intros.
@@ -1158,7 +1158,7 @@ Proof. intros l.
        apply IHl. right. easy.
 Qed.
 
-Lemma eqscs: forall l (a: (participant*actT)) xs, List.In a l \/ coseqIn a xs ->
+Lemma eqscs: forall l (a: (participant*dir)) xs, List.In a l \/ coseqIn a xs ->
             coseqIn a (appendL l xs).
 Proof. intros l.
        induction l; intros.

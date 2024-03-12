@@ -133,11 +133,6 @@ Proof. intros A xs.
        unfold coseq_id. simpl. easy.
 Qed.
 
-(* inductive membership check *)
-Inductive coseqIn {A: Type}: A -> coseq A -> Prop :=
-  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
-  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
-
 (* unsound coinductive membership check *)
 Inductive coseqInC {A: Type} (R: A -> coseq A -> Prop): A -> coseq A -> Prop :=
   | CoInSplit1A x xs {ys}: force xs = cocons x ys -> coseqInC R x xs 
@@ -166,68 +161,5 @@ Proof. intros.
        right. easy.
 Qed.
 (**)
-
-(* alternative coinductive membership check measures *)
-Inductive coseqInL {A: Type} (R: coseq A -> list A -> Prop): coseq A -> list A -> Prop :=
-  | c_nil : forall ys, coseqInL R (Delay conil) ys
-  | c_incl: forall x xs ys,
-            List.In x ys ->
-            R xs ys ->
-            coseqInL R (Delay (cocons x xs)) ys.
-
-Definition coseqInLC {A: Type} := fun s1 s2 => paco2 (@coseqInL A) bot2 s1 s2.
-
-Lemma coseqInLC_mon {A}: monotone2 (@coseqInL A).
-Proof. unfold monotone2.
-       intros.
-       induction IN; intros.
-       - constructor.
-       - specialize (c_incl r'); intro HS.
-         apply HS.
-         apply H.
-         apply LE, H0.
-Qed.
-
-Inductive coseqInR {A: Type}: list A -> coseq A -> Prop :=
-  | l_nil : forall ys, coseqInR nil ys
-  | l_incl: forall x xs ys,
-            coseqIn x ys ->
-            coseqInR xs ys ->
-            coseqInR (x::xs) ys.
-
-Inductive triv: Type :=
-  | const_a: triv
-  | const_b: triv
-  | const_c: triv.
-
-CoFixpoint Wtriv := Delay (cocons const_a (Delay (cocons const_b (Delay (cocons const_c Wtriv))))).
-
-Definition Ltriv := const_b :: const_a :: const_c :: nil. 
-
-Example smallexL: coseqInLC Wtriv Ltriv.
-Proof. pcofix CIH.
-       pfold.
-       rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
-       apply c_incl. simpl. right. left. easy.
-       left. pfold.
-       apply c_incl. simpl. left. easy.
-       left. pfold.
-       apply c_incl. simpl. right. right. left. easy.
-       right. exact CIH.
-Qed. 
-
-Example smallexR: coseqInR Ltriv Wtriv.
-Proof. rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
-       apply l_incl. simpl.
-       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |} )). simpl. easy. easy.
-       apply CoInSplit1 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
-       apply l_incl. simpl.
-       apply CoInSplit1 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
-       apply l_incl. simpl.
-       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
-       apply CoInSplit2 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
-       apply CoInSplit1 with (y := const_c) (ys := (Wtriv)). simpl. easy. easy.
-       apply l_nil.
-Qed.
 
 
