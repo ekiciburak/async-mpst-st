@@ -76,6 +76,23 @@ Qed.
 
 Axiom ext0: forall w l, coseqInLC (act w) l -> coseqInLI (act w) l.
 
+Lemma ext0_rev: forall w l, coseqInLI (act w) l -> coseqInLC (act w) l.
+Proof. intros.
+       induction H.
+       pfold. constructor.
+       pfold.
+       punfold IHcoseqInLI.
+       inversion IHcoseqInLI.
+       subst. simpl. constructor.
+       easy. left. pfold. easy.
+       subst.
+       constructor. easy.
+       unfold upaco2 in H2. destruct H2.
+       punfold H2. apply coseqInLC_mon.
+       easy.
+       apply coseqInLC_mon.
+Qed.
+
 Lemma liftExt: forall w l, coseqInLI (act w) l -> (forall a, coseqIn a (act w) -> List.In a l).
 Proof. intros.
        induction H.
@@ -134,7 +151,16 @@ Proof. intros w1 w2 (l1,(l2,(Ha,(Hb,(Hc,(Hd,He)))))).
        apply Hc. easy.
 Qed.
 
-Axiom finiteST:
+Axiom finiteST: forall w1 w2, 
+  (forall x, coseqIn x (act w1) <-> coseqIn x (act w2)) ->
+  (  exists L, 
+     coseqInLI (act w1) L /\ 
+     coseqInLI (act w2) L /\
+     (forall x, List.In x L -> coseqIn x (act w1)) /\
+     (forall x, List.In x L -> coseqIn x (act w2))
+   ).
+
+Lemma finiteness:
 forall w1 w2,
 act_eq w1 w2 ->
 ( exists L1, exists L2,
@@ -144,6 +170,17 @@ act_eq w1 w2 ->
   coseqInR L2 (act w2) /\
   (forall x, List.In x L1 <-> List.In x L2)
 ).
+Proof. intros.
+       apply finiteST in H.
+       destruct H as (l,(Ha,(Hb,(Hc,Hd)))).
+       exists l.
+       exists l.
+       split. apply ext0_rev. exact Ha.
+       split. apply ext0_rev. exact Hb.
+       split. apply coseqInRInv2. right. exact Hc.
+       split. apply coseqInRInv2. right. exact Hd.
+       easy.
+Qed.
 
 Lemma mem_ext: forall w1 w2,
 ( exists L1, exists L2,
@@ -155,7 +192,7 @@ Lemma mem_ext: forall w1 w2,
 ) <-> act_eq w1 w2.
 Proof. split.
        apply cind_ext.
-       apply finiteST.
+       apply finiteness.
 Qed.
 
 Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
