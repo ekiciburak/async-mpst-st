@@ -5,7 +5,7 @@ Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
+Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Inductive dir: Type := rcv: dir | snd: dir.
 
@@ -16,7 +16,7 @@ Definition direqb (a1 a2: dir): bool :=
     | _         => false
   end.
 
-Lemma act_dec: forall a1 a2, direqb a1 a2 = true \/ direqb a1 a2 = false.
+Lemma dir_dec: forall a1 a2, direqb a1 a2 = true \/ direqb a1 a2 = false.
 Proof. intros a1 a2.
        case_eq a1; case_eq a2; intros.
        - left. easy.
@@ -25,14 +25,14 @@ Proof. intros a1 a2.
        - left. easy.
 Qed.
 
-Lemma act_eqb_eq: forall a1 a2, direqb a1 a2 = true -> a1 = a2.
+Lemma dir_eqb_eq: forall a1 a2, direqb a1 a2 = true -> a1 = a2.
 Proof. intros a1 a2 Ha.
        case_eq a1; case_eq a2; intros; try easy.
        - subst. easy.
        - subst. easy.
 Qed.
 
-Lemma act_neqb_neq: forall a1 a2, direqb a1 a2 = false -> a1 <> a2.
+Lemma dir_neqb_neq: forall a1 a2, direqb a1 a2 = false -> a1 <> a2.
 Proof. intros a1 a2 Ha.
        case_eq a1; case_eq a2; intros; try easy.
        - subst. easy.
@@ -88,6 +88,162 @@ Inductive coseqInR: list (participant * dir) -> coseq (participant * dir) -> Pro
             coseqIn x ys ->
             coseqInR xs ys ->
             coseqInR (x::xs) ys.
+
+Lemma coseqInRInv: forall l w, coseqInR l (act w) -> 
+                              (l = [] \/ (forall x, List.In x l -> coseqIn x (act w))).
+Proof. intros.
+       induction H. left. easy.
+       destruct IHcoseqInR. subst.
+       right. intros a Ha.
+       inversion Ha. subst. easy. easy.
+       right. intros a Ha.
+       inversion Ha. subst. easy.
+       apply H1. easy.
+Qed.
+
+Lemma coseqInRInv2: forall l w,
+  (l = [] \/ (forall x, List.In x l -> coseqIn x (act w))) -> coseqInR l (act w).
+Proof. intros.
+       destruct H. subst. constructor.
+       induction l; intros.
+       - constructor.
+       - constructor. apply H. simpl. left. easy.
+         apply IHl. intros. apply H.
+         simpl. right. easy.
+Qed.
+
+Axiom ext: forall w l, coseqInLC (act w) l -> coseqInLI (act w) l.
+
+Lemma ext_rev: forall w l, coseqInLI (act w) l -> coseqInLC (act w) l.
+Proof. intros.
+       induction H.
+       pfold. constructor.
+       pfold.
+       punfold IHcoseqInLI.
+       inversion IHcoseqInLI.
+       subst. simpl. constructor.
+       easy. left. pfold. easy.
+       subst.
+       constructor. easy.
+       unfold upaco2 in H2. destruct H2.
+       punfold H2. apply coseqInLC_mon.
+       easy.
+       apply coseqInLC_mon.
+Qed.
+
+Lemma liftExt: forall w l, coseqInLI (act w) l -> (forall a, coseqIn a (act w) -> List.In a l).
+Proof. intros.
+       induction H.
+       inversion H0. subst. easy. subst. easy.
+       inversion H0. subst. simpl in H2. inversion H2. subst. easy.
+       subst. simpl in H2. inversion H2. subst. apply IHcoseqInLI. easy.
+Qed.
+
+Lemma extC: forall w l, coseqInLC (act w) l -> (forall a, coseqIn a (act w) -> List.In a l).
+Proof. intros.
+       apply liftExt with (w := w).
+       apply ext. easy. easy.
+Qed.
+
+Lemma coseqInLCInv: forall l w, coseqInLC (act w) l -> 
+                                ((act w) = Delay conil \/ (forall x, coseqIn x (act w) -> List.In x l)).
+Proof. intros.
+       specialize(extC w l H); intro Hax.
+       destruct (act w), force.
+       - left. easy.
+       - right. intros a Ha.
+         punfold H.
+         apply coseqInLC_mon.
+Qed.
+
+Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
+
+Definition act_neq (w w': st) := (exists a, coseqIn a (act w) /\ (coseqIn a (act w') -> False) \/ coseqIn a (act w') /\ (coseqIn a (act w) -> False)).
+
+Lemma coind_ext: forall w1 w2,
+  (exists L1, exists L2, 
+    coseqInLC (act w1) L1 /\ coseqInLC (act w2) L2 /\
+    coseqInR L1 (act w1) /\ coseqInR L2 (act w2) /\ (forall x, List.In x L1 <-> List.In x L2)) -> 
+  act_eq w1 w2.
+Proof. intros w1 w2 (l1,(l2,(Ha,(Hb,(Hc,(Hd,He)))))).
+       unfold act_eq. intro a.
+       split. intro Hf.
+       apply coseqInRInv in Hc, Hd.
+       apply coseqInLCInv in Ha, Hb.
+       destruct Ha as [Ha | Ha].
+       rewrite Ha in Hf.
+       inversion Hf. subst. easy. subst. easy.
+       specialize(Ha a Hf).
+       apply He in Ha.
+       destruct Hd as [Hd | Hd]. subst. easy.
+       apply Hd. easy.
+
+       intro Hf.
+       apply coseqInRInv in Hc, Hd.
+       apply coseqInLCInv in Ha, Hb.
+       destruct Hb as [Hb | Hb].
+       rewrite Hb in Hf.
+       inversion Hf. subst. easy. subst. easy.
+       specialize(Hb a Hf).
+       apply He in Hb.
+       destruct Hc as [Hc | Hc]. subst. easy.
+       apply Hc. easy.
+Qed.
+
+Axiom finAct: forall w1 w2, 
+  act_eq w1 w2 ->
+  (exists L, 
+    coseqInLI (act w1) L /\ (forall x, List.In x L -> coseqIn x (act w1)) /\
+    coseqInLI (act w2) L /\ (forall x, List.In x L -> coseqIn x (act w2))
+   ).
+
+Lemma finiteAct: forall w1 w2, 
+  act_eq w1 w2 ->
+  (exists L1, exists L2,
+    coseqInLC (act w1) L1 /\ coseqInLC (act w2) L2 /\
+    coseqInR L1 (act w1) /\ coseqInR L2 (act w2) /\
+    (forall x, List.In x L1 <-> List.In x L2)
+  ).
+Proof. intros.
+       apply finAct in H.
+       destruct H as (l,(Ha,(Hb,(Hc,Hd)))).
+       exists l.
+       exists l.
+       split. apply ext_rev. exact Ha.
+       split. apply ext_rev. exact Hc.
+       split. apply coseqInRInv2. right. exact Hb.
+       split. apply coseqInRInv2. right. exact Hd.
+       easy.
+Qed.
+
+Lemma mem_ext: forall w1 w2,
+  (exists L1, exists L2,
+    coseqInLC (act w1) L1 /\ coseqInLC (act w2) L2 /\
+    coseqInR L1 (act w1) /\ coseqInR L2 (act w2) /\
+    (forall x, List.In x L1 <-> List.In x L2)
+  ) <-> act_eq w1 w2.
+Proof. split.
+       apply coind_ext.
+       apply finiteAct.
+Qed.
+
+Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
+Proof. intros.
+       unfold act_eq, act_neq in *.
+       apply not_all_ex_not in H.
+       destruct H as (a, H).
+       exists a.
+       unfold iff in H.
+       apply not_and_or in H.
+       destruct H as [H | H].
+       apply imply_to_and in H.
+       left. easy.
+       apply imply_to_and in H.
+       right. easy.
+Qed.
+
+Lemma listEq: forall {A: Type} (l1 l2: list A), l1 = l2 -> (forall x, List.In x l1 <-> List.In x l2).
+Proof. intros. subst. easy. Qed.
 
 (*
 Inductive triv: Type :=

@@ -1063,7 +1063,7 @@ Proof. intros l.
        destruct H1.
        rewrite eqb_eq in H1.
        simpl in H2.
-       apply act_eqb_eq in H2.
+       apply dir_eqb_eq in H2.
        inversion H1. inversion H2.
        simpl in *. subst.
        easy. easy.
@@ -1095,7 +1095,7 @@ Proof. intros l.
        (appendL l xs)
        ); intro Ha.
        apply Ha. simpl. easy. 
-       apply act_neqb_neq in H1.
+       apply dir_neqb_neq in H1.
        unfold not in *.
        intro H2.
        apply H1.
@@ -1117,7 +1117,7 @@ Proof. intros l.
        rewrite Bool.andb_true_iff in H0.
        destruct H0.
        rewrite eqb_eq in H0.
-       apply act_eqb_eq in H1.
+       apply dir_eqb_eq in H1.
        inversion H0. inversion H1.
        simpl in *. subst.
        easy. easy.
@@ -1149,7 +1149,7 @@ Proof. intros l.
        (appendL l xs)
        ); intro Ha.
        apply Ha. simpl. easy. 
-       apply act_neqb_neq in H0.
+       apply dir_neqb_neq in H0.
        unfold not in *.
        intro H1.
        apply H0.
@@ -1181,7 +1181,7 @@ Proof. intros l.
        rewrite Bool.andb_true_iff in H1.
        destruct H1.
        rewrite eqb_eq in H1.
-       apply act_eqb_eq in H2.
+       apply dir_eqb_eq in H2.
        inversion H1. inversion H2.
        simpl in *. subst.
        easy. easy.
@@ -1204,7 +1204,7 @@ Proof. intros l.
        rewrite(coseq_eq(appendL (a :: l) xs)).
        unfold coseq_id. simpl.
        apply CoInSplit2 with (y := a) (ys := (appendL l xs)). simpl. easy. 
-       apply act_neqb_neq in H1.
+       apply dir_neqb_neq in H1.
        unfold not in *.
        intro H2.
        apply H1.
@@ -1222,7 +1222,7 @@ Proof. intros l.
        rewrite Bool.andb_true_iff in H0.
        destruct H0.
        rewrite eqb_eq in H0.
-       apply act_eqb_eq in H1.
+       apply dir_eqb_eq in H1.
        inversion H0. inversion H1.
        simpl in *. subst.
        easy.
@@ -1245,7 +1245,7 @@ Proof. intros l.
        rewrite(coseq_eq(appendL (a :: l) xs)).
        unfold coseq_id. simpl.
        apply CoInSplit2 with (y := a) (ys := (appendL l xs)). simpl. easy. 
-       apply act_neqb_neq in H0.
+       apply dir_neqb_neq in H0.
        unfold not in *.
        intro H1.
        apply H0.
