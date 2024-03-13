@@ -556,7 +556,7 @@ Qed.
 
 Lemma W1W3UnfVar4R: forall n,
   ev n ->
-  W3 ~<  merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 n.
+  refinement (W3) (merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 n).
 Proof. intros.
        generalize dependent n.
        pcofix CIH.

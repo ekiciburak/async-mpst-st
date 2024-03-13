@@ -10,4 +10,8 @@ Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts.
 
 Definition subtype (T T': st): Prop :=
   exists (W: siso), st2sisoC (@und W) T /\
+  exists (W':siso), st2sisoC (@und W') T' /\ refinement (@und W) (@und W').
+
+Definition subtype2 (T T': st): Prop :=
+  exists (W: siso), st2sisoC (@und W) T /\
   exists (W':siso), st2sisoC (@und W') T' /\ (@und W) ~< (@und W').

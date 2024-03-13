@@ -4,7 +4,7 @@ Require Import ST.src.stream ST.src.st ST.src.so ST.src.si
                ST.negations.nrefinement ST.negations.nsubtyping.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
-Lemma subNeqR: forall T T', nsubtype T T' -> (subtype T T' -> False).
+Lemma subNeqR: forall T T', nsubtype T T' -> (subtype2 T T' -> False).
 Proof. intros.
        unfold subtype, nsubtype in *.
        destruct H0 as (W, (Ha, (W',(Hb,Hc)))).
@@ -12,7 +12,7 @@ Proof. intros.
        apply (nRefR W W'); easy.
 Qed.
 
-Lemma subNeqL: forall T T', (subtype T T' -> False) -> nsubtype T T'.
+Lemma subNeqL: forall T T', (subtype2 T T' -> False) -> nsubtype T T'.
 Proof. intros.
        unfold subtype, nsubtype in *.
        intro W.
@@ -29,7 +29,7 @@ Proof. intros.
        apply nRefL. easy.
 Qed.
 
-Theorem completeness: forall T T', (subtype T T' -> False) <-> nsubtype T T'.
+Theorem completeness: forall T T', (subtype2 T T' -> False) <-> nsubtype T T'.
 Proof. split.
        apply (subNeqL T T').
        intros. apply (subNeqR T T'); easy.

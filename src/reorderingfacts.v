@@ -3431,7 +3431,8 @@ Proof. intros.
        - case_eq ac; intros.
          + subst. apply Hb.
            punfold H0. inversion H0.
-           subst. apply mem_ext in H2.
+           subst. 
+(*            apply mem_ext in H2. *)
            case_eq (eqb p q); intros.
            ++ rewrite eqb_eq in H3. subst.
               rewrite actApLcomb. apply eq0. right. 
@@ -3457,7 +3458,8 @@ Proof. intros.
                 rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id.
                 simpl. 
                 apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w')). simpl. easy. easy. easy.
-         + subst. apply mem_ext in H2.
+         + subst. 
+(*          apply mem_ext in H2. *)
            rewrite actBpLcomb. apply eq0.
            rewrite(coseq_eq(act (p ! [(l, s, w)]))) in Ha. unfold coseq_id in Ha.
            simpl in Ha. inversion Ha.
@@ -3474,10 +3476,11 @@ Proof. intros.
          + subst. rewrite(coseq_eq(act (end))) in Ha.
            unfold coseq_id in Ha. simpl in Ha.
            inversion Ha. subst. easy. subst. easy.
-           apply refinementR_mon.
+           apply refinementR2_mon.
        - subst. apply Hb.
          punfold H0. inversion H0.
-         subst. apply mem_ext in H2.
+         subst. 
+(*          apply mem_ext in H2. *)
          rewrite(coseq_eq(act (p & [(l, s, w)]))) in Ha.
          unfold coseq_id in Ha. simpl in Ha. 
          inversion Ha. subst. simpl in H3. easy.
@@ -3491,7 +3494,8 @@ Proof. intros.
          left. easy.
          right.
          apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w')). simpl. easy. easy. easy.
-         subst. apply mem_ext in H2.
+         subst. 
+(*          apply mem_ext in H2. *)
          case_eq (eqb p q); intros.
          ++ rewrite eqb_eq in H3. subst.
             rewrite actBpLcomb. apply eq0. right.
@@ -3517,12 +3521,13 @@ Proof. intros.
          ++ subst. rewrite(coseq_eq(act (end))) in Ha.
              unfold coseq_id in Ha. simpl in Ha.
              inversion Ha. subst. easy. subst. easy.
-             apply refinementR_mon.
+             apply refinementR2_mon.
 
        - case_eq ac; intros.
          + subst. apply Hb.
            punfold H0. inversion H0.
-           subst. apply mem_ext in H2.
+           subst. 
+(*            apply mem_ext in H2. *)
            case_eq (eqb p q); intros.
            ++ rewrite eqb_eq in H3. subst.
               rewrite(coseq_eq(act (q & [(l, s, w)]))). unfold coseq_id. simpl.
@@ -3548,7 +3553,7 @@ Proof. intros.
               inversion Hx. easy. easy.
               subst.
               unfold act_eq in H2.
-              apply mem_ext in H2.
+(*               apply mem_ext in H2. *)
               rewrite actBpLcomb in Ha.
               apply eqscsrcv in Ha.
               assert(In (q, rcv) (actBn p b n) \/ coseqIn (q, rcv) (act w')).
@@ -3566,11 +3571,12 @@ Proof. intros.
               subst. rewrite(coseq_eq(act (end))) in Ha.
               unfold coseq_id in Ha. simpl in Ha.
               inversion Ha. subst. easy. subst. easy.
-              apply refinementR_mon.
+              apply refinementR2_mon.
          + subst.
            apply Hb.
            punfold H0. inversion H0.
-           subst. apply mem_ext in H2.
+           subst.
+(*            apply mem_ext in H2. *)
            unfold act_eq in H2.
            rewrite actApLcomb in H2.
            rewrite actApLcomb in Ha.
@@ -3592,7 +3598,7 @@ Proof. intros.
             apply CoInSplit1 with (y := (q, snd)) (ys:= (act w)). simpl. easy. easy.
          ++ rewrite eqb_neq in H3.
             unfold act_eq in H2.
-            apply mem_ext in H2.
+(*             apply mem_ext in H2. *)
             rewrite actBpLcomb in Ha.
             apply eqscssnd in Ha.
             assert(In (q, snd) (actBn p b n) \/ coseqIn (q, snd) (act w')).
@@ -3614,7 +3620,7 @@ Proof. intros.
             subst. rewrite(coseq_eq(act (end))) in Ha.
             unfold coseq_id in Ha. simpl in Ha.
             inversion Ha. subst. easy. subst. easy.
-            apply refinementR_mon.
+            apply refinementR2_mon.
 Qed.
 
 

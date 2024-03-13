@@ -220,12 +220,12 @@ Lemma nRefR: forall w w', nRefinement w w' -> ((@und w) ~< (@und w') -> False).
 Proof. intros w w' Ha H.
        revert Ha.
        unfold refinement in H.
-       punfold H; [ | apply refinementR_mon].
+       punfold H; [ | apply refinementR2_mon].
        intro Ha.
        induction Ha; intros.
        { simpl in H.
          inversion H.
-         apply mem_ext in H5.
+(*          apply mem_ext in H5. *)
          rewrite <- H1, <- H2 in H0.
          unfold act_neq in H0.
          destruct H0 as ((q, ac), [(Ha, Hb) | (Ha, Hb)]).
@@ -303,7 +303,7 @@ Proof. intros w w' Ha H.
            rewrite(coseq_eq(act (p & [(l, s, w0)]))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w0)). simpl. easy. easy. easy.
 
-         apply mem_ext in H5.
+(*          apply mem_ext in H5. *)
          rewrite <- H1, <- H2 in H0.
          unfold act_neq in H0.
          destruct H0 as ((q, ac), [(Ha, Hb) | (Ha, Hb)]).
@@ -401,7 +401,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqAp2 in H6.
          apply ApApeqInv in H6.
          inversion H6. subst. easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
        { inversion H.
@@ -417,7 +417,7 @@ Proof. intros w w' Ha H.
          apply ApApeqInv in H6.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
        { apply IHHa.
@@ -439,7 +439,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqAp in H1.
          rewrite <- H2.
          easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
        { inversion H.
@@ -462,7 +462,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqBp in H6.
          apply ApApeqInv3 in H6.
          inversion H6. subst. easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
        { inversion H.
@@ -477,7 +477,7 @@ Proof. intros w w' Ha H.
          apply ApApeqInv3 in H6.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
        { apply IHHa.
@@ -501,7 +501,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqBp in H1.
          rewrite <- H2.
          easy.
-         apply refinementR_mon.
+         apply refinementR2_mon.
          easy.
        }
 Qed.
@@ -760,13 +760,14 @@ Proof. intros.
          easy. easy. easy.
 Qed.
 
-Lemma nRefLH: forall w w', (nRefinement w w' -> False) -> (@und w) ~< (@und w').
+Lemma nRefLH: forall w w', (nRefinement w w' -> False) -> refinement2 (@und w) (@und w').
 Proof. destruct w as (w, Pw).
        destruct w' as (w', Pw').
        intro H.
        generalize dependent w.
        generalize dependent w'.
-       simpl. pcofix CIH.
+       simpl.
+       pcofix CIH.
        intros.
        specialize(sinv w Pw); intros Hpw.
        destruct Hpw as [Hpw | Hpw].
@@ -787,7 +788,7 @@ Proof. destruct w as (w, Pw).
 
          specialize(classic(act_eq w1 w2)); intros Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref_b (upaco2 refinementR r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
+         specialize(ref2_b (upaco2 refinementR2 r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
          rewrite bpend_ann in HSR.
          rewrite bpend_ann in HSR.
          simpl in HSR.
@@ -801,7 +802,8 @@ Proof. destruct w as (w, Pw).
          intros Hp2.
          apply Hp. easy. simpl. exact H0.
          exact Hp2.
-         apply mem_ext. easy.
+(*          apply mem_ext.  *)
+         easy.
          subst.
 
          specialize(n_b_act q l' s s' w1 w2 (bp_end) Pw ); intros HBN.
@@ -841,7 +843,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref2_b (upaco2 refinementR2 r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -865,7 +867,8 @@ Proof. destruct w as (w, Pw).
          intros Pw' H0.
          specialize(n_b_w (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw'' Pw); intros HN. simpl in HN.
          apply HN. easy. easy.
-         apply mem_ext. easy.
+(*          apply mem_ext.  *)
+         easy.
 
          generalize dependent Pw'.
          rewrite IHw3.
@@ -925,7 +928,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref2_b (upaco2 refinementR2 r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -944,7 +947,8 @@ Proof. destruct w as (w, Pw).
 
          specialize(n_b_w (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 b 1 Pw'' Pw); intros HN. simpl in HN.
          apply HN. easy. easy.
-         apply mem_ext. easy.
+(*          apply mem_ext.  *)
+         easy.
 
          destruct H0.
          apply act_eq_neq in Hact.
@@ -1032,7 +1036,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_ap_cont p a w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref_a (upaco2 refinementR r) w1 w3 p l1 s s1 a 1); intro Hrb.
+         specialize(ref2_a (upaco2 refinementR2 r) w1 w3 p l1 s s1 a 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -1055,7 +1059,8 @@ Proof. destruct w as (w, Pw).
 
          specialize(n_a_w (mk_siso w1 Hs1) (mk_siso w3 Hs3) p l1 s s1 a 1 Pw'' Pw); intros HN. simpl in HN.
          apply HN. easy. easy.
-         apply mem_ext. easy.
+(*          apply mem_ext.  *)
+         easy.
 
          destruct H0.
          apply act_eq_neq in Hact.
