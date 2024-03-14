@@ -35,7 +35,7 @@ Proof. pfold.
        simpl.
        constructor.
        simpl. right. left. easy.
-       
+
        unfold upaco2.
        left.
        pfold.
@@ -224,7 +224,7 @@ Proof. unfold subtype.
        constructor.
        rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
        constructor. constructor. easy.
-       
+
        rewrite(coseq_eq(act ("p" & [("success", I, end)]))).
        unfold coseq_id.
        simpl.

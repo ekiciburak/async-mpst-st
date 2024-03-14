@@ -554,7 +554,7 @@ Proof. intro n.
          constructor.
 Qed.
 
-Lemma W1W3UnfVar4R: forall n,
+Lemma WBRef: forall n,
   ev n ->
   refinement (W3) (merge_bp_contn "p" (bp_receivea "p" "l1" sint) W1 n).
 Proof. intros.
@@ -1353,7 +1353,7 @@ Proof. unfold subtype.
        apply st2siso_snd. simpl.
        right. exact CIH.
 
-       specialize(W1W3UnfVar4R 0); intros.
+       specialize(WBRef 0); intros.
        rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
        simpl in H. simpl.
        rewrite(st_eq W1).

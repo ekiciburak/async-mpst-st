@@ -1951,7 +1951,7 @@ Proof. intros p a.
        rewrite cpend_an. easy.
 Qed.
 
-Lemma ApApeqInv3: forall p b1 b2 l1 l2 s1 s2 w1 w2,
+Lemma BpBpeqInv2: forall p b1 b2 l1 l2 s1 s2 w1 w2,
   merge_bp_cont p b1 (p ! [(l1, s1, w1)]) =
   merge_bp_cont p b2 (p ! [(l2, s2, w2)]) -> (p ! [(l1, s1, w1)]) = (p ! [(l2, s2, w2)]).
 Proof. intros p b.

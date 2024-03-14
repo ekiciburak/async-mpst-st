@@ -460,7 +460,7 @@ Proof. intros w w' Ha H.
          subst.
          rewrite <- meqBp in H6.
          rewrite <- meqBp in H6.
-         apply ApApeqInv3 in H6.
+         apply BpBpeqInv2 in H6.
          inversion H6. subst. easy.
          apply refinementR2_mon.
          easy.
@@ -474,7 +474,7 @@ Proof. intros w w' Ha H.
          subst.
          rewrite <- meqBp in H6.
          rewrite <- meqBp in H6.
-         apply ApApeqInv3 in H6.
+         apply BpBpeqInv2 in H6.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
          apply refinementR2_mon.
@@ -491,7 +491,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqBp in H6.
          rewrite <- meqBp in H6.
          pose proof H6.
-         apply ApApeqInv3 in H6.
+         apply BpBpeqInv2 in H6.
          rewrite <- meqBp in H8.
 
          inversion H6. subst.
