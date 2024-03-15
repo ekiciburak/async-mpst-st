@@ -104,43 +104,43 @@ Qed.
 Lemma listEq: forall {A: Type} (l1 l2: list A), l1 = l2 -> (forall x, List.In x l1 <-> List.In x l2).
 Proof. intros. subst. easy. Qed.
 
-(*
-Inductive triv: Type :=
-  | const_a: triv
-  | const_b: triv
-  | const_c: triv
+(***********************)
 
-CoFixpoint Wtriv := Delay (cocons const_a (Delay (cocons const_b (Delay (cocons const_c Wtriv))))).
+CoFixpoint Wtriv := st_send "p" [("l1"%string,I, st_receive "p" [("l2"%string,I, st_send "q" [("l3"%string,I,Wtriv)])])].
+Definition Ltriv := ("p"%string, rcv) :: ("p"%string, snd) :: ("q"%string, snd) :: nil. 
 
-Definition Ltriv := const_b :: const_a :: const_c :: nil. 
-
-Example smallexL: coseqInLC Wtriv Ltriv.
+Example smallexL: coseqInLC (act Wtriv) Ltriv.
 Proof. pcofix CIH.
        pfold.
-       rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+       rewrite(coseq_eq (act Wtriv)). unfold Ltriv. unfold coseq_id. simpl.
        apply c_incl. simpl. right. left. easy.
        left. pfold.
+       rewrite(coseq_eq(act ("p" & [("l2"%string, I, "q" ! [("l3"%string, I, Wtriv)])]))).
+       unfold coseq_id. simpl.
        apply c_incl. simpl. left. easy.
        left. pfold.
+       rewrite(coseq_eq(act ("q" ! [("l3"%string, I, Wtriv)]))). unfold coseq_id. simpl.
        apply c_incl. simpl. right. right. left. easy.
        right. exact CIH.
 Qed. 
 
-Example smallexR: coseqInR Ltriv Wtriv.
-Proof. rewrite(coseq_eq Wtriv). unfold Ltriv. unfold coseq_id. simpl.
+Example smallexR: coseqInR Ltriv (act Wtriv).
+Proof. rewrite(coseq_eq (act Wtriv)). unfold Ltriv. unfold coseq_id. simpl.
        apply l_incl. simpl.
-       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |} )). simpl. easy. easy.
-       apply CoInSplit1 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p"%string, snd)) (ys := (act ("p" & [("l2"%string, I, "q" ! [("l3"%string, I, Wtriv)])]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("p" & [("l2"%string, I, "q" ! [("l3"%string, I, Wtriv)])]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("p"%string, rcv)) (ys := (act ("q" ! [("l3"%string, I, Wtriv)]))). simpl. easy. easy.
        apply l_incl. simpl.
-       apply CoInSplit1 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
+       rewrite(coseq_eq(act ("p" & [("l2"%string, I, "q" ! [("l3"%string, I, Wtriv)])]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("p"%string, snd)) (ys := ({| force := cocons ("p"%string, rcv) (act ("q" ! [("l3"%string, I, Wtriv)])) |})). simpl. easy. easy.
        apply l_incl. simpl.
-       apply CoInSplit2 with (y := const_a) (ys := ({| force := cocons const_b {| force := cocons const_c Wtriv |} |})). simpl. easy. easy.
-       apply CoInSplit2 with (y := const_b) (ys := ({| force := cocons const_c Wtriv |})). simpl. easy. easy.
-       apply CoInSplit1 with (y := const_c) (ys := (Wtriv)). simpl. easy. easy.
+       rewrite(coseq_eq(act ("p" & [("l2"%string, I, "q" ! [("l3"%string, I, Wtriv)])]))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("p"%string, snd)) (ys := ({| force := cocons ("p"%string, rcv) (act ("q" ! [("l3"%string, I, Wtriv)])) |})). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p"%string, rcv)) (ys := (act ("q" ! [("l3"%string, I, Wtriv)]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("q" ! [("l3"%string, I, Wtriv)]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("q"%string, snd)) (ys := (act Wtriv)). simpl. easy. easy.
        apply l_nil.
 Qed.
-*)
-
  
 (***********************)
 
