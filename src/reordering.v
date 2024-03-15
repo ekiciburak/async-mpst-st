@@ -53,10 +53,6 @@ Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
 
-Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
-
-Definition act_neq (w w': st) := (exists a, coseqIn a (act w) /\ (coseqIn a (act w') -> False) \/ coseqIn a (act w') /\ (coseqIn a (act w) -> False)).
-
 (* alternative coinductive membership check measures *)
 Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
                     coseq (participant * dir) -> list (participant * dir) -> Prop :=
@@ -85,6 +81,10 @@ Inductive coseqInR: list (participant * dir) -> coseq (participant * dir) -> Pro
             coseqIn x ys ->
             coseqInR xs ys ->
             coseqInR (x::xs) ys.
+
+Definition act_eq (w w': st) := forall a, coseqIn a (act w) <-> coseqIn a (act w').
+
+Definition act_neq (w w': st) := (exists a, coseqIn a (act w) /\ (coseqIn a (act w') -> False) \/ coseqIn a (act w') /\ (coseqIn a (act w) -> False)).
 
 Lemma act_eq_neq: forall w w', (act_eq w w' -> False) -> act_neq w w'.
 Proof. intros.
