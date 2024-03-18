@@ -15,8 +15,8 @@ The library succesfully compiles with the Coq compiler `coqc 8.18.0`.
 5 | `src/reordering.v` | defines action reorderings for prefixes of sorts $A^{(p)}$, $B^{(p)}$ and $C^{(p)}$
 6 | `src/siso.v` | defines single-output-single-input (SISO) trees and the siso decomposition of an arbitrary session tree
 7 | `src/reorderingfacts.v` | contains some facts about the action reorderings for prefixes of sorts $A^{(p)}$, $B^{(p)}$ and $C^{(p)}$
-8 | `subtyping/refinement.v` | defines the SISO refinement relation
-9 | `subtyping/subtyping.v` | defines the subtyping relation
+8 | `subtyping/refinement.v` | defines the SISO refinement (and refinement2) relation(s)
+9 | `subtyping/subtyping.v` | defines the subtyping (and subtyping2) relation(s)
 10 | `examples/ring_choice.v` | proves `ring-choice` protocol optimisation
 11 | `examples/Example3_17.v` | proves `Example 3-15` in `[1]`
 12 | `examples/Example3_19.v` | proves `Example 3-19` in `[1]`

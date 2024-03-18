@@ -96,7 +96,7 @@ Proof. pcofix CIH. pfold.
        apply st2siso_snd. simpl. left. pfold.
        rewrite(st_eq exst). simpl.
        apply st2siso_snd. simpl. left. pfold.
-       apply st2siso_rcv. simpl. 
+       apply st2siso_rcv. simpl.
        right. exact CIH.
 Qed.
 
