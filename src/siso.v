@@ -72,32 +72,32 @@ Local Open Scope string_scope.
 CoFixpoint exst := st_send "C" [("add", I, st_receive "A" [("add", I, exst); ("X",I,st_send "C" [("Y",I,exst);("Z",I,exst)])]); 
                                 ("sub", I, st_receive "A" [("add", I, exst)]);
                                 ("mul", I, st_receive "A" [("add", I, exst)]);
-                                ("add", I, "A" & [("X", I, exst)]); 
+                                ("div", I, "A" & [("X", I, exst)]); 
                                 ("X", I, exst)].
 
 CoFixpoint exsiso := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I,exsiso)]))])].
 
 Lemma example_ns: st2sisoC exsiso exst.
 Proof. pcofix CIH. pfold.
-       rewrite(st_eq exst).
-       rewrite(st_eq exsiso).
-       simpl.
-       apply st2siso_snd.
-       left. simpl.
-       pfold.
-       apply st2siso_rcv.
-       left. simpl.
-       pfold. apply st2siso_snd. 
-       setoid_rewrite(st_eq exst) at 1. simpl.
-       setoid_rewrite(st_eq exsiso) at 1. simpl.
-       left. pfold.
-       apply st2siso_snd.
-       left. pfold. simpl.
-       apply st2siso_rcv. simpl.
-       left. pfold.
-       apply st2siso_snd. simpl.
-       right.
-       exact CIH.
+       rewrite(st_eq exst). rewrite(st_eq exsiso). simpl.
+       apply st2siso_snd. simpl. left. pfold.
+       apply st2siso_rcv. simpl. left. pfold.
+       apply st2siso_snd. simpl. 
+       right. exact CIH.
+Qed.
+
+CoFixpoint exsiso2 := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I, st_send "C" [("sub", I, st_receive "A" [("add", I, exsiso2)])])]))])].
+
+Lemma example_ns2: st2sisoC exsiso2 exst.
+Proof. pcofix CIH. pfold.
+       rewrite(st_eq exst). rewrite(st_eq exsiso2). simpl.
+       apply st2siso_snd. simpl. left. pfold.
+       apply st2siso_rcv. simpl. left. pfold.
+       apply st2siso_snd. simpl. left. pfold.
+       rewrite(st_eq exst). simpl.
+       apply st2siso_snd. simpl. left. pfold.
+       apply st2siso_rcv. simpl. 
+       right. exact CIH.
 Qed.
 
 (**)
@@ -133,4 +133,7 @@ Proof. intros.
        unfold upaco1 in H1. destruct H1; easy.
        apply sI_mon.
 Qed.
+
+
+
 
