@@ -107,7 +107,7 @@ Proof. intros p l s w H.
        pfold. constructor. left.
        punfold H.
        apply sI_mon.
-Qed.
+Defined.
 
 Lemma extsR: forall {p l s} w, singleton (st_send p [(l,s,w)]) -> singleton w .
 Proof. intros.
@@ -123,7 +123,7 @@ Proof. intros.
        pfold. constructor. left.
        punfold H.
        apply sI_mon.
-Qed.
+Defined.
 
 Lemma extrR: forall {p l s} w, singleton (st_receive p [(l,s,w)]) -> singleton w .
 Proof. intros.
@@ -133,7 +133,5 @@ Proof. intros.
        unfold upaco1 in H1. destruct H1; easy.
        apply sI_mon.
 Qed.
-
-
 
 

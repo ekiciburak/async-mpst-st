@@ -150,9 +150,12 @@ Lemma st1: subtype T' T.
 Proof. unfold subtype.
        assert(singleton(st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))])) as Hs1.
        { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
-
-       exists(mk_siso (st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]) Hs1).
-       split.
+       assert(singleton(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))])) as Hs2.
+       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
+       exists([((mk_siso (st_send "q" [("cont",sint,(st_receive "p" [("success",sint,st_end)]))]) Hs1),
+                    (mk_siso(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]) Hs2))
+              ]).
+       simpl. split. split.
 
        pcofix H.
        pfold.
@@ -161,10 +164,6 @@ Proof. unfold subtype.
        left. pfold.
        apply st2siso_rcv. simpl.
        left. pfold. constructor.
-
-       assert(singleton(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))])) as Hs2.
-       { pfold. constructor. left. pfold. constructor. left. pfold. constructor. }
-       exists(mk_siso(st_receive "p" [("success", sint,(st_send "q" [("cont", sint, st_end)]))]) (Hs2)).
        split.
 
        pcofix H.
@@ -173,7 +172,10 @@ Proof. unfold subtype.
        apply st2siso_rcv. simpl.
        left. pfold.
        apply st2siso_snd. simpl.
-       left. pfold. constructor.
+       left. pfold. constructor. easy.
+       split.
+       exists dp_end. exists dp_end. intro n.
+       rewrite !dpend_ann.
 
        pcofix CIH.
        pfold.
@@ -283,5 +285,7 @@ Proof. unfold subtype.
        simpl. easy. easy.
        constructor.
        easy.
+       easy.
 Qed.
+
 

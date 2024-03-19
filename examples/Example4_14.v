@@ -1342,9 +1342,9 @@ Qed.
 
 Lemma stb: subtype Tctl' Tctl.
 Proof. unfold subtype.
-       exists (mk_siso Tctl' (singletonTctl')).
-       split.
-       pfold. simpl.
+       exists [((mk_siso Tctl' (singletonTctl')), (mk_siso Tctl (singletonTctl)))].
+       simpl. split. split.
+       pfold. 
        rewrite(st_eq Tctl'). simpl.
        apply st2siso_snd. simpl.
        left. pfold.
@@ -1368,10 +1368,8 @@ Proof. unfold subtype.
        left. pfold.
        apply st2siso_snd. simpl.
        right. exact CIH.
-
-       exists (mk_siso Tctl (singletonTctl)).
        split.
-       simpl.
+
        pcofix CIH.
        pfold. 
        rewrite(st_eq Tctl). simpl.
@@ -1390,9 +1388,10 @@ Proof. unfold subtype.
        apply st2siso_rcv. simpl.
        left. pfold.
        apply st2siso_snd. simpl.
-       right. exact CIH.
+       right. exact CIH. easy.
+       split. exists dp_end. exists dp_end. intro n.
+       rewrite !dpend_ann.
 
-       simpl.
        rewrite(st_eq Tctl').
        rewrite(st_eq Tctl). simpl.
        pfold.
@@ -1912,4 +1911,6 @@ split.
 apply action_eq37.
 split.
 apply action_eq38. easy.
+easy.
 Qed.
+

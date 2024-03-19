@@ -3623,17 +3623,260 @@ Proof. intros.
             apply refinementR2_mon.
 Qed.
 
+Lemma extdp: forall {d} w, singleton w -> singleton (merge_dp_cont d w).
+Proof. induction d; intros.
+       rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w)).
+       simpl. apply extr. easy.
+       rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w)).
+       simpl. apply exts. easy.
+       rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w)).
+       simpl. apply extr, IHd. easy.
+       rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w)).
+       simpl. apply exts, IHd. easy.
+       rewrite(st_eq(merge_dp_cont dp_end w)). simpl.
+       destruct w; easy.
+Defined.
+
+Lemma extdpn: forall {n d} w, singleton w -> singleton (merge_dp_contn d w n).
+Proof. intros n.
+       induction n; intros.
+       simpl. easy.
+       simpl.
+       apply extdp.
+       apply IHn. easy.
+Defined.
 
 
+Lemma dpend_an: forall w, merge_dp_cont (dp_end) w = w.
+Proof. intros.
+       rewrite(st_eq(merge_dp_cont dp_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma dpend_ann: forall n w, merge_dp_contn (dp_end) w n = w.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. simpl.
+       rewrite(st_eq(merge_dp_cont dp_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma mergeSw5: forall d l w,
+merge_dp_cont (listDp (dpList d ++ l)) w =
+merge_dp_cont d (merge_dp_cont (listDp l) w).
+Proof. intros d.
+       induction d; intros.
+       simpl.
+       case_eq l; intros.
+       subst. simpl.
+       rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 dp_end) w)). simpl.
+       rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) (merge_dp_cont dp_end w))). simpl.
+       rewrite dpend_an. easy.
+       rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 (listDp (d :: l0))) w)).
+       rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) (merge_dp_cont (listDp (d :: l0)) w))).
+       simpl. easy.
+       rewrite(st_eq(merge_dp_cont (listDp (dpList (dp_send s s0 s1) ++ l)) w)).
+       rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) (merge_dp_cont (listDp l) w))).
+       simpl. easy.
+       rewrite(st_eq(merge_dp_cont (listDp (dpList (dp_mergea s s0 s1 d) ++ l)) w )).
+       rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) (merge_dp_cont (listDp l) w))).
+       simpl.
+       rewrite IHd. easy.
+       rewrite(st_eq(merge_dp_cont (listDp (dpList (dp_merge s s0 s1 d) ++ l)) w )).
+       rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) (merge_dp_cont (listDp l) w))).
+       simpl. rewrite IHd. easy.
+       simpl. rewrite dpend_an. easy.
+Qed.
+
+Lemma meqDp: forall n d w,
+  merge_dp_cont (DpnA d n) w = merge_dp_contn d w n.
+Proof. intro n.
+       induction n; intros.
+       simpl. unfold DpnA. simpl.
+       rewrite dpend_an. easy.
+       simpl.
+       rewrite <- IHn.
+
+       unfold DpnA. simpl.
+       rewrite mergeSw5. 
+       easy.
+Qed.
 
 
+Lemma ApApeqInvAnd: forall p a1 l1 l2 s1 s2 w1 w2,
+  merge_ap_cont p a1 (p & [(l1, s1, w1)]) =
+  p & [(l2, s2, w2)] -> a1 = ap_end.
+Proof. intros p a.
+       induction a; intros.
+       rewrite(st_eq(merge_ap_cont p (ap_receive q n s s0) (p & [(l1, s1, w1)]))) in H.
+       simpl in H. inversion H. subst. easy.
+       subst.
+       rewrite(st_eq(merge_ap_cont p (ap_merge q n s s0 a) (p & [(l1, s1, w1)]))) in H. simpl in H.
+       inversion H. subst. easy.
+       easy.
+Qed.
 
+Lemma BpBpeqInvAnd: forall p b1 l1 l2 s1 s2 w1 w2,
+  merge_bp_cont p b1 (p ! [(l1, s1, w1)]) =
+  p ! [(l2, s2, w2)] -> b1 = bp_end.
+Proof. intros p b.
+       induction b; intros.
+       rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l1, s2, w1)]))) in H.
+       simpl in H. easy.
+       subst.
+       rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) (p ! [(l1, s1, w1)]))) in H. simpl in H.
+       inversion H. subst. easy.
+       rewrite(st_eq( merge_bp_cont p (bp_mergea s s0 s1 b) (p ! [(l1, s2, w1)]))) in H. simpl in H.
+       inversion H.
+       rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) (p ! [(l1, s1, w1)]))) in H. simpl in H.
+       inversion H. subst. easy.
+       easy.
+Qed.
 
+Lemma refUnfDInv: forall d w w', (merge_dp_cont d (@und w) ~< merge_dp_cont d (@und w')) -> (@und w) ~< (@und w').
+Proof. intro d. 
+       induction d; intros.
+       - setoid_rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) und)) in H. simpl in H.
+         punfold H. inversion H.
+         subst. 
+         rewrite <- meqAp2 in H5, H6.
+         pose proof H5 as H5a.
+         apply ApApeqInvAnd in H5a.
+         rewrite H5a in H5. rewrite apend_an in H5.
+         inversion H5. subst.
+         rewrite H5a in H6. rewrite apend_an in H6.
+         unfold upaco2 in H6.
+         destruct H6. punfold H0. pfold. easy.
+         apply refinementR2_mon.
+         easy.
+         apply refinementR2_mon.
+       - setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) und)) in H. simpl in H.
+         punfold H. inversion H.
+         subst. 
+         rewrite <- meqBp in H5, H6.
+         pose proof H5 as H5a.
+         apply BpBpeqInvAnd in H5a.
+         rewrite H5a in H5. rewrite bpend_an in H5.
+         inversion H5. subst.
+         rewrite H5a in H6. rewrite bpend_an in H6.
+         unfold upaco2 in H6.
+         destruct H6. punfold H0. pfold. easy.
+         apply refinementR2_mon.
+         easy.
+         apply refinementR2_mon.
+       - apply IHd. 
+         setoid_rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) und)) in H. simpl in H.
+         punfold H. inversion H.
+         subst. simpl in *.
+         pfold. unfold upaco2 in H6.
+         destruct H6.
+         punfold H0.
+         rewrite <- meqAp2 in H5, H0, H7.
+         pose proof H5 as H5a.
+         apply ApApeqInvAnd in H5a.
+         assert((s & [(s0, s1, merge_dp_cont d und)]) = merge_ap_cont s (ap_end) (s & [(s0, s1, merge_dp_cont d und)])).
+         { rewrite apend_an. easy. }
+         rewrite H1 in H5.
+         apply ApApeqInv in H5.
+         inversion H5. subst.
+         rewrite H5a in H0. rewrite apend_an in H0. easy.
+         apply refinementR2_mon.
+         easy.
+         apply refinementR2_mon.
 
+         apply IHd.
+         setoid_rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) und)) in H. simpl in H.
+         punfold H. inversion H.
+         subst. simpl in *.
+         pfold. unfold upaco2 in H6.
+         destruct H6.
+         punfold H0.
+         rewrite <- meqBp in H5, H0, H7.
+         pose proof H5 as H5a.
+         apply BpBpeqInvAnd in H5a.
+         assert(s ! [(s0, s1, merge_dp_cont d und)] = merge_bp_cont s (bp_end) (s ! [(s0, s1, merge_dp_cont d und)])).
+         { rewrite bpend_an. easy. }
+         rewrite H1 in H5.
+         apply BpBpeqInv2 in H5.
+         inversion H5. subst.
+         rewrite H5a in H0. rewrite bpend_an in H0. easy.
+         apply refinementR2_mon.
+         easy.
+         apply refinementR2_mon.
+         setoid_rewrite(st_eq(merge_dp_cont dp_end und)) in H. simpl in H.
+         destruct und, und; easy.
+Qed.
 
-
-
-
+Lemma refUnfD: forall d w w', (@und w) ~< (@und w') -> merge_dp_cont d (@und w) ~< merge_dp_cont d (@und w').
+Proof. intros.
+       destruct w as (w, Hw).
+       destruct w' as (w', Hw'). 
+       simpl in *.
+       revert w w' Hw Hw' H.
+       induction d; intros.
+       - setoid_rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w)).
+         setoid_rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w')). simpl.
+         pfold.
+         specialize (ref2_a (upaco2 refinementR2 bot2) w w' s s0 s1 s1 (ap_end) 1); intro Ha.
+         rewrite !apend_ann in Ha.
+         apply Ha. constructor. left. pfold.
+         punfold H.
+         apply refinementR2_mon.
+         specialize(classic(act_eq w w')); intros Hact.
+         destruct Hact. easy.
+         apply act_eq_neq in H0.
+         apply actNeq in H0. easy.
+         easy.
+       - setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w )).
+         setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w')). simpl.
+         pfold.
+         specialize (ref2_b (upaco2 refinementR2 bot2) w w' s s0 s1 s1 (bp_end) 1); intro Ha.
+         rewrite !bpend_ann in Ha.
+         apply Ha. constructor. left. pfold.
+         punfold H.
+         apply refinementR2_mon.
+         specialize(classic(act_eq w w')); intros Hact.
+         destruct Hact. easy.
+         apply act_eq_neq in H0.
+         apply actNeq in H0. easy.
+         easy.
+       - rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w)).
+         rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w')). simpl.
+         pfold.
+         specialize (ref2_a (upaco2 refinementR2 bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (ap_end) 1); intro Ha.
+         rewrite !apend_ann in Ha.
+         apply Ha. constructor.
+         specialize(IHd w w' Hw Hw').
+         left.
+         unfold refinement2 in IHd. apply IHd.
+         pfold. punfold H.
+         apply refinementR2_mon.
+         specialize(classic(act_eq (merge_dp_cont d w) (merge_dp_cont d w'))); intros Hact.
+         destruct Hact.
+         easy.
+         apply act_eq_neq in H0.
+         apply actNeq in H0. easy.
+         apply IHd. easy. easy. easy.
+       - rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w)).
+         rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w')). simpl.
+         pfold.
+         specialize (ref2_b (upaco2 refinementR2 bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (bp_end) 1); intro Ha.
+         rewrite !bpend_ann in Ha.
+         apply Ha. constructor.
+         specialize(IHd w w' Hw Hw').
+         left.
+         unfold refinement2 in IHd. apply IHd.
+         pfold. punfold H.
+         apply refinementR2_mon.
+         specialize(classic(act_eq (merge_dp_cont d w) (merge_dp_cont d w'))); intros Hact.
+         destruct Hact.
+         easy.
+         apply act_eq_neq in H0.
+         apply actNeq in H0. easy.
+         apply IHd. easy. easy. easy.
+       - rewrite !dpend_an. easy.
+Qed.
 
 
 

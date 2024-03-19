@@ -1323,10 +1323,113 @@ split.
 apply action_eq10. easy.
 Qed.
 
+CoFixpoint W2C: st := st_send "p" [("l3",sint,W2C)].
+Definition W2: st := st_receive "p" [("l2",sint,W2C)].
+
+Definition listW2C := [("p", snd)].
+
+Lemma w2singleton: singleton W2.
+Proof. pfold. 
+       rewrite(st_eq W2). simpl.
+       rewrite(st_eq W2C). simpl.
+       constructor.
+       left. pfold.
+       constructor. left.
+       pcofix CIH. pfold.
+       rewrite(st_eq W2C). simpl.
+       constructor.
+       right. exact CIH.
+Qed.
+
+Lemma refw2_refl: refinement W2 W2.
+Proof. rewrite(st_eq W2). simpl.
+       pfold.
+       specialize(ref_a (upaco2 refinementR bot2) W2C W2C "p" "l2" (I) (I) (ap_end) 1); intro Ha.
+       simpl in Ha.
+       rewrite !apend_an in Ha.
+       apply Ha. clear Ha.
+       constructor.
+       left.
+       pcofix CIH. pfold.
+       rewrite(st_eq W2C). simpl.
+       specialize(ref_b (upaco2 refinementR r) W2C W2C "p" "l3" (I) (I) (bp_end) 1); intro Hb.
+       simpl in Hb.
+       rewrite !bpend_an in Hb.
+       apply Hb. clear Ha Hb.
+       constructor.
+       right. exact CIH.
+       clear CIH.
+
+       exists listW2C.
+       exists listW2C.
+       split. unfold listW2C.
+       pcofix CIH.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       right. exact CIH.
+       
+       split. unfold listW2C.
+       pcofix CIH.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       right. exact CIH.
+       
+       split. unfold listW2C.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2C)). simpl. easy. easy.
+       constructor.
+       
+       split. unfold listW2C.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2C)). simpl. easy. easy.
+       constructor.
+       easy.
+
+       exists listW2C.
+       exists listW2C.
+       split. unfold listW2C.
+       pcofix CIH.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       right. exact CIH.
+       
+       split. unfold listW2C.
+       pcofix CIH.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       right. exact CIH.
+       
+       split. unfold listW2C.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2C)). simpl. easy. easy.
+       constructor.
+       
+       split. unfold listW2C.
+       rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2C)). simpl. easy. easy.
+       constructor.
+       easy.
+Qed.
+
 Lemma st2: subtype TB TB'.
 Proof. unfold subtype.
-       exists (mk_siso W3 (w3singleton)).
-       split.
+
+       exists(
+       [
+        ((mk_siso W3 (w3singleton)),(mk_siso W1 (w1singleton)));
+        ((mk_siso W2 (w2singleton)),(mk_siso W2 (w2singleton)))
+        ]
+       ).
+       simpl.
+       split. split. 
        pcofix CIH.
        pfold. simpl.
        rewrite (st_eq W3).
@@ -1340,9 +1443,8 @@ Proof. unfold subtype.
        left. pfold.
        apply st2siso_snd. simpl.
        right. exact CIH.
-
-       exists (mk_siso W1 (w1singleton)).
        split.
+
        pcofix CIH.
        pfold. simpl.
        rewrite (st_eq W1).
@@ -1353,6 +1455,34 @@ Proof. unfold subtype.
        apply st2siso_snd. simpl.
        right. exact CIH.
 
+       split.
+       rewrite (st_eq W2).
+       rewrite (st_eq TB).
+       simpl. pfold.
+       apply st2siso_rcv. simpl.
+       left. pcofix CIH.
+       pfold.
+       rewrite (st_eq W2C).
+       rewrite (st_eq TS). simpl.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+
+       split.
+       rewrite (st_eq W2).
+       rewrite (st_eq TB').
+       simpl. pfold.
+       apply st2siso_rcv. simpl.
+       left. pcofix CIH.
+       pfold.
+       rewrite (st_eq W2C).
+       rewrite (st_eq TS). simpl.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+
+       easy.
+       split.
+       exists dp_end. exists dp_end. intro n. rewrite !dpend_ann.
+
        specialize(WBRef 0); intros.
        rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
        simpl in H. simpl.
@@ -1360,5 +1490,9 @@ Proof. unfold subtype.
        simpl.
        apply H.
        constructor.
+       
+       split.
+       exists dp_end. exists dp_end. intro n. rewrite !dpend_ann.
+       apply refw2_refl.
+       easy.
 Qed.
-

@@ -123,8 +123,15 @@ Proof. unfold subtype.
          pfold. constructor. left. pfold. constructor.
          right. exact CIH.
        }
-       exists (mk_siso w2 Hw2).
-       split. simpl.
+       assert (singleton w1) as Hw1.
+       { pcofix CIH. rewrite(st_eq w1). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       exists [((mk_siso w2 Hw2),(mk_siso w1 Hw1))].
+       simpl.
+       split. split.
+
        pcofix CIH. pfold.
        rewrite(st_eq w2). simpl.
        rewrite(st_eq rcop). simpl.
@@ -133,22 +140,18 @@ Proof. unfold subtype.
        apply st2siso_rcv.
        simpl. right. apply CIH.
 
-       assert (singleton w1) as Hw1.
-       { pcofix CIH. rewrite(st_eq w1). simpl.
-         pfold. constructor. left. pfold. constructor.
-         right. exact CIH.
-       }
-       exists (mk_siso w1 Hw1).
-       split. simpl.
+       split.
        pcofix CIH. pfold. 
        rewrite(st_eq w1). simpl.
        rewrite(st_eq rcp). simpl.
        apply st2siso_rcv. simpl.
        left. pfold.
        apply st2siso_snd. simpl.
-       right. exact CIH.
+       right. exact CIH. easy.
+       split.
+       exists dp_end. exists dp_end. intro n.
+       rewrite !dpend_ann.
 
-       simpl.
        pcofix CIH. pfold.
        rewrite(st_eq w2). rewrite(st_eq w1). simpl.
        specialize(ref_b (upaco2 refinementR r) ("A" & [("add", I, w2)]) (w1)
@@ -197,4 +200,6 @@ Proof. unfold subtype.
        split.
        apply acteqr8.
        easy.
+       easy.
 Qed.
+

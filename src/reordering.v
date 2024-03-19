@@ -486,3 +486,54 @@ Proof. intros p c.
          simpl. easy.
 Qed.
 
+Inductive Dp: Type :=
+  | dp_receive: participant -> label -> st.sort -> Dp
+  | dp_send   : participant -> label -> st.sort -> Dp
+  | dp_mergea : participant -> label -> st.sort -> Dp -> Dp
+  | dp_merge  : participant -> label -> st.sort -> Dp -> Dp
+  | dp_end    : Dp.
+
+(* Arguments dp_merge {_}  _ _ _.
+Arguments dp_mergea {_} _ _ _. *)
+(* Arguments dp_receive _ _ _.
+Arguments dp_send _ _ _. *)
+
+
+CoFixpoint merge_dp_cont (d: Dp) (w: st): st :=
+  match d with 
+    | dp_receive q l s  => st_receive q [(l,s,w)]
+    | dp_send q l s     => st_send q [(l,s,w)]
+    | dp_mergea q l s c => st_receive q [(l,s,(merge_dp_cont c w))]
+    | dp_merge q l s c  => st_send q [(l,s,(merge_dp_cont c w))]
+    | dp_end            => w
+  end.
+
+Fixpoint merge_dp_contn (d: Dp) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_dp_cont d (merge_dp_contn d w k)
+  end.
+
+Fixpoint dpList (d: Dp): list (Dp) :=
+  match d with
+    | dp_receive q l s  => [d]
+    | dp_send q l s     => [d]
+    | dp_mergea q l s c => dp_receive q l s :: (dpList c)
+    | dp_merge q l s c  => dp_send q l s :: (dpList c)
+    | dp_end            => nil
+  end.
+
+Fixpoint listDp (l: list Dp): Dp :=
+  match l with
+    | nil   => dp_end
+    | x::xs => 
+      match x with
+        | dp_receive q l s => dp_mergea q l s (listDp xs)
+        | dp_send q l s    => dp_merge q l s (listDp xs)
+        | _                 => x
+      end
+  end.
+
+Definition DpnA (d: Dp) (n: nat): Dp :=
+  listDp (napp n (dpList d)).
+

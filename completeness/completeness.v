@@ -4,29 +4,24 @@ Require Import ST.src.stream ST.src.st ST.src.so ST.src.si
                ST.negations.nrefinement ST.negations.nsubtyping.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
-Lemma subNeqR: forall T T', nsubtype T T' -> (subtype2 T T' -> False).
-Proof. intros.
-       unfold subtype, nsubtype in *.
-       destruct H0 as (W, (Ha, (W',(Hb,Hc)))).
-       specialize(H W Ha W' Hb).
-       apply (nRefR W W'); easy.
-Qed.
-
 Lemma subNeqL: forall T T', (subtype2 T T' -> False) -> nsubtype T T'.
 Proof. intros.
-       unfold subtype, nsubtype in *.
-       intro W.
-       apply not_ex_all_not with (n := W) in H.
+       unfold subtype2, nsubtype in *.
+       intro l.
+       apply not_ex_all_not with (n := l) in H.
        apply not_and_or in H.
-       destruct H as [H | H].
-       intro Ha. easy.
-       intros Ha W'.
-       apply not_ex_all_not with (n := W') in H.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       intro Hb. easy.
-       intro Hb.
-       apply nRefL. easy.
+       intro Ha.
+       destruct H as [H | H]. easy.
+       apply trivL2. easy.
+Qed.
+
+Lemma subNeqR: forall T T', nsubtype T T' -> (subtype2 T T' -> False).
+Proof. intros.
+       unfold subtype2, nsubtype in *.
+       destruct H0 as (l, H0).
+       specialize(H l).
+       apply (trivL1 l). easy.
+       apply H. apply H0.
 Qed.
 
 Theorem completeness: forall T T', (subtype2 T T' -> False) <-> nsubtype T T'.
@@ -34,3 +29,4 @@ Proof. split.
        apply (subNeqL T T').
        intros. apply (subNeqR T T'); easy.
 Qed.
+
