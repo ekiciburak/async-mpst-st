@@ -133,5 +133,3 @@ Proof. intros.
        unfold upaco1 in H1. destruct H1; easy.
        apply sI_mon.
 Qed.
-
-

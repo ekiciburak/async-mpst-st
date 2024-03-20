@@ -69,3 +69,6 @@ Proof. unfold monotone2.
          apply LE. exact H0.
        - constructor.
 Qed.
+
+#[export]
+Declare Instance Ref_Trans: Transitive (refinement).
