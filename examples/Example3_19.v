@@ -2505,10 +2505,6 @@ Proof. intro k.
          apply actp31_B2.
 Qed.
 
-Lemma asd: forall n m, m + 1 <= n -> 0 < n - m.
-Proof. lia.
-Qed.
-
 Lemma act_eqw21: forall n,
 exists L1 L2 : list (participant * dir),
   coseqInLC (act (merge_dp_contn pi3 W2 n)) L1 /\
@@ -2883,14 +2879,16 @@ Proof. intro k.
          assert(u + (S k) = u + k + 1).
          { lia. }
          rewrite H2 in H.
-         apply asd in H.
+         assert(forall n m, m + 1 <= n -> 0 < n - m).
+         { lia. }
+         apply H3 in H.
          rewrite H0 in H.
          specialize(Href H).
          assert(u + k <= n).
          { lia. }
-         specialize(IHk n u H3).
+         specialize(IHk n u H4).
          assert(S (u + k) = (u + (S k))) by lia.
-         rewrite H4 in Href.
+         rewrite H5 in Href.
          specialize(Ref_Trans (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u)) u)
                               (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u - k)) (u + k))
                               (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u - (S k))) (u + (S k)))
