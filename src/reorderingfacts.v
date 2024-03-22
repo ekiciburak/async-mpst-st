@@ -3877,8 +3877,3 @@ Proof. intros.
          apply IHd. easy. easy. easy.
        - rewrite !dpend_an. easy.
 Qed.
-
-
-
-
-

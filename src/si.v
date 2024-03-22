@@ -24,16 +24,20 @@ Definition si_id (s: si): si :=
 Lemma si_eq: forall s, s = si_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-Inductive st2si (R: st -> st -> Prop) : st -> st -> Prop :=
+Fixpoint pathselSi (u: label) (l: list (label*st.sort*st)): st :=
+  match l with
+    | (lbl,s,x)::xs => if eqb u lbl then x else pathselSi u xs
+    | nil           => st_end
+  end.
+
+Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
   | st2si_end: st2si R st_end st_end
-  | st2si_rcv: forall l s x t xs p,
-               List.In (l,s,x) xs ->
-               R (st_receive p [(l,s,x)]) t ->
-               st2si R (st_receive p xs) t
-  | st2si_snd: forall p l s t xs ys,
-               List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
-               R (st_send p (zip (zip l s) ys)) t ->
-               st2si R (st_send p (zip (zip l s) xs)) t.
+  | st2si_rcv: forall l s x xs p,
+               R x (pathselSi l xs) ->
+               st2si R (st_receive p [(l,s,x)]) (st_receive p xs)
+  | st2si_snd: forall p l s xs ys,
+               List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
+               st2si R (st_send p (zip (zip l s) ys)) (st_send p (zip (zip l s) xs)).
 
 Lemma st2si_mon: monotone2 st2si.
 Proof. unfold monotone2.
@@ -42,8 +46,7 @@ Proof. unfold monotone2.
        - apply st2si_end.
        - specialize (st2si_rcv r'); intro HS.
          apply HS with (l := l) (s := s) (x := x).
-         apply H.
-         apply LE, H0.
+         apply LE, H.
        - specialize (st2si_snd r'); intro HS.
          apply HS with (l := l) (s := s) (ys := ys).
          apply Forall_forall.
@@ -53,7 +56,6 @@ Proof. unfold monotone2.
          rewrite Forall_forall in H.
          apply (H (x1,x2)).
          apply Ha.
-         apply LE, H0.
 Qed.
 
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2.
