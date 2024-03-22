@@ -18,11 +18,12 @@ The library succesfully compiles with the Coq compiler `coqc 8.18.0`.
 8 | `subtyping/refinement.v` | defines the SISO refinement (and refinement2) relation(s)
 9 | `subtyping/subtyping.v` | defines the subtyping (and subtyping2) relation(s)
 10 | `examples/ring_choice.v` | proves `ring-choice` protocol optimisation
-11 | `examples/Example3_17.v` | proves `Example 3-15` in `[1]`
-12 | `examples/Example3_19.v` | proves `Example 3-19` in `[1]`
-13 | `examples/Example4_14.v` | proves `Example 4-14` in `[1]`
-14 | `negations/nrefinement.v` | defines the negation of the SISO refinement relation $\not\lesssim$ inductively proves $\neg (w \lesssim w') \iff w \not\lesssim w'$
-15 | `negations/nsubtyping.v` | defines the negation of subtyping relation $\not\leqslant$
-16 | `completeness/completeness.v` | proves completeness of subtyping with respect to negations: $\neg (T \leqslant T') \iff T \not\leqslant T'$
+11 | `examples/Example3_17.v` | proves `Example 3-17` in `[1]`
+12 | `examples/Example3_18.v` | proves `Example 3-18` in `[1]`
+13 | `examples/Example3_19.v` | proves `Example 3-19` in `[1]`
+14 | `examples/Example4_14.v` | proves `Example 4-14` in `[1]`
+15 | `negations/nrefinement.v` | defines the negation of the SISO refinement relation $\not\lesssim$ inductively proves $\neg (w \lesssim w') \iff w \not\lesssim w'$
+16 | `negations/nsubtyping.v` | defines the negation of subtyping relation $\not\leqslant$
+17 | `completeness/completeness.v` | proves completeness of subtyping with respect to negations: $\neg (T \leqslant T') \iff T \not\leqslant T'$
 
 `[1] Ghilezan et al., Precise Subtyping for Asynchronous Multiparty Sessions [JLAMP 2023]`
