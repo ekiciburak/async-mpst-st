@@ -11,6 +11,7 @@ src/reorderingfacts.v
 subtyping/subtyping.v
 examples/ring_choice.v
 examples/Example3_17.v
+examples/Example3_18.v
 examples/Example3_19.v
 examples/Example4_14.v
 negations/nsubtyping.v
