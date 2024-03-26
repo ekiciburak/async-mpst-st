@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.subtyping.refinement.
+Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -717,7 +717,7 @@ Qed.
 
 (*shapes of terms wrt membership*)
 
-Lemma invsingl: forall p l, singleton (p & l) -> exists (l': label) (s: st.sort) (w: st), l = [((l',s),w)].
+Lemma invsingl: forall p l, singleton (p & l) -> exists (l': label) (s: local.sort) (w: st), l = [((l',s),w)].
 Proof. intros.
        induction l; intros.
        unfold singleton in H. punfold H. inversion H. 
@@ -728,7 +728,7 @@ Proof. intros.
        apply sI_mon.
 Qed.
 
-Lemma invsingl2: forall p l, singleton (p ! l) -> exists (l': label) (s: st.sort) (w: st), l = [((l',s),w)].
+Lemma invsingl2: forall p l, singleton (p ! l) -> exists (l': label) (s: local.sort) (w: st), l = [((l',s),w)].
 Proof. intros.
        induction l; intros.
        unfold singleton in H. punfold H. inversion H. 

@@ -1,5 +1,11 @@
 -R . ST
 
+processes/axioms.v
+processes/fintype.v
+processes/unscoped.v
+processes/header_extensible.v
+processes/process.v
+types/local.v
 src/stream.v
 src/st.v
 src/so.v

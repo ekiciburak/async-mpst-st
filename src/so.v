@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
-Require Import ST.src.stream ST.src.st.
+Require Import ST.src.stream ST.processes.process ST.src.st ST.types.local.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
@@ -22,7 +22,7 @@ Definition so_id (s: so): so :=
 Lemma so_eq: forall (s: so), s = so_id s.
 Proof. intro s; destruct s; simpl; try easy. destruct p as ((l,srt),t). easy. Defined.
 
-Fixpoint pathselSo (u: label) (l: list (label*st.sort*st)): st :=
+Fixpoint pathselSo (u: label) (l: list (label*sort*st)): st :=
   match l with
     | (lbl,s,x)::xs => if eqb u lbl then x else pathselSo u xs
     | nil           => st_end

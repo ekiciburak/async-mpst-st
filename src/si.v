@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import ST.src.stream ST.src.st.
+Require Import ST.src.stream ST.processes.process ST.src.st ST.types.local.
 Require Import String List.
 Import ListNotations.
 Require Import Setoid.
@@ -21,7 +21,7 @@ Definition si_id (s: si): si :=
 Lemma si_eq: forall s, s = si_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-Fixpoint pathselSi (u: label) (l: list (label*st.sort*st)): st :=
+Fixpoint pathselSi (u: label) (l: list (label*sort*st)): st :=
   match l with
     | (lbl,s,x)::xs => if eqb u lbl then x else pathselSi u xs
     | nil           => st_end

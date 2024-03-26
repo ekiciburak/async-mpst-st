@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering.
+Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.types.local ST.src.reordering.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -37,7 +37,7 @@ Qed.
 
 (* direct st -> siso -- omits the middle men so and si decompositions *)
 
-Fixpoint pathsel (u: label) (l: list (label*st.sort*st)): st :=
+Fixpoint pathsel (u: label) (l: list (label*local.sort*st)): st :=
   match l with
     | (lbl,s,x)::xs => if eqb u lbl then x else pathsel u xs
     | nil           => st_end

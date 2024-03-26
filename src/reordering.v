@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si.
+Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.types.local.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -145,8 +145,8 @@ Qed.
 (***********************)
 
 Inductive Ap (p: participant): Type :=
-  | ap_receive: forall q, p <> q -> label -> st.sort -> Ap p
-  | ap_merge  : forall q, p <> q -> label -> st.sort -> Ap p -> Ap p
+  | ap_receive: forall q, p <> q -> label -> local.sort -> Ap p
+  | ap_merge  : forall q, p <> q -> label -> local.sort -> Ap p -> Ap p
   | ap_end    : Ap p.
 
 Arguments ap_receive {_} _ _ _ _.
@@ -277,10 +277,10 @@ Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
   end.
 
 Inductive Bp (p: participant): Type :=
-  | bp_receivea: participant -> label -> st.sort -> Bp p
-  | bp_send    : forall q: participant, p <> q -> label -> st.sort -> Bp p
-  | bp_mergea  : participant -> label -> st.sort -> Bp p -> Bp p
-  | bp_merge   : forall q: participant, p <> q -> label -> st.sort -> Bp p -> Bp p
+  | bp_receivea: participant -> label -> local.sort -> Bp p
+  | bp_send    : forall q: participant, p <> q -> label -> local.sort -> Bp p
+  | bp_mergea  : participant -> label -> local.sort -> Bp p -> Bp p
+  | bp_merge   : forall q: participant, p <> q -> label -> local.sort -> Bp p -> Bp p
   | bp_end     : Bp p.
 
 Arguments bp_receivea {_} _ _ _.
@@ -372,10 +372,10 @@ Definition BpnA (p: participant) (b: Bp p) (n: nat): Bp p :=
   listBp p (napp n (bpList p b)).
 
 Inductive Cp (p: participant): Type :=
-  | cp_receive: forall q, p <> q -> label -> st.sort -> Cp p
-  | cp_mergea : forall q, p <> q -> label -> st.sort -> Cp p -> Cp p
-  | cp_send   : participant -> label -> st.sort -> Cp p
-  | cp_merge  : participant -> label -> st.sort -> Cp p -> Cp p
+  | cp_receive: forall q, p <> q -> label -> local.sort -> Cp p
+  | cp_mergea : forall q, p <> q -> label -> local.sort -> Cp p -> Cp p
+  | cp_send   : participant -> label -> local.sort -> Cp p
+  | cp_merge  : participant -> label -> local.sort -> Cp p -> Cp p
   | cp_end    : Cp p.
 
 Arguments cp_receive {_} _ _ _ _.
@@ -487,10 +487,10 @@ Proof. intros p c.
 Qed.
 
 Inductive Dp: Type :=
-  | dp_receive: participant -> label -> st.sort -> Dp
-  | dp_send   : participant -> label -> st.sort -> Dp
-  | dp_mergea : participant -> label -> st.sort -> Dp -> Dp
-  | dp_merge  : participant -> label -> st.sort -> Dp -> Dp
+  | dp_receive: participant -> label -> local.sort -> Dp
+  | dp_send   : participant -> label -> local.sort -> Dp
+  | dp_mergea : participant -> label -> local.sort -> Dp -> Dp
+  | dp_merge  : participant -> label -> local.sort -> Dp -> Dp
   | dp_end    : Dp.
 
 (* Arguments dp_merge {_}  _ _ _.

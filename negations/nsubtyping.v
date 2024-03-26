@@ -1,5 +1,5 @@
-Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering 
-               ST.src.siso ST.subtyping.refinement ST.src.reorderingfacts 
+Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering 
+               ST.src.siso ST.types.local ST.subtyping.refinement ST.src.reorderingfacts 
                ST.subtyping.subtyping ST.negations.nrefinement.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
