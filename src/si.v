@@ -3,9 +3,6 @@ From Paco Require Import paco.
 Require Import ST.src.stream ST.src.st.
 Require Import String List.
 Import ListNotations.
-
-
-From Paco Require Import paco.
 Require Import Setoid.
 Require Import Morphisms.
 
@@ -30,14 +27,14 @@ Fixpoint pathselSi (u: label) (l: list (label*st.sort*st)): st :=
     | nil           => st_end
   end.
 
-Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
-  | st2si_end: st2si R st_end st_end
+Inductive st2si (R: si -> st -> Prop): si -> st -> Prop :=
+  | st2si_end: st2si R si_end st_end
   | st2si_rcv: forall l s x xs p,
                R x (pathselSi l xs) ->
-               st2si R (st_receive p [(l,s,x)]) (st_receive p xs)
+               st2si R (si_receive p (l,s,x)) (st_receive p xs)
   | st2si_snd: forall p l s xs ys,
                List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
-               st2si R (st_send p (zip (zip l s) ys)) (st_send p (zip (zip l s) xs)).
+               st2si R (si_send p (zip (zip l s) ys)) (st_send p (zip (zip l s) xs)).
 
 Lemma st2si_mon: monotone2 st2si.
 Proof. unfold monotone2.
