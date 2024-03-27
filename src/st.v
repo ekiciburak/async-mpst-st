@@ -55,3 +55,8 @@ Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
                lt2st R (lt_mu l) t.
 
 Definition lt2stC l t := paco2 lt2st bot2 l t.
+
+
+(* Parameters (p: process).
+Check p [ps_mu p .: ps_var]. *)
+
