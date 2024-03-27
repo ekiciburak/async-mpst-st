@@ -5,6 +5,7 @@ processes/fintype.v
 processes/unscoped.v
 processes/header_extensible.v
 processes/process.v
+processes/beta.v
 types/local.v
 src/stream.v
 src/st.v

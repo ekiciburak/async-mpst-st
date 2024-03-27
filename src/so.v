@@ -34,6 +34,7 @@ Inductive st2so (R: so -> st -> Prop): so -> st -> Prop :=
                R x (pathselSo l xs) ->
                st2so R (so_send p (l,s,x)) (st_send p xs)
   | st2so_rcv: forall p l s xs ys,
+               length xs = length ys ->
                List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
                st2so R (so_receive p (zip (zip l s) ys)) (st_receive p (zip (zip l s) xs)).
 
@@ -48,13 +49,13 @@ Proof. unfold monotone2.
          apply HS with (l := l) (s := s) (x := x).
          apply LE, H.
        - specialize (st2so_rcv r'); intro HS.
-         apply HS with (l := l) (s := s) (ys := ys).
+         apply HS with (l := l) (s := s) (ys := ys). easy.
          apply Forall_forall.
          intros(x1,x2) Ha.
          simpl.
          apply LE.
-         rewrite Forall_forall in H.
-         apply (H (x1,x2)).
+         rewrite Forall_forall in H0.
+         apply (H0 (x1,x2)).
          apply Ha.
 Qed.
 
@@ -95,7 +96,7 @@ Proof. pcofix CIH.
        ); intro Ha.
        simpl in Ha.
        apply Ha; clear Ha.
-       simpl.
+       simpl. easy.
        apply Forall_forall.
        intros (a,b) Hb.
        simpl in Hb.
@@ -112,7 +113,7 @@ Proof. pcofix CIH.
        ); intro Ha.
        simpl in Ha.
        rewrite(so_eq Et1so). simpl.
-       apply Ha; clear Ha.
+       apply Ha; clear Ha. easy.
        apply Forall_forall.
        intros (a,b) Hc.
        simpl in Hc.
@@ -131,7 +132,7 @@ Proof. pcofix CIH.
        ); intro Ha.
        simpl in Ha.
        apply Ha; clear Ha.
-       simpl.
+       simpl. easy.
        apply Forall_forall.
        intros (a,b) Hc.
        simpl in Hc.

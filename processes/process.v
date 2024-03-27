@@ -10,17 +10,24 @@ Notation label := string.
 
 Inductive value: Type :=
  | vint : Z    -> value
- | vbool: bool -> value
- | vunit: unit -> value.
+ | vbool: bool -> value.
+
+Inductive aexpr: Type :=
+  | aeval : Z      -> aexpr
+  | aevar : string -> aexpr
+  | aesucc: aexpr  -> aexpr
+  | aeinv : aexpr  -> aexpr.
+
+Inductive bexpr: Type :=
+  | beval : bool   -> bexpr
+  | bevar : string -> bexpr
+  | beneg : bexpr  -> bexpr.
 
 Inductive expr: Type :=
-  | eval : value  -> expr
-  | evar : string -> expr
-  | esucc: expr   -> expr
-  | einv : expr   -> expr
-  | eneg : expr   -> expr
-  | eisgt: expr   -> expr
-  | eistt: expr   -> expr.
+  | isval : value -> expr
+  | isae  : aexpr -> expr
+  | isbe  : bexpr -> expr
+  | isgt  : aexpr -> expr.
 
 Inductive mqueue: Type := 
   | nilq: mqueue
@@ -39,6 +46,13 @@ Inductive process  : Type :=
   | ps_receive: participant -> list(label*expr*process) -> process 
   | ps_ite    : expr -> process -> process -> process 
   | ps_mu     : process -> process.
+
+Inductive session: Type :=
+  | sind: participant -> process -> mqueue -> session
+  | spar: session -> session -> session.
+
+Notation "p '<--' P '|' h" :=  (sind p P h) (at level 50, left associativity).
+Notation "s1 '||' s2" :=  (spar s1 s2) (at level 50, left associativity).
 
 Lemma congr_ps_end  : ps_end  = ps_end.
 Proof. congruence. Qed.
@@ -80,6 +94,27 @@ Fixpoint subst_process   (sigmaprocess : ( fin ) -> process ) (s : process ) : p
     | ps_ite  s0 s1 s2 => ps_ite  ((fun x => x) s0) ((subst_process sigmaprocess) s1) ((subst_process sigmaprocess) s2)
     | ps_mu  s0 => ps_mu  ((subst_process (up_process_process sigmaprocess)) s0)
     end.
+
+Fixpoint unfold_muP (s: process): process :=
+  match s with
+    | ps_mu p          => subst_process ((ps_mu p) .: ps_var) p
+    | ps_send a l e p  => ps_send a l e (unfold_muP p)
+    | ps_receive s0 s1 => ps_receive ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (unfold_muP))) s1)
+    | ps_ite  s0 s1 s2 => ps_ite  ((fun x => x) s0) ((unfold_muP) s1) ((unfold_muP) s2)
+    | _                 => s
+  end.
+
+(*
+Check ps_send.
+Check vint.
+Let pr := ps_mu (ps_send "p" "l" (eval (vint 10)) (ps_var 0)).
+Let pr2 := Eval compute in unfold_muP pr.
+Compute unfold_muP pr2.
+Print pr. *)
+
+
+(* Parameters (p: process).
+Check p [ps_mu p .: ps_var]. *)
 
 Definition upId_process_process  (sigma : ( fin ) -> process ) (Eq : forall x, sigma x = (ps_var ) x) : forall x, (up_process_process sigma) x = (ps_var ) x :=
   fun n => match n with

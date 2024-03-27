@@ -1,11 +1,9 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
-Require Import ST.src.stream.
+Require Import ST.src.stream ST.processes.process ST.types.local.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
-Require Import ST.processes.process ST.types.local ST.processes.unscoped.
-
 
 (* session trees *)
 CoInductive st: Type :=
@@ -16,8 +14,8 @@ CoInductive st: Type :=
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p l s xs ys,
-                List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
-                st_equiv R (st_receive p (zip (zip l s) xs)) (st_receive p (zip (zip l s) ys))
+               List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
+               st_equiv R (st_receive p (zip (zip l s) xs)) (st_receive p (zip (zip l s) ys))
   | eq_st_snd: forall p l s xs ys,
                List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
                st_equiv R (st_send p (zip (zip l s) xs)) (st_send p (zip (zip l s) ys)).
@@ -45,18 +43,27 @@ Proof. intro s; destruct s; easy. Defined.
 Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
   | lt2st_end: lt2st R lt_end st_end
   | lt2st_rcv: forall p l s xs ys,
+               length xs = length ys ->
                List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
                lt2st R (lt_receive p (zip (zip l s) xs)) (st_receive p (zip (zip l s) ys))
   | lt2st_snd: forall p l s xs ys,
+               length xs = length ys ->
                List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
                lt2st R (lt_send p (zip (zip l s) xs)) (st_send p (zip (zip l s) ys))
   | lt2st_mu : forall l t,
-               lt2st R (l [lt_mu l .: lt_var]) t ->
+               lt2st R (unfold_muL l) t ->
                lt2st R (lt_mu l) t.
 
 Definition lt2stC l t := paco2 lt2st bot2 l t.
 
+(*
+Check lt_send.
+Check lt_var 0.
 
-(* Parameters (p: process).
-Check p [ps_mu p .: ps_var]. *)
+Let lr := lt_mu (lt_send "p" [("l",sint,(lt_var 0))] ).
+Let lr2 := Eval compute in unfold_muL lr.
+Compute unfold_muL lr2.
+Print lr.
+Print lr2.  *)
+
 

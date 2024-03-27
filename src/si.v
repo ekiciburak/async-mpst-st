@@ -33,6 +33,7 @@ Inductive st2si (R: si -> st -> Prop): si -> st -> Prop :=
                R x (pathselSi l xs) ->
                st2si R (si_receive p (l,s,x)) (st_receive p xs)
   | st2si_snd: forall p l s xs ys,
+               length xs = length ys ->
                List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
                st2si R (si_send p (zip (zip l s) ys)) (st_send p (zip (zip l s) xs)).
 
@@ -45,13 +46,13 @@ Proof. unfold monotone2.
          apply HS with (l := l) (s := s) (x := x).
          apply LE, H.
        - specialize (st2si_snd r'); intro HS.
-         apply HS with (l := l) (s := s) (ys := ys).
+         apply HS with (l := l) (s := s) (ys := ys). easy.
          apply Forall_forall.
          intros(x1,x2) Ha.
          simpl.
          apply LE.
-         rewrite Forall_forall in H.
-         apply (H (x1,x2)).
+         rewrite Forall_forall in H0.
+         apply (H0 (x1,x2)).
          apply Ha.
 Qed.
 

@@ -110,6 +110,16 @@ Fixpoint subst_local   (sigmalocal : ( nat ) -> local ) (s : local ) : local  :=
     | lt_mu  s0 => lt_mu  ((subst_local (up_local_local sigmalocal)) s0)
     end.
 
+Fixpoint unfold_muL (l: local): local :=
+  match l with
+    | lt_mu l          => subst_local ((lt_mu l) .: lt_var) l
+    | lt_send s0 s1    => lt_send ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (unfold_muL))) s1)
+    | lt_receive s0 s1 => lt_receive ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (unfold_muL))) s1)
+    | _                => l
+  end.
+
+Local Open Scope list_scope.
+
 Definition upId_local_local  (sigma : nat -> local ) (Eq : forall x, sigma x = (lt_var ) x) : 
   forall x, (up_local_local sigma) x = (lt_var ) x :=
   fun n => match n with
