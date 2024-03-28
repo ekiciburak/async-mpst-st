@@ -4,11 +4,13 @@ From Paco Require Import paco.
 Require Import String List ZArith Relations.
 Local Open Scope string_scope.
 Import ListNotations.
+Require Import Setoid Morphisms.
 
 Definition veqb (v1 v2: value): bool :=
   match (v1, v2) with
     | (vint n1, vint n2  ) => Z.eqb n1 n2
     | (vbool n1, vbool n2) => Bool.eqb n1 n2
+    | (vunit tt, vunit tt) => true
     | _                    => false
   end.
 
@@ -39,11 +41,12 @@ Definition eeqb (e1 e2: expr): bool :=
 
 Definition total_map (A : Type) := string -> A.
 Definition state := total_map (Z*bool).
+Definition estate := fun (x: string) => (0%Z,false).
 
-Fixpoint aeval (m: state) (e: aexpr): Z :=
+Fixpoint aevaluate (m: state) (e: aexpr): Z :=
   match e with
-    | aeinv e1  => (aeval m e1) * (-1)
-    | aesucc e1 => (aeval m e1) + 1
+    | aeinv e1  => (aevaluate m e1) * (-1)
+    | aesucc e1 => (aevaluate m e1) + 1
     | aevar x   => fst (m x) 
     | aeval n   => n
   end.
@@ -54,18 +57,18 @@ Definition negate(b: bool): bool :=
     | false => true
   end.
 
-Fixpoint beval (m: state) (e: bexpr): bool :=
+Fixpoint bevaluate (m: state) (e: bexpr): bool :=
   match e with
-    | beneg e1  => negate (beval m e1)
+    | beneg e1  => negate (bevaluate m e1)
     | bevar x   => snd (m x) 
     | beval n   => n
   end.
 
 Definition eval (m: state) (e: expr): value :=
   match e with
-    | isae a  => vint (aeval m a)
-    | isbe b  => vbool (beval m b)
-    | isgt e1 => vbool (Z.eqb (aeval m e1) 0)
+    | isae a  => vint (aevaluate m a)
+    | isbe b  => vbool (bevaluate m b)
+    | isgt e1 => vbool (Z.eqb (aevaluate m e1) 0)
     | isval n => n 
   end.
 
@@ -92,6 +95,8 @@ Definition exprR (e: expr) (y: string) (e1: expr): expr :=
     | (isae a, isae a1)  => isae (aexprR a y a1)
     | (isbe b, isbe b1)  => isbe (bexprR b y b1)
     | (isgt a, isgt a1)  => isgt (aexprR a y a1)
+    | (isae a, isval (vint a1)) => isae (aexprR a y (aeval a1))
+    | (isbe a, isval (vbool a1)) => isbe (bexprR a y (beval a1))
     | _                  => e
   end.
 
@@ -133,30 +138,46 @@ Inductive pcong: relation process :=
   | pmuUnf: forall p, pcong (ps_mu p) (unfold_muP p).
 
 Inductive scong: relation session :=
-  | sann  : forall p M, scong (p <-- ps_end | nilq || M) M
-  | scomm : forall M1 M2, scong (M1 || M2) (M2 || M1)
-  | sassoc: forall M1 M2 M3, scong (M1 || (M2 || M3)) ((M1 || M2) || M3)
-  | scongl: forall p P Q h1 h2 M, pcong P Q -> qcong h1 h2 -> 
-                                  scong (p <-- P | h1 || M) (p <-- Q | h2 || M).
+  | sann   : forall p M, scong ((p <-- ps_end | nilq) ||| M) M
+  | scomm  : forall M1 M2, scong (M1 ||| M2) (M2 ||| M1)
+  | sassoc : forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M2 ||| M3))
+  | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M3 ||| M2))
+  | scongl : forall p P Q h1 h2 M, pcong P Q -> qcong h1 h2 -> 
+                                   scong ((p <-- P | h1) ||| M) ((p <-- Q | h2) ||| M).
 
 Inductive beta: relation session :=
-  | r_send : forall p q l e v P hp M c, eval c e = v -> 
-                                        beta (p <-- (ps_send l q e P) | hp || M) 
-                                             (p <-- P | conq hp (mesq q l v nilq) || M)
-  | r_rcv   : forall p q l xs v Q hp hq M, beta (p <-- ps_receive q xs | hp || (q <-- Q | conq (mesq p l v nilq) hq) || M)
-                                                (p <-- subst_expr (ps_receive q xs) l (isval v) | hp  || (q <-- Q | hq) || M)
-  | r_cond_t: forall p e P Q h M c, eval c e = vbool true  -> beta (p <-- ps_ite e P Q | h || M) (p <-- P | h || M)
-  | r_cond_f: forall p e P Q h M c, eval c e = vbool false -> beta (p <-- ps_ite e P Q | h || M) (p <-- Q | h || M)
+  | r_send : forall p q l e P hp M c, beta ((p <-- (ps_send q l e P) | hp) ||| M) 
+                                           ((p <-- P | conq hp (mesq q l (eval c e) nilq)) ||| M)
+  | r_rcv   : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) ||| (q <-- Q | conq (mesq p l v nilq) hq) ||| M)
+                                                ((p <-- subst_expr (ps_receive q xs) l (isval v) | hp)  ||| (q <-- Q | hq) ||| M)
+  | r_cond_t: forall p e P Q h M c, eval c e = vbool true  -> beta ((p <-- ps_ite e P Q | h) ||| M) ((p <-- P | h) ||| M)
+  | r_cond_f: forall p e P Q h M c, eval c e = vbool false -> beta ((p <-- ps_ite e P Q | h) ||| M) ((p <-- Q | h) ||| M)
   | r_struct: forall M1 M1' M2 M2', scong M1 M1' -> scong M2' M2 -> beta M1' M2' -> beta M1 M2.
+
+Declare Instance Equivalence_beta : Equivalence beta.
+Declare Instance Equivalence_scong : Equivalence scong.
 
 Inductive multi {X : Type} (R : relation X) : relation X :=
   | multi_refl : forall (x : X), multi R x x
-  | multi_step : forall (x y z : X),
-                    R x y ->
-                    multi R y z ->
-                    multi R x z.
+  | multi_step : forall (x y z : X), R x y -> multi R y z -> multi R x z.
 
 Definition beta_multistep := multi beta.
-(* Parameter (M: session).
-Check beta_multistep M M. *)
 
+(* #[global]
+Declare Instance RW_scong1: Proper (scong ==> scong ==> flip impl) beta.
+#[global]
+Declare Instance RW_scong2: Proper (scong ==> scong ==> flip impl) beta_multistep. *)
+
+#[global]
+Declare Instance RW_scong3: Proper (scong ==> scong ==> impl) beta.
+#[global]
+Declare Instance RW_scong4: Proper (scong ==> scong ==> impl) beta_multistep.
+
+(* #[global]
+Declare Instance RW_scong5: Proper (scong ==> flip scong ==> impl) beta_multistep.
+#[global]
+Declare Instance RW_scong6: Proper (flip scong ==> scong ==> impl) beta_multistep.
+#[global]
+Declare Instance RW_scong7: Proper (scong ==> flip scong ==> flip impl) beta_multistep.
+#[global]
+Declare Instance RW_scong8: Proper (flip scong ==> scong ==> flip impl) beta_multistep. *)

@@ -22,16 +22,10 @@ Definition so_id (s: so): so :=
 Lemma so_eq: forall (s: so), s = so_id s.
 Proof. intro s; destruct s; simpl; try easy. destruct p as ((l,srt),t). easy. Defined.
 
-Fixpoint pathselSo (u: label) (l: list (label*sort*st)): st :=
-  match l with
-    | (lbl,s,x)::xs => if eqb u lbl then x else pathselSo u xs
-    | nil           => st_end
-  end.
-
 Inductive st2so (R: so -> st -> Prop): so -> st -> Prop :=
   | st2so_end: st2so R so_end st_end
   | st2so_snd: forall l s x xs p,
-               R x (pathselSo l xs) ->
+               R x (pathsel l s xs) ->
                st2so R (so_send p (l,s,x)) (st_send p xs)
   | st2so_rcv: forall p l s xs ys,
                length xs = length ys ->

@@ -37,19 +37,13 @@ Qed.
 
 (* direct st -> siso -- omits the middle men so and si decompositions *)
 
-Fixpoint pathsel (u: label) (l: list (label*local.sort*st)): st :=
-  match l with
-    | (lbl,s,x)::xs => if eqb u lbl then x else pathsel u xs
-    | nil           => st_end
-  end.
-
 Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
   | st2siso_end: st2siso R st_end st_end
   | st2siso_rcv: forall l s x xs p,
-                  R x (pathsel l xs) ->
+                  R x (pathsel l s xs) ->
                   st2siso R (st_receive p [(l,s,x)]) (st_receive p xs) 
   | st2siso_snd: forall l s x xs p,
-                  R x (pathsel l xs) ->
+                  R x (pathsel l s xs) ->
                   st2siso R (st_send p [(l,s,x)]) (st_send p xs) .
 
 Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s1 s2.

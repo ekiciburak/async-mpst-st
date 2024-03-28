@@ -1,5 +1,5 @@
 Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering 
-               ST.src.siso ST.subtyping.refinement ST.src.reorderingfacts.
+               ST.src.siso ST.types.local ST.subtyping.refinement ST.src.reorderingfacts.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List Coq.Arith.Even.
@@ -29,3 +29,9 @@ Fixpoint listSisoPRef2 (l: list (siso*siso)): Prop :=
   end.
 
 Definition subtype2 (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef2 l.
+
+Definition subltype (T T': local) :=
+  exists T1 T2, lt2stC T T1 /\ lt2stC T' T2 /\ subtype T1 T2.
+
+Definition subltype2 (T T': local) :=
+  exists T1 T2, lt2stC T T1 /\ lt2stC T' T2 /\ subtype2 T1 T2.

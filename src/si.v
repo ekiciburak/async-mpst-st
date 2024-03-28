@@ -21,16 +21,10 @@ Definition si_id (s: si): si :=
 Lemma si_eq: forall s, s = si_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-Fixpoint pathselSi (u: label) (l: list (label*sort*st)): st :=
-  match l with
-    | (lbl,s,x)::xs => if eqb u lbl then x else pathselSi u xs
-    | nil           => st_end
-  end.
-
 Inductive st2si (R: si -> st -> Prop): si -> st -> Prop :=
   | st2si_end: st2si R si_end st_end
   | st2si_rcv: forall l s x xs p,
-               R x (pathselSi l xs) ->
+               R x (pathsel l s xs) ->
                st2si R (si_receive p (l,s,x)) (st_receive p xs)
   | st2si_snd: forall p l s xs ys,
                length xs = length ys ->

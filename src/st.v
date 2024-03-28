@@ -66,4 +66,19 @@ Compute unfold_muL lr2.
 Print lr.
 Print lr2.  *)
 
+Definition sort_eqb (s1 s2: local.sort): bool :=
+  match (s1,s2) with
+    | (sunit, sunit) => true
+    | (sbool, sbool) => true
+    | (sint, sint)   => true
+    | (snat, snat)   => true
+    | _              => false
+  end.
+
+Fixpoint pathsel (u: label) (v: local.sort) (l: list (label*local.sort*st)): st :=
+  match l with
+    | (lbl,s,x)::xs => if andb (eqb u lbl) (sort_eqb v s) then x else pathsel u v xs
+    | nil           => st_end
+  end.
+
 

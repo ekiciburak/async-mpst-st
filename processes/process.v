@@ -5,12 +5,13 @@ Require Import String List ZArith.
 Local Open Scope string_scope.
 Import ListNotations.
 
-Notation participant := string.
-Notation label := string.
+Notation participant := string (only parsing).
+Notation label := string (only parsing).
 
 Inductive value: Type :=
  | vint : Z    -> value
- | vbool: bool -> value.
+ | vbool: bool -> value
+ | vunit: unit -> value.
 
 Inductive aexpr: Type :=
   | aeval : Z      -> aexpr
@@ -51,8 +52,8 @@ Inductive session: Type :=
   | sind: participant -> process -> mqueue -> session
   | spar: session -> session -> session.
 
-Notation "p '<--' P '|' h" :=  (sind p P h) (at level 50, left associativity).
-Notation "s1 '||' s2" :=  (spar s1 s2) (at level 50, left associativity).
+Notation "p '<--' P '|' h" :=  (sind p P h) (at level 50, no associativity).
+Notation "s1 '|||' s2" :=  (spar s1 s2) (at level 50, no associativity): type_scope.
 
 Lemma congr_ps_end  : ps_end  = ps_end.
 Proof. congruence. Qed.

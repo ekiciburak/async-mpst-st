@@ -16,6 +16,7 @@ src/siso.v
 subtyping/refinement.v
 src/reorderingfacts.v
 subtyping/subtyping.v
+examples/Example2_3.v
 examples/ring_choice.v
 examples/Example3_17.v
 examples/Example3_18.v
