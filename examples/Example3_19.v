@@ -9,6 +9,25 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
+Definition lTS: local :=
+  lt_mu (lt_send "p" [("l3",sint,(lt_var 0))]).
+
+Definition lTB: local :=
+  lt_mu 
+  (lt_receive "p"
+  [
+   ("l1",sint,lt_send "p" [("l3",sint,lt_send "p" [("l3",sint,lt_send "p" [("l3",sint,(lt_var 0))])])]);
+   ("l2",sint,lTS)
+  ]).
+
+Definition lTB': local :=
+  lt_mu
+  (lt_receive "p"
+  [
+   ("l1",sint,lt_send "p" [("l3",sint,(lt_var 0))]);
+   ("l2",sint,lTS)
+  ]).
+
 CoFixpoint TS: st :=
   st_send "p" [("l3",sint,TS)].
 
@@ -3017,3 +3036,162 @@ Proof. unfold subtype.
 
        easy.
 Qed.
+
+Lemma lTB2TB: lt2stC lTB TB.
+Proof. pcofix CIH. unfold lTB, lTS.
+       rewrite(st_eq TB). simpl. pfold.
+       apply lt2st_mu. simpl. unfold unscoped.var_zero.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "p" ["l1";"l2"] [(I);(I)]
+       [lt_send "p"
+         [("l3", I,
+           lt_send "p"
+             [("l3", I,
+               lt_send "p"
+                 [("l3", I,
+                   lt_mu
+                     (lt_receive "p"
+                        [("l1", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_var 0)])])]);
+                         ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))]))])])];
+        lt_mu (lt_send "p" [("l3", I, lt_var 0)])]
+       ["p" ! [("l3", I, "p" ! [("l3", I, "p" ! [("l3", I, TB)])])]; TS]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l, s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H.
+       left. pfold. simpl.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_send "p"
+         [("l3", I,
+           lt_send "p"
+             [("l3", I,
+               lt_mu
+                 (lt_receive "p"
+                    [("l1", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_var 0)])])]);
+                     ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))]))])]]
+       ["p" ! [("l3", I, "p" ! [("l3", I, TB)])]]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H.
+       left. pfold. simpl.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_send "p"
+             [("l3", I,
+               lt_mu
+                 (lt_receive "p"
+                    [("l1", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_var 0)])])]);
+                     ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))]))]]
+       ["p" ! [("l3", I, TB)]]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy. 
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H.
+       left. pfold. simpl.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_mu
+                 (lt_receive "p"
+                    [("l1", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_send "p" [("l3", I, lt_var 0)])])]);
+                     ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))])]
+       [TB]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy. 
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H.
+       right. unfold lTB in CIH. simpl. exact CIH.
+       easy.
+       easy.
+       easy.
+       destruct H as [H | H].
+       simpl in H. inversion H. subst. clear H.
+       simpl. clear CIH.
+       left. pcofix CIH. pfold.
+       apply lt2st_mu. simpl.
+       rewrite(st_eq TS). simpl. 
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_mu (lt_send "p" [("l3", I, lt_var 0)])]
+       [TS]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H.
+       simpl. right. exact CIH.
+       easy.
+       easy.
+Qed.
+
+Lemma lTB'2TB': lt2stC lTB' TB'.
+Proof. pcofix CIH. unfold lTB', lTS.
+       rewrite(st_eq TB'). simpl. pfold.
+       apply lt2st_mu. simpl. unfold unscoped.var_zero.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "p" ["l1";"l2"] [(I);(I)]
+       [lt_send "p"
+         [("l3", I,
+           lt_mu
+             (lt_receive "p"
+                [("l1", I, lt_send "p" [("l3", I, lt_var 0)]);
+                 ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))]))];
+       lt_mu (lt_send "p" [("l3", I, lt_var 0)])]
+       ["p" ! [("l3", I, TB')]; TS]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l, s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H. simpl.
+       left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_mu
+         (lt_receive "p"
+            [("l1", I, lt_send "p" [("l3", I, lt_var 0)]);
+             ("l2", I, lt_mu (lt_send "p" [("l3", I, lt_var 0)]))])]
+       [TB']
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy. 
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H. simpl.
+       right. unfold lTB', lTS in CIH. exact CIH.
+       easy.
+       destruct H as [H | H]. inversion H.
+       subst. clear H. simpl.
+       clear CIH. left. pcofix CIH. pfold.
+       rewrite(st_eq TS). simpl.
+       apply lt2st_mu. simpl.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "p" ["l3"] [(I)]
+       [lt_mu (lt_send "p" [("l3", I, lt_var 0)])]
+       [TS]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy. 
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H]. inversion H.
+       subst. clear H. simpl.
+       right. exact CIH.
+       easy.
+       easy.
+Qed.
+
+Lemma lT'_lT: subltype lTB lTB' TB TB' lTB2TB lTB'2TB'.
+Proof. unfold subltype.
+       exact st2.
+Qed.
+
