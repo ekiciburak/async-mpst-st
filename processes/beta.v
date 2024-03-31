@@ -141,7 +141,8 @@ Inductive scong: relation session :=
   | sann   : forall p M, scong ((p <-- ps_end | nilq) ||| M) M
   | scomm  : forall M1 M2, scong (M1 ||| M2) (M2 ||| M1)
   | sassoc : forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M2 ||| M3))
-  | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M3 ||| M2))
+(*   | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) ((M1 ||| M2) ||| M3) *)
+  | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M3 ||| M2)) 
   | scongl : forall p P Q h1 h2 M, pcong P Q -> qcong h1 h2 -> 
                                    scong ((p <-- P | h1) ||| M) ((p <-- Q | h2) ||| M).
 

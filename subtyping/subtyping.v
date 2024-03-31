@@ -30,8 +30,6 @@ Fixpoint listSisoPRef2 (l: list (siso*siso)): Prop :=
 
 Definition subtype2 (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef2 l.
 
-Definition subltype (T T': local) :=
-  exists T1 T2, lt2stC T T1 /\ lt2stC T' T2 /\ subtype T1 T2.
+Definition subltype (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2) := subtype T1 T2.
 
-Definition subltype2 (T T': local) :=
-  exists T1 T2, lt2stC T T1 /\ lt2stC T' T2 /\ subtype2 T1 T2.
+Definition subltype2 (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2) := subtype2 T1 T2.

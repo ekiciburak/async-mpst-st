@@ -51,7 +51,7 @@ Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
                List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
                lt2st R (lt_send p (zip (zip l s) xs)) (st_send p (zip (zip l s) ys))
   | lt2st_mu : forall l t,
-               lt2st R (unfold_muL l) t ->
+               lt2st R (unfold_muL (lt_mu l)) t ->
                lt2st R (lt_mu l) t.
 
 Definition lt2stC l t := paco2 lt2st bot2 l t.
@@ -61,8 +61,8 @@ Check lt_send.
 Check lt_var 0.
 
 Let lr := lt_mu (lt_send "p" [("l",sint,(lt_var 0))] ).
-Let lr2 := Eval compute in unfold_muL lr.
-Compute unfold_muL lr2.
+Let lr2 := Eval simpl in unfold_muL lr.
+Eval simpl in unfold_muL lr2.
 Print lr.
 Print lr2.  *)
 

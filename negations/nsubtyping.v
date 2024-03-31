@@ -19,6 +19,8 @@ Fixpoint listSisoNRef (l: list (siso*siso)): Prop :=
 
 Definition nsubtype (T T': st): Prop := forall (l: list (siso*siso)), decomposeL l T T' -> listSisoNRef l.
 
+Definition nsubltype (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2 ) := nsubtype T1 T2.
+
 Lemma trivL2:  forall l, (listSisoPRef2 l -> False) -> listSisoNRef l.
 Proof. intro l.
        induction l; intros.

@@ -30,3 +30,9 @@ Proof. split.
        intros. apply (subNeqR T T'); easy.
 Qed.
 
+Theorem lcompleteness: forall T T' T1 T2 (P: lt2stC T T1) (Q: lt2stC T' T2), 
+  (subltype2 T T' T1 T2 P Q -> False) <-> nsubltype T T' T1 T2 P Q.
+Proof. unfold subltype2, nsubltype.
+       intros T T' T1 T2 P Q.
+       apply completeness.
+Qed.

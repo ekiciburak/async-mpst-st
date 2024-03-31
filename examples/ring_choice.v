@@ -9,6 +9,12 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
+Definition ltB := lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, (lt_var 0));
+                                                                 ("sub", I, (lt_var 0))])]).
+
+Definition ltBOp := lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, (lt_var 0))]); 
+                                        ("sub", I, lt_receive "A" [("add", I, (lt_var 0))])]).
+
 CoFixpoint rcp := st_receive "A" [("add", I, st_send "C" [("add", I, rcp);
                                                           ("sub", I, rcp)])].
 
@@ -202,4 +208,115 @@ Proof. unfold subtype.
        easy.
        easy.
 Qed.
+
+Lemma ltB_rcp: lt2stC ltB rcp.
+Proof. unfold ltB.
+       rewrite (st_eq rcp). simpl.
+       pcofix CIH.
+       pfold.
+       apply lt2st_mu. simpl.
+       specialize (lt2st_rcv (upaco2 lt2st r)
+       "A" ["add"] [(I)]
+       [(lt_send "C"
+         [("add", I, lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]));
+          ("sub", I, lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]))])]
+       (["C" ! [("add", I, rcp); ("sub", I, rcp)]])
+       ); intro HR.
+       apply HR; clear HR. simpl. easy. 
+       apply Forall_forall.
+       intros (l, s).
+       simpl. intros.
+       destruct H as [H | H]. inversion H. subst.
+       left. pfold.
+       specialize (lt2st_snd (upaco2 lt2st r)
+       "C" ["add"; "sub"] [(I); (I)]
+       [(lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]));
+        (lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]))]
+       [rcp; rcp]
+       ); intro HS. simpl in HS.
+       apply HS; clear HS. easy.
+       apply Forall_forall.
+       intros (l, s). simpl. intro H1.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst.
+       right. rewrite (st_eq rcp). simpl. exact CIH.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst.
+       right. rewrite (st_eq rcp). simpl. exact CIH.
+       easy.
+       easy.
+Qed.
+
+Lemma ltBop_rcop: lt2stC ltBOp rcop.
+Proof. unfold ltBOp.
+       rewrite (st_eq rcop). simpl.
+       pcofix CIH.
+       pfold. 
+       apply lt2st_mu. simpl.
+       specialize (lt2st_snd (upaco2 lt2st r)
+         "C" ["add"; "sub"] [(I); (I)]
+         [(lt_receive "A"
+           [("add", I,
+             lt_mu
+               (lt_send "C"
+                  [("add", I, lt_receive "A" [("add", I, lt_var 0)]);
+                   ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))]);
+        (lt_receive "A"
+           [("add", I,
+             lt_mu
+               (lt_send "C"
+                  [("add", I, lt_receive "A" [("add", I, lt_var 0)]);
+                   ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))])]
+           [("A" & [("add", I, rcop)]); ("A" & [("add", I, rcop)])]
+       ); intro HS. simpl in HS.
+       apply HS; clear HS. easy.
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H.
+       destruct H as [H | H].
+       inversion H. subst.
+       left. pfold. simpl.
+       specialize (lt2st_rcv (upaco2 lt2st r)
+       "A" ["add"] [(I)]
+       [(lt_mu
+         (lt_send "C"
+            [("add", I, lt_receive "A" [("add", I, lt_var 0)]);
+             ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))]
+       [rcop]
+       ); intro HR. simpl in HR.
+       apply HR; clear HR. easy.
+       apply Forall_forall.
+       intros (l, s) H1.
+       simpl in H1.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst.
+       right. rewrite (st_eq rcop). simpl. exact CIH.
+       easy.
+       destruct H as [H | H].
+       inversion H. subst.
+       left. pfold. simpl.
+       specialize (lt2st_rcv (upaco2 lt2st r)
+       "A" ["add"] [(I)]
+       [(lt_mu
+         (lt_send "C"
+            [("add", I, lt_receive "A" [("add", I, lt_var 0)]);
+             ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))]
+       [rcop]
+       ); intro HR. simpl in HR.
+       apply HR; clear HR. easy.
+       apply Forall_forall.
+       intros (l, s) H1.
+       simpl in H1.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst.
+       right. rewrite (st_eq rcop). simpl. exact CIH.
+       easy.
+       easy.
+Qed.
+
+Lemma ltB_ltBop: subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
+Proof. unfold subltype.
+       exact st_rcp.
+Qed.
+
 
