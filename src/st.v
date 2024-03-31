@@ -56,6 +56,28 @@ Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
 
 Definition lt2stC l t := paco2 lt2st bot2 l t.
 
+Lemma lt2st_mon: monotone2 lt2st.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - apply lt2st_end.
+       - specialize (lt2st_rcv r'); intro HS.
+         apply HS with (l := l) (s := s). easy.
+         apply Forall_forall.
+         intros (lt,st) H1. simpl in H1. simpl.
+         rewrite Forall_forall in H0. simpl in H0.
+         specialize (H0 (lt,st)). simpl in H0.
+         apply LE, H0. exact H1.
+       - specialize (lt2st_snd r'); intro HS.
+         apply HS with (l := l) (s := s). easy.
+         apply Forall_forall.
+         intros (lt,st) H1. simpl in H1. simpl.
+         rewrite Forall_forall in H0. simpl in H0.
+         specialize (H0 (lt,st)). simpl in H0.
+         apply LE, H0. exact H1.
+       - apply lt2st_mu. exact IHIN.
+Qed.
+
 (*
 Check lt_send.
 Check lt_var 0.

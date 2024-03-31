@@ -317,6 +317,6 @@ Qed.
 Lemma ltB_ltBop: subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
 Proof. unfold subltype.
        exact st_rcp.
-Qed.
+Qed. 
 
 

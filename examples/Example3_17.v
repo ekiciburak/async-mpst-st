@@ -9,6 +9,18 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
+Definition lT': local :=
+  lt_send "q" [
+               ("cont",sint ,lt_receive "p" [("success",sint,lt_end);("error",sbool,lt_end)]);
+               ("stop",sunit,lt_receive "p" [("success",sint,lt_end);("error",sbool,lt_end)])
+              ].
+
+Definition lT: local :=
+  lt_receive "p" [
+                  ("success",sint ,lt_send "q" [("cont",sint,lt_end);("stop",sunit,lt_end)]);
+                  ("error",  sbool,lt_send "q" [("cont",sint,lt_end);("stop",sunit,lt_end)])
+                 ].
+
 Definition T': st :=
   st_send "q" [
                ("cont",sint ,st_receive "p" [("success",sint,st_end);("error",sbool,st_end)]);
@@ -287,5 +299,119 @@ Proof. unfold subtype.
        easy.
        easy.
 Qed.
+
+
+Lemma lT'2T': lt2stC lT' T'.
+Proof. unfold lT'.
+       rewrite (st_eq T'). simpl.
+       pfold.
+       specialize(lt2st_snd (upaco2 lt2st bot2)
+       "q" ["cont"; "stop"] [(I); ()]
+       [(lt_receive "p" [("success", I, lt_end); ("error", B, lt_end)]);
+        (lt_receive "p" [("success", I, lt_end); ("error", B, lt_end)])]
+       [("p" & [("success", I, end); ("error", B, end)]);
+        ("p" & [("success", I, end); ("error", B, end)])]
+       ); intro HS.
+       apply HS; clear HS. simpl. easy.
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H].
+       left. pfold. inversion H. subst. simpl.
+       specialize(lt2st_rcv (upaco2 lt2st bot2)
+       "p" ["success";"error"] [(I);(B)]
+       [lt_end; lt_end]
+       [(end);(end)]
+       ); intro HR.
+       simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H1.
+       simpl in H1. destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       easy.
+       destruct H as [H | H].
+       left. pfold. inversion H. subst. simpl.
+       specialize(lt2st_rcv (upaco2 lt2st bot2)
+       "p" ["success";"error"] [(I);(B)]
+       [lt_end; lt_end]
+       [(end);(end)]
+       ); intro HR.
+       simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H1.
+       simpl in H1. destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       easy.
+       easy.
+Qed.
+
+Lemma lT2T: lt2stC lT T.
+Proof. unfold lT.
+       rewrite (st_eq T). simpl.
+       pfold.
+       specialize(lt2st_rcv (upaco2 lt2st bot2)
+       "p" ["success";"error"] [(I);(B)]
+       [lt_send "q" [("cont", I, lt_end); ("stop", (), lt_end)]; 
+        lt_send "q" [("cont", I, lt_end); ("stop", (), lt_end)]]
+       ["q" ! [("cont", I, end); ("stop", (), end)];
+        "q" ! [("cont", I, end); ("stop", (), end)]]
+       ); intro HR.
+       simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H.
+       simpl in H. destruct H as [H | H].
+       left. pfold. inversion H. subst. simpl.
+       specialize(lt2st_snd (upaco2 lt2st bot2)
+       "q" ["cont"; "stop"] [(I); ()]
+       [lt_end; lt_end]
+       [(end); (end)]
+       ); intro HS.
+       apply HS; clear HS. simpl. easy.
+       apply Forall_forall.
+       intros (l,s) H1.
+       simpl in H1. destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       easy.
+       left. simpl. pfold.
+       simpl in H. destruct H as [H | H].
+       inversion H. subst. simpl.
+       specialize(lt2st_snd (upaco2 lt2st bot2)
+       "q" ["cont";"stop"] [(I);()]
+       [lt_end; lt_end]
+       [(end);(end)]
+       ); intro HR.
+       simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (l,s) H1.
+       simpl in H1. destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       destruct H1 as [H1 | H1].
+       inversion H1. subst. simpl.
+       left. pfold. constructor.
+       easy.
+       easy.
+Qed.
+
+Lemma lT'_lT: subltype lT' lT T' T lT'2T' lT2T.
+Proof. unfold subltype.
+       exact st1.
+Qed. 
+
 
 
