@@ -2,7 +2,7 @@ Require Import ST.processes.process ST.types.local ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream.
-Require Import String List Datatypes.
+Require Import String List Datatypes ZArith.
 Local Open Scope string_scope.
 Import ListNotations.
 
@@ -119,12 +119,55 @@ Inductive tcP: theta -> process -> local -> Prop :=
                                        tcP c P T -> tcP c (ps_send q l e P) (lt_send q xs)
   | tc_rcv  : forall c q L E P S T, size E >= size S ->
                                     size P >= size T ->
-                                    List.Forall (fun u => tcE c (fst u) (snd u)) (zip E S) ->
+(*                                  List.Forall (fun u => tcE c (fst u) (snd u)) (zip E S) -> *)
                                     List.Forall (fun u => tcP (extende c (fst u) (fst (snd u))) (fst (snd (snd u))) (snd (snd (snd u)))) (zip E (zip S (zip P T))) ->
                                     tcP c (ps_receive q (zip (zip L E) P)) (lt_receive q (zip (zip L S) T))
   | tc_condt: forall c e P Q T, tcE c e sbool -> tcP c P T -> tcP c Q T -> tcP c (ps_ite e P Q) T
   | tc_mu   : forall c P T, tcP (extendp c (ps_var 0) (lt_var 0)) P T -> tcP c (ps_mu P) (lt_mu T)
   | tc_sst  : forall c P T T' p q r s, tcP c P T -> subltype2 T T' p q r s -> tcP c P T'.
+
+Lemma remark4_5: forall c e, tcE c (isbe e) sbool ->
+                             tcP c (ps_ite (isbe e) (ps_send "q" "l1" (isval (vint 1%Z)) (ps_send "r" "l2" (isval (vint 2)) ps_end)) 
+                                                    (ps_send "q" "l1" (isval (vint 11)) (ps_send "r" "l2" (isval (vint 22)) ps_end)))
+                                   (lt_send "q" [("l1",sint, lt_send "r" [("l2",sint,lt_end)])]).
+Proof. intros.
+       apply tc_condt.
+       - easy.
+       - specialize (tc_snd c "q" "l1" (isval (vint 1)) sint
+                            (ps_send "r" "l2" (isval (vint 2)) ps_end)
+                            (lt_send "r" [("l2", sint, lt_end)])
+                            [("l1", sint, lt_send "r" [("l2", sint, lt_end)])]
+                    ); intro HS.
+         simpl in HS. apply HS; clear HS.
+         easy. 
+         apply tce_iv1.
+         specialize (tc_snd c "r" "l2" (isval (vint 2)) sint
+                            (ps_end)
+                            (lt_end)
+                            [("l2", sint, lt_end)]
+                    ); intro HS.
+         simpl in HS. apply HS; clear HS.
+         easy.
+         apply tce_iv1.
+         apply tc_end.
+       - specialize (tc_snd c "q" "l1" (isval (vint 11)) sint
+                            (ps_send "r" "l2" (isval (vint 22)) ps_end)
+                            (lt_send "r" [("l2", sint, lt_end)])
+                            [("l1", sint, lt_send "r" [("l2", sint, lt_end)])]
+                    ); intro HS.
+         simpl in HS. apply HS; clear HS.
+         easy. 
+         apply tce_iv1.
+         specialize (tc_snd c "r" "l2" (isval (vint 22)) sint
+                            (ps_end)
+                            (lt_end)
+                            [("l2", sint, lt_end)]
+                    ); intro HS.
+         simpl in HS. apply HS; clear HS.
+         easy.
+         apply tce_iv1.
+         apply tc_end.
+Qed.
 
 
 
