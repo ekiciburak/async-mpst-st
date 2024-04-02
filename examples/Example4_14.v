@@ -9,6 +9,11 @@ Require Import Morphisms.
 
 Local Open Scope string_scope.
 
+Definition TTctl := lt_mu (lt_send "src" [("b1",sunit,lt_receive "src" [("b1",sunit,
+                                  lt_receive "sk" [("b1",sunit,lt_send "sk" [("b1",sunit,
+                                  lt_send "src" [("b2",sunit,lt_receive "src" [("b2",sunit,
+                                  lt_receive "sk" [("b2",sunit,lt_send "sk" [("b2",sunit,(lt_var 0))])])])])])])])]).
+
 CoFixpoint Tctl := st_send "src" [("b1",sunit,st_receive "src" [("b1",sunit,
                                   st_receive "sk" [("b1",sunit,st_send "sk" [("b1",sunit,
                                   st_send "src" [("b2",sunit,st_receive "src" [("b2",sunit,
@@ -29,11 +34,19 @@ Proof. pcofix CIH.
        right. exact CIH.
 Qed.
 
+Definition TTR := lt_mu(lt_receive "src" [("b1",sunit,lt_receive "sk" [("b1",sunit,
+                                   lt_send "sk" [("b1",sunit,lt_send "src" [("b1",sunit,
+                                   lt_receive "src" [("b2",sunit,lt_receive "sk" [("b2",sunit,
+                                   lt_send "sk" [("b2",sunit,lt_send "src" [("b2",sunit,(lt_var 0))])])])])])])])]).
+
+
 CoFixpoint TR := st_receive "src" [("b1",sunit,st_receive "sk" [("b1",sunit,
                                    st_send "sk" [("b1",sunit,st_send "src" [("b1",sunit,
                                    st_receive "src" [("b2",sunit,st_receive "sk" [("b2",sunit,
                                    st_send "sk" [("b2",sunit,st_send "src" [("b2",sunit,TR)])])])])])])])].
 (* Print TR. *)
+
+Definition TTctl' := lt_send "src" [("b1",sunit,lt_send "src" [("b2",sunit,TTR)])].
 
 Definition Tctl' := st_send "src" [("b1",sunit,st_send "src" [("b2",sunit,TR)])].
 (* Print Tctl'. *)
@@ -1913,5 +1926,519 @@ apply action_eq37.
 split.
 apply action_eq38. easy.
 easy.
+Qed.
+
+
+Lemma TTctl2Tctl: lt2stC TTctl Tctl.
+Proof. unfold TTctl. pcofix CIH.
+       pfold. 
+       apply lt2st_mu. simpl.
+       rewrite(st_eq Tctl). simpl.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "src" ["b1"] [()]
+        [lt_receive "src"
+         [("b1", (),
+           lt_receive "sk"
+             [("b1", (),
+               lt_send "sk"
+                 [("b1", (),
+                   lt_send "src"
+                     [("b2", (),
+                       lt_receive "src"
+                         [("b2", (),
+                           lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])])])])])])]]
+       ["src" &
+       [("b1", (),
+         "sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])])]]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "src" ["b1"] [()]
+        [lt_receive "sk"
+             [("b1", (),
+               lt_send "sk"
+                 [("b1", (),
+                   lt_send "src"
+                     [("b2", (),
+                       lt_receive "src"
+                         [("b2", (),
+                           lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])])])])])]]
+       ["sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])])]]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "sk" ["b1"] [()]
+        [lt_send "sk"
+                 [("b1", (),
+                   lt_send "src"
+                     [("b2", (),
+                       lt_receive "src"
+                         [("b2", (),
+                           lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])])])])]]
+       ["sk" ! [("b1", (), "src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])])]]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "sk" ["b1"] [()]
+        [lt_send "src"
+                     [("b2", (),
+                       lt_receive "src"
+                         [("b2", (),
+                           lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])])])]]
+       ["src" ! [("b2", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])])]]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "src" ["b2"] [()]
+        [lt_receive "src"
+                         [("b2", (),
+                           lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])])]]
+       ["src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])])]]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "src" ["b2"] [()]
+        [lt_receive "sk"
+                             [("b2", (),
+                               lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))])]]
+       ["sk" & [("b2", (), "sk" ! [("b2", (), Tctl)])]]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "sk" ["b2"] [()]
+        [lt_send "sk"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])]))]]
+       ["sk" ! [("b2", (), Tctl)]]
+       ); intro HR. simpl in HR. apply HR; clear HR.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "sk" ["b2"] [()]
+        [lt_mu
+                                     (lt_send "src"
+                                        [("b1", (),
+                                          lt_receive "src"
+                                            [("b1", (),
+                                              lt_receive "sk"
+                                                [("b1", (),
+                                                  lt_send "sk"
+                                                    [("b1", (),
+                                                      lt_send "src"
+                                                        [("b2", (),
+                                                          lt_receive "src"
+                                                            [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_var 0)])])])])])])])])]
+       [Tctl]
+       ); intro HS. simpl in HS. apply HS; clear HS.
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       destruct H as [H | H]. inversion H. subst. clear H.
+       right.  simpl. exact CIH.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+       simpl in H. easy.
+Qed.
+
+Lemma TTctl'2Tctl': lt2stC TTctl' Tctl'.
+Proof. unfold TTctl', TTR.
+       rewrite (st_eq Tctl'). simpl.
+       pfold.
+       specialize(lt2st_snd (upaco2 lt2st bot2)
+       "src" ["b1"] [()]
+       [lt_send "src"
+         [("b2", (),
+           lt_mu
+             (lt_receive "src"
+                [("b1", (),
+                  lt_receive "sk"
+                    [("b1", (),
+                      lt_send "sk"
+                        [("b1", (),
+                          lt_send "src"
+                            [("b1", (),
+                              lt_receive "src"
+                                [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))]]
+       ["src" ! [("b2", (), TR)]]
+       ); intro HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st bot2)
+       "src" ["b2"] [()]
+       [lt_mu
+             (lt_receive "src"
+                [("b1", (),
+                  lt_receive "sk"
+                    [("b1", (),
+                      lt_send "sk"
+                        [("b1", (),
+                          lt_send "src"
+                            [("b1", (),
+                              lt_receive "src"
+                                [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])])]
+       [TR]
+       ); intro HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pcofix CIH. pfold.
+       apply lt2st_mu. simpl.
+       rewrite(st_eq TR). simpl.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "src" ["b1"] [()]
+       [lt_receive "sk"
+         [("b1", (),
+           lt_send "sk"
+             [("b1", (),
+               lt_send "src"
+                 [("b1", (),
+                   lt_receive "src"
+                     [("b2", (),
+                       lt_receive "sk"
+                         [("b2", (),
+                           lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])])])])])])]]
+       ["sk" & [("b1", (), "sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])])]]
+       ); intro HR. simpl in HR. apply HR; clear HR. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "sk" ["b1"] [()]
+       [lt_send "sk"
+             [("b1", (),
+               lt_send "src"
+                 [("b1", (),
+                   lt_receive "src"
+                     [("b2", (),
+                       lt_receive "sk"
+                         [("b2", (),
+                           lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])])])])])]]
+       ["sk" ! [("b1", (), "src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])])]]
+       ); intro HR. simpl in HR. apply HR; clear HR. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "sk" ["b1"] [()]
+       [lt_send "src"
+                 [("b1", (),
+                   lt_receive "src"
+                     [("b2", (),
+                       lt_receive "sk"
+                         [("b2", (),
+                           lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])])])])]]
+       ["src" ! [("b1", (), "src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])])]]
+       ); intro HS. simpl in HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "src" ["b1"] [()]
+       [lt_receive "src"
+                     [("b2", (),
+                       lt_receive "sk"
+                         [("b2", (),
+                           lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])])])]]
+       ["src" & [("b2", (), "sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])])]]
+       ); intro HS. simpl in HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "src" ["b2"] [()]
+       [lt_receive "sk"
+                         [("b2", (),
+                           lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])])]]
+       ["sk" & [("b2", (), "sk" ! [("b2", (), "src" ! [("b2", (), TR)])])]]
+       ); intro HR. simpl in HR. apply HR; clear HR. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_rcv (upaco2 lt2st r)
+       "sk" ["b2"] [()]
+       [lt_send "sk"
+                             [("b2", (),
+                               lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))])]]
+       ["sk" ! [("b2", (), "src" ! [("b2", (), TR)])]]
+       ); intro HR. simpl in HR. apply HR; clear HR. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "sk" ["b2"] [()]
+       [lt_send "src"
+                                 [("b2", (),
+                                   lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])]))]]
+       ["src" ! [("b2", (), TR)]]
+       ); intro HS. simpl in HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. left. pfold.
+       specialize(lt2st_snd (upaco2 lt2st r)
+       "src" ["b2"] [()]
+       [lt_mu
+                                     (lt_receive "src"
+                                        [("b1", (),
+                                          lt_receive "sk"
+                                            [("b1", (),
+                                              lt_send "sk"
+                                                [("b1", (),
+                                                  lt_send "src"
+                                                    [("b1", (),
+                                                      lt_receive "src" [("b2", (), lt_receive "sk" [("b2", (), lt_send "sk" [("b2", (), lt_send "src" [("b2", (), lt_var 0)])])])])])])])])]
+       [TR]
+       ); intro HS. simpl in HS. apply HS; clear HS. simpl. 
+       easy.
+       apply Forall_forall.
+       intros (t,s) H.
+       simpl in H. destruct H as [H | H]. inversion H. subst. clear H.
+       simpl. right. exact CIH.
+       easy. easy. easy. easy. easy. easy. easy. easy. easy. easy.
+Qed.
+
+Lemma lTctl'_lTctl: subltype TTctl' TTctl Tctl' Tctl TTctl'2Tctl' TTctl2Tctl.
+Proof. unfold subltype.
+       exact stb.
 Qed.
 
