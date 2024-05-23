@@ -2,6 +2,9 @@
 
 subtyping of asynchronous session trees
 
+The library makes use of the [Paco](https://github.com/snu-sf/paco) tool to state coinductive predicates
+and reason about them. Please ensure that you have it installed before compiling the library.
+
 The library succesfully compiles with the Coq compiler `coqc 8.18.0`.
 -  `coq_makefile -f _CoqProject -o Makefile` to create the Makefile
 -  `make` to compile
