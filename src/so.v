@@ -22,7 +22,7 @@ Definition so_id (s: so): so :=
 Lemma so_eq: forall (s: so), s = so_id s.
 Proof. intro s; destruct s; simpl; try easy. destruct p as ((l,srt),t). easy. Defined.
 
-Inductive st2so (R: so -> st -> Prop): so -> st -> Prop :=
+(* Inductive st2so (R: so -> st -> Prop): so -> st -> Prop :=
   | st2so_end: st2so R so_end st_end
   | st2so_snd: forall l s x xs p,
                R x (pathsel l s xs) ->
@@ -31,6 +31,19 @@ Inductive st2so (R: so -> st -> Prop): so -> st -> Prop :=
                length xs = length ys ->
                List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
                st2so R (so_receive p (zip (zip l s) ys)) (st_receive p (zip (zip l s) xs)).
+
+Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2. *)
+
+
+Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2so_end: st2so R st_end st_end
+  | st2so_snd: forall l s x xs p,
+               R x (pathsel l s xs) ->
+               st2so R (st_send p [(l,s,x)]) (st_send p xs)
+  | st2so_rcv: forall p l s xs ys,
+               length xs = length ys ->
+               List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
+               st2so R (st_receive p (zip (zip l s) ys)) (st_receive p (zip (zip l s) xs)).
 
 Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2.
 
@@ -57,8 +70,8 @@ Qed.
 CoFixpoint Et1 := st_receive "q" [("l7",sint,Et1)].
 CoFixpoint Et2 := st_send "q" [("l8",sint,Et2)].
 
-CoFixpoint Et1so := so_receive "q" [("l7",sint,Et1so)].
-CoFixpoint Et2so := so_send "q" ("l8",sint,Et2so).
+CoFixpoint Et1so := st_receive "q" [("l7",sint,Et1so)].
+CoFixpoint Et2so := st_send "q" [("l8",sint,Et2so)].
 
 CoFixpoint eT1 := st_receive "p" [("l1",sint,st_send "p" [("l4",sint,Et1);
                                                          ("l5",sint,Et2);
@@ -66,13 +79,13 @@ CoFixpoint eT1 := st_receive "p" [("l1",sint,st_send "p" [("l4",sint,Et1);
                                  ("l2",sint,st_send "q" [("l9",sint,eT1)]);
                                  ("l3",sint,st_receive "q" [("l10",sint,eT1)])].
 
-CoFixpoint eT2 := so_receive "p" [("l1",sint,so_send "p" ("l4",sint,Et1so));
-                                 ("l2",sint,so_send "q" ("l9",sint,eT2));
-                                 ("l3",sint,so_receive "q" [("l10",sint,eT2)])].
+CoFixpoint eT2 := st_receive "p" [("l1",sint,st_send "p" [("l4",sint,Et1so)]);
+                                 ("l2",sint,st_send "q" [("l9",sint,eT2)]);
+                                 ("l3",sint,st_receive "q" [("l10",sint,eT2)])].
 
 Lemma T1soT2: st2soC eT2 eT1.
 Proof. pcofix CIH.
-       rewrite(st_eq eT1); rewrite(so_eq eT2); simpl.
+       rewrite(st_eq eT1); rewrite(st_eq eT2); simpl.
        pfold.
        specialize (st2so_rcv (upaco2 st2so r) "p"
                               ["l1";"l2";"l3"]
@@ -82,9 +95,9 @@ Proof. pcofix CIH.
                                               ("l6",sint,eT1)]);
                               (st_send "q" [("l9",sint,eT1)]);
                               (st_receive "q" [("l10",sint,eT1)])])
-                              ([so_send "p" ("l4",sint,Et1so); 
-                                so_send "q" ("l9",sint,eT2);
-                                so_receive "q" [("l10",sint,eT2)]
+                              ([st_send "p" [("l4",sint,Et1so)]; 
+                                st_send "q" [("l9",sint,eT2)];
+                                st_receive "q" [("l10",sint,eT2)]
                                 ])
    
        ); intro Ha.
@@ -106,7 +119,7 @@ Proof. pcofix CIH.
                              [Et1] [Et1so]
        ); intro Ha.
        simpl in Ha.
-       rewrite(so_eq Et1so). simpl.
+       rewrite(st_eq Et1so). simpl.
        apply Ha; clear Ha. easy.
        apply Forall_forall.
        intros (a,b) Hc.
@@ -136,8 +149,17 @@ Proof. pcofix CIH.
        easy.
 Qed.
 
+Inductive st2soA (R: so -> st -> Prop): so -> st -> Prop :=
+  | st2so_endA: st2soA R so_end st_end
+  | st2so_sndA: forall l s x xs p,
+                R x (pathsel l s xs) ->
+                st2soA R (so_send p (l,s,x)) (st_send p xs)
+  | st2so_rcvA: forall p l s xs ys,
+                length xs = length ys ->
+                List.Forall (fun u => R (fst u) (snd u)) (zip ys xs) ->
+                st2soA R (so_receive p (zip (zip l s) ys)) (st_receive p (zip (zip l s) xs)).
 
-
+Definition st2soCA s1 s2 := paco2 (st2soA) bot2 s1 s2. 
 
 
 

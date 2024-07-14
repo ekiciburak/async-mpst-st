@@ -40,11 +40,11 @@ Qed.
 Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
   | st2siso_end: st2siso R st_end st_end
   | st2siso_rcv: forall l s x xs p,
-                  R x (pathsel l s xs) ->
-                  st2siso R (st_receive p [(l,s,x)]) (st_receive p xs) 
+                 R x (pathsel l s xs) ->
+                 st2siso R (st_receive p [(l,s,x)]) (st_receive p xs) 
   | st2siso_snd: forall l s x xs p,
-                  R x (pathsel l s xs) ->
-                  st2siso R (st_send p [(l,s,x)]) (st_send p xs) .
+                 R x (pathsel l s xs) ->
+                 st2siso R (st_send p [(l,s,x)]) (st_send p xs) .
 
 Definition st2sisoC s1 s2 := paco2 (st2siso) bot2 s1 s2.
 
@@ -127,3 +127,5 @@ Proof. intros.
        unfold upaco1 in H1. destruct H1; easy.
        apply sI_mon.
 Qed.
+
+

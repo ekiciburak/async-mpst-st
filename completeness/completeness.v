@@ -36,3 +36,9 @@ Proof. unfold subltype2, nsubltype.
        intros T T' T1 T2 P Q.
        apply completeness.
 Qed.
+
+Theorem completeness3: forall T T', (subtype3 T T' -> False) <-> nsubtype3 T T'.
+Proof. split.
+       apply (subNeq3L T T').
+       intros. apply (subNeq3R T T'); easy.
+Qed.
