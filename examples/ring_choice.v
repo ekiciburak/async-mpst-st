@@ -24,6 +24,9 @@ CoFixpoint rcop := st_send "C" [("add", I, st_receive "A" [("add", I, rcop)]);
 CoFixpoint w1 := st_receive "A" [("add", I, st_send "C" [("add", I, w1)])].
 CoFixpoint w2 := st_send "C" [("add", I, st_receive "A" [("add", I, w2)])].
 
+CoFixpoint w3 := st_receive "A" [("add", I, st_send "C" [("sub", I, w3)])].
+CoFixpoint w4 := st_send "C" [("sub", I, st_receive "A" [("add", I, w4)])].
+
 Definition actL := [("A",rcv); ("C",snd)].
 
 Lemma acteqr1: coseqInLC (act w2) actL.
