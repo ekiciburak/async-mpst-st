@@ -2,7 +2,7 @@ Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si 
                ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
 Require Import Lia.
 From Paco Require Import paco.
-Require Import String List Coq.Arith.Even.
+Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.

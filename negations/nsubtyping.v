@@ -3,7 +3,7 @@ Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si 
                ST.subtyping.subtyping ST.negations.nrefinement.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
-Require Import String List Coq.Arith.Even.
+Require Import String List.
 Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
