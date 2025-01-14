@@ -7,6 +7,7 @@ Import ListNotations.
 Require Import Setoid.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
+Require Import ProofIrrelevance.
 
 Fixpoint listSisoPRef (l: list (siso*siso)): Prop :=
   match l with
@@ -69,8 +70,50 @@ Fixpoint isInAp {p} (a: Ap p) q: bool :=
   match a with
     | ap_merge q' H l s a' => eqb q' q || isInAp a' q
     | ap_receive q' H l s  => eqb q' q
-    | _                   => false
+    | _                    => false
   end.
+
+Fixpoint isInApP {p} (a: Ap p) q: Prop :=
+  match a with
+    | ap_merge q' H l s a' => q' = q \/ isInApP a' q
+    | ap_receive q' H l s  => q' = q
+    | _                    => False
+  end.
+
+Definition eqbs s1 s2: bool :=
+  match (s1, s2) with
+    | (sunit, sunit) => true
+    | (sbool, sbool) => true
+    | (snat, snat)   => true
+    | (sint, sint)   => true
+    | _              => false
+  end.
+
+Definition eqbsP s1 s2: Prop :=
+  match (s1, s2) with
+    | (sunit, sunit) => True
+    | (sbool, sbool) => True
+    | (snat, snat)   => True
+    | (sint, sint)   => True
+    | _              => False
+  end.
+
+Fixpoint isInApE {p} (a: Ap p) q l s: bool :=
+  match a with
+    | ap_merge q' H l' s' a' => (eqb q' q && eqb l' l && eqbs s' s) || isInApE a' q l s
+    | ap_receive q' H l' s'  => (eqb q' q && eqb l' l && eqbs s' s)
+    | _                      => false
+  end.
+
+Fixpoint isInApEP {p} (a: Ap p) q l s: Prop :=
+match a with
+  | ap_merge q' H l' s' a' => (q' = q /\ l' = l /\ eqbsP s' s) /\ isInApEP a' q l s
+  | ap_receive q' H l' s'  => (q' = q /\ l' = l /\ eqbsP s' s)
+  | _                      => False
+end.
+
+Lemma isInApE_dec: forall {p} (a: Ap p) q l s, isInApE a q l s = true \/ isInApE a q l s = false.
+Admitted.
 
 Lemma isInAp_dec: forall {p} (a: Ap p) q, isInAp a q = true \/ isInAp a q = false.
 Proof. intros p a.
@@ -87,6 +130,67 @@ Proof. intros p a.
            -- right. easy.
         - simpl. right. easy.
 Qed.
+
+Lemma chN: forall {p q} (H: (p =? q)%string = false), q <> p.
+Proof. intros. rewrite eqb_neq in H. easy. Defined.
+
+Lemma orbtf: forall b1 b2 : bool, b1 || b2 = false <-> b1 = false /\ b2 = false.
+Proof. intro b1.
+       case_eq b1; intros.
+       - simpl. split; easy.
+       - case_eq b2; intros.
+         + split; easy.
+         + split; easy.
+Defined.
+
+Lemma pexq p (a: Ap p) q (H: isInAp a q = false): Ap q.
+Proof. induction a; intros.
+       - exact (ap_receive q0 (chN H) s s0).
+       - simpl in H.
+         apply orbtf in H.
+         destruct H.
+         exact (ap_merge q0 (chN H) s s0 (IHa H0)).
+       - exact ap_end.
+Defined.
+
+Lemma merge_pq: forall p (a: Ap p) q (H: isInAp a q = false) w,
+  exists b, merge_ap_cont p a w = merge_ap_cont q b w /\ b = pexq p a q H.
+Proof. intros p a.
+       induction a; intros.
+       - simpl in H.
+         rewrite(st_eq(merge_ap_cont p (ap_receive q n s s0) w)). simpl.
+         exists (ap_receive q (chN H) s s0).
+         rewrite(st_eq( merge_ap_cont q0 (ap_receive q (chN H) s s0) w)). simpl.
+         split; easy.
+       - simpl in H.
+         pose proof H as HH.
+         apply orbtf in HH.
+         destruct HH as (HHa, HHb).
+         specialize(IHa q0 HHb w).
+         destruct IHa as (b, (Ha,Hb)).
+         rewrite(st_eq(merge_ap_cont p (ap_merge q n s s0 a) w )).
+         simpl.
+         exists (ap_merge q (chN HHa) s s0 b).
+         rewrite(st_eq(merge_ap_cont q0 (ap_merge q (chN HHa) s s0 b) w)). simpl.
+         split. rewrite Ha. easy.
+
+         rewrite Hb. simpl.
+         destruct (orbtf (q =? q0)%string (isInAp a q0)).
+         destruct (a0 H).
+         specialize(proof_irrelevance _ HHb e1); intros.
+         specialize(proof_irrelevance _ HHa e0); intros.
+         subst. easy.
+       - exists ap_end.
+         simpl. split.
+         rewrite !apend_an. easy. easy.
+Qed.
+
+Lemma pRevq': forall p a q l s l1 s1 w (H: p <> q),
+  isInApE a q l1 s1 ->
+  exists a1 a2,
+  merge_ap_cont p a (p & [(l, s, w)]) = merge_ap_cont q a1 (merge_ap_cont p (ap_merge q H l1 s1 a2) (p & [(l, s, w)])).
+Proof. Admitted.
+
 
 Lemma pRevq: forall p a q l s w,
   p <> q ->
@@ -130,6 +234,66 @@ Proof. intros p a.
         - simpl in H0. easy.
 Qed.
 
+Lemma actReq: forall w w' r,
+  paco2 refinementR2 r w w' ->
+  act_eq w w'.
+Proof. Admitted.
+
+Lemma extendSame: forall w w' p l s s' r,
+  paco2 refinementR2 r w w' ->
+  subsort s' s ->
+  paco2 refinementR2 r (st_receive p [(l,s,w)]) (st_receive p [(l,s',w')]).
+Proof. intros.
+       pfold.
+       specialize(ref2_a (upaco2 refinementR2 r) w w' p l s s' ap_end 1 H0); intro HS.
+       simpl in HS.
+       rewrite !apend_an in HS.
+       apply HS. left. easy.
+       apply actReq in H. easy.
+Qed.
+
+
+Lemma inside1: forall w w' p q l s s' l0 s0 r,
+  p <> q ->
+  subsort s' s ->
+  paco2 refinementR2 r w (q & [(l0, s0, w')]) ->
+  paco2 refinementR2 r (p & [(l, s, w)]) (q & [(l0, s0, p & [(l, s', w')])]).
+Proof. intros.
+       pfold.
+       assert((q & [(l0, s0, p & [(l, s', w')])]) = merge_ap_cont p (ap_receive q H l0 s0) (p & [(l, s', w')])).
+       { rewrite(st_eq( merge_ap_cont p (ap_receive q H l0 s0) (p & [(l, s', w')]))).
+         simpl. easy.
+       }
+       rewrite H2.
+       specialize(ref2_a (upaco2 refinementR2 r) w w' p l s s' (ap_receive q H l0 s0)  1 ); intro HS.
+       simpl in HS.
+       apply HS. easy. left.
+       rewrite(st_eq (merge_ap_cont p (ap_receive q H l0 s0) w')). simpl. easy.
+       rewrite(st_eq (merge_ap_cont p (ap_receive q H l0 s0) w')). simpl.
+       apply actReq with (r := r). easy.
+Qed.
+
+
+Lemma inside1': forall w w' p q l s s' l0 s0 a' r,
+  p <> q ->
+  subsort s' s ->
+  paco2 refinementR2 r w (q & [(l0, s0, merge_ap_cont p a' w')]) ->
+  paco2 refinementR2 r (p & [(l, s, w)]) (q & [(l0, s0, merge_ap_cont p a' (p & [(l, s', w')]))]).
+Proof. intros.
+       pfold.
+       assert((q & [(l0, s0, merge_ap_cont p a' (p & [(l, s', w')]))]) = merge_ap_cont p (ap_merge q H l0 s0 a') (p & [(l, s', w')])).
+       { rewrite(st_eq(merge_ap_cont p (ap_merge q H l0 s0 a') (p & [(l, s', w')]))).
+         simpl. easy.
+       }
+       rewrite H2.
+       specialize(ref2_a (upaco2 refinementR2 r) w w' p l s s' (ap_merge q H l0 s0 a') 1); intro HS.
+       simpl in HS.
+       apply HS. easy. left.
+       rewrite(st_eq(merge_ap_cont p (ap_merge q H l0 s0 a') w')). simpl. easy.
+       rewrite(st_eq(merge_ap_cont p (ap_merge q H l0 s0 a') w')). simpl.
+       apply actReq with (r := r). easy.
+Qed.
+
 Lemma helperRecv:
   forall a b c r,
   a ~< b ->
@@ -143,38 +307,70 @@ Proof. intros.
        - subst. 
          pinversion H0.
          + subst.
-         case_eq (String.eqb p0 p); intros.
-         ++ rewrite eqb_eq in H9. subst.
-            pose proof H5 as H5A.
-            rewrite <- meqAp in H5, H5A.
-            specialize(ApApeqInvAnd p (ApnA2 p a0 n) l l0 s' s0 w' w0); intros HR.
-            symmetry in H5.
-            apply HR in H5.
-            specialize (ApApeqInv p ap_end (ApnA2 p a0 n) l0 l s0 s' w0 w'); intros.
-            rewrite apend_an in H9.
-            apply H9 in H5A. inversion H5A. subst.
-            constructor.
-            admit.
-            rewrite <- meqAp in H3.
-            rewrite H5 in H3.
-            rewrite apend_an in H3.
-            right. apply H1 with (y := w'). easy. easy.
-            admit.
-         ++ rewrite eqb_neq in H9.
-            rename p0 into q.
-            rewrite <- meqAp in H5.
-            assert(p <> q) by easy.
-            apply pneqq2 with (H := H10) in H5.
-            destruct H5 as (a',(Hw0,H5)).
-            destruct H5 as [H5 | H5].
- 
-            rewrite <- meqAp.
-            rewrite <- meqAp in H3, H7, H8, H4.
-            specialize(isInAp_dec (ApnA2 q a n0) p); intros HLEM.
-            destruct HLEM as [HL| HL].
-            specialize(pRevq q (ApnA2 q a n0) p l0 s'0 w'0 H9 HL); intro HS.
-            destruct HS as (a1,(l1,(s1,(w1,HS)))).
-            rewrite HS.
+           case_eq (String.eqb p0 p); intros.
+           ++ rewrite eqb_eq in H9. subst.
+              pose proof H5 as H5A.
+              rewrite <- meqAp in H5, H5A.
+              specialize(ApApeqInvAnd p (ApnA2 p a0 n) l l0 s' s0 w' w0); intros HR.
+              symmetry in H5.
+              apply HR in H5.
+              specialize (ApApeqInv p ap_end (ApnA2 p a0 n) l0 l s0 s' w0 w'); intros.
+              rewrite apend_an in H9.
+              apply H9 in H5A. inversion H5A. subst.
+              constructor.
+              admit.
+              rewrite <- meqAp in H3.
+              rewrite H5 in H3.
+              rewrite apend_an in H3.
+              right. apply H1 with (y := w'). easy. easy.
+              admit.
+           ++ rewrite eqb_neq in H9.
+              rename p0 into q.
+(*               rewrite <- meqAp in H3, H7, H8, H4. *)
+              rewrite <- meqAp in H5.
+              assert(p <> q) by easy.
+              pose proof H5 as H5A.
+              pose proof H3 as H3A.
+              apply pneqq2 with (H := H10) in H5.
+              destruct H5 as (a',(Hw0,H5)).
+              destruct H5 as [H5 | H5].
+              
+              
+              (* rewrite <- meqAp.
+              rewrite <- meqAp in H3, H7, H8, H4.
+              rewrite H5 in H3.
+              rewrite(st_eq(merge_ap_cont p (ap_merge q H10 l0 s0 a') w')) in H3.
+              simpl in H3.
+              specialize(inside1' w w' p q l s s' l0 s0 a' bot2 H10 H2 H3); intros HI.
+              rewrite <- Hw0 in HI.
+              pose proof H7 as H7A.
+              rewrite Hw0 in H7.
+              specialize(extendSame w0 (merge_ap_cont q (ApnA2 q a n0) w'0) q l0 s0 s'0 bot2 H7A H6); intro HII. *)
+
+(*               rewrite Hw0 in HII.
+              
+              admit.0
+              specialize(extendSame w (q & [(l0, s0, merge_ap_cont p a' w')]) p l s s' bot2 H3 H2); intros HES.
+*)
+
+              rewrite <- meqAp.
+              rewrite <- meqAp in H3, H7, H8, H4.
+              specialize(isInApE_dec (ApnA2 q a n0) p l s); intros HLEM.
+              destruct HLEM as [HL| HL].
+              specialize(pRevq' q (ApnA2 q a n0) p l0 s'0 l s w'0 H9 HL); intro HS.
+              destruct HS as (a1,(a2,HS)).
+              rewrite HS.
+              rewrite(st_eq(merge_ap_cont q (ap_merge p H9 l s a2) (q & [(l0, s'0, w'0)]))).
+              simpl.
+(*               rewrite(st_eq(merge_ap_cont q (ap_merge p H9 l s a2) (q & [(l0, s'0, w'0)]))) in HS.
+              simpl in HS. *)
+              specialize(ref2_a (upaco2 refinementR2 r) w (merge_ap_cont q a2 (q & [(l0, s'0, w'0)])) 
+                                p l s s a1 1); intro HA.
+              simpl in HA.
+              apply HA.
+              admit.
+              right. 
+              
 Admitted.
 
 Lemma endAp: forall p a l s w, end = merge_ap_cont p a (p & [(l, s, w)]) -> False.
@@ -187,11 +383,26 @@ Proof. intros p a.
        - rewrite apend_an in H0. easy.
 Qed.
 
+Lemma notInAp: forall p (a: Ap p), isInAp a p = false.
+Proof. intros p a.
+       induction a; intros.
+       - simpl.
+         apply eqb_neq. easy.
+       - simpl.
+         apply orbtf. split.
+         rewrite eqb_neq.
+         easy.
+         rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+
 Lemma refTrans: Transitive (refinement2).
 Proof. red. pcofix CIH.
        intros x y z Ha Hb.
        pinversion Ha. subst.
        pinversion Hb. subst.
+(*        rewrite <- meqAp in H0, H1, H2, H4, H5, Ha, Hb, Hb. *)
+(*        rename p0 into q. *)
 (*     + punfold H0. punfold H4.
          pfold. *)
          case_eq (String.eqb p0 p); intros.
