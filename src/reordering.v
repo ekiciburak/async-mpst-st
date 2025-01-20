@@ -46,6 +46,20 @@ CoFixpoint act (t: st): coseq (participant * dir) :=
     | _                       => Delay conil
   end.
 
+CoFixpoint actls (t: st): coseq (participant * dir * label * local.sort) :=
+  match t with
+    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv, l, s) (actls w'))
+    | st_send p [(l,s,w')]    => Delay (cocons (p, snd, l, s) (actls w'))
+    | _                       => Delay conil
+  end.
+
+CoFixpoint actl (t: st): coseq (participant * dir * label) :=
+  match t with
+    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv, l) (actl w'))
+    | st_send p [(l,s,w')]    => Delay (cocons (p, snd, l) (actl w'))
+    | _                       => Delay conil
+  end.
+  
 (***********************)
 
 (* inductive membership check *)
@@ -53,6 +67,14 @@ Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
   | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
   | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
 
+Inductive coseqInLS: (participant * dir * label * local.sort) -> coseq (participant * dir * label *local.sort) -> Prop :=
+  | CoInSplit1ls x xs y ys: force xs = cocons y ys -> x = y  -> coseqInLS x xs
+  | CoInSplit2ls x xs y ys: force xs = cocons y ys -> x <> y -> coseqInLS x ys -> coseqInLS x xs.
+
+Inductive coseqInl: (participant * dir * label) -> coseq (participant * dir * label) -> Prop :=
+  | CoInSplit1l x xs y ys: force xs = cocons y ys -> x = y  -> coseqInl x xs
+  | CoInSplit2l x xs y ys: force xs = cocons y ys -> x <> y -> coseqInl x ys -> coseqInl x xs.
+  
 (* alternative coinductive membership check measures *)
 Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
                     coseq (participant * dir) -> list (participant * dir) -> Prop :=
@@ -163,6 +185,27 @@ Fixpoint isInA (a: Apf) p: bool :=
     | apf_receive q l' s' a' => eqb p q || isInA a' p
   end.
 
+Definition eqbs s1 s2: bool :=
+  match (s1, s2) with
+    | (sunit, sunit) => true
+    | (sbool, sbool) => true
+    | (snat, snat)   => true
+    | (sint, sint)   => true
+    | _              => false
+  end.
+
+Fixpoint isInAsl (a: Apf) p l s: bool :=
+  match a with
+    | apf_end                => false
+    | apf_receive q l' s' a' => (eqb p q && eqb l l' && eqbs s s') || isInAsl a' p l s
+  end.
+
+Fixpoint isInAl (a: Apf) p l: bool :=
+  match a with
+    | apf_end                => false
+    | apf_receive q l' s' a' => (eqb p q && eqb l l') || isInAl a' p l
+  end.
+
 CoFixpoint merge_apf_cont (a: Apf) (w: st): st :=
   match a with
     | apf_end              => w
@@ -179,6 +222,13 @@ Fixpoint Apf_merge (a: Apf) (b: Apf): Apf :=
   match a with
     | apf_receive q l s a' => apf_receive q l s (Apf_merge a' b)
     | apf_end              => b
+  end.
+
+Fixpoint Apf_eqb (a: Apf) (b: Apf): bool :=
+  match (a, b) with
+    | (apf_receive p l s a', apf_receive q l' s' b') => eqb p q && eqb l l' && eqbs s s' && Apf_eqb a' b'
+    | (apf_end, apf_end)                             => true
+    | _                                              => false
   end.
 
 Fixpoint ApnA3 (a: Apf) (n: nat): Apf :=
@@ -226,6 +276,14 @@ Fixpoint Bpf_merge (a: Bpf) (b: Bpf): Bpf :=
     | bpf_receive q l s a' => bpf_receive q l s (Bpf_merge a' b)
     | bpf_send q l s a'    => bpf_send q l s (Bpf_merge a' b)
     | bpf_end              => b
+  end.
+
+Fixpoint Bpf_eqb (a: Bpf) (b: Bpf): bool :=
+  match (a, b) with
+    | (bpf_receive p l s a', bpf_receive q l' s' b') => eqb p q && eqb l l' && eqbs s s' && Bpf_eqb a' b'
+    | (bpf_send p l s a', bpf_send q l' s' b')       => eqb p q && eqb l l' && eqbs s s' && Bpf_eqb a' b'
+    | (bpf_end, bpf_end)                             => true
+    | _                                              => false
   end.
   
 (* Definition Apre (p: participant) (a: Apf) := isInA a p = false.  *)

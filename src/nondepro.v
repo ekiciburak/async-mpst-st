@@ -101,6 +101,64 @@ Proof. intros.
        - rewrite(st_eq(merge_bpf_cont bpf_end (s ! l))). simpl. easy.
 Qed.
 
+Lemma eqbs_eq: forall s1 s2, eqbs s1 s2 = true <-> s1 = s2.
+Proof. intro s1.
+       induction s1; intros.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.       
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+Qed.
+
+Lemma apf_eqb_eq: forall a b, Apf_eqb a b <-> a = b.
+Proof. intro a.
+       induction a; intros.
+       - case_eq b; intros.
+         + simpl. easy.
+         + subst. simpl. easy.
+       - simpl.
+         case_eq b; intros.
+         + subst. easy.
+         + subst. split.
+           intros.
+           apply Bool.andb_true_iff in H.
+           destruct H as (Ha,Hb).
+           apply Bool.andb_true_iff in Ha.
+           destruct Ha as (Ha,Hc).
+           apply Bool.andb_true_iff in Ha.
+           destruct Ha as (Ha,Hd).
+           rewrite eqb_eq in Ha.
+           rewrite eqb_eq in Hd.
+           rewrite eqbs_eq in Hc.
+           apply IHa in Hb.
+           subst. easy.
+           intros.
+           inversion H. subst.
+           apply Bool.andb_true_iff. split.
+           apply Bool.andb_true_iff. split.
+           apply Bool.andb_true_iff. split.
+           rewrite eqb_eq. easy.
+           rewrite eqb_eq. easy.
+           rewrite eqbs_eq. easy.
+           apply IHa. easy.
+Qed.
+
 Lemma _39_1: forall a b p q w w1 w2,
   isInB a p = false ->
   isInB b q = false ->
@@ -361,4 +419,202 @@ Proof. intro b.
        - simpl in H3. easy.
 Qed.
 
+Lemma pneqq3: forall a p q l l' s s' w w' (H: p <> q),
+  q & [(l, s, w)] = merge_apf_cont a (p & [(l', s', w')]) ->
+  exists a', 
+  w = merge_apf_cont a' (p & [(l', s', w')]) /\ a = apf_receive q l s a'.
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0.
+         inversion H0. subst. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l', s', w')]))) in H0.
+         simpl in H0.
+         inversion H0. subst.
+         exists a. split; easy.
+Qed.
+
+Lemma merge_same_aeq: forall a w w',
+  merge_apf_cont a w = merge_apf_cont a w' -> w = w'.
+Proof. intro a.
+       induction a; intros.
+       - rewrite !apfend_an in H. easy.
+       - apply IHa.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)) in H.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w')) in H.
+         simpl in H. inversion H. easy.
+Qed.
+
+
+Lemma inH0: forall a p l s w, coseqInl (p, rcv, l) (actl (merge_apf_cont a (p & [(l, s, w)]))).
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an.
+         rewrite(coseq_eq(actl (p & [(l, s, w)]))). unfold coseq_id. simpl.
+         apply CoInSplit1l with (y := (p, rcv, l)) (ys := actl w).
+         simpl. easy. easy.
+       - rewrite(st_eq( (merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)])))). simpl.
+         case_eq (eqb p s); intros.
+         + rewrite eqb_eq in H.
+           case_eq (eqb l s0); intros.
+           ++ rewrite eqb_eq in H0.
+              subst.
+              rewrite(coseq_eq (actl (s & [(s0, s1, merge_apf_cont a (s & [(s0, s2, w)]))]))). unfold coseq_id. simpl.
+              apply CoInSplit1l with (y := (s, rcv, s0)) (ys :=  (actl (merge_apf_cont a (s & [(s0, s2, w)])))).
+              simpl. easy. easy.
+           ++ rewrite eqb_neq in H0.
+              apply CoInSplit2l with (y := (s, rcv, s0)) (ys :=  (actl (merge_apf_cont a (p & [(l, s2, w)])))).
+              simpl. easy. subst.
+              unfold not. intros. apply H0. inversion H. easy.
+           apply IHa.
+         + rewrite eqb_neq in H.
+           rewrite(coseq_eq(actl (s & [(s0, s1, merge_apf_cont a (p & [(l, s2, w)]))]))). unfold coseq_id. simpl.
+           apply CoInSplit2l with (y := (s, rcv, s0)) (ys := (actl (merge_apf_cont a (p & [(l, s2, w)])))).
+           simpl. easy.
+           unfold not. intros. apply H. inversion H0. easy.
+           apply IHa.
+Qed.
+
+Lemma inH1: forall b a p l s w w',
+   merge_apf_cont a (p & [(l, s, w)]) = merge_apf_cont b w' ->
+   isInAl b p l = false -> 
+   coseqInl (p, rcv, l) (actl w').
+Proof. intro b.
+       induction b; intros.
+       - rewrite apfend_an in H.
+         rewrite <- H.
+         apply inH0.
+       - case_eq a; intros.
+         + subst.
+           rewrite apfend_an in H.
+           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w')) in H.
+           simpl in H.
+           inversion H. subst.
+            
+           simpl in H0.
+           rewrite orbtf in H0. 
+           destruct H0.
+           rewrite !eqb_refl in H0. easy.
+         + subst.
+           rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a0) (p & [(l, s2, w)]))) in H.
+           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w')) in H.
+           simpl in H.
+           inversion H. subst.
+           simpl in H0.
+
+           rewrite orbtf in H0.
+           destruct H0 as (Ha, Hb).
+           specialize(IHb a0 p l s2 w w' H5 Hb).
+           easy.
+Qed.
+
+Lemma inH2: forall b a p l w w', 
+  merge_apf_cont a w = merge_apf_cont b w' ->
+  isInAl a p l ->
+  isInAl b p l \/ coseqInl (p, rcv, l) (actl w').
+Proof. intro b.
+       induction b; intros.
+       - case_eq a; intros.
+         + subst. simpl in H0. easy.
+         + subst. simpl in H0. 
+           rewrite apfend_an in H.
+           apply Bool.orb_true_iff in H0.
+           destruct H0 as [Ha | Ha].
+           ++ apply Bool.andb_true_iff in Ha.
+              destruct Ha as (Ha,Hb).
+              rewrite eqb_eq in Ha.
+              rewrite eqb_eq in Hb.
+              subst.
+              admit.
+           ++ simpl.
+              rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a0) w )) in H.
+              simpl in H.
+              admit.
+       - simpl. 
+         case_eq a; intros.
+         + subst. simpl in H0. easy.
+         + subst. simpl in H0.
+           rewrite(st_eq(merge_apf_cont (apf_receive s2 s3 s4 a0) w)) in H.
+           rewrite(st_eq( merge_apf_cont (apf_receive s s0 s1 b) w')) in H.
+           simpl in H.
+           inversion H. subst.
+           apply Bool.orb_true_iff in H0.
+           destruct H0 as [Ha | Ha].
+           ++ left. admit.
+           ++ specialize(IHb a0 p l w w' H5 Ha).
+              destruct IHb as [IHb | IHb].
+              * left. rewrite IHb.
+                apply Bool.orb_true_iff. right. easy.
+              * right. easy.
+Admitted.
+
+Lemma inH3: forall b a p l w w', 
+  merge_apf_cont a w = merge_apf_cont b w' ->
+  coseqInl (p, rcv, l) (actl w) ->
+  isInAl b p l \/ coseqInl (p, rcv, l) (actl w').
+Admitted.
+
+Lemma InL: forall a b p l s w w', 
+  isInA a p = false ->
+  paco2 refinementR3 bot2 (merge_apf_cont a (p & [(l, s, w)])) (merge_apf_cont b w') ->
+  isInAl b p l \/ coseqInl (p, rcv, l) (actl w').
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0.
+         pinversion H0.
+         + subst.
+           rewrite <- meqAp3 in H5.
+           case_eq(Apf_eqb (ApnA3 a n) b); intros.
+           ++ apply apf_eqb_eq in H1. subst.
+              apply merge_same_aeq in H5.
+              rewrite <- H5.
+              right.  
+              rewrite(coseq_eq(actl (p & [(l, s', w'0)]))). unfold coseq_id. simpl.
+              apply CoInSplit1l with (y := (p, rcv, l)) (ys := (actl w'0)). simpl. easy. easy.
+              case_eq(isInAl b p l); intros.
+              * left. easy.
+              * assert (isInA b p = false) by admit.
+                right.
+                specialize(inH1 b (ApnA3 a n) p l s' w'0 w' H5 H2); intro Hin.
+                easy.
+                admit.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H0.
+         simpl in H0. simpl in H.
+         pinversion H0.
+         subst.
+         rewrite <- meqAp3 in H5, H8, H9.
+         rewrite orbtf in H.
+         destruct H as (Ha, Hb).
+         specialize(IHa (ApnA3 a0 n) p l s2 w w'0 Hb H8).
+         destruct IHa as [IHa | IHa].
+         ++ specialize(inH2 b (ApnA3 a0 n) p l (s & [(s0, s', w'0)]) w' H5 IHa); intro Hin. easy.
+         ++ specialize(inH3 b (ApnA3 a0 n) p l (s & [(s0, s', w'0)]) w' H5 ); intro Hin.
+            apply Hin.
+            rewrite(coseq_eq(actl (s & [(s0, s', w'0)]))). unfold coseq_id. simpl.
+            apply CoInSplit2l with (y := (s, rcv, s0)) (ys := (actl w'0)).
+            simpl. easy. 
+            rewrite eqb_neq in Ha.
+            unfold not. intros. apply Ha. inversion H. easy.
+            easy.
+            admit.
+Admitted.
+
+Lemma refTrans: Transitive (refinement3).
+Proof. red. pcofix CIH.
+       intros x y z Ha Hb.
+       pinversion Ha.
+       - subst. pinversion Hb.
+         + subst. 
+           case_eq(eqb p0 p); intros.
+           + rewrite eqb_eq in H8. subst.
+             admit.
+           + rewrite eqb_neq in H8.
+             rename p0 into q.
+             rewrite <- meqAp3 in H3.
+             assert(p <> q) by easy.
+             specialize(pneqq3 (ApnA3 a n) p q l0 l s0 s' w0 w' H9 H3); intros HR.
+             destruct HR as (a',(HR1,HR2)).
+             assert(isInA a' p = false) by admit.
+             rewrite <- meqAp3.
+             rewrite <- meqAp3 in H6, H7, H1, H2.
+Admitted.
 
