@@ -153,6 +153,83 @@ Arguments ap_receive {_} _ _ _ _.
 Arguments ap_merge {_} _ _ _ _.
 Arguments ap_end {_}.
 
+Inductive Apf: Type :=
+  | apf_end    : Apf
+  | apf_receive: participant -> label -> local.sort -> Apf -> Apf.
+
+Fixpoint isInA (a: Apf) p: bool :=
+  match a with
+    | apf_end                => false
+    | apf_receive q l' s' a' => eqb p q || isInA a' p
+  end.
+
+CoFixpoint merge_apf_cont (a: Apf) (w: st): st :=
+  match a with
+    | apf_end              => w
+    | apf_receive q l s a' => st_receive q [(l,s,(merge_apf_cont a' w))]
+  end.
+
+Fixpoint merge_apf_contn (a: Apf) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_apf_cont a (merge_apf_contn a w k)
+  end.
+
+Fixpoint Apf_merge (a: Apf) (b: Apf): Apf :=
+  match a with
+    | apf_receive q l s a' => apf_receive q l s (Apf_merge a' b)
+    | apf_end              => b
+  end.
+
+Fixpoint ApnA3 (a: Apf) (n: nat): Apf :=
+  match n with
+    | O   => apf_end
+    | S O => a
+    | S k => Apf_merge a (ApnA3 a k)
+  end.
+
+
+Inductive Bpf: Type :=
+  | bpf_receive: participant -> label -> local.sort -> Bpf -> Bpf
+  | bpf_send   : participant -> label -> local.sort -> Bpf -> Bpf
+  | bpf_end    : Bpf.
+
+Fixpoint isInB (b: Bpf) p: bool :=
+  match b with
+    | bpf_receive q l s b' => isInB b' p
+    | bpf_send q l s b'    => eqb p q || isInB b' p
+    | _                    => false
+  end.
+
+CoFixpoint merge_bpf_cont (b: Bpf) (w: st): st :=
+  match b with 
+    | bpf_end             => w
+    | bpf_receive q l s c => st_receive q [(l,s,(merge_bpf_cont c w))]
+    | bpf_send q l s c    => st_send q [(l,s,(merge_bpf_cont c w))]
+  end.
+
+Fixpoint merge_bpf_contn (b: Bpf) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_bpf_cont b (merge_bpf_contn b w k)
+  end.
+
+Fixpoint isBpSend (b: Bpf): bool :=
+  match b with
+    | bpf_receive q l s c => isBpSend c
+    | bpf_send q l s c    => true
+    | _                   => false
+  end.
+
+Fixpoint Bpf_merge (a: Bpf) (b: Bpf): Bpf :=
+  match a with
+    | bpf_receive q l s a' => bpf_receive q l s (Bpf_merge a' b)
+    | bpf_send q l s a'    => bpf_send q l s (Bpf_merge a' b)
+    | bpf_end              => b
+  end.
+  
+(* Definition Apre (p: participant) (a: Apf) := isInA a p = false.  *)
+
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=
   match n with
     | O   => ap_end

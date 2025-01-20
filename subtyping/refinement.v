@@ -70,6 +70,22 @@ Proof. unfold monotone2.
        - constructor.
 Qed.
 
-
 #[export]
 Declare Instance Ref_Trans: Transitive (refinement).
+
+Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
+  | ref3_a  : forall w w' p l s s' a n, subsort s' s ->
+                                        isInA a p = false ->
+                                        seq w (merge_apf_contn a w' n)  ->
+                                        act_eq w (merge_apf_contn a w' n) ->
+                                        refinementR3 seq (st_receive p [(l,s,w)]) (merge_apf_contn a (st_receive p [(l,s',w')]) n)
+  | ref3_b  : forall w w' p l s s' b n, subsort s s' ->
+                                        isInB b p = false ->
+                                        seq w (merge_bpf_contn b w' n) ->
+                                        act_eq w (merge_bpf_contn b w' n) ->
+                                        refinementR3 seq (st_send p [(l,s,w)]) (merge_bpf_contn b (st_send p [(l,s',w')]) n)
+  | ref3_end: refinementR3 seq st_end st_end.
+
+Definition refinement3: st -> st -> Prop := fun s1 s2 => paco2 refinementR3 bot2 s1 s2.
+
+
