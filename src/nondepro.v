@@ -658,6 +658,80 @@ Proof. intro a1.
            simpl. split. easy. split. easy. rewrite Ha5. easy.
 Qed.
 
+Lemma InMergeF: forall a b p,
+  isInA (Apf_merge a b) p = false <->
+  isInA a p = false /\ isInA b p = false.
+Proof. split.
+       revert b p.
+       induction a; intros.
+       - simpl in H. simpl. rewrite H. easy.
+       - simpl in H. simpl.
+         rewrite orbtf in H.
+         destruct H as (Ha, Hb).
+         rewrite Ha. simpl.
+         apply IHa. easy.
+      
+       revert p b.
+       induction a; intros.
+       - simpl in H. simpl. easy.
+       - simpl in H. simpl.
+         destruct H as (Ha, Hb).
+         rewrite orbtf in Ha.
+         rewrite orbtf.
+         split. easy.
+         apply IHa. split; easy.
+Qed.
+
+Lemma isInDec: forall a p, isInA a p = false \/ isInA a p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. left. easy.
+       - simpl.
+         case_eq(eqb p s); intros.
+         + simpl. right. easy.
+         + simpl. easy.
+Qed.
+
+Lemma InMerge: forall a b p,
+  isInA (Apf_merge a b) p =
+  isInA a p || isInA b p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl.
+         case_eq(eqb p s); intros.
+         + simpl. easy.
+         + simpl. easy.
+Qed.
+
+
+Lemma InMergeN: forall a p, isInA a p = isInA (Apf_merge a a) p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl.
+         rewrite IHa.
+         case_eq(eqb p s); intros.
+         + simpl. easy.
+         + simpl.
+           setoid_rewrite InMerge at 2.
+           simpl. rewrite H. simpl.
+           rewrite InMerge. easy.
+Qed.
+
+Lemma InN: forall n a p, n > 0 -> isInA a p = isInA (ApnA3 a n) p.
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - simpl.
+         destruct n.
+         easy.
+         rewrite InMerge.
+         rewrite <- IHn.
+         destruct(isInA a p); easy.
+         easy.
+Qed.
+
 
 Lemma InLA: forall a b p l s w w', 
   isInA a p = false ->
@@ -680,17 +754,31 @@ Proof. intro a.
               split. simpl. easy.
               rewrite apfend_an.
               split. easy. split.
-              admit. easy.
+
+              case_eq n; intros.
+              subst. simpl in *.
+              easy.
+              rewrite <- InN; easy.
+
+              easy.
            ++ case_eq(isInA b p); intros.
               * assert((ApnA3 a n) <> b) by admit.
-                assert(isInA (ApnA3 a n) p = false) by admit.
+                assert(isInA (ApnA3 a n) p = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InN; easy.
+                }
                 specialize(inH4 (ApnA3 a n) b p l s' w'0 w' H3 H4 H2 H5); intro Hin.
                 destruct Hin as (a1,Ha1). 
                 left.
                 exists(ApnA3 a n). exists a1. exists s'.
                 split. easy. split. easy. easy.
               * assert((ApnA3 a n) <> b) by admit.
-                assert(isInA (ApnA3 a n) p = false) by admit.
+                assert(isInA (ApnA3 a n) p = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InN; easy.
+                }
                 assert(merge_apf_cont b w' = merge_apf_cont b w') by easy.
                 symmetry in H5. 
                 specialize(_39_2 (ApnA3 a n) b p p
@@ -729,7 +817,11 @@ Proof. intro a.
            split. easy. split. easy. easy.
          + case_eq(isInA b s); intros.
            * assert((ApnA3 a0 n) <> b) by admit.
-             assert(isInA (ApnA3 a0 n) s = false) by admit.
+             assert(isInA (ApnA3 a0 n) s = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              specialize(inH4 (ApnA3 a0 n) b s s0 s' w'0 w' H2 H3 H1 H4); intro Hin.
              destruct Hin as (a3,Ha3).
              rewrite He in Ha3.
@@ -738,7 +830,11 @@ Proof. intro a.
              left. exists a1. exists (Apf_merge a2 (apf_receive s s0 s' a3)).
              exists s''. split. easy. split. easy. easy.
            * assert((ApnA3 a0 n) <> b) by admit.
-             assert(isInA (ApnA3 a0 n) s = false) by admit.
+             assert(isInA (ApnA3 a0 n) s = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              assert(merge_apf_cont b w' = merge_apf_cont b w') by easy.
              symmetry in H4. 
              specialize(_39_2 (ApnA3 a0 n) b s s
@@ -782,7 +878,11 @@ Proof. intro a.
          + rewrite Ha4 in H4.
            case_eq(isInA b s); intros.
            * assert((ApnA3 a0 n) <> b) by admit.
-             assert(isInA (ApnA3 a0 n) s = false) by admit.
+             assert(isInA (ApnA3 a0 n) s = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              specialize(inH4 (ApnA3 a0 n) b s s0 s' (merge_apf_cont a1 (p & [(l, s'', w1)])) w' H2 H3 H1 H4); intro Hin.
              destruct Hin as (a3,(Ha5,Ha6)).
              case_eq(Apf_eqb a1 a3); intros.
@@ -792,7 +892,13 @@ Proof. intro a.
                 exists apf_end. exists w1. exists s''.
                 simpl. split. easy. split. easy.
                 split.
-                admit.
+                assert(isInA (ApnA3 a0 n) s = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InN; easy.
+                }
+                rewrite InMerge. rewrite Ha3. simpl.
+                apply orbtf. split. rewrite eqb_neq. easy. easy.
                 rewrite apfend_an. easy.
              ++ assert(a1 <> a3) by admit.
                 case_eq(isInA a3 p); intros.
@@ -804,7 +910,13 @@ Proof. intro a.
                    exists(Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' a1)).
                    exists a2. exists s''.
                    split.
-                   admit.
+                   assert(isInA (ApnA3 a0 n) s = false).
+                   { case_eq n; intros.
+                     - simpl. easy.
+                     - rewrite <- InN; easy.
+                   }
+                   rewrite InMerge. rewrite Ha3. simpl.
+                   apply orbtf. split. rewrite eqb_neq. easy. easy.
                    split. easy. easy.
                 ** symmetry in Ha6.
                    assert(merge_apf_cont a3 w' = merge_apf_cont a3 w') by easy.
@@ -818,15 +930,27 @@ Proof. intro a.
                        rewrite H13 in Hf. rewrite apfend_an in Hf.
                        right. exists apf_end. exists w1. exists s''.
                        simpl. split. easy. split. easy. 
-                       split. rewrite Ha5. admit.
+                       split. rewrite Ha5. 
+                       apply InMergeF.
+                       split. easy.
+                       simpl.
+                       rewrite orbtf. split. rewrite eqb_neq. easy. easy.
                        rewrite apfend_an. easy.
                    *** destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
                        right. exists c. exists w1. exists s''.
                        split. easy. split. easy. 
-                       split. rewrite Ha5. admit.
+                       split. rewrite Ha5.
+                       apply InMergeF.
+                       split. easy.
+                       simpl.
+                       rewrite orbtf. split. rewrite eqb_neq. easy. easy.
                        easy.
            * assert((ApnA3 a0 n) <> b) by admit.
-             assert(isInA (ApnA3 a0 n) s = false) by admit.
+             assert(isInA (ApnA3 a0 n) s = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              symmetry in H4.
              assert(merge_apf_cont b w' = merge_apf_cont b w') by easy.
              specialize(_39_2 (ApnA3 a0 n) b s s 
@@ -844,7 +968,13 @@ Proof. intro a.
                 split. simpl. rewrite Ha1.
                 apply orbtf. split. rewrite eqb_neq. easy. easy.
                 split. easy.
-                split. rewrite He H10. simpl. admit.
+                split. rewrite He H10. simpl.
+                assert(isInA (ApnA3 a0 n) s = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InN; easy.
+                }
+                rewrite InMerge. rewrite Ha3. simpl. easy.
                 rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [(l, s'', w1)]))). simpl.
                 easy.
              ++ destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
@@ -852,8 +982,14 @@ Proof. intro a.
                 rewrite He in Ha3.
                 right.
                 exists (Apf_merge c (apf_receive s s0 s' a1)). exists w1. exists s''.
-                split. admit.
-                split. easy. split. admit.
+                split.
+                rewrite InMerge.
+                apply InMergeF in Ha3.
+                destruct Ha3 as (Ha3a,Ha3b).
+                rewrite Ha3b. simpl.
+                rewrite orbtf. split. rewrite eqb_neq. easy. easy.
+                split. easy. split.
+                apply InMergeF in Ha3. easy.
                 easy.
                 admit.
 Admitted.
