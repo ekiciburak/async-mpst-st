@@ -732,6 +732,27 @@ Proof. intro n.
          easy.
 Qed.
 
+Lemma reOrg1: forall a1 a2 a3 p l s,
+  Apf_merge (Apf_merge a1 (apf_receive p l s a2)) a3 =
+  Apf_merge a1 (apf_receive p l s (Apf_merge a2 a3)).
+Proof. intro a1.
+       induction a1; intros.
+       - simpl. easy.
+       - simpl. rewrite IHa1. easy.
+Qed.
+
+Lemma reOrg2: forall a1 a2 p l s w,
+  merge_apf_cont (Apf_merge a1 (apf_receive p l s a2)) w =
+  merge_apf_cont a1 (p & [(l, s, merge_apf_cont a2 w)]).
+Proof. intro a1.
+       induction a1; intros.
+       - simpl. rewrite apfend_an.
+         rewrite(st_eq(merge_apf_cont (apf_receive p l s a2) w )). simpl. easy.
+       - simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 (Apf_merge a1 (apf_receive p l s2 a2))) w)).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a1) (p & [(l, s2, merge_apf_cont a2 w)]))). simpl.
+         rewrite IHa1. easy.
+Qed.
 
 Lemma InLA: forall a b p l s w w', 
   isInA a p = false ->
@@ -826,7 +847,12 @@ Proof. intro a.
              destruct Hin as (a3,Ha3).
              rewrite He in Ha3.
              simpl in Ha3.
-             assert(b = Apf_merge a1 (apf_receive p l s'' (Apf_merge a2 (apf_receive s s0 s' a3)))) by admit.
+             assert(b = Apf_merge a1 (apf_receive p l s'' (Apf_merge a2 (apf_receive s s0 s' a3)))).
+             { destruct Ha3 as (Ha3,Ha4).
+               rewrite Ha3.
+               rewrite reOrg1.
+               easy.
+             }
              left. exists a1. exists (Apf_merge a2 (apf_receive s s0 s' a3)).
              exists s''. split. easy. split. easy. easy.
            * assert((ApnA3 a0 n) <> b) by admit.
@@ -845,7 +871,10 @@ Proof. intro a.
              destruct Hnin as [Hnin | Hnin].
              destruct Hnin as (c, (Hf,(Hg,(Hh,Hi)))).
              rewrite He in Hh.
-             assert(b = Apf_merge a1 (apf_receive p l s'' (Apf_merge a2 c))) by admit.
+             assert(b = Apf_merge a1 (apf_receive p l s'' (Apf_merge a2 c))).
+             { rewrite Hh.
+               rewrite reOrg1. easy.
+             }
              left.
              exists a1. exists (Apf_merge a2 c). exists s''.
              split. easy. split. easy. easy.
@@ -860,7 +889,10 @@ Proof. intro a.
                 destruct Hin as (a3,(Ha3,(Ha4,Ha5))).
                 right.
                 rewrite Ha4 in Hi.
-                assert(w' = merge_apf_cont a3 (p & [(l, s'', merge_apf_cont a2 (s & [(s0, s', w'0)]))])) by admit.
+                assert(w' = merge_apf_cont a3 (p & [(l, s'', merge_apf_cont a2 (s & [(s0, s', w'0)]))])).
+                { rewrite Hi.
+                  rewrite reOrg2. easy.
+                }
                 exists a3. exists (merge_apf_cont a2 (s & [(s0, s', w'0)])). exists s''.
                 split. easy. split. easy. split. easy. easy.
          destruct IHa as (a1,(w1,(s'',(Ha1,(Ha2,(Ha3,Ha4)))))).
@@ -905,7 +937,11 @@ Proof. intro a.
                 ** specialize(inH4 a1 a3 p l s'' w1 w' H10 Ha1 H11 Ha6); intro Hin.
                    destruct Hin as (a2,(Ha2a,Ha2b)).
                    rewrite Ha2a in Ha5.
-                   assert(b = Apf_merge (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' a1)) (apf_receive p l s'' a2)) by admit.
+                   assert(b = Apf_merge (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' a1)) (apf_receive p l s'' a2)).
+                   { rewrite Ha5.
+                     rewrite reOrg1.
+                     easy.
+                   }
                    left.
                    exists(Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' a1)).
                    exists a2. exists s''.
@@ -978,7 +1014,11 @@ Proof. intro a.
                 rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [(l, s'', w1)]))). simpl.
                 easy.
              ++ destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
-                assert(w' =  merge_apf_cont (Apf_merge c (apf_receive s s0 s' a1)) (p & [(l, s'', w1)])) by admit.
+                assert(w' =  merge_apf_cont (Apf_merge c (apf_receive s s0 s' a1)) (p & [(l, s'', w1)])).
+                { rewrite Hf.
+                  rewrite reOrg2.
+                  easy.
+                }
                 rewrite He in Ha3.
                 right.
                 exists (Apf_merge c (apf_receive s s0 s' a1)). exists w1. exists s''.
