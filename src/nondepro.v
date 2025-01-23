@@ -754,6 +754,57 @@ Proof. intro a1.
          rewrite IHa1. easy.
 Qed.
 
+Lemma noPre: forall c p l s w w',
+  isInA c p = false ->
+  p & [(l, s, w)] = merge_apf_cont c w' ->
+  c = apf_end.
+Proof. intro c.
+       induction c; intros.
+       - easy.
+       - simpl in H.
+         rewrite orbtf in H.
+         destruct H as (Ha,Hb).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 c) w')) in H0.
+         simpl in H0. inversion H0.
+         subst. rewrite eqb_refl in Ha. easy.
+Qed.
+
+Lemma apf_eqb_refl: forall a, Apf_eqb a a.
+Proof. intro a.
+       induction a; intros.
+       - easy.
+       - simpl. apply Bool.andb_true_iff.
+         split. apply Bool.andb_true_iff.
+         split. apply Bool.andb_true_iff.
+         split. rewrite eqb_refl. easy.
+         rewrite eqb_refl. easy.
+         destruct s1; easy.
+         easy.
+Qed.
+
+Lemma apf_eqb_neq: forall a b,
+  Apf_eqb a b = false ->
+  a <> b.
+Proof. intro a.
+       induction a; intros.
+       - simpl in H. case_eq b; intros.
+         + subst. easy.
+         + subst. simpl. easy.
+       - simpl in H.
+         case_eq b; intros.
+         + subst. easy.
+         + subst. unfold not.
+           intro Ha.
+           inversion Ha.
+           subst.
+           rewrite !eqb_refl in H.
+           simpl in H.
+           rewrite Bool.andb_false_iff in H.
+           destruct H.
+           destruct s4; easy.
+           rewrite apf_eqb_refl in H. easy.
+Qed.
+
 Lemma InLA: forall a b p l s w w', 
   isInA a p = false ->
   paco2 refinementR3 bot2 (merge_apf_cont a (p & [(l, s, w)])) (merge_apf_cont b w') ->
@@ -783,7 +834,8 @@ Proof. intro a.
 
               easy.
            ++ case_eq(isInA b p); intros.
-              * assert((ApnA3 a n) <> b) by admit.
+              * assert((ApnA3 a n) <> b).
+                { apply apf_eqb_neq in H1. easy. }
                 assert(isInA (ApnA3 a n) p = false).
                 { case_eq n; intros.
                   - simpl. easy.
@@ -794,7 +846,8 @@ Proof. intro a.
                 left.
                 exists(ApnA3 a n). exists a1. exists s'.
                 split. easy. split. easy. easy.
-              * assert((ApnA3 a n) <> b) by admit.
+              * assert((ApnA3 a n) <> b).
+                { apply apf_eqb_neq in H1. easy. }
                 assert(isInA (ApnA3 a n) p = false).
                 { case_eq n; intros.
                   - simpl. easy.
@@ -806,10 +859,12 @@ Proof. intro a.
                 (merge_apf_cont b w')
                 (p & [(l, s', w'0)]) w'
                 H4 H2 H3 H5 H10
-                ); intro Hnin.
+                ); intro Hnin. 
                 destruct Hnin as [Hnin | Hnin].
                 destruct Hnin as (c, (Ha,(Hb,(Hc,Hd)))).
-                assert(c = apf_end) by admit.
+                assert(c = apf_end).
+                { apply noPre with (p := p) (l := l) (s := s') (w :=  w'0) (w' := w'); easy.
+                }
                 rewrite H11 in Hd.
                 rewrite apfend_an in Hd.
                 right. exists apf_end. exists w'0. exists s'.
@@ -837,7 +892,8 @@ Proof. intro a.
            left. exists a1. exists a2. exists s''.
            split. easy. split. easy. easy.
          + case_eq(isInA b s); intros.
-           * assert((ApnA3 a0 n) <> b) by admit.
+           * assert((ApnA3 a0 n) <> b).
+             { apply apf_eqb_neq in H. easy. }
              assert(isInA (ApnA3 a0 n) s = false).
              { case_eq n; intros.
                - simpl. easy.
@@ -855,7 +911,8 @@ Proof. intro a.
              }
              left. exists a1. exists (Apf_merge a2 (apf_receive s s0 s' a3)).
              exists s''. split. easy. split. easy. easy.
-           * assert((ApnA3 a0 n) <> b) by admit.
+           * assert((ApnA3 a0 n) <> b).
+             { apply apf_eqb_neq in H. easy. }
              assert(isInA (ApnA3 a0 n) s = false).
              { case_eq n; intros.
                - simpl. easy.
@@ -909,7 +966,8 @@ Proof. intro a.
            easy.
          + rewrite Ha4 in H4.
            case_eq(isInA b s); intros.
-           * assert((ApnA3 a0 n) <> b) by admit.
+           * assert((ApnA3 a0 n) <> b).
+             { apply apf_eqb_neq in H. easy. }
              assert(isInA (ApnA3 a0 n) s = false).
              { case_eq n; intros.
                - simpl. easy.
@@ -932,7 +990,8 @@ Proof. intro a.
                 rewrite InMerge. rewrite Ha3. simpl.
                 apply orbtf. split. rewrite eqb_neq. easy. easy.
                 rewrite apfend_an. easy.
-             ++ assert(a1 <> a3) by admit.
+             ++ assert(a1 <> a3).
+                { apply apf_eqb_neq in H9. easy. }
                 case_eq(isInA a3 p); intros.
                 ** specialize(inH4 a1 a3 p l s'' w1 w' H10 Ha1 H11 Ha6); intro Hin.
                    destruct Hin as (a2,(Ha2a,Ha2b)).
@@ -962,7 +1021,8 @@ Proof. intro a.
                    ); intro Hin.
                    destruct Hin as [Hin | Hin].
                    *** destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
-                       assert(c = apf_end) by admit.
+                       assert(c = apf_end).
+                       { apply noPre with (p := p) (l := l) (s := s'') (w :=  w1) (w' := w'); easy. }
                        rewrite H13 in Hf. rewrite apfend_an in Hf.
                        right. exists apf_end. exists w1. exists s''.
                        simpl. split. easy. split. easy. 
@@ -981,7 +1041,8 @@ Proof. intro a.
                        simpl.
                        rewrite orbtf. split. rewrite eqb_neq. easy. easy.
                        easy.
-           * assert((ApnA3 a0 n) <> b) by admit.
+           * assert((ApnA3 a0 n) <> b).
+             { apply apf_eqb_neq in H. easy. }
              assert(isInA (ApnA3 a0 n) s = false).
              { case_eq n; intros.
                - simpl. easy.
@@ -996,7 +1057,9 @@ Proof. intro a.
                    ); intro Hin.
              destruct Hin as [Hin | Hin].
              ++ destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
-                assert(c = apf_end) by admit.
+                assert(c = apf_end).
+                { apply noPre with (p := s) (l := s0) (s := s') (w := merge_apf_cont a1 (p & [(l, s'', w1)])) (w' := w'); easy.
+                }
                 rewrite H10 in Hf.
                 rewrite apfend_an in Hf.
                 right.
