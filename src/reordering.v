@@ -238,7 +238,6 @@ Fixpoint ApnA3 (a: Apf) (n: nat): Apf :=
     | S k => Apf_merge a (ApnA3 a k)
   end.
 
-
 Inductive Bpf: Type :=
   | bpf_receive: participant -> label -> local.sort -> Bpf -> Bpf
   | bpf_send   : participant -> label -> local.sort -> Bpf -> Bpf
@@ -276,6 +275,13 @@ Fixpoint Bpf_merge (a: Bpf) (b: Bpf): Bpf :=
     | bpf_receive q l s a' => bpf_receive q l s (Bpf_merge a' b)
     | bpf_send q l s a'    => bpf_send q l s (Bpf_merge a' b)
     | bpf_end              => b
+  end.
+
+Fixpoint BpnB3 (b: Bpf) (n: nat): Bpf :=
+  match n with
+    | O   => bpf_end
+    | S O => b
+    | S k => Bpf_merge b (BpnB3 b k)
   end.
 
 Fixpoint Bpf_eqb (a: Bpf) (b: Bpf): bool :=

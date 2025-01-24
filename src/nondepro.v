@@ -27,6 +27,16 @@ Fixpoint Ap2BpSeq (a: Apf): Bpf :=
     | apf_end              => bpf_end
   end.
 
+Lemma Ap2Bp: forall a, exists b, b = Ap2BpSeq a.
+Proof. intro a.
+       exists (Ap2BpSeq a). easy.
+Qed.
+
+Lemma Bp2Ap: forall b, exists a, a = Bp2ApSeq b.
+Proof. intro b.
+       exists (Bp2ApSeq b). easy.
+Qed.
+
 Lemma BpApSeq: forall b, 
   isBpSend b = false ->
   exists a, b = Ap2BpSeq a.
@@ -48,11 +58,27 @@ Proof. intro a.
        - simpl. rewrite IHa. easy.
 Qed.
 
+Lemma mergelb: forall b, Bpf_merge b bpf_end = b.
+Proof. intro b.
+       induction b; intros.
+       - simpl. rewrite IHb. easy.
+       - simpl. rewrite IHb. easy.
+       - simpl. easy.
+Qed.
+
 Lemma ApnA3C: forall n a, ApnA3 a n.+1 =  Apf_merge a (ApnA3 a n).
 Proof. intros.
        simpl.
        case_eq n; intros.
        - simpl. rewrite mergel. easy.
+       - easy.
+Qed.
+
+Lemma BpnB3C: forall n b, BpnB3 b n.+1 =  Bpf_merge b (BpnB3 b n).
+Proof. intros.
+       simpl.
+       case_eq n; intros.
+       - simpl. rewrite mergelb. easy.
        - easy.
 Qed.
 
@@ -62,6 +88,14 @@ Proof. intros.
        - rewrite(st_eq(merge_apf_cont apf_end (end))). simpl. easy.
        - rewrite(st_eq(merge_apf_cont apf_end (s & l) )). simpl. easy.
        - rewrite(st_eq(merge_apf_cont apf_end (s ! l))). simpl. easy.
+Qed.
+
+Lemma bpfend_bn: forall w, merge_bpf_cont bpf_end w = w.
+Proof. intros.
+       case_eq w; intros.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (end))). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s & l) )). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s ! l))). simpl. easy.
 Qed.
 
 Lemma meqApH: forall a b w,
@@ -75,12 +109,36 @@ Proof. intro a.
          rewrite IHa. easy.
 Qed.
 
+Lemma meqBpH: forall a b w,
+  merge_bpf_cont (Bpf_merge a b) w = merge_bpf_cont a (merge_bpf_cont b w).
+Proof. intro a.
+       induction a; intros.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge a b)) w)).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 a) (merge_bpf_cont b w))).
+         simpl. rewrite IHa. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Bpf_merge a b)) w)).
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 a) (merge_bpf_cont b w))).
+         simpl. rewrite IHa. easy.
+       - rewrite bpfend_bn. easy.
+Qed.
+
 Lemma meqAp3: forall n a w, merge_apf_cont (ApnA3 a n) w = merge_apf_contn a w n.
 Proof. intro n.
        induction n; intros.
        - simpl. rewrite apfend_an. easy.
        - rewrite ApnA3C.
          rewrite meqApH. rewrite IHn.
+         simpl. easy.
+Qed.
+
+Lemma meqBp3: forall n a w, merge_bpf_cont (BpnB3 a n) w = merge_bpf_contn a w n.
+Proof. intro n.
+       induction n; intros.
+       - simpl. rewrite bpfend_bn. easy.
+       - rewrite BpnB3C.
+         rewrite meqBpH. rewrite IHn.
          simpl. easy.
 Qed.
 
@@ -99,6 +157,24 @@ Proof. intros.
        - rewrite(st_eq(merge_bpf_cont bpf_end (end))). simpl. easy.
        - rewrite(st_eq(merge_bpf_cont bpf_end (s & l) )). simpl. easy.
        - rewrite(st_eq(merge_bpf_cont bpf_end (s ! l))). simpl. easy.
+Qed.
+
+Lemma mcAp2Bp: forall a w, 
+  exists b, 
+  merge_apf_cont a w = merge_bpf_cont b w.
+Proof. intro a.
+       induction a; intros.
+       - exists bpf_end.
+         rewrite apfend_an.
+         rewrite bpfend_bn.
+         easy.
+       - specialize(IHa w).
+         destruct IHa as (b, IHa).
+         exists(bpf_receive s s0 s1 b).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)).
+         simpl. rewrite IHa.
+         easy.
 Qed.
 
 Lemma eqbs_eq: forall s1 s2, eqbs s1 s2 = true <-> s1 = s2.
@@ -1248,6 +1324,13 @@ Proof. intro a.
          split. easy. split. easy. easy.
 Qed.
 
+Lemma apf_endN: forall n, ApnA3 apf_end n = apf_end.
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - rewrite ApnA3C IHn. simpl. easy.
+Qed.
+
 Lemma dropRA: forall a b p l s s' w w',
   isInA a p = false ->
   isInA b p = false ->
@@ -1426,7 +1509,11 @@ Proof. intro a.
          pinversion H1.
          + subst.
            rewrite <- meqAp3 in H6, H9, H10.
-           assert(isInA (ApnA3 a n) p = false) by admit.
+           assert(isInA (ApnA3 a n) p = false).
+           { case_eq n; intros.
+             - simpl. easy.
+             - rewrite <- InN; easy.
+           }
            assert((ApnA3 a n) = apf_end).
            { symmetry in H6.
              specialize(noPre (ApnA3 a n) p l s' w' (p & [(l, s'0, w'0)]) H2 H6); intro HP.
@@ -1472,7 +1559,13 @@ Proof. intro a.
            simpl in HR.
            apply HR.
            easy.
-           admit.
+           assert(isInA (ApnA3 a0 n) s = false) as HNN.
+           { case_eq n; intros.
+             - simpl. easy.
+             - rewrite <- InN; easy.
+           }
+           rewrite He in HNN.
+           simpl in HNN. rewrite orbtf in HNN. easy.
            rewrite He in H6.
            rewrite(st_eq(merge_apf_cont (apf_receive p l s' a2) w'0)) in H6. simpl in H6.
            left.
@@ -1505,19 +1598,22 @@ Proof. red. pcofix CIH.
              rename p0 into q.
              rewrite <- meqAp3 in H3.
              assert(p <> q) by easy.
-             assert(isInA (ApnA3 a n) p = false) by admit.
+             assert(isInA (ApnA3 a n) p = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              specialize(pneqq4 (ApnA3 a n) p q l0 l s0 s' w0 w' H9 H10 H3); intros HR.
              destruct HR as (a',(Hnin,(HR1,HR2))).
 
              rewrite <- meqAp3.
              rewrite <- meqAp3 in H6, H7, H1, H2.
              rewrite HR1 in H6.
-             
 
              subst.
-             
+
              specialize(InLA a' (ApnA3 a0 n0) p l s' w' w'0 Hnin H6); intro HIn.
-             
+
              destruct HIn as [HIn | HIn].
              destruct HIn as (a1,(a2,(s'',(Hc,(Hd,He))))).
              rewrite He.
@@ -1531,14 +1627,18 @@ Proof. red. pcofix CIH.
              ); intro HR.
              simpl in HR.
              apply HR.
-             
+
              rewrite HR2 in H1.
              rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H1. simpl in H1.
              right.
              apply CIH with (y:= (q & [(l0, s0, merge_apf_cont a' w')])).
              easy.
              rewrite merge_merge.
-             assert(isInA (ApnA3 a0 n0) q = false) by admit.
+             assert(isInA (ApnA3 a0 n0) q = false).
+             { case_eq n0; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              assert(isInA (Apf_merge a1 a2) q = false).
              { rewrite He in H12.
                simpl in H12.
@@ -1561,13 +1661,14 @@ Proof. red. pcofix CIH.
 
              admit.
              admit.
-             
+
              destruct HIn as (a1,(w1,(s'',(Hc,(Hd,(He,Hf)))))).
              rewrite Hf.
              assert(
              merge_apf_cont (ApnA3 a0 n0) (q & [(l0, s'0, merge_apf_cont a1 (p & [(l, s'', w1)]))]) =
              merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) (p & [(l, s'', w1)])
-             ) by admit.
+             ).
+             { rewrite reOrg2. easy. }
              rewrite H11.
 
              assert(subsort s'' s) by admit.
@@ -1578,15 +1679,19 @@ Proof. red. pcofix CIH.
              simpl in HR.
              pfold.
              apply HR.
-             admit.
-             
+             apply InMergeF.
+             split. easy.
+             simpl. rewrite orbtf. split.
+             rewrite eqb_neq. easy. easy.
+
              rewrite HR2 in H1.
              rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H1. simpl in H1.
              right.
              assert(
                merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) w1 =
                merge_apf_cont (ApnA3 a0 n0) (q & [(l0, s'0, merge_apf_cont a1 w1)])
-             ) by admit.
+             ).
+             { rewrite reOrg2. easy. }
              rewrite H13.
              apply CIH with (y := (q & [(l0, s0, merge_apf_cont a' w')])).
              easy.
@@ -1594,7 +1699,11 @@ Proof. red. pcofix CIH.
              rewrite merge_merge in H6.
              apply dropRA in H6.
              pfold.
-             assert(isInA (ApnA3 a0 n0) q = false) by admit.
+             assert(isInA (ApnA3 a0 n0) q = false).
+             { case_eq n0; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
              specialize(ref3_a (upaco2 refinementR3 bot2) (merge_apf_cont a' w') (merge_apf_cont a1 w1)
                q l0 s0 s'0 (ApnA3 a0 n0) 1 H4 H14
              ); intro HR3.
@@ -1604,18 +1713,52 @@ Proof. red. pcofix CIH.
              rewrite merge_merge.
              easy.
              admit. easy.
-             admit. easy.
+             apply InMergeF. split. easy. easy.
+             easy.
              admit.
-             
-             contradict H3.
+
+             rewrite <- meqAp3 in H3.
+             case_eq a; intros.
+             - subst. rewrite apf_endN in H3.
+               rewrite apfend_an in H3. easy.
+             - subst.
+               case_eq n; intros.
+               + subst. simpl in H3. rewrite apfend_an in H3. easy.
+               + subst. rewrite ApnA3C in H3. simpl in H3.
+                 rewrite(st_eq(merge_apf_cont (apf_receive s1 s2 s3 (Apf_merge a0 (ApnA3 (apf_receive s1 s2 s3 a0) n1)))
+                        (p & [(l, s', w')]))) in H3.
+               simpl in H3. easy.
+             subst.
+             rewrite <- meqAp3 in H4.
+             case_eq a; intros.
+             - subst. rewrite apf_endN in H4.
+               rewrite apfend_an in H4. easy.
+             - subst.
+               case_eq n; intros.
+               + subst. simpl in H4. rewrite apfend_an in H4. easy.
+               + subst. rewrite ApnA3C in H4. simpl in H4.
+                 rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 (Apf_merge a0 (ApnA3 (apf_receive s0 s1 s2 a0) n0)))
+                        (p & [(l, s', w')]))) in H4.
+               simpl in H4. easy.
              admit.
              subst.
-             contradict H4.
-             admit.
-             admit.
-             
+
              (*send case*)
              subst.
+             pinversion Hb.
+             subst.
+             rewrite <- meqBp3 in H3.
+             rewrite <- meqAp3.
+             specialize(mcAp2Bp (ApnA3 a n0) (p0 & [(l0, s'0, w'0)])); intro HHa.
+             destruct HHa as (b1, HHa).
+             rewrite HHa.
+             assert(b1 = Ap2BpSeq (ApnA3 a n0)) by admit.
+
+             admit.
+             subst.
+             admit.
+             subst.
+             admit.
              admit.
              (*end case*)
              subst.
@@ -1625,4 +1768,3 @@ Proof. red. pcofix CIH.
              admit.
              admit.
 Admitted.
-
