@@ -88,4 +88,13 @@ Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
 
 Definition refinement3: st -> st -> Prop := fun s1 s2 => paco2 refinementR3 bot2 s1 s2.
 
-
+Lemma refinementR3_mon: monotone2 refinementR3.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - specialize(ref3_a r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H1.
+       - specialize(ref3_b r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H1.
+       - constructor.
+Qed.
