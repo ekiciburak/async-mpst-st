@@ -1385,6 +1385,15 @@ Proof. intro b.
          apply refinementR3_mon.
 Admitted.
 
+
+Lemma InvertBB: forall a b p l s w w', 
+  isInB a p = false ->
+  paco2 refinementR3 bot2 (merge_bpf_cont a (p ! [(l, s, w)])) (merge_bpf_cont b w') ->
+  (exists a1 a2 s', isInB a1 p = false /\ subsort s s' /\ b = Bpf_merge a1 (bpf_send p l s' a2))
+  \/
+  (exists a1  w1 s', isInB a1 p = false /\ subsort s s' /\ isInB b p = false /\ w' = merge_bpf_cont a1 (p ! [(l, s', w1)])).
+Admitted.
+
 Lemma InvertAA: forall a b p l s w w', 
   isInA a p = false ->
   paco2 refinementR3 bot2 (merge_apf_cont a (p & [(l, s, w)])) (merge_apf_cont b w') ->
@@ -2423,6 +2432,18 @@ Proof. intro a.
          admit.
 Admitted. *)
 
+
+Lemma end_send_false: forall b p l s w,
+  end = merge_bpf_cont b (p ! [(l, s, w)]) -> False.
+Proof. intros.
+       case_eq b; intros.
+       - subst. rewrite(st_eq(merge_bpf_cont (bpf_receive s0 s1 s2 b0) (p ! [(l, s, w)]))) in H.
+         simpl in H. easy.
+       - subst. rewrite(st_eq(merge_bpf_cont (bpf_send s0 s1 s2 b0) (p ! [(l, s, w)]))) in H.
+         simpl in H. easy.
+       - subst. rewrite bpfend_bn in H. easy.
+Qed.
+
 Lemma refTrans: Transitive (refinement3).
 Proof. red. pcofix CIH.
        intros x y z Ha Hb.
@@ -2657,9 +2678,121 @@ Proof. red. pcofix CIH.
                 easy. admit. admit. admit.
 
              subst.
-             admit.
+             rewrite <- meqBp3 in H1, H3, H6, H7.
+             rewrite <- meqBp3.
+             case_eq(eqb p0 p); intros.
+             + rewrite eqb_eq in H8. subst.
+               assert((BpnB3 b n) = bpf_end) by admit.
+               rewrite H8 in H3.
+               rewrite bpfend_bn in H3.
+               inversion H3. subst.
+               pfold.
+               specialize(ref3_b (upaco2 refinementR3 r) w w'0
+               p l s s'0 (BpnB3 b0 n0) 1
+               ); intro HR.
+               simpl in HR.
+               apply HR.
+               admit.
+               admit.
+               right.
+               apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
+               easy.
+               rewrite H8. rewrite bpfend_bn. easy.
+               admit.
+             + rewrite eqb_neq in H8.
+               assert(p <> p0) by easy.
+               assert(isInB (BpnB3 b n) p = false) by admit.
+               specialize(pneqq7 (BpnB3 b n) p p0 l0 l s0 s' w0 w' H9 H10 H3); intro HP.
+               destruct HP as (b1,(HPa,(HPb,HPc))).
+               rewrite HPb in H6.
+               specialize(InvertBB b1 (BpnB3 b0 n0) p l s' w' w'0 HPa H6); intro HBB.
+               destruct HBB as [HBB | HBB].
+               ++ destruct HBB as (b2,(b3,(s2,(HBa,(HBb,HBc))))).
+                  rewrite HBc.
+                  assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l s2 b3)) (p0 ! [(l0, s'0, w'0)])) =
+                         (merge_bpf_cont b2 (p ! [(l, s2, merge_bpf_cont b3  (p0 ! [(l0, s'0, w'0)]))])))
+                  by admit.
+                  rewrite H11.
+                  pfold.
+                  specialize(ref3_b (upaco2 refinementR3 r)
+                  w (merge_bpf_cont b3 (p0 ! [(l0, s'0, w'0)]))
+                  p l s s2 b2 1
+                  ); intro HR.
+                  simpl in HR.
+                  apply HR. admit. easy.
+                  right.
+                  apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
+                  easy.
+                  rewrite HPc.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s0 b1) w')). simpl.
+                  assert((merge_bpf_cont b2 (merge_bpf_cont b3 (p0 ! [(l0, s'0, w'0)]))) =
+                         (merge_bpf_cont (Bpf_merge b2 b3) (p0 ! [(l0, s'0, w'0)]))) by admit.
+                  rewrite H12.
+                  pfold.
+                  specialize(ref3_b (upaco2 refinementR3 bot2) 
+                  (merge_bpf_cont b1 w') w'0 p0 l0 s0 s'0
+                  (Bpf_merge b2 b3) 1 H4
+                  ); intros HR2.
+                  simpl in HR2.
+                  apply HR2. admit.
+                  left. 
+                  rewrite HBc in H6.
+                  assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l s2 b3)) w'0) =
+                         (merge_bpf_cont b2 (p ! [(l, s2, merge_bpf_cont b3 w'0)])))
+                  by admit.
+                  rewrite H13 in H6.
+                  apply dropBA in H6.
+                  assert((merge_bpf_cont b2 (merge_bpf_cont b3 w'0)) =
+                         merge_bpf_cont (Bpf_merge b2 b3) w'0) by admit.
+                  rewrite H14 in H6. easy.
+                  easy. easy.
+                  admit.
+                  admit.
+               ++ destruct HBB as (b2,(w2,(s2,(HBa,(HBb,(HBc,HBd)))))).
+                  rewrite HBd.
+                  assert((merge_bpf_cont (BpnB3 b0 n0) (p0 ! [(l0, s'0, merge_bpf_cont b2 (p ! [(l, s2, w2)]))])) =
+                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) (p ! [(l, s2, w2)])))
+                  by admit.
+                  rewrite H11.
+                  pfold.
+                  specialize(ref3_b (upaco2 refinementR3 r) w w2 p l s s2
+                  (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) 1
+                  ); intro HR.
+                  simpl in HR.
+                  apply HR. admit.
+                  simpl. admit.
+                  right.
+                  apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
+                  easy.
+                  rewrite HPc.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s0 b1) w')). simpl.
+                  assert((merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) w2) =
+                         (merge_bpf_cont (BpnB3 b0 n0) (p0 ! [(l0, s'0, merge_bpf_cont b2 w2)])))
+                  by admit.
+                  rewrite H12.
+                  pfold.
+                  specialize(ref3_b (upaco2 refinementR3 bot2) (merge_bpf_cont b1 w')
+                  (merge_bpf_cont b2 w2) p0 l0 s0 s'0
+                  (BpnB3 b0 n0) 1 H4
+                  ); intro HR2.
+                  simpl in HR2.
+                  apply HR2. admit.
+                  left.
+                  rewrite HBd in H6.
+                  assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
+                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)])))
+                  by admit.
+                  rewrite H13 in H6.
+                  apply dropBA in H6.
+                  assert((merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) w2) =
+                         (merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 w2)))
+                  by admit.
+                  rewrite H14 in H6. easy. easy. admit.
+                  admit.
+                  admit.
              subst.
-             admit.
+             rewrite <- meqBp3 in H4.
+             apply end_send_false in H4. easy.
              apply refinementR3_mon.
              (*end case*)
              subst.
