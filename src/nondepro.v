@@ -234,6 +234,31 @@ Proof. intro s1.
          + subst. easy.
 Qed.
 
+Lemma eqbs_neq: forall s1 s2, eqbs s1 s2 = false <-> s1 <> s2.
+Proof. intro s1.
+       induction s1; intros.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.       
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+       - case_eq s2; intros.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+         + subst. easy.
+Qed.
+
 Lemma apf_eqb_eq: forall a b, Apf_eqb a b <-> a = b.
 Proof. intro a.
        induction a; intros.
@@ -265,6 +290,165 @@ Proof. intro a.
            rewrite eqb_eq. easy.
            rewrite eqbs_eq. easy.
            apply IHa. easy.
+Qed.
+
+Lemma bpf_eqb_eq: forall a b, Bpf_eqb a b <-> a = b.
+Proof. intro a.
+       induction a; intros.
+       - case_eq b; intros.
+         + subst. simpl.
+           case_eq(eqb s s2); intros.
+           ++ rewrite eqb_eq in H. subst.
+              case_eq(eqb s0 s3); intros.
+              +++ rewrite eqb_eq in H. subst.
+                  case_eq(eqbs s1 s4); intros.
+                  * rewrite eqbs_eq in H. subst.
+                     simpl. rewrite IHa.
+                     split. intro Ha. subst. easy.
+                     intro Ha. inversion Ha. easy.
+                  * simpl. split. intro Ha. easy.
+                    rewrite eqbs_neq in H.
+                    intro Ha. inversion Ha. subst. easy.
+              +++ simpl. split. intro Ha. easy.
+                  rewrite eqb_neq in H.
+                  intro Ha. inversion Ha. subst. easy.
+           ++ simpl. split. intro Ha. easy.
+              rewrite eqb_neq in H.
+              intro Ha. inversion Ha. subst. easy.
+         + simpl. split. intro Ha. easy.
+           intro Ha. easy.
+         + simpl. easy.
+       - case_eq b; intros.
+         + simpl. split. intro Ha. easy.
+           intro Ha. easy.
+         + simpl.
+           case_eq(eqb s s2); intros.
+           ++ rewrite eqb_eq in H0. subst.
+              case_eq(eqb s0 s3); intros.
+              +++ rewrite eqb_eq in H. subst.
+                  case_eq(eqbs s1 s4); intros.
+                  * rewrite eqbs_eq in H. subst.
+                     simpl. rewrite IHa.
+                     split. intro Ha. subst. easy.
+                     intro Ha. inversion Ha. easy.
+                  * simpl. split. intro Ha. easy.
+                    rewrite eqbs_neq in H.
+                    intro Ha. inversion Ha. subst. easy.
+              +++ simpl. split. intro Ha. easy.
+                  rewrite eqb_neq in H.
+                  intro Ha. inversion Ha. subst. easy.
+           ++ simpl. split. intro Ha. easy.
+              rewrite eqb_neq in H0.
+              intro Ha. inversion Ha. subst. easy.
+         + simpl. easy.
+         + case_eq b; intros; easy.
+Qed.
+
+Lemma apf_eqb_neq: forall a b, Apf_eqb a b = false <-> a <> b.
+Proof. intro a.
+       induction a; intros.
+       - case_eq b; intros.
+         + simpl. easy.
+         + subst. simpl. easy.
+       - simpl.
+         case_eq b; intros.
+         + subst. easy.
+         + subst. split.
+           intros.
+           apply Bool.andb_false_iff in H.
+           destruct H as [H | H].
+           ++ apply Bool.andb_false_iff in H.
+              destruct H as [H | H].
+              +++ apply Bool.andb_false_iff in H.
+                  destruct H as [H | H].
+                  * rewrite eqb_neq in H.
+                    unfold not. intro Ha.
+                    apply H. inversion Ha. easy.
+                  * rewrite eqb_neq in H.
+                    unfold not. intro Ha.
+                    apply H. inversion Ha. easy.
+              +++ rewrite eqbs_neq in H.
+                  unfold not. intro Ha.
+                  apply H. inversion Ha. easy.
+           ++ apply IHa in H.
+              unfold not. intro Ha.
+              apply H. inversion Ha. easy.
+       intros.
+       case_eq(eqb s s2); intros.
+       + rewrite eqb_eq in H0. subst.
+         simpl.
+         case_eq(eqb s0 s3); intros.
+         ++ rewrite eqb_eq in H0. subst.
+            case_eq(eqbs s1 s4); intros.
+            +++ rewrite eqbs_eq in H0. subst.
+                simpl. apply IHa.
+                unfold not. intro Ha.
+                apply H. subst. easy.
+            +++ simpl. easy.
+         ++ simpl. easy.
+       + simpl. easy. 
+Qed.
+
+Lemma bpf_eqb_neq: forall a b, Bpf_eqb a b = false <-> a <> b.
+Proof. intro a.
+       induction a; intros.
+       - case_eq b; intros.
+         + simpl.
+           case_eq(eqb s s2); intros.
+           ++ rewrite eqb_eq in H0. subst.
+              case_eq(eqb s0 s3); intros.
+              +++ rewrite eqb_eq in H. subst.
+                  case_eq(eqbs s1 s4); intros.
+                  * rewrite eqbs_eq in H. subst.
+                     simpl. rewrite IHa.
+                     split. intro Ha. subst. unfold not.
+                     intro Hb. inversion Hb. subst. easy.
+                  * simpl. intro Ha. unfold not.
+                    intro Hb. apply Ha. subst. easy.
+              +++ simpl. split. intro Ha.
+                  rewrite eqbs_neq in H. unfold not.
+                  intro Hb. inversion Hb. subst. easy.
+           ++ simpl. intro Ha. easy.
+              rewrite eqb_neq in H. simpl. split.
+              intro Ha. unfold not. intro Hb. inversion Hb. subst. easy.
+              intro Ha. easy.
+              simpl.
+              split. intro Ha.
+              rewrite eqb_neq in H0.
+              unfold not. intro Hb.
+              inversion Hb. subst. easy.
+              easy.
+         + simpl. easy.
+         + simpl. easy.
+       - case_eq b; intros.
+         + simpl. easy.
+         + simpl.
+           case_eq(eqb s s2); intros.
+           ++ rewrite eqb_eq in H0. subst.
+              case_eq(eqb s0 s3); intros.
+              +++ rewrite eqb_eq in H. subst.
+                  case_eq(eqbs s1 s4); intros.
+                  * rewrite eqbs_eq in H. subst.
+                     simpl. rewrite IHa.
+                     split. intro Ha. subst. unfold not.
+                     intro Hb. inversion Hb. subst. easy.
+                  * simpl. intro Ha. unfold not.
+                    intro Hb. apply Ha. subst. easy.
+              +++ simpl. split. intro Ha.
+                  rewrite eqbs_neq in H. unfold not.
+                  intro Hb. inversion Hb. subst. easy.
+           ++ simpl. intro Ha. easy.
+              rewrite eqb_neq in H. simpl. split.
+              intro Ha. unfold not. intro Hb. inversion Hb. subst. easy.
+              intro Ha. easy.
+              simpl.
+              split. intro Ha.
+              rewrite eqb_neq in H0.
+              unfold not. intro Hb.
+              inversion Hb. subst. easy.
+              easy.
+         + simpl. easy.
+         + case_eq b; simpl; easy.
 Qed.
 
 Lemma _39_1: forall a b p q w w1 w2,
@@ -1149,30 +1333,6 @@ Proof. intro a.
          destruct s1; easy.
          easy.
 Qed.
-
-Lemma apf_eqb_neq: forall a b,
-  Apf_eqb a b = false ->
-  a <> b.
-Proof. intro a.
-       induction a; intros.
-       - simpl in H. case_eq b; intros.
-         + subst. easy.
-         + subst. simpl. easy.
-       - simpl in H.
-         case_eq b; intros.
-         + subst. easy.
-         + subst. unfold not.
-           intro Ha.
-           inversion Ha.
-           subst.
-           rewrite !eqb_refl in H.
-           simpl in H.
-           rewrite Bool.andb_false_iff in H.
-           destruct H.
-           destruct s4; easy.
-           rewrite apf_eqb_refl in H. easy.
-Qed.
-
 
 Lemma reOrd1: forall a1 a2 p l s w',
   merge_apf_cont (Apf_merge a1 (apf_receive p l s a2)) w' =
