@@ -259,6 +259,11 @@ Proof. intro s1.
          + subst. easy.
 Qed.
 
+Lemma eqbs_refl: forall s, eqbs s s = true.
+Proof. intro s.
+       destruct s; intros; easy.
+Qed.
+
 Lemma apf_eqb_eq: forall a b, Apf_eqb a b <-> a = b.
 Proof. intro a.
        induction a; intros.
@@ -1210,7 +1215,6 @@ Proof. intro a.
          exists b. split. easy. split. simpl. easy. easy.
 Qed.
 
-
 Lemma InMergeF: forall a b p,
   isInA (Apf_merge a b) p = false <->
   isInA a p = false /\ isInA b p = false.
@@ -1223,7 +1227,7 @@ Proof. split.
          destruct H as (Ha, Hb).
          rewrite Ha. simpl.
          apply IHa. easy.
-      
+
        revert p b.
        induction a; intros.
        - simpl in H. simpl. easy.
@@ -1233,6 +1237,30 @@ Proof. split.
          rewrite orbtf.
          split. easy.
          apply IHa. split; easy.
+Qed.
+
+Lemma InMergeFS: forall a b p,
+  isInB (Bpf_merge a b) p = false <->
+  isInB a p = false /\ isInB b p = false.
+Proof. split.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl. simpl in Ha.
+         rewrite orbtf in Ha.
+         destruct Ha as (Ha, Hb).
+         rewrite Ha. simpl. apply IHa. easy.
+       - simpl in Ha. rewrite Ha. simpl. easy.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl. simpl in Ha.
+         rewrite orbtf in Ha.
+         destruct Ha as ((Ha,Hb),Hc).
+         rewrite Ha. simpl. apply IHa. easy.
+       - simpl. easy.
 Qed.
 
 Lemma isInDec: forall a p, isInA a p = false \/ isInA a p.
@@ -1245,6 +1273,17 @@ Proof. intro a.
          + simpl. easy.
 Qed.
 
+Lemma isInDecS: forall a p, isInB a p = false \/ isInB a p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. apply IHa.
+       - simpl.
+         case_eq (eqb p s); intros.
+         + simpl. right; easy.
+         + simpl. apply IHa.
+       - simpl. left; easy.
+Qed.
+
 Lemma InMerge: forall a b p,
   isInA (Apf_merge a b) p =
   isInA a p || isInA b p.
@@ -1255,6 +1294,19 @@ Proof. intro a.
          case_eq(eqb p s); intros.
          + simpl. easy.
          + simpl. easy.
+Qed.
+
+Lemma InMergeS: forall a b p,
+  isInB (Bpf_merge a b) p =
+  isInB a p || isInB b p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. apply IHa.
+       - simpl.
+         case_eq(eqb p s); intros.
+         + simpl. easy.
+         + simpl. apply IHa.
+       - simpl. easy.
 Qed.
 
 Lemma InMergeN: forall a p, isInA a p = isInA (Apf_merge a a) p.
@@ -1271,6 +1323,27 @@ Proof. intro a.
            rewrite InMerge. easy.
 Qed.
 
+Lemma InMergeNSS: forall a b p q l s,
+  isInB (Bpf_merge a (bpf_receive q l s b)) p = isInB (Bpf_merge a b) p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. apply IHa.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+
+Lemma InMergeNS: forall a p, isInB a p = isInB (Bpf_merge a a) p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite InMergeNSS. apply IHa.
+       - simpl. rewrite InMergeS. simpl.
+         case_eq(eqb p s); intros.
+         + simpl. easy.
+         + simpl.
+           destruct(isInB a p); easy.
+       - simpl. easy.
+Qed.
+
 Lemma InN: forall n a p, n > 0 -> isInA a p = isInA (ApnA3 a n) p.
 Proof. intro n.
        induction n; intros.
@@ -1281,6 +1354,19 @@ Proof. intro n.
          rewrite InMerge.
          rewrite <- IHn.
          destruct(isInA a p); easy.
+         easy.
+Qed.
+
+Lemma InNS: forall n a p, n > 0 -> isInB a p = isInB (BpnB3 a n) p.
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - simpl.
+         destruct n.
+         easy.
+         rewrite InMergeS.
+         rewrite <- IHn.
+         destruct(isInB a p); easy.
          easy.
 Qed.
 
@@ -1321,6 +1407,20 @@ Proof. intro c.
          subst. rewrite eqb_refl in Ha. easy.
 Qed.
 
+Lemma noPreS: forall c p l s w w',
+  isInB c p = false ->
+  p ! [(l, s, w)] = merge_bpf_cont c w' ->
+  c = bpf_end.
+Proof. intro c.
+       induction c; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 c) w')) in H0. simpl in H0.
+         easy.
+       - simpl in H.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 c) w')) in H0. simpl in H0.
+         inversion H0. subst. rewrite eqb_refl in H. easy.
+       - easy.
+Qed.
+
 Lemma apf_eqb_refl: forall a, Apf_eqb a a.
 Proof. intro a.
        induction a; intros.
@@ -1332,6 +1432,16 @@ Proof. intro a.
          rewrite eqb_refl. easy.
          destruct s1; easy.
          easy.
+Qed.
+
+Lemma bpf_eqb_refl: forall a, Bpf_eqb a a.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite !eqb_refl.
+         rewrite eqbs_refl. simpl. easy.
+       - simpl. rewrite !eqb_refl.
+         rewrite eqbs_refl. simpl. easy.
+       - simpl. easy.
 Qed.
 
 Lemma reOrd1: forall a1 a2 p l s w',
@@ -1368,7 +1478,6 @@ Proof. intro a.
          rewrite IHa. easy.
 Qed.
 
-
 Lemma merge_merge: forall a1 a2 w,
   merge_apf_cont a1 (merge_apf_cont a2 w) =
   merge_apf_cont (Apf_merge a1 a2) w.
@@ -1380,6 +1489,20 @@ Proof. intro a1.
          rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 (Apf_merge a1 a2)) w)). simpl.
          rewrite IHa1.
          easy.
+Qed.
+
+Lemma merge_mergeS: forall a1 a2 w,
+  merge_bpf_cont a1 (merge_bpf_cont a2 w) =
+  merge_bpf_cont (Bpf_merge a1 a2) w.
+Proof. intro a1.
+       induction a1; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 a1) (merge_bpf_cont a2 w))).
+         rewrite(st_eq(merge_bpf_cont (Bpf_merge (bpf_receive s s0 s1 a1) a2) w)). simpl.
+         rewrite IHa1. easy.
+       - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 a1) (merge_bpf_cont a2 w))).
+         rewrite(st_eq(merge_bpf_cont (Bpf_merge (bpf_send s s0 s1 a1) a2) w)). simpl.
+         rewrite IHa1. easy.
+       - simpl. rewrite bpfend_bn. easy.
 Qed.
 
 Lemma isInFE1: forall a1 a2 p q l s,
@@ -1403,6 +1526,14 @@ Proof. intro a.
        induction a; intros.
        - simpl. easy.
        - simpl. rewrite IHa. easy.
+Qed.
+
+Lemma mergeRS: forall a, Bpf_merge a bpf_end = a.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite IHa. easy.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
 Qed.
 
 Lemma reOrg3: forall a p q l s l' s' w w',
@@ -1430,6 +1561,13 @@ Proof. intro n.
        - rewrite ApnA3C IHn. simpl. easy.
 Qed.
 
+Lemma apf_endNS: forall n, BpnB3 bpf_end n = bpf_end.
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - rewrite BpnB3C IHn. simpl. easy.
+Qed.
+
 Lemma InvertBA: forall b a p l s w w', 
   isInB b p = false ->
   paco2 refinementR3 bot2 (merge_bpf_cont b (p ! [(l, s, w)])) (merge_apf_cont a w') ->
@@ -1454,7 +1592,11 @@ Proof. intro b.
            easy.
          + apply apf_eqb_neq in H1.
            case_eq(isInA a s); intros.
-           ++ assert(isInA (ApnA3 a0 n) s = false) by admit.
+           ++ assert(isInA (ApnA3 a0 n) s = false).
+              { case_eq n; intros.
+                - simpl. easy.
+                - rewrite <- InN; easy.
+              }
               specialize(inH4 (ApnA3 a0 n) a s s0 s' w'0 w' H1 H3 H2 H5); intro HIn4.
               destruct HIn4 as (a1,(Hin4a,Hin4b)).
               case_eq(isBpSend b1); intros.
