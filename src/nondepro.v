@@ -771,6 +771,25 @@ Proof. intro a.
          split; easy.
 Qed.
 
+(* Lemma pneqq4a: forall a p q l l' s s' w w',
+  isInA a p = false ->
+  q & [(l, s, w)] = merge_apf_cont a (p & [(l', s', w')]) ->
+  exists a', isInA a' p = false /\ w = merge_apf_cont a' (p & [(l', s', w')]) /\ a = apf_receive q l s a'.
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0.
+         inversion H0. subst.
+         
+          easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l', s', w')]))) in H1.
+         simpl in H1.
+         inversion H1. subst.
+         exists a. split.
+         simpl in H0. rewrite orbtf in H0. easy.
+         split; easy.
+Qed. *)
+
+
 Lemma pneqq5: forall b p q l l' s s' w w' (H: p <> q),
   isInB b p = false ->
   q & [(l, s, w)] = merge_bpf_cont b (p ! [(l', s', w')]) ->
@@ -3369,6 +3388,33 @@ Proof. red. pcofix CIH.
          + subst. 
            case_eq(eqb p0 p); intros.
            + rewrite eqb_eq in H8. subst.
+             rewrite <- meqAp3 in H1, H3, H6, H7.
+             assert(isInA (ApnA3 a n) p = false).
+             { case_eq n; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+             }
+             assert((ApnA3 a n) = apf_end).
+             { apply noPre in H3; easy. }
+             rewrite H9 in H3.
+             rewrite apfend_an in H3.
+             inversion H3. subst.
+             rewrite <- meqAp3.
+             rewrite H9 in H1.
+             rewrite apfend_an in H1.
+             pfold.
+             specialize(ref3_a (upaco2 refinementR3 r) w w'0 p l s s'0
+             (ApnA3 a0 n0) 1 
+             ); intro HR.
+             simpl in HR.
+             apply HR.
+             apply ssTrans with (s2 := s'); easy.
+             case_eq n0; intros.
+             - simpl. easy.
+             - rewrite <- InN; easy.
+             right.
+             apply CIH with (y := w').
+             easy. easy.
              admit.
            + rewrite eqb_neq in H8.
              rename p0 into q.
@@ -3532,7 +3578,90 @@ Proof. red. pcofix CIH.
              rewrite HHa.
              rename p0 into q.
              case_eq(eqb p q); intros.
-             + admit.
+             + rewrite eqb_eq in H8. subst.
+               assert(isInB (BpnB3 b n) q = false).
+               { case_eq n; intros.
+                 - simpl. easy.
+                 - rewrite <- InNS; easy.
+               }
+               specialize(pneqq6 (BpnB3 b n) q q l0 l s0 s' w0 w' H8 H3); intro HP.
+               destruct HP as (b2,(HP1,(HP2,HP3))).
+               rewrite <- meqAp3 in H6, H7.
+               rewrite <- meqBp3 in H1, H2.
+               assert(merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (q & [(l0, s'0, w'0)]) =
+                      merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 bpf_end)) w'0).
+               { rewrite breOrg3.
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 bpf_end) w'0)). simpl. 
+                 rewrite bpfend_bn. easy.
+               }
+               rewrite H9.
+               rewrite HP2 in H6.
+               specialize(InvertBA b2 (ApnA3 a n0) q l s' w' w'0 HP1 H6); intro HQ.
+               destruct HQ as (b1,(w1,(s1,(Hb1,(Hb2,Hb3))))).
+               rewrite Hb3.
+               pfold.
+               assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 bpf_end)) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) (q ! [(l, s1, w1)]))).
+               { rewrite !breOrg3.
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 bpf_end) (merge_bpf_cont b1 (q ! [(l, s1, w1)])))).
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b1) (q ! [(l, s1, w1)]))).
+                 simpl.
+                 rewrite bpfend_bn. easy.
+               }
+               rewrite H10.
+               specialize(ref3_b (upaco2 refinementR3 r) w w1 q l s s1
+               (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) 1
+               ); intro HR.
+               simpl in HR.
+               apply HR.
+               apply ssTrans with (s2 := s'); easy.
+               simpl.
+               apply InMergeFS. simpl. rewrite BisInAF. easy.
+               right.
+               apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
+               easy.
+               rewrite HP3.
+               pfold.
+               rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s0 b2) w')). simpl.
+               assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) w1) =
+                      (merge_apf_cont (Apf_merge (ApnA3 a n0) (apf_receive q l0 s'0 apf_end)) (merge_bpf_cont b1 w1))).
+               { rewrite bareOrg1.
+                 rewrite reOrd1.
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b1) w1)).
+                 rewrite(st_eq(merge_apf_cont (apf_receive q l0 s'0 apf_end) (merge_bpf_cont b1 w1))).
+                 simpl. rewrite apfend_an. easy.
+               }
+               rewrite H11.
+               assert((merge_apf_cont (Apf_merge (ApnA3 a n0) (apf_receive q l0 s'0 apf_end)) (merge_bpf_cont b1 w1)) =
+                      (merge_apf_cont (ApnA3 a n0) (q & [(l0, s'0, (merge_bpf_cont b1 w1))]))).
+               { rewrite reOrd1.
+                 rewrite(st_eq(merge_apf_cont (apf_receive q l0 s'0 apf_end) (merge_bpf_cont b1 w1))). simpl.
+                 rewrite apfend_an. easy.
+               }
+               rewrite H12.
+               rewrite Hb3 in H6.
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [(l, s1, w1)]))).
+               { rewrite bareOrg1. easy. }
+               rewrite H13 in H6.
+               apply dropBA in H6.
+               specialize(ref3_a (upaco2 refinementR3 bot2) (merge_bpf_cont b2 w') (merge_bpf_cont b1 w1)
+               q l0 s0 s'0 (ApnA3 a n0) 1 H4
+               ); intro HR2.
+               simpl in HR2.
+               apply HR2.
+               case_eq n0; intros.
+               - simpl. easy.
+               - rewrite <- InN; easy.
+               left.
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 w1)) = 
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) w1)).
+               { rewrite bareOrg1. easy. }
+               rewrite H14. easy.
+               admit.
+               easy.
+               apply InMergeFS. rewrite BisInAF. simpl. easy.
+               admit.
              + rewrite eqb_neq in H8.
                assert(isInB (BpnB3 b n) p = false).
                { case_eq n; intros.
