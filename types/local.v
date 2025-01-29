@@ -67,6 +67,16 @@ Proof. intro s.
        induction s; intros; case_eq t; intros; subst; try easy.
 Qed.
 
+Lemma ssTrans: forall s1 s2 s3, subsort s1 s2 -> subsort s2 s3 -> subsort s1 s3.
+Proof. intros.
+       case_eq s1; intros.
+       - subst. inversion H. subst. easy.
+       - subst. inversion H. subst. easy.
+       - subst. inversion H. subst. easy.
+       - subst. inversion H. subst. inversion H0. subst. easy.
+         subst. easy.
+Qed.
+
 Inductive local: Type :=
   | lt_var    : nat -> local 
   | lt_end    : local 
