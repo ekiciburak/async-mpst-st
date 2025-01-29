@@ -683,10 +683,7 @@ Proof. intro b.
            simpl.
            specialize(IHb a0 p (merge_bpf_cont b w1) w1 w2).
            simpl in H. simpl in H2.
-(*            rewrite orbtf in H0.
-           destruct H0 as (Ha, Hb). *)
            assert(merge_bpf_cont b w1 = merge_bpf_cont b w1) by easy.
-(*            simpl in H3. *)
            specialize(IHb H H0 H6 H2).
            destruct IHb as (c,IHb).
            exists c.
@@ -770,25 +767,6 @@ Proof. intro a.
          simpl in H0. rewrite orbtf in H0. easy.
          split; easy.
 Qed.
-
-(* Lemma pneqq4a: forall a p q l l' s s' w w',
-  isInA a p = false ->
-  q & [(l, s, w)] = merge_apf_cont a (p & [(l', s', w')]) ->
-  exists a', isInA a' p = false /\ w = merge_apf_cont a' (p & [(l', s', w')]) /\ a = apf_receive q l s a'.
-Proof. intro a.
-       induction a; intros.
-       - rewrite apfend_an in H0.
-         inversion H0. subst.
-         
-          easy.
-       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l', s', w')]))) in H1.
-         simpl in H1.
-         inversion H1. subst.
-         exists a. split.
-         simpl in H0. rewrite orbtf in H0. easy.
-         split; easy.
-Qed. *)
-
 
 Lemma pneqq5: forall b p q l l' s s' w w' (H: p <> q),
   isInB b p = false ->
@@ -3890,6 +3868,8 @@ Proof. red. pcofix CIH.
                   { rewrite breOrg3. easy. }
                   rewrite H14 in H6. easy. easy.
                   apply InMergeFS. easy.
+                  rewrite HBd in H7. rewrite HPb in H7.
+                  (*here*)
                   admit.
                   admit.
              subst.
@@ -3904,3 +3884,60 @@ Proof. red. pcofix CIH.
              apply refinementR3_mon.
              apply refinementR3_mon.
 Admitted.
+
+Lemma sinv2: forall w, singleton w ->
+                      (exists p l s w', w = st_send p [(l,s,w')] /\ singleton w') \/
+                      (exists p l s w', w = st_receive p [(l,s,w')] /\ singleton w') \/
+                      (w = st_end).
+Proof. intros.
+       case_eq w; intros.
+       subst. right. right. (*  left.  *) easy.
+       subst. right. left.
+       induction l; intros.
+       punfold H. inversion H. apply sI_mon.
+       punfold H. inversion H. subst.
+       exists s. exists l0. exists s0. exists w.
+       split. easy. unfold singleton.
+       inversion H1. easy. easy.
+       apply sI_mon.
+       subst. left.
+       induction l; intros.
+       punfold H. inversion H. apply sI_mon.
+       punfold H. inversion H. subst.
+       exists s. exists l0. exists s0. exists w.
+       split. easy. unfold singleton.
+       inversion H1. easy. easy.
+       apply sI_mon.
+Qed.
+
+Lemma refRefl: forall w: st, singleton w -> (paco2 refinementR3 bot2 w w).
+Proof. pcofix CIH.
+       intros x Hx.
+       apply sinv2 in Hx.
+       destruct Hx as [Hx | [Hx | Hx]].
+       - destruct Hx as (p, (l, (s, (w, (Hx1, Hx2))))).
+         subst.
+         pfold.
+         specialize(ref3_b  (upaco2 refinementR3 r) w w p l s s bpf_end 1); intro HR.
+         simpl in HR.
+         rewrite !bpfend_bn in HR.
+         apply HR.
+         destruct s; constructor.
+         easy.
+         right. apply CIH. easy.
+         easy.
+       - destruct Hx as (p, (l, (s, (w, (Hx1, Hx2))))).
+         subst.
+         pfold.
+         specialize(ref3_a  (upaco2 refinementR3 r) w w p l s s apf_end 1); intro HR.
+         simpl in HR.
+         rewrite !apfend_an in HR.
+         apply HR.
+         destruct s; constructor.
+         easy.
+         right. apply CIH. easy.
+         easy.
+       - pfold. subst. constructor.
+Qed.
+
+
