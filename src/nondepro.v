@@ -830,6 +830,18 @@ Proof. intro a.
          simpl in H. inversion H. easy.
 Qed.
 
+Lemma merge_same_beq: forall a w w',
+  merge_bpf_cont a w = merge_bpf_cont a w' -> w = w'.
+Proof. intro a.
+       induction a; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 a) w)) in H.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 a) w')) in H.
+         simpl in H. inversion H. apply IHa. easy.
+       - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 a) w)) in H.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 a) w')) in H.
+         simpl in H. inversion H. apply IHa. easy.
+       - rewrite !bpfend_bn in H. easy.
+Qed.
 
 Lemma inH0: forall a p l s w, coseqInl (p, rcv, l) (actl (merge_apf_cont a (p & [(l, s, w)]))).
 Proof. intro a.
@@ -1379,6 +1391,25 @@ Proof. intro a1.
        - simpl. rewrite IHa1. easy.
 Qed.
 
+Lemma apf_merge_assoc: forall a1 a2 a3,
+  Apf_merge (Apf_merge a1 a2) a3 =
+  Apf_merge a1 (Apf_merge a2 a3).
+Proof. intro a1.
+       induction a1; intros.
+       - simpl. easy.
+       - simpl. rewrite IHa1. easy.
+Qed.
+
+Lemma bpf_merge_assoc: forall a1 a2 a3,
+  Bpf_merge (Bpf_merge a1 a2) a3 =
+  Bpf_merge a1 (Bpf_merge a2 a3).
+Proof. intro a1.
+       induction a1; intros.
+       - simpl. rewrite IHa1. easy.
+       - simpl. rewrite IHa1. easy.
+       - simpl. easy.
+Qed.
+
 Lemma reOrg2: forall a1 a2 p l s w,
   merge_apf_cont (Apf_merge a1 (apf_receive p l s a2)) w =
   merge_apf_cont a1 (p & [(l, s, merge_apf_cont a2 w)]).
@@ -1568,6 +1599,85 @@ Proof. intro n.
        - rewrite BpnB3C IHn. simpl. easy.
 Qed.
 
+Lemma breOrg1: forall b b2 p l s w,
+  merge_bpf_cont (Bpf_merge b (bpf_send p l s b2)) w =
+  merge_bpf_cont b (p ! [(l, s, merge_bpf_cont b2 w)]).
+Proof. intro b.
+       induction b; intros.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge b (bpf_send p l s2 b2))) w )).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite IHb. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Bpf_merge b (bpf_send p l s2 b2))) w )).
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite IHb. easy.
+       - simpl. rewrite bpfend_bn.
+         rewrite(st_eq(merge_bpf_cont (bpf_send p l s b2) w )). simpl. easy.
+Qed.
+
+Lemma breOrg2: forall b b2 p l s w,
+  merge_bpf_cont (Bpf_merge b (bpf_receive p l s b2)) w =
+  merge_bpf_cont b (p & [(l, s, merge_bpf_cont b2 w)]).
+Proof. intro b.
+       induction b; intros.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge b (bpf_receive p l s2 b2))) w )).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p & [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite IHb. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Bpf_merge b (bpf_receive p l s2 b2))) w )).
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p & [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite IHb. easy.
+       - simpl. rewrite bpfend_bn.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive p l s b2) w )). simpl. easy.
+Qed.
+
+Lemma bareOrg1: forall a c w, merge_bpf_cont (Bpf_merge (Ap2BpSeq a) c) w = merge_apf_cont a (merge_bpf_cont c w).
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite apfend_an. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge (Ap2BpSeq a) c)) w )).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (merge_bpf_cont c w))). simpl.
+         rewrite IHa. easy.
+Qed.
+
+Lemma bareOrg2: forall a p l s w, 
+  merge_bpf_cont (Ap2BpSeq a) (p & [(l, s, w)]) =
+  merge_bpf_cont (Ap2BpSeq (Apf_merge a (apf_receive p l s apf_end))) w.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite bpfend_bn.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive p l s bpf_end) w)). simpl.
+         rewrite bpfend_bn. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Ap2BpSeq a)) (p & [(l, s2, w)]))).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Ap2BpSeq (Apf_merge a (apf_receive p l s2 apf_end)))) w)).
+         simpl. rewrite IHa. easy.
+Qed.
+
+Lemma BisInAF: forall c p, isInB (Ap2BpSeq c) p = false.
+Proof. intro c.
+       induction c; intros.
+       - simpl. easy.
+       - simpl. apply IHc.
+Qed.
+
+Lemma inH9: forall c p l s w w',
+  isInB c p = true ->
+  p ! [(l, s, w)] = merge_bpf_cont c w' ->
+  exists b : Bpf, c = (bpf_send p l s b) /\ w = merge_bpf_cont b w'.
+Proof. intro c.
+       induction c; intros.
+       - rewrite(st_eq( merge_bpf_cont (bpf_receive s s0 s1 c) w')) in H0.
+         simpl in H0. easy.
+       - rewrite(st_eq( merge_bpf_cont (bpf_send s s0 s1 c) w')) in H0.
+         simpl in H0. inversion H0. subst.
+         exists c. esplit; easy.
+       - simpl in H. easy.
+Qed.
+
 Lemma InvertBA: forall b a p l s w w', 
   isInB b p = false ->
   paco2 refinementR3 bot2 (merge_bpf_cont b (p ! [(l, s, w)])) (merge_apf_cont a w') ->
@@ -1618,9 +1728,13 @@ Proof. intro b.
                    specialize(_39_4 a1 a2 p l s'' w'0 w' w2 H11 Hin4b Hc); intros.
                    destruct H12 as (c,(Hc1,Hc2)).
                    exists (Ap2BpSeq c). exists w2. exists s''.
-                   split. admit. split. easy.
+                   split. apply BisInAF. split. easy.
                    rewrite mcAp2Bp2 in Hc2. easy.
-           ++ assert(isInA (ApnA3 a0 n) s = false) by admit.
+           ++ assert(isInA (ApnA3 a0 n) s = false).
+              { case_eq n; intros.
+                - simpl. easy.
+                - rewrite <- InN; easy.
+              }
               assert(merge_apf_cont a w' = merge_apf_cont a w') by easy.
               symmetry in H5.
               specialize(_39_2 (ApnA3 a0 n) a s s
@@ -1631,7 +1745,8 @@ Proof. intro b.
               destruct HR as [HR | HR].
               * destruct HR as (c,(Hd,(He,(Hf,Hg)))).
                 rewrite Hc in Hg.
-                assert(c = apf_end) by admit.
+                assert(c = apf_end).
+                { apply noPre with (p := s) (l := s0) (s := s') (w := merge_bpf_cont b1 (p ! [(l, s'', w2)])) (w' := w'); easy. }
                 rewrite H10 in Hg. rewrite apfend_an in Hg.
                 exists (bpf_receive s s0 s' b1). exists w2. exists s''.
                 split. simpl. easy. split. easy.
@@ -1641,10 +1756,10 @@ Proof. intro b.
                 rewrite Hc in Hg.
                 exists (Bpf_merge (Ap2BpSeq c) (bpf_receive s s0 s' b1)). exists w2. exists s''.
                 split.
-                admit.
+                apply InMergeFS. split. rewrite BisInAF. easy. simpl. easy.
                 split. easy.
                 rewrite mcAp2Bp2 in Hg.
-                admit.
+                rewrite breOrg2. easy.
                 apply refinementR3_mon.
        - simpl in H.
          rewrite orbtf in H.
@@ -1654,7 +1769,11 @@ Proof. intro b.
          pinversion H0.
          rewrite <- meqBp3 in H4, H7, H8.
          case_eq(isBpSend (BpnB3 b0 n)); intros.
-         + assert(isInB (BpnB3 b0 n) s = false) by admit.
+         + assert(isInB (BpnB3 b0 n) s = false).
+           { case_eq n; intros.
+             - simpl. easy.
+             - rewrite <- InNS; easy.
+           }
            subst.
            specialize(inH7  (BpnB3 b0 n) a s s0 s' w'0 w' H10 H4); intro HIn.
            destruct HIn as (c,(Hc1,(Hc2,Hc3))).
@@ -1662,34 +1781,52 @@ Proof. intro b.
            simpl in H7.
            assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq a) c) w'0) = 
                   (merge_apf_cont a (merge_bpf_cont c w'0))
-                  ) by admit.
+                  ).
+           { rewrite bareOrg1. easy. }
            rewrite H in H7.
            specialize(IHb a p l s2 w  (merge_bpf_cont c w'0) Hb H7).
            destruct IHb as (b1,(w1,(s'',(HHa,(HHb,HHc))))).
            case_eq(Bpf_eqb c b1); intros H1.
-           assert(c = b1) by admit.
+           assert(c = b1).
+           { apply bpf_eqb_eq in H1. easy. }
            rewrite H2 in HHc.
-           assert(w'0 = (p ! [(l, s'', w1)])) by admit.
+           assert(w'0 = (p ! [(l, s'', w1)])).
+           { apply merge_same_beq in HHc. easy. }
            rewrite H3 in Hc3.
            assert(merge_bpf_cont c (s ! [(s0, s', p ! [(l, s'', w1)])]) =
-                  merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' bpf_end)) (p ! [(l, s'', w1)])) by admit.
+                  merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' bpf_end)) (p ! [(l, s'', w1)])).
+           { rewrite breOrg1. rewrite bpfend_bn. easy. }
            exists ((Bpf_merge c (bpf_send s s0 s' bpf_end))). exists w1. exists s''.
-           split. simpl. admit. split. easy.
+           split. simpl.
+           apply InMergeFS. split. rewrite H2. easy. simpl. apply eqb_neq in Ha. rewrite Ha. easy.
+           split. easy.
            rewrite H11 in Hc3.
            easy.
            assert(merge_bpf_cont c w'0 = merge_bpf_cont c w'0 ) by easy.
            case_eq(isInB c p); intros HHN.
-           assert(exists b2, c = Bpf_merge b1 (bpf_send p l s'' b2) /\ w1 = merge_bpf_cont b2 w'0) by admit.
+           assert(exists b2, c = Bpf_merge b1 (bpf_send p l s'' b2) /\ w1 = merge_bpf_cont b2 w'0).
+           { symmetry in HHc. 
+             specialize(inH8 b1 c p (p ! [(l, s'', w1)]) w'0 
+             HHa HHN HHc
+             );intro HP.
+             destruct HP as (c1,(HP1,(HP2,HP3))).
+             apply inH9 in HP3.
+             destruct HP3 as (c2,(HP4,HP5)).
+             exists c2. rewrite <- HP4. split; easy.
+             easy. 
+           }
            destruct H3 as (b2,(Hb2,Hb3)).
            rewrite Hb2 in Hc3.
            simpl in Hc3.
            assert(merge_bpf_cont (Bpf_merge b1 (bpf_send p l s'' b2)) (s ! [(s0, s', w'0)]) =
-                 merge_bpf_cont b1 (p! [(l, s'', (merge_bpf_cont b2 (s ! [(s0, s', w'0)])))])) by admit.
+                  merge_bpf_cont b1 (p! [(l, s'', (merge_bpf_cont b2 (s ! [(s0, s', w'0)])))])).
+           { rewrite breOrg1. easy. }
            rewrite H3 in Hc3.
            exists b1. exists(merge_bpf_cont b2 (s ! [(s0, s', w'0)])). exists s''.
            split. easy. split. easy. easy.
            rename H1 into HH1.
-           assert(c <> b1) by admit.
+           assert(c <> b1).
+           { apply bpf_eqb_neq in HH1. easy. }
            specialize(_39_1 c b1 p p (merge_bpf_cont c w'0) w'0 (p ! [(l, s'', w1)])
            HHN HHa H1 H2 HHc
            ); intro HR.
@@ -1697,22 +1834,31 @@ Proof. intro b.
            ++ destruct HR as (d,(Hr1,(Hr2,(Hr3,Hr4)))).
               rewrite Hr4 in Hc3.
               assert(merge_bpf_cont c (s ! [(s0, s', merge_bpf_cont d (p ! [(l, s'', w1)]))]) =
-                     merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' d)) (p ! [(l, s'', w1)])) by admit.
+                     merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' d)) (p ! [(l, s'', w1)])).
+              { rewrite breOrg1. easy. }
               rewrite H3 in Hc3.
               exists (Bpf_merge c (bpf_send s s0 s' d)). exists w1. exists s''.
-              split. simpl. admit. split. easy. easy.
+              split. simpl.
+              apply InMergeFS. split. easy. simpl. rewrite Hr1.
+              apply eqb_neq in Ha. rewrite Ha. easy.
+              split. easy. easy.
            ++ destruct HR as (d,(Hr1,(Hr2,(Hr3,Hr4)))).
               rewrite Hr3 in Hc3.
-              assert(d = bpf_end) by admit.
+              assert(d = bpf_end).
+              { apply noPreS in Hr4. easy. easy. }
               rewrite H3 in Hr4.
               rewrite bpfend_bn in Hr4.
               rewrite <- Hr4 in Hc3.
               rewrite H3 in Hc3. simpl in Hc3.
               assert(merge_bpf_cont (Bpf_merge b1 bpf_end) (s ! [(s0, s', p ! [(l, s'', w1)])]) =
-                    merge_bpf_cont (Bpf_merge b1 (bpf_send s s0 s' bpf_end)) (p ! [(l, s'', w1)])) by admit.
+                    merge_bpf_cont (Bpf_merge b1 (bpf_send s s0 s' bpf_end)) (p ! [(l, s'', w1)])).
+              { rewrite breOrg1. rewrite bpfend_bn. rewrite mergeRS. easy. }
               rewrite H11 in Hc3.
               exists (Bpf_merge b1 (bpf_send s s0 s' bpf_end)). exists w1. exists s''.
-              split. admit. split. easy.  easy.
+              split. 
+              apply InMergeFS. split. easy. simpl. 
+              apply eqb_neq in Ha. rewrite Ha. easy.
+              split. easy. easy.
          + specialize(mcBp2Ap (BpnB3 b0 n) (s ! [(s0, s', w'0)]) H9); intro HR.
            destruct HR as (a2,(HR,HRa)).
            rewrite HR in H4.
@@ -1720,13 +1866,14 @@ Proof. intro b.
            ++ apply apf_eqb_eq in H10. subst.
               apply merge_same_aeq in H4.
               rewrite HRa in H7.
-              assert( (merge_bpf_cont (Ap2BpSeq a) w'0)  =  (merge_apf_cont a w'0)) by admit.
+              assert( (merge_bpf_cont (Ap2BpSeq a) w'0) = (merge_apf_cont a w'0)).
+              { rewrite mcAp2Bp2. easy. }
               rewrite H in H7.
               specialize(IHb a p l s2 w  w'0 Hb H7).
               destruct IHb as (b1,(w1,(s'',(HHa,(HHb,HHc))))).
               rewrite HHc in H4.
               exists(bpf_send s s0 s' b1). exists w1. exists s''.
-              split. simpl. rewrite HHa. simpl. admit.
+              split. simpl. rewrite HHa. simpl. apply eqb_neq in Ha. rewrite Ha. easy.
               split. easy. 
               rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w1)]))). simpl. easy.
            ++ apply apf_eqb_neq in H10. subst.
@@ -1736,16 +1883,20 @@ Proof. intro b.
               specialize(_39_4 a a2 s s0 s' (merge_apf_cont a w') w' w'0 H H1 H4); intro HH.
               destruct HH as (c,(HHa,HHb)).
               rewrite HRa in H7. rewrite HHa in H7.
-              assert((merge_bpf_cont (Ap2BpSeq (Apf_merge a c)) w'0) = (merge_apf_cont (Apf_merge a c) w'0)) by admit.
+              assert((merge_bpf_cont (Ap2BpSeq (Apf_merge a c)) w'0) = (merge_apf_cont (Apf_merge a c) w'0)).
+              { rewrite mcAp2Bp2. easy. }
               rewrite H2 in H7.
               specialize(IHb (Apf_merge a c) p l s2 w  w'0 Hb H7).
               destruct IHb as (b1,(w1,(s'',(HHc,(HHd,HHe))))).
               rewrite HHe in HHb.
               assert(merge_apf_cont c (s ! [(s0, s', merge_bpf_cont b1 (p ! [(l, s'', w1)]))]) =
-                     merge_bpf_cont (Bpf_merge (Ap2BpSeq c) (bpf_send s s0 s' b1)) (p ! [(l, s'', w1)])) by admit.
+                     merge_bpf_cont (Bpf_merge (Ap2BpSeq c) (bpf_send s s0 s' b1)) (p ! [(l, s'', w1)])).
+              { rewrite mcAp2Bp2. rewrite breOrg1. easy. }
               rewrite H3 in HHb.
               exists (Bpf_merge (Ap2BpSeq c) (bpf_send s s0 s' b1)). exists w1. exists s''.
-              split. simpl. admit.
+              split. simpl.
+              apply InMergeFS. split. rewrite BisInAF. easy. simpl.
+              apply eqb_neq in Ha. rewrite Ha. easy.
               split. easy.
               easy.
          apply refinementR3_mon. 
@@ -1753,13 +1904,17 @@ Proof. intro b.
          pinversion H0.
          subst.
          rewrite <- meqBp3 in H5, H8, H9.
-         assert(isInB (BpnB3 b n) p = false) by admit.
+         assert(isInB (BpnB3 b n) p = false).
+         { case_eq n; intros.
+           - simpl. easy.
+           - rewrite <- InNS; easy.
+         }
          specialize(inH7 (BpnB3 b n) a p l s' w'0 w' H1 H5); intro Hin.
          destruct Hin as (c,(Hi1,(Hi2,Hi3))).
          exists c. exists w'0. exists s'.
          split. easy. split. easy. easy.
          apply refinementR3_mon.
-Admitted.
+Qed.
 
 Lemma abContra: forall a b1 b2 p l s,
   Ap2BpSeq a = Bpf_merge b1 (bpf_send p l s b2) -> False.
@@ -1794,15 +1949,19 @@ Proof. intro a.
          pinversion H0.
          subst.
          rewrite <- meqAp3 in H5, H8, H9.
-         assert((merge_apf_cont (ApnA3 a0 n) w'0) = (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)) by admit.
+         assert((merge_apf_cont (ApnA3 a0 n) w'0) = (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
+         { rewrite mcAp2Bp2. easy. }
          rewrite H1 in H8.
          specialize(IHa (Ap2BpSeq (ApnA3 a0 n)) p l s2 w w'0 H H8).
          assert(merge_apf_cont (ApnA3 a0 n) (s & [(s0, s', w'0)]) =
-                merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (s & [(s0, s', w'0)])) by admit.
+                merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (s & [(s0, s', w'0)])).
+         { rewrite mcAp2Bp2. easy. }
          rewrite H2 in H5.
          case_eq(Bpf_eqb (Ap2BpSeq (ApnA3 a0 n)) b); intros.
-         + assert(Ap2BpSeq (ApnA3 a0 n) = b) by admit.
-           assert((s & [(s0, s', w'0)]) = w') by admit.
+         + assert(Ap2BpSeq (ApnA3 a0 n) = b).
+           { apply bpf_eqb_eq. easy. }
+           assert((s & [(s0, s', w'0)]) = w').
+           { rewrite H4 in H5. apply merge_same_beq in H5. easy. }
            destruct IHa as [IHa | IHa].
            ++ destruct IHa as (b1,(b2,(s'',(Hb1,(Hb2,Hb3))))). 
               left.
@@ -1817,7 +1976,8 @@ Proof. intro a.
               simpl.
               rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s' b1) (p ! [(l, s'', w1)]))). simpl.
               easy.
-         + assert(Ap2BpSeq (ApnA3 a0 n) <> b) by admit.
+         + assert(Ap2BpSeq (ApnA3 a0 n) <> b).
+           { apply bpf_eqb_neq. easy. }
            destruct IHa as [IHa | IHa].
            ++ destruct IHa as (b1,(b2,(s'',(Hb1,(Hb2,Hb3))))).
               apply abContra in Hb3. easy.
@@ -1825,11 +1985,11 @@ Proof. intro a.
               simpl in Hb3.
               case_eq (isInB b p); intros.
               * assert(merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (s & [(s0, s', w'0)]) =
-                      merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) w'0)
-                by admit.
-                rewrite H11 in H5.
-                assert(isInB (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) p = false)
-                by admit.
+                       merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) w'0).
+                { rewrite bareOrg2. easy. }
+                rewrite H11 in H5. 
+                assert(isInB (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) p = false).
+                { rewrite BisInAF. easy. }
                 specialize(inH8 (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b
                 p w'0 w' H12 H10 H5
                 ); intro HP.
@@ -1840,35 +2000,41 @@ Proof. intro a.
                 left. 
                 rewrite HP2. simpl.
                 rewrite HP5. simpl.
-                assert(exists c3, c2 = bpf_send p l s'' c3) by admit.
+                assert(exists c3, c2 = bpf_send p l s'' c3).
+                { apply inH9 in HP6.
+                  destruct HP6 as (b2,(HP6,HP7)).
+                  exists b2. easy. easy.
+                }
                 destruct H13 as (c3,HP7).
                 rewrite HP7.
                 assert(Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) (Bpf_merge b1 (bpf_send p l s'' c3)) =
-                       Bpf_merge (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) (bpf_send p l s'' c3))
-                by admit.
+                       Bpf_merge (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) (bpf_send p l s'' c3)).
+                { rewrite bpf_merge_assoc. easy. }
                 rewrite H13.
                 exists (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1).
                 exists c3.
                 exists s''.
-                split. simpl. admit.
+                split. simpl.
+                apply InMergeFS. rewrite BisInAF. easy.
                 split. easy. easy.
               * assert(merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (s & [(s0, s', w'0)]) =
-                      merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) w'0)
-                by admit.
+                       merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) w'0).
+                { rewrite bareOrg2. easy. }
                 rewrite H11 in H5.
                 rewrite Hb4 in H5.
                 assert(merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) (merge_bpf_cont b1 (p ! [(l, s'', w1)])) =
-                       merge_bpf_cont (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) (p ! [(l, s'', w1)]))
-                by admit.
+                       merge_bpf_cont (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) (p ! [(l, s'', w1)])).
+                { rewrite bareOrg1. rewrite mcAp2Bp2. easy.  }
                 rewrite H12 in H5.
                 case_eq(Bpf_eqb b (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1)); intros.
-                ** assert((p ! [(l, s'', w1)]) = w') by admit.
+                ** assert((p ! [(l, s'', w1)]) = w').
+                   { apply bpf_eqb_eq in H13. rewrite <- H13 in H5. apply merge_same_beq in H5. easy. }
                    right. exists bpf_end. exists w1. exists s''.
                    split. easy. split. easy. split. easy. rewrite bpfend_bn. easy.
-                ** assert(isInB (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) p = false)
-                   by admit.
-                   assert( b <> Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1)
-                   by admit.
+                ** assert(isInB (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) p = false).
+                   { apply InMergeFS. rewrite BisInAF. easy. }
+                   assert( b <> Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1).
+                   { apply bpf_eqb_neq. easy. }
                    assert(merge_bpf_cont b w' = merge_bpf_cont b w') by easy.
                    symmetry in H5.
                    specialize(_39_1 b (Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1) 
@@ -1879,15 +2045,16 @@ Proof. intro a.
                        right. exists c. exists w1. exists s''.
                        split. easy. split. easy. split. easy. easy.
                    *** destruct HP as (c,(HP1,(HP2,(HP3,HP4)))).
-                       assert(exists c2, c = bpf_send p l s'' c2) by admit.
-                       destruct H17 as (c2,HP5).
-                       left.
-                       rewrite HP3.
-                       rewrite HP5.
-                       exists(Bpf_merge (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s' apf_end))) b1).
-                       exists c2.
+                       apply noPreS in HP4; try easy.
+                       rewrite HP4 in HP3. simpl in HP3.
+                       rewrite mergeRS in HP3.
+                       rewrite <- HP3 in H5.
+                       apply merge_same_beq in H5.
+                       right.
+                       exists bpf_end.
+                       exists w1.
                        exists s''.
-                       split. admit. split. easy. easy.
+                       rewrite bpfend_bn. easy.
          apply refinementR3_mon.
        - simpl in H.
          rewrite orbtf in H.
@@ -1902,25 +2069,48 @@ Proof. intro a.
          + destruct IHa as (b1,(b2,(s'',(Hb1,(Hb2,Hb3))))). 
            rewrite Hb3 in H4.
            case_eq(Bpf_eqb (Bpf_merge b1 (bpf_send p l s'' b2)) b); intros.
-           ++ assert((Bpf_merge b1 (bpf_send p l s'' b2)) = b) by admit.
+           ++ assert((Bpf_merge b1 (bpf_send p l s'' b2)) = b).
+              { apply bpf_eqb_eq. easy. }
               rewrite <- H1.
               left. exists b1. exists b2. exists s''.
               split. easy. split. easy. easy.
-           ++ assert((Bpf_merge b1 (bpf_send p l s'' b2)) <> b) by admit.
+           ++ assert((Bpf_merge b1 (bpf_send p l s'' b2)) <> b).
+              { apply bpf_eqb_neq. easy. }
               case_eq(isInB b s); intros.
-              * assert(isInB (Bpf_merge b1 (bpf_send p l s'' b2)) s = false) by admit.
+              * assert(isInB (Bpf_merge b1 (bpf_send p l s'' b2)) s = false).
+                { rewrite InMergeFS. simpl.
+                  assert(isInB (BpnB3 b0 n) s = false).
+                  { case_eq n; intros.
+                    - simpl. easy.
+                    - rewrite <- InNS; easy.
+                  }
+                  rewrite Hb3 in H3.
+                  apply InMergeFS in H3. simpl in H3.
+                  easy.
+                }
                 specialize(inH8 (Bpf_merge b1 (bpf_send p l s'' b2)) b s
                 (s ! [(s0, s', w'0)]) w' H3 H2 H4
                 ); intro HP.
                 destruct HP as (c,(HP1,(HP2,HP3))).
                 assert(Bpf_merge (Bpf_merge b1 (bpf_send p l s'' b2)) c =
-                       Bpf_merge b1 (bpf_send p l s'' (Bpf_merge b2 c))) by admit.
+                       Bpf_merge b1 (bpf_send p l s'' (Bpf_merge b2 c))).
+                { rewrite bpf_merge_assoc. easy. }
                 rewrite H9 in HP2.
                 left.
                 exists b1. exists (Bpf_merge b2 c). exists s''.
                 split. easy. split. easy. easy.
-              * assert(isInB (Bpf_merge b1 (bpf_send p l s'' b2)) s = false) by admit.
-                assert(merge_bpf_cont b w' = merge_bpf_cont b w') by easy.
+              * assert(isInB (Bpf_merge b1 (bpf_send p l s'' b2)) s = false).
+                { rewrite InMergeFS. simpl.
+                  assert(isInB (BpnB3 b0 n) s = false).
+                  { case_eq n; intros.
+                    - simpl. easy.
+                    - rewrite <- InNS; easy.
+                  }
+                  rewrite Hb3 in H3.
+                  apply InMergeFS in H3. simpl in H3.
+                  easy.
+                }
+                assert(merge_bpf_cont b w' = merge_bpf_cont b w') by easy. 
                 symmetry in H4.
                 specialize(_39_1 (Bpf_merge b1 (bpf_send p l s'' b2)) b s s
                 (merge_bpf_cont b w')
@@ -1928,10 +2118,15 @@ Proof. intro a.
                 ); intro HP.
                 destruct HP as [HP | HP].
                 ** destruct HP as (c,(HP1,(HP2,(HP3,HP4)))).
-                   assert(c = bpf_end) by admit.
+                   assert(c = bpf_end).
+                   { apply noPreS in HP4; easy. }
                    rewrite H10 in HP3.
                    assert(Bpf_merge (Bpf_merge b1 (bpf_send p l s'' b2)) bpf_end =
-                          Bpf_merge b1 (bpf_send p l s'' b2)) by admit.
+                          Bpf_merge b1 (bpf_send p l s'' b2)).
+                   { rewrite bpf_merge_assoc. simpl.
+                     rewrite mergeRS.
+                     easy.
+                   }
                    rewrite H11 in HP3.
                    left.
                    exists b1. exists b2. exists s''.
@@ -1947,21 +2142,23 @@ Proof. intro a.
                        destruct HP as (c2,(HP5,(HP6,HP7))).
                        rewrite HP6 in HP4.
                        assert(merge_bpf_cont (Bpf_merge c2 (bpf_send p l s'' b2)) (s ! [(s0, s', w'0)]) =
-                              merge_bpf_cont c2 (p ! [(l, s'', merge_bpf_cont b2 (s ! [(s0, s', w'0)]))]))
-                       by admit.
+                              merge_bpf_cont c2 (p ! [(l, s'', merge_bpf_cont b2 (s ! [(s0, s', w'0)]))])).
+                       { rewrite breOrg1. easy. }
                        rewrite H11 in HP4.
                        right. 
                        exists c2. exists(merge_bpf_cont b2 (s ! [(s0, s', w'0)])). exists s''.
                        split. easy. split. easy. split; easy.
          + destruct IHa as (b1,(w2,(s'',(Hb1,(Hb2,(Hb3,Hb4)))))).
            case_eq(Bpf_eqb (BpnB3 b0 n) b); intros.
-           ++ assert((BpnB3 b0 n) = b) by admit. 
+           ++ assert((BpnB3 b0 n) = b).
+              { apply bpf_eqb_eq. easy. } 
              rewrite H1 in H4.
-             assert((s ! [(s0, s', w'0)]) = w') by admit.
+             assert((s ! [(s0, s', w'0)]) = w').
+             { apply merge_same_beq in H4. easy. }
              rewrite Hb4 in H2.
              assert(s ! [(s0, s', merge_bpf_cont b1 (p ! [(l, s'', w2)]))] =
-                    merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))
-             by admit.
+                    merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)])).
+             { rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))). simpl. easy. }
              rewrite H3 in H2.
              right.
              exists(bpf_send s s0 s' b1).
@@ -1969,45 +2166,69 @@ Proof. intro a.
              exists s''.
              simpl. split. rewrite Hb1. apply eqb_neq in Ha. rewrite Ha. easy. 
              split. easy. rewrite <- H1. split; easy.
-           ++ assert((BpnB3 b0 n) <> b) by admit.
+           ++ assert((BpnB3 b0 n) <> b).
+              { apply bpf_eqb_neq. easy. }
               case_eq(isInB b s); intros.
-              * assert(isInB (BpnB3 b0 n) s = false) by admit.
+              * assert(isInB (BpnB3 b0 n) s = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InNS; easy.
+                }
                 specialize(inH8 (BpnB3 b0 n) b s (s ! [(s0, s', w'0)]) w'
                 H3 H2 H4
                 ); intro HP.
                 destruct HP as (c,(HP1,(HP2,HP3))).
                 rewrite Hb4 in HP3.
                 assert(s ! [(s0, s', merge_bpf_cont b1 (p ! [(l, s'', w2)]))] =
-                      merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))
-                by admit.
+                      merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)])).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))). simpl. easy. }
                 rewrite H9 in HP3.
                 case_eq(Bpf_eqb (bpf_send s s0 s' b1) c); intros.
-                ** assert((bpf_send s s0 s' b1) = c) by admit.
-                   assert((p ! [(l, s'', w2)]) = w') by admit.
+                ** assert((bpf_send s s0 s' b1) = c).
+                   { apply bpf_eqb_eq. easy. }
+                   assert((p ! [(l, s'', w2)]) = w').
+                   { rewrite H11 in HP3.
+                     apply merge_same_beq in HP3. easy.
+                   }
                    right. exists bpf_end. exists w2. exists s''.
                    simpl. rewrite bpfend_bn. split. easy. split. easy. split. rewrite HP2.
-                   rewrite <- H11. admit. easy.
-                ** assert((bpf_send s s0 s' b1) <> c) by admit.
+                   rewrite <- H11.
+                   apply InMergeFS. simpl. split. easy. rewrite Hb1.
+                   apply eqb_neq in Ha. rewrite Ha. easy.
+                   easy.
+                ** assert((bpf_send s s0 s' b1) <> c).
+                   { apply bpf_eqb_neq. easy. }
                    case_eq(isInB c p); intros.
-                   *** assert(isInB (bpf_send s s0 s' b1) p = false) by admit.
+                   *** assert(isInB (bpf_send s s0 s' b1) p = false).
+                       { simpl. apply eqb_neq in Ha. rewrite Ha. easy. }
                        specialize(inH8 (bpf_send s s0 s' b1) c
                        p (p ! [(l, s'', w2)]) w' H13 H12 HP3
                        ); intro HP.
                        destruct HP as (c2,(HP4,(HP5,HP6))).
                        rewrite HP5 in HP2.
-                       assert(exists c3, c2 = bpf_send p l s'' c3) by admit.
+                       assert(exists c3, c2 = bpf_send p l s'' c3).
+                       { apply inH9 in HP6. 
+                         destruct HP6 as (c3,(HP6,HP7)).
+                         exists c3. easy.
+                         easy.
+                       }
                        destruct H14 as (c3,HP7).
                        rewrite HP7 in HP2.
                        assert(Bpf_merge (BpnB3 b0 n) (Bpf_merge (bpf_send s s0 s' b1) (bpf_send p l s'' c3)) =
-                             (Bpf_merge (Bpf_merge (BpnB3 b0 n) (bpf_send s s0 s' b1)) (bpf_send p l s'' c3)))
-                       by admit.
+                             (Bpf_merge (Bpf_merge (BpnB3 b0 n) (bpf_send s s0 s' b1)) (bpf_send p l s'' c3))).
+                       { rewrite bpf_merge_assoc. easy. }
                        rewrite H14 in HP2.
                        left. 
                        exists((Bpf_merge (BpnB3 b0 n) (bpf_send s s0 s' b1))).
                        exists c3.
                        exists s''.
-                       split. simpl. admit. split; easy.
-                   *** assert(isInB (bpf_send s s0 s' b1) p = false) by admit.
+                       split. simpl.
+                       apply InMergeFS. simpl.
+                       apply eqb_neq in Ha. rewrite Ha.
+                       easy.
+                       split; easy.
+                   *** assert(isInB (bpf_send s s0 s' b1) p = false).
+                       { simpl. apply eqb_neq in Ha. rewrite Ha. easy. }
                        assert(merge_bpf_cont c w' = merge_bpf_cont c w') by easy.
                        symmetry in HP3.
                        specialize(_39_1 (bpf_send s s0 s' b1) c p p
@@ -2015,19 +2236,28 @@ Proof. intro a.
                        ); intro HP.
                        destruct HP as [HP | HP].
                        +++ destruct HP as (c2,(HP4,(HP5,(HP6,HP7)))).
-                           assert(c2 = bpf_end) by admit.
+                           assert(c2 = bpf_end).
+                           { apply noPreS in HP7; easy. }
                            rewrite H15 in HP7. 
                            rewrite bpfend_bn in HP7.
                            right. 
                            exists bpf_end. exists w2. exists s''.
                            split. easy. split. easy. split. rewrite HP2. rewrite HP6.
-                           rewrite H15. simpl. admit.
+                           rewrite H15. simpl. 
+                           apply InMergeFS. simpl.
+                           apply eqb_neq in Ha. rewrite Ha. split. easy.
+                           simpl. 
+                           apply InMergeFS. simpl. easy.
                            rewrite bpfend_bn. easy.
                        +++ destruct HP as (c2,(HP4,(HP5,(HP6,HP7)))).
                            right.
                            exists c2. exists w2. exists s''.
-                           split. easy. split. easy. rewrite HP2. split. admit. easy.
-              * assert(isInB (BpnB3 b0 n) s = false) by admit.
+                           split. easy. split. easy. rewrite HP2. split.
+                           apply InMergeFS. simpl. easy. easy.
+              * assert(isInB (BpnB3 b0 n) s = false).
+                { case_eq n; intros.
+                  - simpl. easy.
+                  - rewrite <- InNS; easy. }
                 assert(merge_bpf_cont b w' = merge_bpf_cont b w') by easy.
                 symmetry in H4.
                 specialize(_39_1 (BpnB3 b0 n) b s s
@@ -2035,32 +2265,41 @@ Proof. intro a.
                 ); intro HP.
                 destruct HP as [HP | HP].
                 ** destruct HP as (c,(HP4,(HP5,(HP6,HP7)))).
-                   assert(c = bpf_end) by admit.
+                   assert(c = bpf_end).
+                   { apply noPreS in HP7; easy. }
                    rewrite H10 in HP7. rewrite bpfend_bn in HP7.
                    rewrite Hb4 in HP7.
                    assert(s ! [(s0, s', merge_bpf_cont b1 (p ! [(l, s'', w2)]))] =
-                          merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))
-                   by admit.
+                          merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)])).
+                   { rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s' b1) (p ! [(l, s'', w2)]))). simpl. easy. }
                    rewrite H11 in HP7.
                    right.
                    exists(bpf_send s s0 s' b1).
                    exists w2.
                    exists s''.
                    split. simpl. rewrite Hb1. apply eqb_neq in Ha. rewrite Ha. easy.
-                   split. easy. split. rewrite HP6. rewrite H10. simpl. admit.
+                   split. easy. split. rewrite HP6. rewrite H10. simpl.
+                   rewrite mergeRS. easy.
                    easy.
                 ** destruct HP as (c,(HP4,(HP5,(HP6,HP7)))).
                    rewrite Hb4 in HP7.
                    assert(merge_bpf_cont c (s ! [(s0, s', merge_bpf_cont b1 (p ! [(l, s'', w2)]))]) =
-                          merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' b1)) (p ! [(l, s'', w2)]))
-                   by admit.
+                          merge_bpf_cont (Bpf_merge c (bpf_send s s0 s' b1)) (p ! [(l, s'', w2)])).
+                   { rewrite breOrg1. easy. }
                    rewrite H10 in HP7.
                    right.
                    exists(Bpf_merge c (bpf_send s s0 s' b1)).
                    exists w2.
                    exists s''.
-                   split. simpl. admit.
-                   split. easy. split. admit (*Hb3 and HP6*).
+                   split. simpl.
+                   apply InMergeFS. simpl.
+                   apply eqb_neq in Ha. rewrite Ha. simpl. rewrite Hb1. 
+                   split; try easy.
+                   rewrite HP6 in Hb3.
+                   apply InMergeFS in Hb3. easy.
+                   split. easy. split.
+                   rewrite HP6 in Hb3.
+                   apply InMergeFS in Hb3. easy.
                    easy.
          apply refinementR3_mon.
        - rewrite bpfend_bn in H0.
@@ -2068,20 +2307,34 @@ Proof. intro a.
          subst.
          rewrite <- meqBp3 in H5, H8, H9.
          case_eq(Bpf_eqb (BpnB3 b0 n) b); intros.
-         + assert((BpnB3 b0 n) = b) by admit.
-           assert((p ! [(l, s', w'0)]) = w') by admit.
+         + assert((BpnB3 b0 n) = b).
+           { apply bpf_eqb_eq. easy. }
+           assert((p ! [(l, s', w'0)]) = w').
+           { rewrite H2 in H5. apply merge_same_beq in H5. easy. }
            right.
            exists bpf_end. exists w'0. exists s'.
-           simpl. split. easy. split. easy. split. rewrite <- H2. admit.
+           simpl. split. easy. split. easy. split. rewrite <- H2.
+           case_eq n; intros.
+           - simpl. easy.
+           - rewrite <- InNS; easy.
            rewrite bpfend_bn. easy.
-         + assert((BpnB3 b0 n) <> b) by admit.
+         + assert((BpnB3 b0 n) <> b).
+           { apply bpf_eqb_neq. easy. }
            case_eq(isInB b p); intros.
-           ++ assert(isInB (BpnB3 b0 n) p = false) by admit.
+           ++ assert(isInB (BpnB3 b0 n) p = false).
+              { case_eq n; intros.
+                - simpl. easy.
+                - rewrite <- InNS; easy.
+              }
               specialize(inH8 (BpnB3 b0 n) b p(p ! [(l, s', w'0)]) w'
               H4 H3 H5
               ); intro HP.
               destruct HP as (c,(HP1,(HP2,HP3))).
-              assert(exists c2, c = bpf_send p l s' c2) by admit.
+              assert(exists c2, c = bpf_send p l s' c2).
+              { apply inH9 in HP3.
+                destruct HP3 as (c3,(HP3,HP4)).
+                exists c3. easy. easy.
+              }
               destruct H10 as (c2,H10).
               rewrite H10 in HP2.
               left.
@@ -2089,7 +2342,11 @@ Proof. intro a.
               exists c2.
               exists s'.
               split. easy. split. easy. easy.
-           ++ assert(isInB (BpnB3 b0 n) p = false) by admit.
+           ++ assert(isInB (BpnB3 b0 n) p = false).
+              { case_eq n; intros.
+                - simpl. easy.
+                - rewrite <- InNS; easy.
+              }
               assert(merge_bpf_cont b w' = merge_bpf_cont b w') by easy.
               symmetry in H5.
               specialize(_39_1 (BpnB3 b0 n) b p p
@@ -2097,7 +2354,8 @@ Proof. intro a.
               ); intro HP.
               destruct HP as [HP | HP].
               * destruct HP as (c,(HP1,(HP2,(HP3,HP4)))).
-                assert(c = bpf_end) by admit.
+                assert(c = bpf_end).
+                { apply noPreS in HP4; easy. }
                 rewrite H11 in HP4.
                 rewrite bpfend_an in HP4.
                 right. 
@@ -2108,7 +2366,7 @@ Proof. intro a.
                 exists c. exists w'0. exists s'.
                 split; easy.
          apply refinementR3_mon.
-Admitted.
+Qed.
 
 Lemma InvertAA: forall a b p l s w w', 
   isInA a p = false ->
