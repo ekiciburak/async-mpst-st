@@ -31,6 +31,14 @@ Fixpoint listSisoPRef2 (l: list (siso*siso)): Prop :=
 
 Definition subtype2 (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef2 l.
 
+(* Fixpoint listSisoPRef3A (l: list (siso*siso)): Prop :=
+  match l with
+    | nil            => True
+    | cons (W,W') xs => (exists b1, exists b2, (forall n, refinement3 (merge_bpf_contn b1 (@und W) n)  (merge_bpf_contn b2 (@und W') n))) /\ listSisoPRef3A xs
+  end.
+
+Definition subtype3A (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef3A l. *)
+
 Definition subltype (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2) := subtype T1 T2.
 
 Definition subltype2 (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2) := subtype2 T1 T2.

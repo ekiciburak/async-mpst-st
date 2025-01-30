@@ -76,13 +76,27 @@ Declare Instance Ref_Trans: Transitive (refinement).
 Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
   | ref3_a  : forall w w' p l s s' a n, subsort s' s ->
                                         isInA a p = false ->
-                                        seq w (merge_apf_contn a w' n)  ->
-                                        act_eq w (merge_apf_contn a w' n) ->
+                                        seq w (merge_apf_contn a w' n)  -> 
+                                        ( exists L1, exists L2,
+                                          coseqInLC (act w) L1 /\
+                                          coseqInLC (act (merge_apf_contn a w' n)) L2 /\
+                                          coseqInR L1 (act w) /\
+                                          coseqInR L2 (act (merge_apf_contn a w' n)) /\
+                                          (forall x, List.In x L1 <-> List.In x L2)
+                                         ) ->
+(*                                         act_eq w (merge_apf_contn a w' n) -> *)
                                         refinementR3 seq (st_receive p [(l,s,w)]) (merge_apf_contn a (st_receive p [(l,s',w')]) n)
   | ref3_b  : forall w w' p l s s' b n, subsort s s' ->
                                         isInB b p = false ->
-                                        seq w (merge_bpf_contn b w' n) ->
-                                        act_eq w (merge_bpf_contn b w' n) ->
+                                        seq w (merge_bpf_contn b w' n) -> 
+                                        ( exists L1, exists L2,
+                                          coseqInLC (act w) L1 /\
+                                          coseqInLC (act (merge_bpf_contn b w' n)) L2 /\
+                                          coseqInR L1 (act w) /\
+                                          coseqInR L2 (act (merge_bpf_contn b w' n)) /\
+                                          (forall x, List.In x L1 <-> List.In x L2)
+                                        ) ->
+(*                                         act_eq w (merge_bpf_contn b w' n) -> *)
                                         refinementR3 seq (st_send p [(l,s,w)]) (merge_bpf_contn b (st_send p [(l,s',w')]) n)
   | ref3_end: refinementR3 seq st_end st_end.
 
@@ -93,7 +107,7 @@ Proof. unfold monotone2.
        intros.
        induction IN; intros.
        - specialize(ref3_a r'); intro Ha. apply Ha; try easy.
-         apply LE. exact H1.
+         apply LE. exact H1. 
        - specialize(ref3_b r'); intro Ha. apply Ha; try easy.
          apply LE. exact H1.
        - constructor.
