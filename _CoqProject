@@ -15,8 +15,8 @@ src/si.v
 src/reordering.v
 src/siso.v
 subtyping/refinement.v
-src/nondepro.v
 src/reorderingfacts.v
+src/nondepro.v
 subtyping/subtyping.v
 examples/Example2_3.v
 examples/ring_choice.v
