@@ -16,6 +16,7 @@ src/reordering.v
 src/siso.v
 subtyping/refinement.v
 src/reorderingfacts.v
+src/acteqfacts.v
 src/nondepro.v
 subtyping/subtyping.v
 examples/Example2_3.v
