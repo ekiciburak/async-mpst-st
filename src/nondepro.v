@@ -2999,7 +2999,7 @@ Proof. red. pcofix CIH.
                        rewrite H7 in Hlb.
                        assert(isInB (Bpf_merge (BpnB3 b0 n0) b2) p = false).
                        { apply InMergeFS. easy. }
-                       specialize(actdSNE (Bpf_merge (BpnB3 b0 n0) b2) l2 p l s2 w2 H13 Hcl2 Hlb); intro HP2.
+(*                        specialize(actdSNE (Bpf_merge (BpnB3 b0 n0) b2) l2 p l s2 w2 H13 Hcl2 Hlb); intro HP2. *)
                        rewrite HBd in H6.
                        assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
                               (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
