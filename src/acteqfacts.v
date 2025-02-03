@@ -1403,7 +1403,7 @@ Proof. intro l1.
            subst. easy.
 Qed.
 
-Lemma IactdSRE: forall l1 a p l s w,
+Lemma IactdRNE: forall l1 a p l s w,
   isInA a p = false ->
   (coseqIn (p, rcv) (act w) -> False) ->
   coseqInR l1 (act (merge_apf_cont a (p & [(l, s, w)]))) ->
@@ -1667,7 +1667,7 @@ Proof. intro a.
                apply IHa. right. easy.
 Qed.
 
-Lemma csInRBG: forall b p w,
+Lemma csInSBG: forall b p w,
   coseqIn (p,snd) (act (merge_bpf_cont b w)) ->
   isInB b p = true \/ coseqIn (p,snd) (act w).
 Proof. intro b.
@@ -1697,7 +1697,7 @@ Proof. intro b.
        - rewrite bpfend_bn in H. right. easy.
 Qed.
 
-Lemma csInRBRevG: forall b p w,
+Lemma csInSBRevG: forall b p w,
   isInB b p = true \/ coseqIn (p,snd) (act w) ->
   coseqIn (p,snd) (act (merge_bpf_cont b w)).
 Proof. intro b.
@@ -1812,7 +1812,7 @@ Proof. intros.
                      (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
               { rewrite mcAp2Bp2. easy. }
               rewrite H4 in HG.
-              apply csInRBG in HG.
+              apply csInSBG in HG.
               destruct HG as [HG | HG].
               * rewrite BisInAF in HG. easy.
               * assert((merge_apf_cont (ApnA3 a0 n) (p & [(l, s', w'0)])) =
@@ -1823,7 +1823,7 @@ Proof. intros.
                   rewrite bpfend_bn. easy.
                 }
                 rewrite H5.
-                apply csInRBRevG.
+                apply csInSBRevG.
                 right. easy.
        - destruct H4 as (l1,(l2,(Ha,(Hb,(Hc,(Hd,He)))))).
          rewrite <- meqBp3 in H3, H6, Hb, Hd.
@@ -1832,7 +1832,7 @@ Proof. intros.
          destruct H as [H | H].
          + subst.
            rewrite <- meqBp3.
-           apply csInRBRevG.
+           apply csInSBRevG.
            right.
            rewrite(coseq_eq(act (p ! [(l, s', w'0)]))). unfold coseq_id. simpl.
            apply CoInSplit1 with (y := (p, snd)) (ys := (act w'0) ). simpl. easy. easy.
@@ -1844,11 +1844,11 @@ Proof. intros.
            case_eq d; intros.
            ++ subst. apply coseqInRAddS. easy.
            ++ subst.
-              apply csInRBG in HG.
+              apply csInSBG in HG.
               destruct HG as [HG | HG].
-              * apply csInRBRevG. 
+              * apply csInSBRevG. 
                 left. easy.
-              * apply csInRBRevG.
+              * apply csInSBRevG.
                 right.
                 rewrite(coseq_eq(act (p ! [(l, s', w'0)]))). unfold coseq_id. simpl.
                 case_eq (eqb p q); intros.
@@ -1914,14 +1914,14 @@ Proof. intros.
                      (merge_bpf_cont (Ap2BpSeq (Apf_merge (ApnA3 a0 n) (apf_receive p l s' apf_end))) w'0)).
               { rewrite mcAp2Bp2. easy. }
               rewrite H5 in H.
-              apply csInRBG in H.
+              apply csInSBG in H.
               destruct H as [H | H].
               * rewrite BisInAF in H. easy.
               * assert((merge_apf_cont (ApnA3 a0 n) w'0) = (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
                 { rewrite mcAp2Bp2. easy. }
                 rewrite H6 in Hb.
                 assert(coseqIn (q, snd) (act (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0))).
-                { apply csInRBRevG. right. easy. }
+                { apply csInSBRevG. right. easy. }
                 specialize(coseqING _ _ _ H7 Hb); intro HP.
                 apply He in HP.
                 specialize(listInG _ _ _ HP Hc); intro HR.

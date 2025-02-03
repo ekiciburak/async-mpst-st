@@ -1809,7 +1809,114 @@ Proof. intro a.
                 apply InMergeF in H0. easy.
                 easy.
                 easy. easy.
-                admit.
+(*action eq*)
+                destruct H8 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, rcv) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, rcv) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ rewrite Hg in Hv, Hy.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     { rewrite merge_merge. easy. }
+                     rewrite H8 in Hv, Hy.
+                     apply actdRE in Hv.
+                     apply IactdRE in Hy.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d w')) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) w')).
+                     { rewrite merge_merge. easy. }
+                     rewrite H14.
+                     apply actdRE in Hu.
+                     apply IactdRE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     simpl in H. rewrite orbtf in H. easy.
+                     easy. simpl in H. rewrite orbtf in H. easy.
+                     easy.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b).
+                     rewrite InMergeF. simpl in H0b.
+                     rewrite orbtf in H0b. easy. easy.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b).
+                     rewrite InMergeF. simpl in H0b.
+                     rewrite orbtf in H0b. easy. easy.
+                  ++ simpl in H. rewrite orbtf in H.
+                     destruct H as (Ha1, Hb1).
+                     rewrite Hg in H7.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     { rewrite merge_merge. easy. }
+                     rewrite H in H7.
+                     apply IHa in H7; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont a w))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExL _ _ _ H8 H7); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite InMerge in HQ. rewrite He in HQ.
+                       rewrite Hc in H0. 
+                       rewrite InMergeF in H0.
+                       destruct H0 as (H0a, H0b).
+                       rewrite H0a in HQ. easy.
+                     * easy.
+                     rewrite InMergeF.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b). easy.
+                + specialize(classic (coseqIn (p, rcv) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ simpl in H. rewrite orbtf in H.
+                     destruct H as (Ha1, Hb1).
+                     rewrite Hg in H7.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     { rewrite merge_merge. easy. }
+                     rewrite H in H7.
+                     apply IHa in H7; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) w'))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExR _ _ _ H8 H7); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb1 in HQ. easy.
+                     * easy.
+                     rewrite InMergeF.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b). easy.
+                  ++ rewrite Hg in Hv, Hy.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     { rewrite merge_merge. easy. }
+                     rewrite H8 in Hv, Hy.
+                     apply actdRNE in Hv.
+                     apply IactdRNE in Hy.
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d w')) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) w')).
+                     { rewrite merge_merge. easy. }
+                     rewrite H14.
+                     apply actdRNE in Hu.
+                     apply IactdRNE in Hw.
+                     exists(dropE l1 (p, rcv)). exists(dropE l2 (p, rcv)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     simpl in H. rewrite orbtf in H. easy.
+                     easy. simpl in H. rewrite orbtf in H. easy.
+                     easy.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b).
+                     rewrite InMergeF. simpl in H0b.
+                     rewrite orbtf in H0b. easy. easy.
+                     rewrite Hc in H0. 
+                     rewrite InMergeF in H0.
+                     destruct H0 as (H0a, H0b).
+                     rewrite InMergeF. simpl in H0b.
+                     rewrite orbtf in H0b. easy. easy.
+(* ends here*)
              * destruct HP as (c,(Ha,(Hb,(Hc,Hd)))).
                 assert(p <> s).
                 { simpl in H. rewrite orbtf in H.
@@ -1852,7 +1959,84 @@ Proof. intro a.
                 rewrite Hc Hf in H7.
                 rewrite reOrg2 in H7.
                 easy.
-                admit.
+(*action eq*)
+                destruct H8 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                rewrite Hf in Hc.
+                rewrite Hc in Hv, Hy.
+                assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
+                       (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                { rewrite reOrd1.
+                  rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
+                }
+                rewrite H8 in Hy, Hv.
+                specialize(classic (coseqIn (p, rcv) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, rcv) (act (merge_apf_cont d w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdRE in Hv.
+                     apply IactdRE in Hy.
+                     assert((merge_apf_cont b (merge_apf_cont d w'0)) =
+                            (merge_apf_cont (Apf_merge b d) w'0)).
+                     { rewrite merge_merge. easy. }
+                     rewrite H14 in Hy, Hv.
+                     apply actdRE in Hu.
+                     apply IactdRE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     simpl in H. rewrite orbtf in H. easy.
+                     easy. simpl in H. rewrite orbtf in H. easy. easy.
+                     easy. easy. easy. easy.
+                  ++ simpl in H. rewrite orbtf in H.
+                     destruct H as (Ha1, Hb1).
+                     rewrite Hc in H7.
+                     assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
+                            (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                     { rewrite reOrd1.
+                       rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
+                     }
+                     rewrite H in H7. 
+                     apply IHa in H7; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont a w))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExL _ _ _ H14 H7); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite H0 in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, rcv) (act (merge_apf_cont d w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ simpl in H. rewrite orbtf in H.
+                     destruct H as (Ha1, Hb1).
+                     rewrite Hc in H7.
+                     assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
+                            (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                     { rewrite reOrd1.
+                       rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
+                     }
+                     rewrite H in H7. 
+                     apply IHa in H7; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont b (merge_apf_cont d w'0)))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExR _ _ _ H14 H7); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb1 in HQ. easy.
+                     * easy.
+                  ++ apply actdRNE in Hv.
+                     apply IactdRNE in Hy.
+                     assert((merge_apf_cont b (merge_apf_cont d w'0)) =
+                            (merge_apf_cont (Apf_merge b d) w'0)).
+                     { rewrite merge_merge. easy. }
+                     rewrite H14 in Hy, Hv.
+                     apply actdRNE in Hu.
+                     apply IactdRNE in Hw.
+                     exists (dropE l1 (p,rcv)). exists (dropE l2 (p,rcv)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     simpl in H. rewrite orbtf in H. easy.
+                     easy. simpl in H. rewrite orbtf in H. easy. easy.
+                     easy. easy. easy. easy.
+(* ends here*) 
          + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H3.
            simpl in H3.
            easy.
@@ -1902,7 +2086,48 @@ Proof. intro b.
               easy. left.
               apply IHb with (p := p) (l := l) (s := s2) (s' := s').
               easy. easy. easy.
-              admit.
+              rewrite H2 in H10.
+              rewrite apfend_an in H10.
+(*action eq*)
+                destruct H10 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H3 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite H0 in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b0 w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H3 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite H in HQ. easy.
+                     * easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
+(* ends here*) 
            ++ rewrite eqb_neq in H2.
               assert(isInA (ApnA3 a n) s = false).
               { case_eq n; intros.
@@ -1957,7 +2182,68 @@ Proof. intro b.
                 { rewrite bareOrg1. easy. }
                 rewrite H13 in H9.
                 easy.
-                admit.
+                rewrite HPc in H10.
+                rewrite HQ2 in H10.
+                rewrite HPc in H9.
+                rewrite HQ2 in H9.
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                { rewrite breOrg3.
+                  rewrite mcAp2Bp2. easy.
+                }
+                rewrite H12 in H10.
+                rewrite H12 in H9.
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 w')) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) w')).
+                { rewrite breOrg3.
+                  rewrite mcAp2Bp2. easy.
+                }
+                rewrite H13.
+(*action eq*)
+                destruct H10 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy. easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy. easy.
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite InMergeS in HQ. rewrite BisInAF in HQ. rewrite HQ1 in HQ. easy.
+                     * easy.
+                      rewrite InMergeFS. rewrite BisInAF. easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite H in HQ. easy.
+                     * easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. rewrite InMergeFS. rewrite BisInAF. easy.
+                     easy. rewrite InMergeFS. rewrite BisInAF. easy. easy.
+(* ends here*) 
               * specialize(mcBp2Ap b0 (p ! [(l, s', w')]) H4); intro HP.
                 destruct HP as (a2,(HP1,HP2)).
                 rewrite HP1 in HPb.
@@ -2019,7 +2305,69 @@ Proof. intro b.
                 { rewrite bareOrg1. easy. }
                 rewrite H18 in H9.
                 easy.
-                admit.
+
+                rewrite HPc in H10.
+                rewrite Hb3 in H10.
+                rewrite HPc in H9.
+                rewrite Hb3 in H9.
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                { rewrite breOrg3.
+                  rewrite mcAp2Bp2. easy.
+                }
+                rewrite H17 in H10.
+                rewrite H17 in H9.
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 w')) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) w')).
+                { rewrite breOrg3.
+                  rewrite mcAp2Bp2. easy.
+                }
+                rewrite H18.
+(*action eq*)
+                destruct H10 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy. easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy. easy.
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite InMergeS in HQ. rewrite BisInAF in HQ. rewrite Hb2 in HQ. easy.
+                     * easy.
+                      rewrite InMergeFS. rewrite BisInAF. easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite H in HQ. easy.
+                     * easy.
+                     rewrite InMergeFS. rewrite BisInAF. easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. rewrite InMergeFS. rewrite BisInAF. easy.
+                     easy. rewrite InMergeFS. rewrite BisInAF. easy. easy.
+(* ends here*)
                 apply refinementR3_mon.
          + subst.
            rewrite(st_eq (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', w')]))) in H1. simpl in H1.
@@ -2137,7 +2485,73 @@ Proof. intro b.
                 }
                 rewrite H14 in H9.
                 easy.
-                admit.
+                
+                rewrite HP3 in H10 H9.
+                rewrite HQ3 in H10 H9.
+                rewrite HPc in H10 H9.
+                assert((merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0 )). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))). simpl.
+                  rewrite breOrg3. 
+                  rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
+                }
+                rewrite H13 in H10 H9.
+(*action eq*)
+                destruct H10 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     assert((merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0)) =
+                            (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)).
+                     { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0))). simpl.
+                       rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)). simpl.
+                       rewrite merge_mergeS. easy.
+                     }
+                     rewrite <- H10.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     simpl. easy. easy. easy. easy.
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * simpl in HQ. rewrite H0 in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0)))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb in HQ. easy.
+                     * easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     assert((merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0)) =
+                            (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)).
+                     { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0))). simpl.
+                       rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)). simpl.
+                       rewrite merge_mergeS. easy.
+                     }
+                     rewrite <- H10.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. simpl. easy. easy. simpl. easy. easy.
+(* ends here*)
               * destruct HQ as (c,(HQ1,(HQ2,(HQ3,HQ4)))).
                 assert(s <> p) by easy.
                 specialize(pneqq7 c p s s0 l s'0 s' w'0 w' Ha HQ1 HQ4); intro HP.
@@ -2193,7 +2607,81 @@ Proof. intro b.
                 }
                 rewrite H14 in H9.
                 easy.
-                admit.
+                
+                rewrite HP3 in H10 H9.
+                rewrite HPb in H10 H9.
+                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))).
+                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')])))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))). simpl.
+                  rewrite merge_mergeS. easy.
+                }
+                rewrite H13 in H10 H9.
+                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 w')) =
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) w')).
+                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 w'))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) w')). simpl.
+                  rewrite merge_mergeS. easy.
+                }
+                rewrite H14.
+(*action eq*)
+                destruct H10 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     simpl. 
+                     rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0. easy.
+                     easy. simpl. rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0. easy. easy.
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * simpl in HQ. rewrite InMergeS in HQ. rewrite HPa in HQ.
+                       rewrite HQ3 in H0. rewrite InMergeFS in H0.
+                       destruct H0 as (H0a,H0b). rewrite H0a in HQ. easy.
+                     * easy.
+                     simpl. 
+                     rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0. easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H9; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H10 H9); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb in HQ. easy.
+                     * easy.
+                     simpl. 
+                     rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0. easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. simpl. rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0.
+                     destruct H0 as (H0a,H0b). rewrite H0a. easy.
+                     easy. rewrite InMergeFS. rewrite HPa.
+                     rewrite HQ3 in H0. rewrite InMergeFS in H0.
+                     destruct H0 as (H0a,H0b). rewrite H0a. easy. easy.
+(* ends here*)
                 apply refinementR3_mon.
          + subst.
            simpl in H. simpl in H0.
@@ -2235,7 +2723,47 @@ Proof. intro b.
               left.
               apply IHb  with (p := p) (l := l) (s := s2) (s' := s'). 
               easy. easy. easy.
-              admit.
+              
+              rewrite H in H8.
+              rewrite bpfend_bn in H8.
+                destruct H8 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H0 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b0 w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H0 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hd in HQ. easy.
+                     * easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
            ++ rewrite eqb_neq in H.
               symmetry in H4.
               assert(isInB (BpnB3 b1 n) s = false).
@@ -2307,7 +2835,81 @@ Proof. intro b.
                      rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
                    }
                    rewrite H13 in H7. easy.
-                   admit.
+
+                rewrite HQ3 in H8 H7.
+                rewrite HPc in H8 H7.
+                rewrite HQc in H8 H7.
+                assert((merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
+                       (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0 )). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))). simpl.
+                  rewrite breOrg3. 
+                  rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
+                }
+                rewrite H12 in H8 H7.
+                assert((merge_bpf_cont (bpf_send s3 s4 s5 b0) (merge_bpf_cont b3 w'0)) =
+                       (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) w'0)).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (merge_bpf_cont b3 w'0))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) w'0)). simpl.
+                  rewrite merge_mergeS. easy.
+                }
+                rewrite <- H13.
+(*action eq*)
+                destruct H8 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy.
+                     easy. simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy. easy.
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H8 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * simpl in HQ.
+                       rewrite Hb in HQ.
+                       apply eqb_neq in Ha. rewrite Ha in HQ. easy. 
+                     * easy.
+                     simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy.
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (bpf_send s3 s4 s5 b0) (merge_bpf_cont b3 w'0)))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H8 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hd in HQ. easy.
+                     * easy.
+                     simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy.
+                     simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy.
+                     easy.
+                     simpl. rewrite Hb.
+                     apply eqb_neq in Ha. rewrite Ha. simpl. easy.
+                     easy.
+(* ends here*)
                 ** destruct HP as (c,(HPa,(HPb,(HPc,HPd)))).
                    specialize(pneqq7 c p s s0 l s'0 s' w'0 w' Hc HPa HPd); intro HQ.
                    destruct HQ as (b3,(HQa,(HQb,HQc))).
@@ -2347,7 +2949,98 @@ Proof. intro b.
                    ).
                    { rewrite breOrg3. easy. }
                    rewrite H12 in H7. easy.
-                   admit.
+
+                rewrite HQ3 in H7 H8.
+                rewrite HQb in H7 H8.
+                assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
+                       (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')])) ).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')])))).
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))). simpl.
+                  rewrite breOrg3. easy.
+                }
+                rewrite H11 in H7 H8.
+
+                assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 w')) =
+                       (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) w')).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 w'))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) w')). simpl.
+                  rewrite merge_mergeS. easy.
+                }
+                rewrite H12.
+
+(*action eq*)
+                destruct H8 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                     easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                     easy.
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H8 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * simpl in HQ.
+                       apply eqb_neq in Ha. rewrite Ha in HQ. simpl in HQ.
+                       rewrite InMergeS in HQ. rewrite HQa in HQ. simpl in HQ.
+                       rewrite HPc in Hb. rewrite InMergeFS in Hb.
+                       destruct Hb as (Hb1,Hb2). rewrite Hb1 in HQ. easy.
+                     * easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                + specialize(classic (coseqIn (p, snd) (act w'))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H7; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) w'))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H8 H7); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hd in HQ. easy.
+                     * easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                     easy.
+                     simpl. 
+                     apply eqb_neq in Ha. rewrite Ha. simpl.
+                     rewrite InMergeFS. rewrite HQa. simpl.
+                     rewrite HPc in Hb. rewrite InMergeFS in Hb. easy.
+                     easy.
+(* ends here*)
+
                    apply refinementR3_mon.
          + subst.
            simpl in H.
@@ -2384,7 +3077,53 @@ Proof. intro b.
            rewrite HQc in H8.
            rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)) in H8. simpl in H8.
            easy.
-           admit.
+
+              rewrite HQc in H8 H9.
+              rewrite(st_eq((merge_bpf_cont (bpf_send p l s' b3) w'0))) in H8 H9. simpl in H8, H9.
+              assert( (p ! [(l, s', merge_bpf_cont b3 w'0)]) =
+                      (merge_bpf_cont bpf_end (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+              { rewrite bpfend_bn. easy. }
+              rewrite H3 in H8 H9.
+                destruct H9 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, snd) (act w))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdSE in Hv.
+                     apply IactdSE in Hy.
+                     apply actdSE in Hu.
+                     apply IactdSE in Hw.
+                     rewrite bpfend_bn in Hv, Hy.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
+                  ++ apply IHb in H8; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont b w))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExL _ _ _ H4 H8); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * simpl in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, snd) (act (merge_bpf_cont b3 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply IHb in H8; try easy.
+                     assert(coseqIn (p, snd) (act (merge_bpf_cont bpf_end (merge_bpf_cont b3 w'0)))).
+                     { apply csInSBRevG. right. easy. }
+                     specialize(actionExR _ _ _ H4 H8); intro HQ.
+                     apply csInSBG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hb in HQ. easy.
+                     * easy.
+                  ++ apply actdSNE in Hv.
+                     apply IactdSNE in Hy.
+                     apply actdSNE in Hu.
+                     apply IactdSNE in Hw.
+                     rewrite bpfend_bn in Hv, Hy.
+                     exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     admit.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
            apply refinementR3_mon.
       - rewrite bpfend_bn.
         rewrite bpfend_bn in H1.
@@ -3007,9 +3746,9 @@ Proof. red. pcofix CIH.
                        rewrite H7 in H6.
                        apply dropBA in H6.
                        assert(coseqIn (p, snd) (act (merge_bpf_cont b1 w'))).
-                       { apply csInRBRevG. right. easy. } 
+                       { apply csInSBRevG. right. easy. } 
                        specialize (actionExL _ _ _ H15 H6); intro Heq.
-                       apply csInRBG in Heq.
+                       apply csInSBG in Heq.
                        destruct Heq as [Heq | Heq].
                        ** rewrite InMergeS in Heq. rewrite HBc in Heq. rewrite HBa in Heq. easy.
                        ** easy.
@@ -3029,9 +3768,9 @@ Proof. red. pcofix CIH.
                         rewrite H13 in H6.
                         apply dropBA in H6.
                        assert(coseqIn (p, snd) (act (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) w2))).
-                       { apply csInRBRevG. right. easy. }
+                       { apply csInSBRevG. right. easy. }
                        specialize (actionExR _ _ _ H14 H6); intro Heq.
-                       apply csInRBG in Heq.
+                       apply csInSBG in Heq.
                        destruct Heq as [Heq | Heq].
                        ** rewrite HPa in Heq. easy.
                        ** easy.
