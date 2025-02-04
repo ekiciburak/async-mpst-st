@@ -1228,6 +1228,38 @@ Proof. intro b.
                 easy.
 Qed.
 
+Lemma coseq_ninRR: forall b a p l s w,
+  coseqIn a (act (merge_apf_cont b w)) ->
+  coseqIn a (act (merge_apf_cont b (p & [(l, s, w)]))).
+Proof. intro b.
+       induction b; intros.
+       - rewrite apfend_an. rewrite apfend_an in H.
+         rewrite(coseq_eq(act (p & [(l, s, w)]))). unfold coseq_id. simpl.
+         case_eq a; intros.
+         + rename s0 into q.
+           destruct d.
+           ++ subst. 
+              case_eq(eqb p q); intros.
+              * rewrite eqb_eq in H0. subst.
+                apply CoInSplit1 with (y := (q, rcv)) (ys := (act w) ). simpl. easy. easy.
+              * rewrite eqb_neq in H0.
+                apply CoInSplit2 with (y := (p, rcv)) (ys := (act w) ). simpl. easy.
+                unfold not. intro Ha. apply H0. inversion Ha. easy.
+                easy.
+           ++ subst. 
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w) ). simpl. easy. easy. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) (p & [(l, s2, w)]))). simpl.
+         rewrite(coseq_eq (act (s & [(s0, s1, merge_apf_cont b (p & [(l, s2, w)]))]))). unfold coseq_id. simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s & [(s0, s1, merge_apf_cont b w)]))) in H. unfold coseq_id in H. simpl in H.
+         inversion H.
+         subst. simpl in H0. inversion H0. subst.
+         apply CoInSplit1 with (y := (s, rcv)) (ys := (act (merge_apf_cont b (p & [(l, s2, w)]))) ). simpl. easy. easy.
+         subst. simpl in H0. inversion H0. subst.
+         apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_apf_cont b (p & [(l, s2, w)]))) ). simpl. easy. easy.
+         apply IHb. easy.
+Qed.
+
 Lemma coseq_inR: forall a p w,
   coseqIn (p, rcv) (act w) ->
   coseqIn (p, rcv) (act (merge_apf_cont a w)).
@@ -1283,6 +1315,26 @@ Proof. intros.
          + subst. simpl in H. inversion H. subst.
            apply IHcoseqIn. easy.
            apply coseqInLC_mon.
+Qed.
+
+Lemma coseqINGA: forall a s l,
+(coseqIn a s -> False) ->
+coseqInLC s l ->
+coseqInLC s (a :: l).
+Proof. pcofix CIH. intros.
+       pinversion H1.
+       subst. pfold. constructor.
+       subst. pfold. constructor. simpl. right. easy.
+       right. apply CIH. 
+       intro Ha.
+       apply H0.
+       case_eq(sdir_eqb a x); intros.
+       + rewrite sdir_eqb_eq in H3. subst.
+         apply CoInSplit1 with (y := x) (ys := xs). simpl. easy. easy.
+       + rewrite sdir_eqb_neq in H3.
+         apply CoInSplit2 with (y := x) (ys := xs). simpl. easy. easy.
+         easy. easy.
+         apply coseqInLC_mon.
 Qed.
 
 Lemma coseqINGC: forall s l,
@@ -1694,7 +1746,15 @@ Lemma IactdSER: forall l1 b p l s w,
   coseqIn (p, snd) (act w) ->
   coseqInR l1 (act (merge_bpf_cont b w)) ->
   coseqInR l1 (act (merge_bpf_cont b (p ! [(l, s, w)]))).
-Admitted.
+Proof. intro l1.
+       induction l1; intros.
+       - constructor.
+       - inversion H1. subst.
+         constructor.
+         apply IHl1 with (p := p) (l := l) (s := s) in H6; try easy.
+         apply coseq_ninSR. easy.
+         apply IHl1; easy.
+Qed.
 
 Lemma actdSNE: forall b l1 p l s w,
   isInB b p = false ->
@@ -1748,7 +1808,33 @@ Lemma actdSNER: forall b l1 p l s w,
   (coseqIn (p, snd) (act w) -> False) ->
   coseqInLC (act (merge_bpf_cont b w)) l1 ->
   coseqInLC (act (merge_bpf_cont b (p ! [(l, s, w)]))) ((p,snd)::l1).
-Admitted.
+Proof. intro b.
+       induction b; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [(l, s2, w)]))). simpl.
+         rewrite(coseq_eq(act (s & [(s0, s1, merge_bpf_cont b (p ! [(l, s2, w)]))]))). unfold coseq_id. simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)) in H1. simpl in H1.
+         rewrite(coseq_eq(act (s & [(s0, s1, merge_bpf_cont b w)]))) in H1. unfold coseq_id in H1. simpl in H1.
+         pinversion H1.
+         subst.
+         pfold. constructor. simpl. right. easy.
+         left.
+         apply IHb. simpl in H. easy. easy. easy.
+         apply coseqInLC_mon.
+       - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, w)]))). simpl.
+         rewrite(coseq_eq(act (s ! [(s0, s1, merge_bpf_cont b (p ! [(l, s2, w)]))]))). unfold coseq_id. simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)) in H1. simpl in H1.
+         rewrite(coseq_eq(act (s ! [(s0, s1, merge_bpf_cont b w)]))) in H1. unfold coseq_id in H1. simpl in H1.
+         pinversion H1.
+         subst.
+         pfold. constructor. simpl. right. easy.
+         left.
+         apply IHb. simpl in H. rewrite orbtf in H. easy. easy. easy.
+         apply coseqInLC_mon.
+       - rewrite bpfend_bn. rewrite bpfend_bn in H1.
+         rewrite(coseq_eq(act (p ! [(l, s, w)])) ). unfold coseq_id. simpl.
+         pfold. constructor. simpl. left. easy.
+         left. apply coseqINGA; easy.
+Qed.
 
 (*yeni*)
 Lemma IactdSNER: forall l1 b p l s w,
@@ -1908,7 +1994,15 @@ Lemma IactdRER: forall l1 a p l s w,
   coseqIn (p, rcv) (act w) ->
   coseqInR l1 (act (merge_apf_cont a w)) ->
   coseqInR l1 (act (merge_apf_cont a (p & [(l, s, w)]))).
-Admitted.
+Proof. intro l1. 
+       induction l1; intros.
+       - constructor.
+       - inversion H1. subst.
+         constructor.
+         apply IHl1 with (p := p) (l := l) (s := s) in H6; try easy.
+         apply coseq_ninRR. easy.
+         apply IHl1; easy.
+Qed.
 
 Lemma actdRNE: forall a l1 p l s w,
   isInA a p = false ->
@@ -1947,7 +2041,23 @@ Lemma actdRNER: forall a l1 p l s w,
   (coseqIn (p, rcv) (act w) -> False) ->
   coseqInLC (act (merge_apf_cont a w)) l1 ->
   coseqInLC (act (merge_apf_cont a (p & [(l, s, w)]))) ((p,rcv)::l1).
-Admitted.
+Proof. intro b.
+       induction b; intros.
+       - rewrite apfend_an. rewrite apfend_an in H1.
+         rewrite(coseq_eq(act (p & [(l, s, w)])) ). unfold coseq_id. simpl.
+         pfold. constructor. simpl. left. easy.
+         left. apply coseqINGA; easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) (p & [(l, s2, w)]))). simpl.
+         rewrite(coseq_eq(act (s & [(s0, s1, merge_apf_cont b (p & [(l, s2, w)]))]))). unfold coseq_id. simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w)) in H1. simpl in H1.
+         rewrite(coseq_eq(act (s & [(s0, s1, merge_apf_cont b w)]))) in H1. unfold coseq_id in H1. simpl in H1.
+         pinversion H1.
+         subst.
+         pfold. constructor. simpl. right. easy.
+         left.
+         apply IHb. simpl in H. rewrite orbtf in H. easy. easy. easy.
+         apply coseqInLC_mon.
+Qed.
 
 Lemma IactdRNE: forall l1 a p l s w,
   isInA a p = false ->
@@ -2256,12 +2366,13 @@ Proof. intro a.
          apply coseqInLC_mon.
 Qed.
 
-Lemma dropAInLCR: forall a l1 p l s w, 
+(* Lemma dropAInLCR: forall a l1 p l s w, 
 In (p, rcv) l1 ->
 coseqInLC (act (merge_apf_cont a w)) l1 ->
 coseqInLC (act (merge_apf_cont a (p & [(l, s, w)]))) l1.
 Admitted.
-
+ *)
+ 
 Lemma dropAInLCL2: forall a l1 p l s w, 
 coseqInLC (act (p & [(l, s, (merge_apf_cont a w))])) l1 ->
 coseqInLC (act (merge_apf_cont a w)) l1.
