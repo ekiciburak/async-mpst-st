@@ -3228,7 +3228,9 @@ Proof. red. pcofix CIH.
              easy. easy.
              
              destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
-             exists l1. exists l2.
+             destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
+             exists l3. exists l2.
+             split. easy. split. easy. split. easy. split. easy.
              admit.
            + rewrite eqb_neq in H8.
              rename p0 into q.
@@ -3246,7 +3248,7 @@ Proof. red. pcofix CIH.
              rewrite <- meqAp3 in H6, H7, H1, H2.
              rewrite HR1 in H6.
 
-             subst.
+             rewrite HR2 in H3.
 
              specialize(InvertAA a' (ApnA3 a0 n0) p l s' w' w'0 Hnin H6); intro HIn.
 
@@ -3296,7 +3298,131 @@ Proof. red. pcofix CIH.
              rewrite <- H14.
              easy. easy. easy. easy.
 
-             admit.
+             rewrite He in H7 H6.
+             assert((merge_apf_cont (Apf_merge a1 (apf_receive p l s'' a2)) w'0) =
+                    (merge_apf_cont a1 (p & [(l, s'', merge_apf_cont a2 w'0)]))).
+             { rewrite reOrd1.
+               rewrite(st_eq (merge_apf_cont (apf_receive p l s'' a2) w'0)). simpl. easy.
+             }
+             rewrite H14 in H7 H6.
+             rewrite HR1 in H7.
+(*action eq*)
+                destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                specialize(classic (coseqIn (p, rcv) (act w'))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (p, rcv) (act (merge_apf_cont a2 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply actdRE in Hv.
+                     apply IactdRE in Hy.
+                     apply actdRE in Hu.
+                     apply IactdRE in Hw.
+                     assert((merge_apf_cont a1 (merge_apf_cont a2 w'0)) = 
+                            (merge_apf_cont (Apf_merge a1 a2) w'0)).
+                     { rewrite merge_merge. easy. }
+                     rewrite <- H7.
+                     exists l1. exists l2.
+                     split; easy.
+                     easy. easy. easy. easy. easy. easy. easy. easy.
+                  ++ apply dropRA in H6; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont a' w'))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExL _ _ _ H7 H6); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hc in HQ. easy.
+                     * easy.
+                + specialize(classic (coseqIn (p, rcv) (act (merge_apf_cont a2 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ apply dropRA in H6; try easy.
+                     assert(coseqIn (p, rcv) (act (merge_apf_cont a1 (merge_apf_cont a2 w'0)))).
+                     { apply csInRARevG. right. easy. }
+                     specialize(actionExR _ _ _ H7 H6); intro HQ.
+                     apply csInRAG in HQ.
+                     destruct HQ as [HQ | HQ].
+                     * rewrite Hnin in HQ. easy.
+                     * easy.
+                  ++ apply actdRNE in Hv.
+                     apply IactdRNE in Hy.
+                     apply actdRNE in Hu.
+                     apply IactdRNE in Hw.
+                     assert((merge_apf_cont a1 (merge_apf_cont a2 w'0)) = 
+                            (merge_apf_cont (Apf_merge a1 a2) w'0)).
+                     { rewrite merge_merge. easy. }
+                     rewrite <- H7.
+                     exists (dropE l1 (p,rcv)). exists (dropE l2 (p,rcv)).
+                     split. easy. split. easy. split. easy. split. easy.
+                     apply invdropE. easy.
+                     easy. easy. easy. easy.
+                     simpl. easy. easy. easy. easy. 
+(* ends here*)
+
+             rewrite He in H7 H6.
+             assert((merge_apf_cont (Apf_merge a1 (apf_receive p l s'' a2)) w'0) =
+                    (merge_apf_cont a1 (p & [(l, s'', merge_apf_cont a2 w'0)]))).
+             { rewrite reOrd1.
+               rewrite(st_eq (merge_apf_cont (apf_receive p l s'' a2) w'0)). simpl. easy.
+             }
+             rewrite H12 in H7 H6.
+             assert((merge_apf_cont a1 (merge_apf_cont a2 (q & [(l0, s'0, w'0)]))) =
+                    (merge_apf_cont (Apf_merge a1 a2) (q & [(l0, s'0, w'0)]))).
+             { rewrite merge_merge. easy. }
+             rewrite H13.
+(*action eq*)
+                apply dropRA in H6; try easy.
+                rewrite HR2 in H1.
+                rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H1. simpl in H1.
+                
+                rewrite HR1 in H7.
+                destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+                destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
+                rewrite HR2 in Hv1, Hy1.
+                rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in Hv1 Hy1.
+                simpl in Hv1, Hy1.
+                apply dropAInLCL2 in Hv1.
+                apply dropAInLCL1 in Hu, Hv.
+
+(* here... case on (p, rcv) w and (q, rcv) ( merge_apf_cont a' w') *)
+(*                 specialize(classic (coseqIn (p, rcv) (act w'))); intro Hcl1.
+                destruct Hcl1 as [Hcl1 | Hcl1].
+                + specialize(classic (coseqIn (q, rcv) (act (merge_apf_cont a2 w'0)))); intro Hcl2.
+                  destruct Hcl2 as [Hcl2 | Hcl2].
+                  ++ specialize(classic (coseqIn (q, rcv) (act w'))); intro Hcl3.
+                     destruct Hcl3 as [Hcl3 | Hcl3].
+                     * exists l3. exists l2.
+                       split. easy. split.
+                       apply IactdRE in Hw; try easy.
+                       apply actdRER.
+                       admit.
+                       admit.
+                       assert((merge_apf_cont a1 (merge_apf_cont a2 w'0)) =
+                              (merge_apf_cont (Apf_merge a1 a2) w'0)).
+                       { rewrite merge_merge. easy. }
+                       rewrite <- H2.
+                       easy.
+                       split. easy.
+                       split.
+                       admit.
+                       split.
+                       intros Hx.
+                       apply Hz1 in Hx.
+                       apply Hz.
+
+                       assert(coseqInR l4 (act (merge_apf_cont a' w'))) by admit.
+                       specialize(listInG _ _ _ Hx H2); intro HP.
+                       specialize(coseqING _ _ _ HP Hu); intro HQ.
+                       easy.
+
+                       intros Hx.
+                       apply Hz in Hx.
+                       apply Hz1.
+
+                       assert(coseqInR l1 (act (merge_apf_cont a' w'))) by admit.
+                       specialize(listInG _ _ _ Hx H2); intro HP.
+                       specialize(coseqING _ _ _ HP Hv1); intro HQ.
+                       easy.
+                     *  *)
+                     
+(*                 here... *)
              admit.
 
              destruct HIn as (a1,(w1,(s'',(Hc,(Hd,(He,Hf)))))).
