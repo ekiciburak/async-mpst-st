@@ -1994,6 +1994,25 @@ Proof. intro l.
            easy.
 Qed.
 
+Lemma in_before_drop: forall l a x, x <> a -> In x l -> In x (dropE l a).
+Proof. intro l.
+       induction l; intros.
+       - simpl in H. easy.
+       - case_eq(sdir_eqb a a0); intros.
+         + apply sdir_eqb_eq in H1. subst.
+           rewrite dl.
+           apply IHl.
+           easy.
+           simpl in H0.
+           destruct H0. subst. easy. easy.
+         + apply sdir_eqb_neq in H1.
+           rewrite dlN.
+           simpl. simpl in H0.
+           destruct H0 as [H0 | H0].
+           ++ left. easy.
+           ++ right. apply IHl; easy. easy.
+Qed.
+
 Lemma nin_before_drop: forall l x a, (In x l -> False) -> In x (dropE l a) -> False.
 Proof. intro l.
        induction l; intros.
@@ -2028,24 +2047,266 @@ Proof. intro l.
          apply ortf in Hb. easy.
 Qed.
 
-(* Lemma invIff: forall {A: Type} (l1 l2: list A) a p,
-  (forall x, In x (a :: l1) <-> In x (p :: l2)) ->
-  (a = p /\ (forall x, In x l1 <-> In x l2)) \/
-  (a <> p /\ In a l2 /\ In p l1).
-Proof. intros A l1.
-       induction l1; intros.
-       - simpl in H.
-         specialize(H a).
-         destruct H. simpl.
-         left. split. symmetry.
-         assert(p = a \/ In a l2).
-         { left. easy.
-          apply H.
-         admit.
-       - simpl. simpl in H.
-         assert((a0 = p \/ In a0 l2 \/ a = p \/ In p l1) <-> (a = p \/ a0 = p \/ In a0 l2 \/ In p l1)) by admit.
-         apply H0.
-         right. apply IHl1. simpl.
-         admit.
-Admitted. *)
+Lemma invdropH1: forall xs ys a x,
+   x <> a ->
+   (In a xs -> In a ys) ->
+   (In a ys -> In a xs) ->
+   In a (dropE xs x) ->
+   In a (dropE ys x).
+Proof. intros.
+       specialize(classic(In a ys)); intro Hin.
+       destruct Hin as [Hin | Hin].
+       - apply H1 in Hin.
+         specialize(H0 Hin).
+         apply in_before_drop; easy.
+       - assert(~ In a xs).
+         { unfold not. intro Ha.
+           apply Hin. apply H0. easy. }
+         apply nin_before_drop with (a := x) in H3. easy.
+         easy.
+Qed.
+
+Lemma dropSame: forall xs a, In a (dropE xs a) -> False.
+Proof. intro xs.
+       induction xs; intros.
+       - simpl in H. easy.
+       - case_eq(sdir_eqb a a0); intros.
+         + apply sdir_eqb_eq in H0. subst.
+           rewrite dl in H.
+           apply IHxs with (a := a0). easy.
+         + apply sdir_eqb_neq in H0.
+           rewrite dlN in H; try easy.
+           simpl in H.
+           destruct H as [H | H].
+           ++ subst. easy.
+           ++ apply IHxs with (a := a0). easy.
+Qed.
+
+Lemma invdropEN: forall xs ys x y,
+  x <> y ->
+  (forall a, In a (x::xs) <-> In a (y::ys)) ->
+  (forall a, In a (dropE (x::xs) x) <-> In a (dropE (y::ys) x)).
+Proof. intros.
+       rewrite dl. rewrite dlN; try easy.
+       specialize(H0 a).
+       simpl in H0.
+       destruct H0 as (Ha, Hb).
+       simpl.
+       split.
+       - intro Hc.
+         specialize(classic (y = a)); intro Heq.
+         destruct Heq as [Heq | Heq].
+         + left. easy.
+         + right.
+           specialize(classic (x = a)); intro Heq2.
+           destruct Heq2 as [Heq2 | Heq2].
+           ++ subst. apply dropSame in Hc. easy.
+           ++ assert(In a xs -> In a ys).
+              { intro Hd.
+                assert(x = a \/ In a xs).
+                { right. easy. }
+                apply Ha in H0.
+                destruct H0. subst. easy. easy.
+              }
+              assert(In a ys -> In a xs).
+              { intro Hd.
+                assert(y = a \/ In a ys).
+                { right. easy. }
+                apply Hb in H1.
+                destruct H1. subst. easy. easy.
+              }
+              clear Ha Hb.
+              rename H0 into Ha.
+              rename H1 into Hb.
+              apply invdropH1 with (xs := xs); easy.
+       - intro Hc.
+         destruct Hc as [Hc | Hc].
+         + subst.
+           assert(x = a \/ In a xs).
+           { apply Hb. left. easy. }
+           destruct H0 as [H0 | H0].
+           ++ subst. easy.
+           ++ apply in_before_drop; easy.
+         + specialize(classic (x = a)); intro Heq.
+           destruct Heq as [Heq | Heq].
+           ++ subst. apply dropSame in Hc. easy.
+           ++ assert(In a xs -> y = a \/ In a ys).
+              { intro Hd. apply Ha. right. easy. }
+              clear Ha.
+              rename H0 into Ha.
+              assert(y = a \/ In a ys -> In a xs).
+              { intro Hd. apply Hb in Hd. 
+                destruct Hd as [Hd | Hd].
+                + subst. easy.
+                + easy.
+              }
+              clear Hb.
+              rename H0 into Hb.
+              specialize(classic (y = a)); intro Heq2.
+              destruct Heq2 as [Heq2 | Heq2].
+              * assert(In a xs).
+                { apply Hb. left. easy. }
+                apply in_before_drop; easy.
+              * assert(In a xs -> In a ys).
+                { intro Hd.
+                  apply Ha in Hd.
+                  destruct Hd as [Hd | Hd].
+                  + subst. easy.
+                  + easy.
+                }
+                clear Ha. rename H0 into Ha.
+                assert(In a ys -> In a xs).
+                { intro Hd. apply Hb. right. easy. }
+                clear Hb. rename H0 into Hb.
+                apply invdropH1 with (xs := ys); easy.
+Qed.
+
+Lemma invdropES: forall xs ys x,
+  (forall a, In a (x::xs) <-> In a (x::ys)) ->
+  (forall a, In a (dropE (x::xs) x) <-> In a (dropE (x::ys) x)).
+Proof. intros.
+       rewrite !dl.
+       specialize(H a).
+       destruct H as (Ha, Hb).
+       simpl in Ha, Hb.
+       specialize(classic (x = a)); intro Heq.
+       destruct Heq as [Heq | Heq].
+       + subst. split. intro Hc.
+         apply dropSame in Hc. easy.
+       + intro Hc.
+         apply dropSame in Hc. easy.
+         assert(In a xs -> In a ys).
+         { intro Hc.
+           assert(x = a \/ In a xs).
+           { right. easy. }
+           apply Ha in H.
+           destruct H. subst. easy. easy.
+         }
+         clear Ha. rename H into Ha.
+         assert(In a ys -> In a xs).
+         { intro Hc.
+           assert(x = a \/ In a ys).
+           { right. easy. }
+           apply Hb in H.
+           destruct H. subst. easy. easy.
+         }
+         clear Hb. rename H into Hb.
+         split. intro Hc.
+         apply invdropH1 with (xs := xs); easy.
+         intro Hc.
+         apply invdropH1 with (xs := ys); easy.
+Qed.
+
+Lemma invdropE: forall xs ys x,
+  (forall a, In a xs <-> In a ys) ->
+  (forall a, In a (dropE xs x) <-> In a (dropE ys x)).
+Proof. intros xs ys x.
+       case_eq xs; case_eq ys; intros.
+       - subst. simpl. easy.
+       - subst. apply nilIff in H1. easy.
+       - subst. symmetry in H1. apply nilIff in H1. easy.
+       - subst. 
+         specialize(classic (p0 = x)); intro Heq.
+         destruct Heq as [Heq | Heq].
+         + subst.
+           specialize(classic (p = x)); intro Heq2.
+           destruct Heq2 as [Heq2 | Heq2].
+           ++ subst. 
+              revert a.
+              apply invdropES. easy.
+           ++ revert a.
+              apply invdropEN. easy. easy.
+         + specialize(classic (p = x)); intro Heq2.
+           destruct Heq2 as [Heq2 | Heq2].
+           ++ subst. 
+              symmetry. symmetry in H1.
+              revert a.
+              apply invdropEN. easy. easy.
+           ++ rewrite !dlN; try easy.
+              simpl.
+              specialize(H1 a).
+              destruct H1 as (Ha, Hb).
+              simpl in Ha, Hb.
+              split.
+              * intro Hc.
+                destruct Hc as [Hc | Hc].
+                ** subst.
+                   assert(p = a \/ In a l).
+                   { apply Ha. left. easy. }
+                   clear Ha. rename H into Ha.
+                   destruct Ha as [Ha | Ha].
+                   *** left. easy.
+                   *** right. apply in_before_drop; easy.
+                ** specialize(classic (p = a)); intro Heq3.
+                   destruct Heq3 as [Heq3 | Heq3].
+                   *** subst.  left. easy.
+                   *** specialize(classic (p0 = a)); intro Heq4.
+                       destruct Heq4 as [Heq4 | Heq4].
+                       +++ subst. 
+                           assert(In a l).
+                           { assert(a = a \/ In a l0).
+                             { left. easy. }
+                             apply Ha in H.
+                             destruct H. subst. easy. easy.
+                           }
+                           right. apply in_before_drop; easy.
+                       +++ assert(In a l0 -> In a l).
+                           { intro Hd.
+                             assert(p0 = a \/ In a l0).
+                             { right. easy. }
+                             apply Ha in H.
+                             destruct H. subst. easy. easy. 
+                            }
+                           assert(In a l -> In a l0).
+                           { intro Hd.
+                             assert(p = a \/ In a l).
+                             { right. easy. }
+                             apply Hb in H0.
+                             destruct H0. subst. easy. easy.
+                           }
+                           specialize(classic (x = a)); intro Heq5.
+                           destruct Heq5 as [Heq5 | Heq5].
+                           -- subst. apply dropSame in Hc. easy.
+                           -- right. apply invdropH1 with (xs := l0); easy.
+              * intro Hc.
+                destruct Hc as [Hc | Hc].
+                ** subst.
+                   assert(p0 = a \/ In a l0).
+                   { apply Hb. left. easy. }
+                   clear Hb. rename H into Hb.
+                   destruct Hb as [Hb | Hb].
+                   *** left. easy.
+                   *** right. apply in_before_drop; easy.
+                ** specialize(classic (p0 = a)); intro Heq3.
+                   destruct Heq3 as [Heq3 | Heq3].
+                   *** subst.  left. easy.
+                   *** specialize(classic (p = a)); intro Heq4.
+                       destruct Heq4 as [Heq4 | Heq4].
+                       +++ subst. 
+                           assert(In a l0).
+                           { assert(a = a \/ In a l).
+                             { left. easy. }
+                             apply Hb in H.
+                             destruct H. subst. easy. easy.
+                           }
+                           right. apply in_before_drop; easy.
+                       +++ assert(In a l0 -> In a l).
+                           { intro Hd.
+                             assert(p0 = a \/ In a l0).
+                             { right. easy. }
+                             apply Ha in H.
+                             destruct H. subst. easy. easy. 
+                            }
+                           assert(In a l -> In a l0).
+                           { intro Hd.
+                             assert(p = a \/ In a l).
+                             { right. easy. }
+                             apply Hb in H0.
+                             destruct H0. subst. easy. easy.
+                           }
+                           specialize(classic (x = a)); intro Heq5.
+                           destruct Heq5 as [Heq5 | Heq5].
+                           -- subst. apply dropSame in Hc. easy.
+                           -- right. apply invdropH1 with (xs := l); easy.
+Qed.
 

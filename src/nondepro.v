@@ -1902,7 +1902,7 @@ Proof. intro a.
                      apply IactdRNE in Hw.
                      exists(dropE l1 (p, rcv)). exists(dropE l2 (p, rcv)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      simpl in H. rewrite orbtf in H. easy.
                      easy. simpl in H. rewrite orbtf in H. easy.
                      easy.
@@ -2032,7 +2032,7 @@ Proof. intro a.
                      apply IactdRNE in Hw.
                      exists (dropE l1 (p,rcv)). exists (dropE l2 (p,rcv)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      simpl in H. rewrite orbtf in H. easy.
                      easy. simpl in H. rewrite orbtf in H. easy. easy.
                      easy. easy. easy. easy.
@@ -2044,7 +2044,7 @@ Proof. intro a.
            simpl in H4.
            easy.
        apply refinementR3_mon.
-Admitted.
+Qed.
 
 Lemma dropBA: forall b b2 p l s s' w w',
   isInB b p = false ->
@@ -2125,7 +2125,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. easy. easy. easy. easy.
 (* ends here*) 
            ++ rewrite eqb_neq in H2.
@@ -2240,7 +2240,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. rewrite InMergeFS. rewrite BisInAF. easy.
                      easy. rewrite InMergeFS. rewrite BisInAF. easy. easy.
 (* ends here*) 
@@ -2364,7 +2364,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. rewrite InMergeFS. rewrite BisInAF. easy.
                      easy. rewrite InMergeFS. rewrite BisInAF. easy. easy.
 (* ends here*)
@@ -2549,7 +2549,7 @@ Proof. intro b.
                      rewrite <- H10.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. simpl. easy. easy. simpl. easy. easy.
 (* ends here*)
               * destruct HQ as (c,(HQ1,(HQ2,(HQ3,HQ4)))).
@@ -2674,7 +2674,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. simpl. rewrite InMergeFS. rewrite HPa.
                      rewrite HQ3 in H0. rewrite InMergeFS in H0.
                      destruct H0 as (H0a,H0b). rewrite H0a. easy.
@@ -2762,7 +2762,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. easy. easy. easy. easy.
            ++ rewrite eqb_neq in H.
               symmetry in H4.
@@ -2901,7 +2901,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy.
                      simpl. rewrite Hb.
                      apply eqb_neq in Ha. rewrite Ha. simpl. easy.
@@ -3027,7 +3027,7 @@ Proof. intro b.
                      apply IactdSNE in Hw.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy.
                      simpl. 
                      apply eqb_neq in Ha. rewrite Ha. simpl.
@@ -3122,7 +3122,7 @@ Proof. intro b.
                      rewrite bpfend_bn in Hv, Hy.
                      exists (dropE l1 (p,snd)). exists (dropE l2 (p,snd)).
                      split. easy. split. easy. split. easy. split. easy.
-                     admit.
+                     apply invdropE. easy.
                      easy. easy. easy. easy. easy. easy. easy. easy.
            apply refinementR3_mon.
       - rewrite bpfend_bn.
@@ -3178,7 +3178,7 @@ Proof. intro b.
              rewrite H12.
              easy.
              apply refinementR3_mon.
-Admitted.
+Qed.
 
 Lemma end_send_false: forall b p l s w,
   end = merge_bpf_cont b (p ! [(l, s, w)]) -> False.
@@ -3226,6 +3226,9 @@ Proof. red. pcofix CIH.
              right.
              apply CIH with (y := w').
              easy. easy.
+             
+             destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+             exists l1. exists l2.
              admit.
            + rewrite eqb_neq in H8.
              rename p0 into q.
