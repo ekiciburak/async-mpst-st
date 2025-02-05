@@ -1318,23 +1318,60 @@ Proof. intros.
 Qed.
 
 Lemma coseqINGA: forall a s l,
-(coseqIn a s -> False) ->
 coseqInLC s l ->
 coseqInLC s (a :: l).
 Proof. pcofix CIH. intros.
-       pinversion H1.
+       pinversion H0.
        subst. pfold. constructor.
        subst. pfold. constructor. simpl. right. easy.
        right. apply CIH. 
-       intro Ha.
-       apply H0.
-       case_eq(sdir_eqb a x); intros.
-       + rewrite sdir_eqb_eq in H3. subst.
-         apply CoInSplit1 with (y := x) (ys := xs). simpl. easy. easy.
-       + rewrite sdir_eqb_neq in H3.
-         apply CoInSplit2 with (y := x) (ys := xs). simpl. easy. easy.
-         easy. easy.
-         apply coseqInLC_mon.
+       easy.
+       apply coseqInLC_mon.
+Qed.
+
+Lemma coseqINGAR: forall a s l,
+coseqInLC s (a :: l) ->
+~ coseqIn a s ->
+coseqInLC s l.
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       subst. pfold. constructor.
+       subst.
+       simpl in H.
+       destruct H as [H | H].
+       - subst.
+         contradict H1.
+         apply CoInSplit1 with (y := x) (ys := xs). easy. easy.
+       - pfold. constructor. easy.
+         right. apply CIH with (a := a). easy.
+         unfold not. intro Ha.
+         apply H1.
+         case_eq(sdir_eqb a x); intros.
+         + rewrite sdir_eqb_eq in H3. subst.
+           apply CoInSplit1 with (y := x) (ys := xs). easy. easy.
+         + rewrite sdir_eqb_neq in H3.
+           apply CoInSplit2 with (y := x) (ys := xs). easy. easy.
+           easy.
+       apply coseqInLC_mon.
+Qed.
+
+Lemma coseqNINGA: forall l s a,
+coseqInR l s ->
+~ coseqIn a s ->
+~ In a l.
+Proof. intro l.
+       induction l; intros.
+       - easy.
+       - simpl. unfold not.
+         intro Ha.
+         destruct Ha as [Ha | Ha].
+         + subst.
+           apply H0.
+           inversion H. subst. easy.
+         + apply H0.
+           inversion H.
+           subst.
+           specialize(IHl _ _ H5 H0). easy. 
 Qed.
 
 Lemma coseqINGC: forall s l,
@@ -2751,5 +2788,67 @@ Proof. intros xs ys x.
                            destruct Heq5 as [Heq5 | Heq5].
                            -- subst. apply dropSame in Hc. easy.
                            -- right. apply invdropH1 with (xs := l); easy.
+Qed.
+
+Lemma notInCoseq: forall a s l,
+  coseqInLC s l ->
+  ~ coseqIn a s ->
+  coseqInLC s (dropE l a).
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       subst. pfold. constructor.
+       subst. pfold.
+       constructor.
+       case_eq(sdir_eqb a x); intros.
+       - rewrite sdir_eqb_eq in H3. subst.
+         contradict H1.
+         apply CoInSplit1 with (y := x) (ys := xs). easy. easy.
+       - rewrite sdir_eqb_neq in H3. subst.
+         apply in_before_drop; easy.
+         right. apply CIH. easy.
+         unfold not. intro Ha.
+         apply H1.
+         case_eq(sdir_eqb a x); intros.
+         + rewrite sdir_eqb_eq in H3. subst.
+           apply CoInSplit1 with (y := x) (ys := xs). easy. easy.
+         + rewrite sdir_eqb_neq in H3. subst.
+           apply CoInSplit2 with (y := x) (ys := xs). easy. easy.
+           easy.
+       apply coseqInLC_mon.
+Qed.
+
+Lemma notInList: forall l a s,
+~ coseqIn a s ->
+coseqInR l s ->
+coseqInR (dropE l a) s.
+Proof. intro l.
+       induction l; intros.
+       - simpl. constructor.
+       - inversion H0. subst.
+         case_eq(sdir_eqb a a0); intros.
+         + rewrite sdir_eqb_eq in H1.
+           subst.
+           rewrite dl.
+           apply IHl; easy.
+         + rewrite sdir_eqb_neq in H1.
+           rewrite dlN.
+           constructor. easy.
+           apply IHl; easy.
+           easy.
+Qed.
+
+Lemma dropEq: forall l a,
+~ In a l ->
+  l = dropE l a.
+Proof. intro l.
+       induction l; intros.
+       - simpl. easy.
+       - simpl in H.
+         apply not_or_and in H.
+         destruct H as (Ha, Hb).
+         rewrite dlN.
+         apply IHl in Hb.
+         rewrite <- Hb. easy.
+         easy.
 Qed.
 
