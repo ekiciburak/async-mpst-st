@@ -5686,7 +5686,22 @@ Proof. red. pcofix CIH.
                apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
                easy.
                rewrite H8. rewrite bpfend_bn. easy.
-               admit.
+               
+               
+               rewrite <- meqBp3 in H2.
+               rewrite H8 in H2.
+               rewrite bpfend_bn in H2.
+               destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+               destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
+               exists l3. exists l2.
+               split. easy. split. easy. split. easy. split. easy.
+               intro x. split.
+               * intro Hx. apply Hz. apply Hz1 in Hx.
+                 specialize(listInG _ _ _ Hx Hy1); intro HP.
+                 specialize(coseqING _ _ _ HP Hu); intro HQ. easy.
+               * intro Hx. apply Hz1. apply Hz in Hx.
+                 specialize(listInG _ _ _ Hx Hw); intro HP.
+                 specialize(coseqING _ _ _ HP Hv1); intro HQ. easy.
              + rewrite eqb_neq in H8.
                assert(p <> p0) by easy.
                assert(isInB (BpnB3 b n) p = false).
