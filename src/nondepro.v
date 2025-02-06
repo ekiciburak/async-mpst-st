@@ -3955,7 +3955,157 @@ Proof. red. pcofix CIH.
              left.
              rewrite merge_merge.
              easy.
-             admit. 
+             
+             
+             rewrite Hf in H7.
+             rewrite HR1 in H7.
+             rewrite HR2 in H2.
+             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 (p & [(l, s'', w1)])) =
+                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) (p & [(l, s'', w1)]))).
+             { rewrite merge_merge. easy. }
+             rewrite H15 in H7.
+             rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H2. simpl in H2.
+             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 w1) =
+                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1)).
+             { rewrite merge_merge. easy. }
+             rewrite H16.
+             destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+             destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
+             assert(In (p,rcv) l1) as HIN1.
+             { apply coseqInA with (p := p) in Hu. easy.
+               rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id. simpl.
+               apply CoInSplit1 with (y := (p,rcv)) (ys := (act w')). easy. easy.
+             }
+             assert(In (p,rcv) l2) as HIN2.
+             { apply coseqInA with (p := p) in Hv. easy.
+               rewrite(coseq_eq(act (p & [(l, s'', w1)]))). unfold coseq_id. simpl.
+               apply CoInSplit1 with (y := (p,rcv)) (ys := (act w1)). easy. easy.
+             }
+             assert((q & [(l0, s0, merge_apf_cont a' w')]) =
+                    (merge_apf_cont apf_end (q & [(l0, s0, merge_apf_cont a' w')]))).
+             { rewrite apfend_an. easy. }
+             rewrite H2 in Hv1.
+             assert(In (q,rcv) l4) as HIN3.
+             { apply coseqInA with (p := q) in Hv1. easy.
+               rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))). unfold coseq_id. simpl.
+               apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_apf_cont a' w'))). easy. easy.
+             }
+             specialize(classic (coseqIn (p, rcv) (act w1))); intro Hcl1.
+             destruct Hcl1 as [Hcl1 | Hcl1].
+             + specialize(classic (coseqIn (q, rcv) (act (merge_apf_cont a' w')))); intro Hcl2.
+               destruct Hcl2 as [Hcl2 | Hcl2].
+               ++ apply actdRE in Hu; try easy.
+                  apply actdRE in Hv; try easy.
+                  apply IactdRE in Hw; try easy.
+                  apply IactdRE in Hy; try easy.
+                  rewrite H2 in Hy1.
+                  apply IactdRE in Hy1; try easy.
+                  rewrite apfend_an in Hy1.
+                  exists l1. exists l2.
+                  split. easy. split. easy. split. easy. split. easy. easy.
+                  rewrite InMergeF. easy. 
+                  assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1))).
+                  { apply csInRARevG. right. easy. }
+                  specialize(actionExR _ _ _ H7 H6); intro Hact.
+                  apply csInRAG in Hact.
+                  destruct Hact as [Hact | Hact].
+                  * rewrite Hnin in Hact. easy.
+                  * easy.
+                  rewrite InMergeF. easy.
+                  assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1))).
+                  { apply csInRARevG. right. easy. }
+                  specialize(actionExR _ _ _ H7 H6); intro Hact.
+                  apply csInRAG in Hact.
+                  destruct Hact as [Hact | Hact].
+                  * rewrite Hnin in Hact. easy.
+                  * easy.
+              ++ apply actdRE in Hu; try easy.
+                 apply actdRE in Hv; try easy.
+                 apply IactdRE in Hw; try easy.
+                 apply IactdRE in Hy; try easy.
+                 rewrite H2 in Hy1.
+                 apply IactdRNE in Hy1; try easy.
+                 rewrite apfend_an in Hy1.
+                 exists l1. exists l2.
+                 split. easy. split. easy. split. easy. split. easy. easy.
+                 rewrite InMergeF. easy. 
+                  assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1))).
+                  { apply csInRARevG. right. easy. }
+                  specialize(actionExR _ _ _ H7 H6); intro Hact.
+                  apply csInRAG in Hact.
+                  destruct Hact as [Hact | Hact].
+                  * rewrite Hnin in Hact. easy.
+                  * easy.
+                  rewrite InMergeF. easy.
+                  assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1))).
+                  { apply csInRARevG. right. easy. }
+                  specialize(actionExR _ _ _ H7 H6); intro Hact.
+                  apply csInRAG in Hact.
+                  destruct Hact as [Hact | Hact].
+                  * rewrite Hnin in Hact. easy.
+                  * easy.
+             + specialize(classic (coseqIn (q, rcv) (act (merge_apf_cont a' w')))); intro Hcl2.
+               destruct Hcl2 as [Hcl2 | Hcl2].
+              ++ apply actdRNE in Hu; try easy.
+                 apply actdRNE in Hv; try easy.
+                 apply IactdRNE in Hw; try easy.
+                 apply IactdRNE in Hy; try easy.
+                 rewrite H2 in Hy1.
+                 apply IactdRE in Hy1; try easy.
+                 rewrite apfend_an in Hy1.
+                 exists (dropE l1 (p, rcv)). exists (dropE l2 (p, rcv)).
+                 split. easy. split. easy. split. easy. split. easy.
+                 apply invdropE. easy.
+                 rewrite InMergeF. easy.
+                 assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1)) -> False).
+                 { intro HH. apply Hcl1. apply csInRAG in HH.
+                   destruct HH as [HH | HH].
+                   + rewrite InMerge in HH. rewrite Hc He in HH. easy.
+                   + easy.
+                 }
+                 specialize(actionExRN _ _ _ H7 H6); intro Hact.
+                 intro HH. apply Hact.
+                 apply csInRARevG. right. easy.
+                 rewrite InMergeF. easy.
+                 assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1)) -> False).
+                 { intro HH. apply Hcl1. apply csInRAG in HH.
+                   destruct HH as [HH | HH].
+                   + rewrite InMerge in HH. rewrite Hc He in HH. easy.
+                   + easy.
+                 }
+                 specialize(actionExRN _ _ _ H7 H6); intro Hact.
+                 intro HH. apply Hact.
+                 apply csInRARevG. right. easy.
+              ++ apply actdRNE in Hu; try easy.
+                 apply actdRNE in Hv; try easy.
+                 apply IactdRNE in Hw; try easy.
+                 apply IactdRNE in Hy; try easy.
+                 rewrite H2 in Hy1.
+                 apply IactdRNE in Hy1; try easy.
+                 rewrite apfend_an in Hy1.
+                 exists (dropE l1 (p, rcv)). exists (dropE l2 (p, rcv)).
+                 split. easy. split. easy. split. easy. split. easy.
+                 apply invdropE. easy.
+                 rewrite InMergeF. easy.
+                                  assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1)) -> False).
+                 { intro HH. apply Hcl1. apply csInRAG in HH.
+                   destruct HH as [HH | HH].
+                   + rewrite InMerge in HH. rewrite Hc He in HH. easy.
+                   + easy.
+                 }
+                 specialize(actionExRN _ _ _ H7 H6); intro Hact.
+                 intro HH. apply Hact.
+                 apply csInRARevG. right. easy.
+                 rewrite InMergeF. easy.
+                 assert(coseqIn (p, rcv) (act (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) w1)) -> False).
+                 { intro HH. apply Hcl1. apply csInRAG in HH.
+                   destruct HH as [HH | HH].
+                   + rewrite InMerge in HH. rewrite Hc He in HH. easy.
+                   + easy.
+                 }
+                 specialize(actionExRN _ _ _ H7 H6); intro Hact.
+                 intro HH. apply Hact.
+                 apply csInRARevG. right. easy.
              easy.
              apply InMergeF. split. easy. easy.
              easy.
