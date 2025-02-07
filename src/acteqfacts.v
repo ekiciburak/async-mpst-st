@@ -2852,3 +2852,124 @@ Proof. intro l.
          easy.
 Qed.
 
+
+(* equivalence of refinement and refinement3 *)
+
+Fixpoint Ap2Apf (p: participant) (a: Ap p): Apf :=
+  match a with
+    | ap_receive q H l s => apf_receive q l s apf_end
+    | ap_merge q H l s c => apf_receive q l s (Ap2Apf p c)
+    | ap_end             => apf_end
+  end.
+
+Lemma mgAp2Apf: forall p a w, merge_ap_cont p a w = merge_apf_cont (Ap2Apf p a) w.
+Proof. intros p a.
+       induction a; intros.
+       - simpl.
+         rewrite(st_eq(merge_ap_cont p (ap_receive q n s s0) w)). simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive q s s0 apf_end) w)). simpl.
+         rewrite apfend_an. easy.
+       - simpl.
+         rewrite(st_eq(merge_ap_cont p (ap_merge q n s s0 a) w)). simpl.
+         rewrite(st_eq( merge_apf_cont (apf_receive q s s0 (Ap2Apf p a)) w)). simpl.
+         rewrite IHa. easy.
+       - simpl. rewrite apend_an. rewrite apfend_an.
+         easy.
+Qed.
+
+Lemma Apf2Ap (a: Apf) (p: participant): isInA a p = false -> Ap p.
+Proof. revert p.
+       induction a; intros.
+       - exact ap_end.
+       - simpl in H. apply orbtf in H.
+         destruct H as (Ha, Hb).
+         apply eqb_neq in Ha.
+         exact (ap_merge s Ha s0 s1 (IHa p Hb)). 
+Defined.
+
+Lemma mgApf2Ap: forall p a w (H: isInA a p = false), merge_ap_cont p (Apf2Ap a p H) w = merge_apf_cont a w.
+Proof. intros p a.
+       induction a; intros.
+       - simpl. rewrite apfend_an. rewrite apend_an. easy.
+       - simpl. simpl in H.
+         destruct(orbtf (p =? s)%string (isInA a p)). 
+         destruct(a0 H).
+         destruct(eqb_neq p s). simpl.
+         rewrite orbtf in H.
+         rewrite(st_eq(merge_ap_cont p (ap_merge s (n e0) s0 s1 (Apf2Ap a p e1)) w)). simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)). simpl.
+         rewrite IHa. easy.
+Qed.
+
+Lemma refEquiv: forall w w', refinement3 w w' -> refinement w w'.
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       - rewrite <- meqAp3.
+         rewrite <- meqAp3 in H2.
+         assert(isInA (ApnA3 a n) p = false).
+         { case_eq n; intros.
+           - easy.
+           - rewrite <- InN; easy.
+         }
+         specialize(mgApf2Ap p (ApnA3 a n) (p & [(l, s', w'0)]) H6); intro HP.
+         rewrite <- HP.
+         specialize(ref_a (upaco2 refinementR r) w0 w'0 p l s s' (Apf2Ap (ApnA3 a n) p H6) 1); intro Href.
+         simpl in Href.
+         pfold. apply Href.
+         easy.
+         right. 
+         apply CIH.
+         rewrite mgApf2Ap. easy.
+         rewrite <- meqAp3 in H3.
+         rewrite mgApf2Ap. easy.
+       - admit.
+       - pfold. constructor.
+         apply refinementR3_mon.
+Admitted.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
