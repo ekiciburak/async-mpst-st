@@ -2862,8 +2862,6 @@ Fixpoint Ap2Apf (p: participant) (a: Ap p): Apf :=
     | ap_end             => apf_end
   end.
 
-Print Bp.
-
 Fixpoint Bp2Bpf (p: participant) (b: Bp p): Bpf :=
   match b with
     | bp_receivea q l s  => bpf_receive q l s bpf_end

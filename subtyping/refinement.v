@@ -70,8 +70,8 @@ Proof. unfold monotone2.
        - constructor.
 Qed.
 
-#[export]
-Declare Instance Ref_Trans: Transitive (refinement).
+(* #[export]
+Declare Instance Ref_Trans: Transitive (refinement). *)
 
 Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
   | ref3_a  : forall w w' p l s s' a n, subsort s' s ->
