@@ -2862,6 +2862,17 @@ Fixpoint Ap2Apf (p: participant) (a: Ap p): Apf :=
     | ap_end             => apf_end
   end.
 
+Print Bp.
+
+Fixpoint Bp2Bpf (p: participant) (b: Bp p): Bpf :=
+  match b with
+    | bp_receivea q l s  => bpf_receive q l s bpf_end
+    | bp_send q H l s    => bpf_send q l s bpf_end
+    | bp_mergea q l s c  => bpf_receive q l s (Bp2Bpf p c)
+    | bp_merge q H l s c => bpf_send q l s (Bp2Bpf p c)
+    | bp_end             => bpf_end
+  end.
+
 Lemma mgAp2Apf: forall p a w, merge_ap_cont p a w = merge_apf_cont (Ap2Apf p a) w.
 Proof. intros p a.
        induction a; intros.
@@ -2877,6 +2888,28 @@ Proof. intros p a.
          easy.
 Qed.
 
+Lemma mgBp2Bpf: forall p b w, merge_bp_cont p b w = merge_bpf_cont (Bp2Bpf p b) w.
+Proof. intros p b.
+       induction b; intros.
+       - simpl.
+         rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 bpf_end) w)). simpl.
+         rewrite bpfend_bn. easy.
+       - simpl.
+         rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send q s s0 bpf_end) w)). simpl.
+         rewrite bpfend_bn. easy.
+       - simpl.
+         rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 b) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bp2Bpf p b)) w)). simpl.
+         rewrite IHb. easy.
+       - simpl.
+         rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send q s s0 (Bp2Bpf p b)) w)). simpl.
+         rewrite IHb. easy.
+       - simpl. rewrite bpfend_bn.  rewrite bpend_an. easy.
+Qed.
+
 Lemma Apf2Ap (a: Apf) (p: participant): isInA a p = false -> Ap p.
 Proof. revert p.
        induction a; intros.
@@ -2885,6 +2918,19 @@ Proof. revert p.
          destruct H as (Ha, Hb).
          apply eqb_neq in Ha.
          exact (ap_merge s Ha s0 s1 (IHa p Hb)). 
+Defined.
+
+Lemma Bpf2Bp (b: Bpf) (p: participant): isInB b p = false -> Bp p.
+Proof. revert p.
+       induction b; intros.
+       - simpl in H.
+         exact (bp_mergea s s0 s1 (IHb p H)).
+       - simpl in H.
+         apply orbtf in H.
+         destruct H as (Ha, Hb).
+         apply eqb_neq in Ha.
+         exact (bp_merge s Ha s0 s1 (IHb p Hb)). 
+       - exact bp_end.
 Defined.
 
 Lemma mgApf2Ap: forall p a w (H: isInA a p = false), merge_ap_cont p (Apf2Ap a p H) w = merge_apf_cont a w.
@@ -2901,7 +2947,26 @@ Proof. intros p a.
          rewrite IHa. easy.
 Qed.
 
-Lemma refEquiv: forall w w', refinement3 w w' -> refinement w w'.
+Lemma mgBpf2Bp: forall p b w (H: isInB b p = false), merge_bp_cont p (Bpf2Bp b p H) w = merge_bpf_cont b w.
+Proof. intros p b.
+       induction b; intros.
+       - simpl. simpl in H.
+         rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 (Bpf2Bp b p H)) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)). simpl.
+         rewrite IHb. easy.
+       - simpl. simpl in H.
+         destruct(orbtf (p =? s)%string (isInB b p)). 
+         destruct(a H).
+         destruct(eqb_neq p s). simpl.
+         rewrite orbtf in H.
+         rewrite(st_eq(merge_bp_cont p (bp_merge s (n e0) s0 s1 (Bpf2Bp b p e1)) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
+         rewrite IHb. easy.
+       - simpl. rewrite bpfend_an. rewrite bpend_an. easy.
+Qed.
+
+
+Lemma refEquivL: forall w w', refinement3 w w' -> refinement w w'.
 Proof. pcofix CIH. intros.
        pinversion H0.
        - rewrite <- meqAp3.
@@ -2922,54 +2987,76 @@ Proof. pcofix CIH. intros.
          rewrite mgApf2Ap. easy.
          rewrite <- meqAp3 in H3.
          rewrite mgApf2Ap. easy.
-       - admit.
+       - rewrite <- meqBp3.
+         rewrite <- meqBp3 in H2.
+         assert(isInB (BpnB3 b n) p = false).
+         { case_eq n; intros.
+           - easy.
+           - rewrite <- InNS; easy.
+         }
+         specialize(mgBpf2Bp p (BpnB3 b n) (p ! [(l, s', w'0)]) H6); intro HP.
+         rewrite <- HP.
+         specialize(ref_b (upaco2 refinementR r) w0 w'0 p l s s' (Bpf2Bp (BpnB3 b n) p H6) 1); intro Href.
+         simpl in Href.
+         pfold. apply Href.
+         easy.
+         right. 
+         apply CIH.
+         rewrite mgBpf2Bp. easy.
+         rewrite <- meqBp3 in H3.
+         rewrite mgBpf2Bp. easy.
        - pfold. constructor.
          apply refinementR3_mon.
-Admitted.
+Qed.
 
+Lemma notInA: forall p a, isInA (Ap2Apf p a) p = false.
+Proof. intros p a.
+       induction a; intros.
+       - simpl. apply eqb_neq in n. rewrite n. easy.
+       - simpl. apply eqb_neq in n. rewrite n IHa. easy.
+       - simpl. easy.
+Qed.
 
+Lemma notInB: forall p b, isInB (Bp2Bpf p b) p = false.
+Proof. intros p b.
+       induction b; intros.
+       - simpl. easy.
+       - simpl. apply eqb_neq in n. rewrite n. easy.
+       - simpl. easy.
+       - simpl. apply eqb_neq in n. rewrite n IHb. easy.
+       - simpl. easy.
+Qed.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Lemma refEquivR: forall w w', refinement w w' -> refinement3 w w'.
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       - rewrite <- meqAp2.
+         rewrite <- meqAp2 in H2.
+         rewrite mgAp2Apf.
+         specialize(ref3_a (upaco2 refinementR3 r) w0 w'0 p l s s' (Ap2Apf p (ApnA p a n)) 1); intro Href.
+         simpl in Href.
+         pfold.
+         apply Href.
+         easy. apply notInA.
+         right.
+         apply CIH.
+         rewrite <- meqAp2 in H1.
+         rewrite mgAp2Apf in H1. easy.
+         rewrite mgAp2Apf in H2. easy.
+       - rewrite <- meqBp.
+         rewrite <- meqBp in H2.
+         rewrite mgBp2Bpf.
+         specialize(ref3_b (upaco2 refinementR3 r) w0 w'0 p l s s' (Bp2Bpf p (BpnA p b n)) 1); intro Href.
+         simpl in Href.
+         pfold.
+         apply Href.
+         easy. apply notInB.
+         right.
+         apply CIH.
+         rewrite <- meqBp in H1.
+         rewrite mgBp2Bpf in H1. easy.
+         rewrite mgBp2Bpf in H2. easy.
+       - pfold. constructor.
+         apply refinementR_mon.
+Qed.
 

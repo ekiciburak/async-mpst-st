@@ -5936,3 +5936,12 @@ Proof. red. pcofix CIH.
              apply refinementR3_mon.
              apply refinementR3_mon.
 Admitted.
+
+Theorem refTransR: Transitive refinement.
+Proof. red. intros.
+       apply refEquivR in H, H0.
+       apply refEquivL.
+       specialize(refTrans); intro Ha.
+       red in Ha. 
+       apply Ha with (y := y); easy. 
+Qed.
