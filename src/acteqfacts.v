@@ -2837,6 +2837,57 @@ Proof. intro l.
            easy.
 Qed.
 
+Lemma InList: forall l a s,
+coseqIn a s ->
+coseqInR l s ->
+coseqInR (a :: l) s.
+Proof. intro l.
+       induction l; intros.
+       - simpl. constructor. easy. easy.
+       - inversion H0. subst.
+         constructor. easy.
+         easy.
+Qed.
+
+
+Lemma coseqRecvIn: forall l p l1 s w,
+coseqInR l (act w) ->
+coseqInR l (act (p & [(l1,s,w)])).
+Proof. intro l. 
+       induction l; intros.
+       - constructor.
+       - inversion H.
+         subst. constructor.
+         rewrite(coseq_eq(act (p & [(l1, s, w)]))). unfold coseq_id. simpl.
+         case_eq (sdir_eqb a (p, rcv)); intros.
+         + rewrite sdir_eqb_eq in H0.
+           subst.
+           apply CoInSplit1 with (y := (p,rcv)) (ys := act w). easy. easy.
+         + rewrite sdir_eqb_neq in H0.
+           apply CoInSplit2 with (y := (p,rcv)) (ys := act w). easy. easy. easy.
+         apply IHl.
+         easy.
+Qed.
+
+Lemma coseqSendIn: forall l p l1 s w,
+coseqInR l (act w) ->
+coseqInR l (act (p ! [(l1,s,w)])).
+Proof. intro l. 
+       induction l; intros.
+       - constructor.
+       - inversion H.
+         subst. constructor.
+         rewrite(coseq_eq(act (p ! [(l1, s, w)]))). unfold coseq_id. simpl.
+         case_eq (sdir_eqb a (p, snd)); intros.
+         + rewrite sdir_eqb_eq in H0.
+           subst.
+           apply CoInSplit1 with (y := (p,snd)) (ys := act w). easy. easy.
+         + rewrite sdir_eqb_neq in H0.
+           apply CoInSplit2 with (y := (p,snd)) (ys := act w). easy. easy. easy.
+         apply IHl.
+         easy.
+Qed.
+
 Lemma dropEq: forall l a,
 ~ In a l ->
   l = dropE l a.
