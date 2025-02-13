@@ -1403,8 +1403,11 @@ Proof. unfold subtype.
        left. pfold.
        apply st2siso_snd. simpl.
        right. exact CIH. easy.
-       split. exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
+       split. exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite dpEnd.
+       rewrite !dpfend_dn.
+       
 
        rewrite(st_eq Tctl').
        rewrite(st_eq Tctl). simpl.

@@ -3646,6 +3646,26 @@ Proof. intros n.
        apply IHn. easy.
 Defined.
 
+Lemma extdpf: forall {d} w, singleton w -> singleton (merge_dpf_cont d w).
+Proof. induction d; intros.
+       rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 d) w)).
+       simpl. apply extr. apply IHd; easy.
+       
+       rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 d) w)).
+       simpl. apply exts. apply IHd; easy.
+ 
+       rewrite(st_eq(merge_dpf_cont dpf_end w)). simpl.
+       destruct w; easy.
+Defined.
+
+Lemma extdpfn: forall {n d} w, singleton w -> singleton (merge_dpf_contn d w n).
+Proof. intros n.
+       induction n; intros.
+       simpl. easy.
+       simpl.
+       apply extdpf.
+       apply IHn. easy.
+Defined.
 
 Lemma dpend_an: forall w, merge_dp_cont (dp_end) w = w.
 Proof. intros.
@@ -3703,6 +3723,103 @@ Proof. intro n.
        easy.
 Qed.
 
+Lemma dpfend_dn: forall w, merge_dpf_cont (dpf_end) w = w.
+Proof. intros.
+       rewrite(st_eq(merge_dpf_cont dpf_end w)). simpl.
+       destruct w; easy.
+Qed.
+
+Lemma eqdpsL: forall d w, merge_dp_cont d w = merge_dpf_cont (dp2dpf d) w.
+Proof. intro d.
+       induction d; intros.
+       - simpl.
+         rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w)).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 dpf_end) w)). simpl. 
+         rewrite dpfend_dn. easy.
+       - simpl.
+         rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w)).
+         rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 dpf_end) w)). simpl. 
+         rewrite dpfend_dn. easy.
+       - simpl.
+         rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w )).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 (dp2dpf d)) w)). simpl.
+         rewrite IHd. easy.
+       - simpl.
+         rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w )).
+         rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 (dp2dpf d)) w)). simpl.
+         rewrite IHd. easy.
+       - simpl. rewrite dpfend_dn dpend_an. easy.
+Qed.
+
+Lemma eqdpsR: forall d w, merge_dpf_cont d w = merge_dp_cont (dpf2dp d) w.
+Proof. intro d.
+       induction d; intros.
+       - rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 d) w )). simpl.
+         rewrite IHd.
+         destruct d.
+         + rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 (dpf2dp (dpf_receive s2 s3 s4 d))) w)). simpl.
+           easy.
+         + rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 (dpf2dp (dpf_send s2 s3 s4 d))) w)). simpl.
+           easy.
+         + simpl. rewrite dpend_an.
+           rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w)). simpl. easy.
+       - rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 d) w )). simpl.
+         rewrite IHd.
+         destruct d.
+         + rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 (dpf2dp (dpf_receive s2 s3 s4 d))) w)). simpl.
+           easy.
+         + rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 (dpf2dp (dpf_send s2 s3 s4 d))) w)). simpl.
+           easy.
+         + simpl. rewrite dpend_an.
+           rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w)). simpl. easy.
+       - simpl. rewrite dpfend_dn dpend_an. easy. 
+Qed.
+
+Lemma Dmergel: forall a, Dpf_merge a dpf_end = a.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite IHa. easy.
+       - simpl. rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+
+Lemma DpnD3C: forall n a, DpnD3 a n.+1 =  Dpf_merge a (DpnD3 a n).
+Proof. intros.
+       simpl.
+       case_eq n; intros.
+       - simpl. rewrite Dmergel. easy.
+       - easy.
+Qed.
+
+Lemma dpEnd: forall k, DpnD3 dpf_end k = dpf_end.
+Proof. intro k.
+       induction k; intros.
+       - simpl. easy.
+       - rewrite DpnD3C. rewrite IHk. simpl. easy. 
+Qed.
+
+Lemma merge_mergeD: forall d1 d2 w,
+  merge_dpf_cont (Dpf_merge d1 d2) w = merge_dpf_cont d1 (merge_dpf_cont d2 w).
+Proof. intro d1.
+       induction d1; intros.
+       - simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 (Dpf_merge d1 d2)) w )).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive s s0 s1 d1) (merge_dpf_cont d2 w))). simpl.
+         rewrite IHd1. easy.
+       - simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 (Dpf_merge d1 d2)) w )).
+         rewrite(st_eq(merge_dpf_cont (dpf_send s s0 s1 d1) (merge_dpf_cont d2 w))). simpl.
+         rewrite IHd1. easy.
+       - simpl. rewrite dpfend_dn. easy.
+Qed.
+
+Lemma meqDpf: forall n d w,
+  merge_dpf_cont (DpnD3 d n) w = merge_dpf_contn d w n.
+Proof. intro n.
+       induction n; intros.
+       - simpl. rewrite dpfend_dn. easy.
+       - rewrite DpnD3C. simpl. rewrite merge_mergeD IHn. easy.
+Qed.
 
 Lemma ApApeqInvAnd: forall p a1 l1 l2 s1 s2 w1 w2,
   merge_ap_cont p a1 (p & [(l1, s1, w1)]) =

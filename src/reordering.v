@@ -634,6 +634,11 @@ Inductive Dp: Type :=
   | dp_merge  : participant -> label -> local.sort -> Dp -> Dp
   | dp_end    : Dp.
 
+Inductive Dpf: Type :=
+  | dpf_receive: participant -> label -> local.sort -> Dpf -> Dpf
+  | dpf_send   : participant -> label -> local.sort -> Dpf -> Dpf
+  | dpf_end    : Dpf.
+
 (* Arguments dp_merge {_}  _ _ _.
 Arguments dp_mergea {_} _ _ _. *)
 (* Arguments dp_receive _ _ _.
@@ -653,6 +658,59 @@ Fixpoint merge_dp_contn (d: Dp) (w: st) (n: nat): st :=
   match n with
     | O    => w
     | S k  => merge_dp_cont d (merge_dp_contn d w k)
+  end.
+
+CoFixpoint merge_dpf_cont (d: Dpf) (w: st): st :=
+  match d with 
+    | dpf_receive q l s c => st_receive q [(l,s,(merge_dpf_cont c w))]
+    | dpf_send q l s c    => st_send q [(l,s,(merge_dpf_cont c w))]
+    | dpf_end             => w
+  end.
+
+Fixpoint merge_dpf_contn (d: Dpf) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_dpf_cont d (merge_dpf_contn d w k)
+  end.
+
+Print Dp.
+
+Fixpoint dp2dpf (d: Dp): Dpf :=
+ match d with
+   | dp_receive p l s   => dpf_receive p l s dpf_end
+   | dp_send p l s      => dpf_send p l s dpf_end
+   | dp_mergea p l s d' => dpf_receive p l s (dp2dpf d')
+   | dp_merge p l s d'  => dpf_send p l s (dp2dpf d')
+   | dp_end             => dpf_end
+ end.
+
+Fixpoint dpf2dp (d: Dpf): Dp :=
+  match d with
+    | dpf_receive p l s d' =>
+      match d' with
+        | dpf_end => dp_receive p l s
+        | _       => dp_mergea p l s (dpf2dp d')
+      end
+    | dpf_send p l s d' =>
+      match d' with
+        | dpf_end => dp_send p l s
+        | _       => dp_merge p l s (dpf2dp d')
+      end
+    | dpf_end           => dp_end
+  end.
+
+Fixpoint Dpf_merge (a: Dpf) (b: Dpf): Dpf :=
+  match a with
+    | dpf_receive q l s d' => dpf_receive q l s (Dpf_merge d' b)
+    | dpf_send q l s d'    => dpf_send q l s (Dpf_merge d' b)
+    | dpf_end              => b
+  end.
+
+Fixpoint DpnD3 (d: Dpf) (n: nat): Dpf :=
+  match n with
+    | O   => dpf_end
+    | S O => d
+    | S k => Dpf_merge d (DpnD3 d k)
   end.
 
 Fixpoint dpList (d: Dp): list (Dp) :=

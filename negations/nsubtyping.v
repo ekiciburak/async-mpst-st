@@ -9,11 +9,13 @@ Require Import Setoid.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
+Locate extdpn.
+
 Fixpoint listSisoNRef (l: list (siso*siso)): Prop :=
   match l with
     | nil            => False
-    | cons (W,W') xs => (forall d1, forall d2, (exists n, (nRefinement (mk_siso (merge_dp_contn d1 (@und W) n) (extdpn (@und W) (@sprop W)))
-                                                                       (mk_siso (merge_dp_contn d2 (@und W') n) (extdpn (@und W') (@sprop W'))))))
+    | cons (W,W') xs => (forall d1, forall d2, (exists n, (nRefinement (mk_siso (merge_dpf_contn d1 (@und W) n) (extdpfn (@und W) (@sprop W)))
+                                                                       (mk_siso (merge_dpf_contn d2 (@und W') n) (extdpfn (@und W') (@sprop W'))))))
                         \/ listSisoNRef xs
   end.
 
@@ -41,7 +43,7 @@ Proof. intro l.
          intros.
          apply H.
          simpl in *.
-         rewrite <- !meqDp in H, H0. easy.
+         rewrite <- !meqDpf in H, H0. easy.
          right.
          apply IHl. easy.
 Qed.
@@ -59,7 +61,7 @@ Proof. intro l.
          destruct H0 as (n, H0).
          specialize(Ha n).
          simpl in H0.
-         specialize (nRefR ({| und := merge_dp_contn d1 w n; sprop := extdpn w Hw |}) ( {| und := merge_dp_contn d2 w' n; sprop := extdpn w' Hw' |})); intros.
+         specialize (nRefR ({| und := merge_dpf_contn d1 w n; sprop := extdpfn w Hw |}) ( {| und := merge_dpf_contn d2 w' n; sprop := extdpfn w' Hw' |})); intros.
          apply H. easy.
          easy.
          apply IHl. easy. easy.

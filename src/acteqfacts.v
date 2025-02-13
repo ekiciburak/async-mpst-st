@@ -3058,3 +3058,89 @@ Proof. pcofix CIH. intros.
          apply refinementR_mon.
 Qed.
 
+Print local.
+Fixpoint actL (t: local): list (participant * dir) :=
+  match t with
+    | lt_send p xs    =>
+      let fix rec xs :=
+        match xs with
+          | nil           => [(p, snd)]
+          | (l,s,t')::xs' => (p, snd)::(actL t') ++ rec xs'
+        end
+      in rec xs
+    | lt_receive p xs =>
+      let fix rec xs :=
+        match xs with
+          | nil           => [(p, rcv)]
+          | (l,s,t')::xs' => (p, rcv)::(actL t') ++ rec xs'
+        end
+      in rec xs
+    | lt_mu t'        => actL t'
+    | _               => nil
+  end.
+
+Lemma singletonnes: forall T W, 
+  st2sisoC W T -> singleton W.
+Proof. pcofix CIH.
+       intros.
+       pinversion H0.
+       - subst. pfold. constructor.
+       - subst. pfold. constructor.
+         apply CIH in H. right. easy.
+       - subst. pfold. constructor.
+         apply CIH in H. right. easy.
+       - apply st2siso_mon.
+Qed.
+
+(*
+Lemma help: forall t xs p,
+  lt2stC (unfold_muL (lt_mu t)) (p ! xs) ->
+  In (p, snd) (actL t).
+Proof. intro t.
+       induction t; intros.
+       - simpl in H.
+         unfold unscoped.scons in H.
+         destruct n.
+         pinversion H.
+         subst.
+          easy.
+       induction H; intros. 
+Lemma muAct: forall t xs p,
+  lt2stC (lt_mu t) (p ! xs) ->
+  In (p, snd) (actL t).
+Proof. intros.
+       pinversion H. subst.
+       
+       induction t; intros.
+       - pinversion H. subst. simpl in H1.
+         unfold unscoped.scons in H1.
+         destruct n. easy.
+         easy.
+         subst.
+         unfold unscoped.scons in H0.
+         destruct n. simpl. inversion H0.
+         subst.
+         inversion H1. subst.
+         easy.
+        simpl. simpl in H.
+
+Lemma actBring: forall t T W, 
+  lt2stC t T ->
+  st2sisoC W T ->
+  coseqInLC (act W) (actL t).
+Proof. pcofix CIH.
+       intros.
+       specialize(singletonnes T W H1); intro Hs.
+       specialize(sinv W Hs); intro Hinv.
+       destruct Hinv as [(p,(l,(s,(w,(Hinv1, Hinv2))))) | [Hinv | Hinv]].
+       - subst.
+         pinversion H1.
+         + subst.
+           rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+           pinversion H0.
+           ++ subst. admit.
+           ++ subst. simpl.
+              simpl in H.
+              pfold. constructor.
+*)
+

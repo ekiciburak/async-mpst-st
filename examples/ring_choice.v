@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local
+Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.nondepro ST.src.siso ST.types.local
                ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
@@ -21,11 +21,23 @@ CoFixpoint rcp := st_receive "A" [("add", I, st_send "C" [("add", I, rcp);
 CoFixpoint rcop := st_send "C" [("add", I, st_receive "A" [("add", I, rcop)]); 
                                 ("sub", I, st_receive "A" [("add", I, rcop)])].
 
+
 CoFixpoint w1 := st_receive "A" [("add", I, st_send "C" [("add", I, w1)])].
 CoFixpoint w2 := st_send "C" [("add", I, st_receive "A" [("add", I, w2)])].
 
 CoFixpoint w3 := st_receive "A" [("add", I, st_send "C" [("sub", I, w3)])].
 CoFixpoint w4 := st_send "C" [("sub", I, st_receive "A" [("add", I, w4)])].
+
+Definition d1: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end).
+Definition d2: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end).
+Definition d3: Dpf := dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end).
+Definition d4: Dpf := dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end).
+
+Definition w5 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) w1 k.
+Definition w6 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) w3 k.
+Definition w7 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w2 k.
+Definition w8 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w4 k.
+
 
 Definition actL := [("A",rcv); ("C",snd)].
 
@@ -125,43 +137,98 @@ Proof. unfold actL.
        constructor.
 Qed.
 
-Lemma st_rcp: subtype rcop rcp.
-Proof. unfold subtype.
-       assert (singleton w2) as Hw2.
-       { pcofix CIH. rewrite(st_eq w2). simpl.
-         pfold. constructor. left. pfold. constructor.
-         right. exact CIH.
-       }
-       assert (singleton w1) as Hw1.
-       { pcofix CIH. rewrite(st_eq w1). simpl.
-         pfold. constructor. left. pfold. constructor.
-         right. exact CIH.
-       }
-       exists [((mk_siso w2 Hw2),(mk_siso w1 Hw1))].
-       simpl.
-       split. split.
+Lemma refm1: forall m W1 W2, 
+  refinement W1 W2 ->
+  refinement (merge_dpf_cont (DpnD3 d4 m) W1) (merge_dpf_cont (DpnD3 d2 m) W2).
+Proof. intro m.
+       induction m; intros.
+       - simpl. rewrite !dpfend_dn. easy.
+       - rewrite !DpnD3C !merge_mergeD.
+         unfold d4 at 1.
+         unfold d2 at 1.
+         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d4 m) W1)))).
+         simpl.
+         rewrite(st_eq  (merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end)) (merge_dpf_cont (DpnD3 d2 m) W2))).
+         simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d4 m) W1))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) dpf_end) (merge_dpf_cont (DpnD3 d2 m) W2))). simpl.
+         rewrite !dpfend_dn.
+         pfold.
+         specialize(ref_b (upaco2 refinementR bot2)
+                          ("A" & [("add", I, merge_dpf_cont (DpnD3 d4 m) W1)])
+                          (merge_dpf_cont (DpnD3 d2 m) W2)
+                          "C" "sub" (I) (I)
+                          (bp_receivea "A" "add" (I)) 1
+                           ); intro HS.
+        simpl in HS.
+        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("sub", I, merge_dpf_cont (DpnD3 d2 m) W2)])))) in HS. simpl in HS.
+        apply HS.
+        constructor.
+        left.
+        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 d2 m) W2)))). simpl.
+        pfold.
+        specialize(ref_a (upaco2 refinementR bot2)
+                         (merge_dpf_cont (DpnD3 d4 m) W1)
+                         (merge_dpf_cont (DpnD3 d2 m) W2)
+                         "A" "add" (I) (I)
+                         (ap_end) 1
+                          ); intro HR.
+       simpl in HR.
+       rewrite !apend_an in HR.
+       apply HR.
+       constructor.
+       left. apply IHm. easy.
+       admit.
+       admit.
+Admitted.
 
-       pcofix CIH. pfold.
-       rewrite(st_eq w2). simpl.
-       rewrite(st_eq rcop). simpl.
-       apply st2siso_snd.
-       left. pfold. simpl.
-       apply st2siso_rcv.
-       simpl. right. apply CIH.
+Lemma refm2: forall m W1 W2, 
+  refinement W1 W2 ->
+  refinement (merge_dpf_cont (DpnD3 d3 m) W1) (merge_dpf_cont (DpnD3 d1 m) W2).
+Proof. intro m.
+       induction m; intros.
+       - simpl. rewrite !dpfend_dn. easy.
+       - rewrite !DpnD3C !merge_mergeD.
+         unfold d3 at 1.
+         unfold d1 at 1.
+         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d3 m) W1)))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d3 m) W1))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
+         rewrite !dpfend_dn.
+         pfold.
+         specialize(ref_b (upaco2 refinementR bot2)
+                          ("A" & [("add", I, merge_dpf_cont (DpnD3 d3 m) W1)])
+                          (merge_dpf_cont (DpnD3 d1 m) W2)
+                          "C" "add" (I) (I)
+                          (bp_receivea "A" "add" (I)) 1
+                           ); intro HS.
+        simpl in HS.
+        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("add", I, merge_dpf_cont (DpnD3 d1 m) W2)]))) in HS.
+        simpl in HS.
+        apply HS.
+        constructor.
+        left.
+        pfold.
+        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
+        specialize(ref_a (upaco2 refinementR bot2)
+                         (merge_dpf_cont (DpnD3 d3 m) W1)
+                         (merge_dpf_cont (DpnD3 d1 m) W2)
+                         "A" "add" (I) (I)
+                         (ap_end) 1
+                          ); intro HR.
+       simpl in HR.
+       rewrite !apend_an in HR.
+       apply HR.
+       constructor.
+       left. apply IHm. easy.
+       admit.
+       admit.
+Admitted.
 
-       split.
-       pcofix CIH. pfold. 
-       rewrite(st_eq w1). simpl.
-       rewrite(st_eq rcp). simpl.
-       apply st2siso_rcv. simpl.
-       left. pfold.
-       apply st2siso_snd. simpl.
-       right. exact CIH. easy.
-       split.
-       exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
-
-       pcofix CIH. pfold.
+Lemma refw2w1: refinement w2 w1.
+Proof. pcofix CIH.
+       pfold.
        rewrite(st_eq w2). rewrite(st_eq w1). simpl.
        specialize(ref_b (upaco2 refinementR r) ("A" & [("add", I, w2)]) (w1)
                           "C" "add" (I) (I) (@bp_receivea "C" "A" "add" (I)) 1
@@ -182,9 +249,212 @@ Proof. unfold subtype.
        apply Ha. constructor.
        rewrite apend_an.
        right. exact CIH.
-       clear Ha.
+       admit.
+       admit.
+Admitted.
 
-       exists actL.
+Lemma refw7w5: forall k n m, refinement (w7 n m k) (w5 n m k).
+Proof. unfold w5, w7.
+       intro k.
+       induction k; intros.
+       - simpl. apply refw2w1.
+       - rewrite <- !meqDpf. rewrite DpnD3C.
+         rewrite DpnD3C.
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k)) w1) =
+                (merge_dpf_cont (DpnD3 d1 n) (merge_dpf_cont (DpnD3 d2 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k) w1)))).
+         { rewrite !merge_mergeD. easy. }
+         rewrite H.
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k)) w2) =
+                (merge_dpf_cont (DpnD3 d3 n) (merge_dpf_cont (DpnD3 d4 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k) w2)))).
+         { rewrite !merge_mergeD. easy. }
+         rewrite H0.
+         apply refm2.
+         apply refm1.
+         specialize(IHk n m).
+         rewrite <- !meqDpf in IHk. easy.
+Qed.
+
+Lemma refw4w3: refinement w4 w3.
+Proof. pcofix CIH.
+       pfold.
+       rewrite(st_eq w4). rewrite(st_eq w3). simpl.
+       specialize(ref_b (upaco2 refinementR r) ("A" & [("add", I, w4)]) (w3)
+                          "C" "sub" (I) (I) (@bp_receivea "C" "A" "add" (I)) 1
+                          ); intro Hb.
+       simpl in Hb.
+       rewrite(st_eq (merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("sub", I, w3)]))) in Hb. simpl in Hb.
+       apply Hb.
+       constructor.
+       left. pfold.
+       rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) w3)). simpl.
+       clear Hb.
+
+       specialize(ref_a (upaco2 refinementR r) (w4) (w3)
+                          "A" "add" (I) (I) (ap_end) 1
+                          ); intro Ha.
+       simpl in Ha.
+       rewrite(st_eq(merge_ap_cont "A" ap_end ("A" & [("add", I, w3)]))) in Ha. simpl in Ha.
+       apply Ha. constructor.
+       rewrite apend_an.
+       right. exact CIH.
+       admit.
+       admit.
+Admitted.
+
+Lemma refw8w6: forall k n m, refinement (w8 n m k) (w6 n m k).
+Proof. unfold w8, w6.
+       intro k.
+       induction k; intros.
+       - simpl. apply refw4w3.
+       - rewrite <- !meqDpf. rewrite DpnD3C.
+         rewrite DpnD3C.
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k)) w4) =
+                (merge_dpf_cont (DpnD3 d3 n) (merge_dpf_cont (DpnD3 d4 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k) w4)))).
+         { rewrite !merge_mergeD. easy. }
+         rewrite H.
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k)) w3) =
+                (merge_dpf_cont (DpnD3 d1 n) (merge_dpf_cont (DpnD3 d2 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k) w3)))).
+         { rewrite !merge_mergeD. easy. }
+         rewrite H0.
+         apply refm2.
+         apply refm1.
+         specialize(IHk n m).
+         rewrite <- !meqDpf in IHk. easy.
+Qed.
+
+
+Lemma st_rcp: forall (n m: nat), subtype rcop rcp.
+Proof. intros n m.
+       unfold subtype.
+       assert (singleton w2) as Hw2.
+       { pcofix CIH. rewrite(st_eq w2). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w1) as Hw1.
+       { pcofix CIH. rewrite(st_eq w1). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w3) as Hw3.
+       { pcofix CIH. rewrite(st_eq w3). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w4) as Hw4.
+       { pcofix CIH. rewrite(st_eq w4). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       exists [((mk_siso w2 Hw2),(mk_siso w1 Hw1));((mk_siso w2 Hw2),(mk_siso w1 Hw1));
+               ((mk_siso w4 Hw4),(mk_siso w3 Hw3));((mk_siso w4 Hw4),(mk_siso w3 Hw3))].
+       simpl.
+       split. split.
+
+       pcofix CIH. pfold.
+       rewrite(st_eq w2). simpl.
+       rewrite(st_eq rcop). simpl.
+       apply st2siso_snd.
+       left. pfold. simpl.
+       apply st2siso_rcv.
+       simpl. right. apply CIH.
+
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w1). simpl.
+       rewrite(st_eq rcp). simpl.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+       
+       split.
+       pcofix CIH. pfold.
+       rewrite(st_eq w2). simpl.
+       rewrite(st_eq rcop). simpl.
+       apply st2siso_snd.
+       left. pfold. simpl.
+       apply st2siso_rcv.
+       simpl. right. apply CIH.
+
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w1). simpl.
+       rewrite(st_eq rcp). simpl.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+       
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w4). simpl.
+       rewrite(st_eq rcop). simpl.
+       apply st2siso_snd. simpl.
+       left. pfold.
+       apply st2siso_rcv. simpl.
+       right. exact CIH.
+
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w3). simpl.
+       rewrite(st_eq rcp). simpl.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w4). simpl.
+       rewrite(st_eq rcop). simpl.
+       apply st2siso_snd. simpl.
+       left. pfold.
+       apply st2siso_rcv. simpl.
+       right. exact CIH.
+
+       split.
+       pcofix CIH. pfold. 
+       rewrite(st_eq w3). simpl.
+       rewrite(st_eq rcp). simpl.
+       apply st2siso_rcv. simpl.
+       left. pfold.
+       apply st2siso_snd. simpl.
+       right. exact CIH.
+       easy.
+       
+       split.
+       exists dpf_end. exists dpf_end. intro k.
+       rewrite <- !meqDpf.
+       rewrite dpEnd.
+       rewrite !dpfend_dn.
+       apply refw2w1.
+       
+       split.
+       exists (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)).
+       exists (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)).
+       intro k.
+       specialize (refw7w5 k n m); intro HH.
+       unfold w7,w5 in HH. easy.
+
+       split.
+       exists dpf_end. exists dpf_end. intro k.
+       rewrite <- !meqDpf.
+       rewrite dpEnd.
+       rewrite !dpfend_dn.
+       apply refw4w3.
+
+       split.
+       exists (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)).
+       exists (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)).
+       intro k.
+       specialize (refw8w6 k n m); intro HH.
+       unfold w7,w5 in HH. easy.
+       
+       easy.
+       
+
+(*        exists actL.
        exists actL.
        split.
        apply acteqr1.
@@ -208,8 +478,14 @@ Proof. unfold subtype.
        apply acteqr7.
        split.
        apply acteqr8.
-       easy.
-       easy.
+       easy. *)
+       
+       
+       
+       
+       
+       
+
 Qed.
 
 Lemma ltB_rcp: lt2stC ltB rcp.
@@ -317,9 +593,9 @@ Proof. unfold ltBOp.
        easy.
 Qed.
 
-Lemma ltB_ltBop: subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
+Lemma ltB_ltBop: forall (n m: nat), subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
 Proof. unfold subltype.
        exact st_rcp.
-Qed. 
+Qed.
 
 

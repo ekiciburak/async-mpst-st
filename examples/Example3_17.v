@@ -243,8 +243,10 @@ Proof. unfold subtype.
        
        easy.
        split.
-       exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
 
        pcofix CIH.
        pfold.
@@ -356,8 +358,11 @@ Proof. unfold subtype.
        easy.
        
        split.
-       exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
+
        pcofix CIH.
        pfold.
        specialize (ref_b (upaco2 refinementR r)
@@ -459,8 +464,11 @@ Proof. unfold subtype.
        easy.
        
        split.
-       exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
+
        pcofix CIH.
        pfold.
        specialize (ref_b (upaco2 refinementR r)
@@ -565,8 +573,11 @@ Proof. unfold subtype.
 
        
        split.
-       exists dp_end. exists dp_end. intro n.
-       rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
+
        pcofix CIH.
        pfold.
        specialize (ref_b (upaco2 refinementR r)

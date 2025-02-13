@@ -77,9 +77,12 @@ Proof. unfold subtype.
          + split. pfold. constructor. simpl.
            left. pfold. constructor. simpl. constructor. pfold. constructor.
            easy.
-       - simpl. split. exists dp_end. exists dp_end.
+       - simpl. split. exists dpf_end. exists dpf_end.
          intro n.
-         rewrite dpend_ann.
+         rewrite <- !meqDpf.
+         rewrite !dpEnd.
+         rewrite !dpfend_dn.
+
          pfold. rewrite(st_eq(dec12)). simpl.
          specialize(ref_b (upaco2 refinementR bot2)
                           ("q" & [("l3", I, end)])

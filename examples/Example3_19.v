@@ -1439,8 +1439,8 @@ Proof. rewrite(st_eq W2). simpl.
 Qed.
 
 Lemma dp_comm: forall n d w,
- (merge_dp_cont d (merge_dp_contn d w n)) = 
- (merge_dp_contn d (merge_dp_cont d w) n).
+ (merge_dpf_cont d (merge_dpf_contn d w n)) = 
+ (merge_dpf_contn d (merge_dpf_cont d w) n).
 Proof. intro n.
        induction n; intros.
        - simpl. easy.
@@ -1448,8 +1448,8 @@ Proof. intro n.
 Qed.
 
 Lemma dp_Scomm: forall n d w,
- (merge_dp_cont d (merge_dp_contn d w n)) = 
- (merge_dp_contn d w) (S n).
+ (merge_dpf_cont d (merge_dpf_contn d w n)) = 
+ (merge_dpf_contn d w) (S n).
 Proof. intro n.
        induction n; intros.
        - simpl. easy.
@@ -1457,12 +1457,12 @@ Proof. intro n.
 Qed.
 
 
-Definition pi1: Dp :=
-  dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)).
+Definition pi1: Dpf :=
+  dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end).
 
-Definition pi3: Dp :=
-  dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) 
-  (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))).
+Definition pi3: Dpf :=
+  dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) 
+  (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))).
 
 Lemma act_eqp31_1:
 exists L1 L2 : list (participant * dir),
@@ -1552,16 +1552,17 @@ Qed.
 
 Lemma act_eqp31_3:
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) W2)) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)) L1 /\
   coseqInLC (act (merge_bp_cont "p" (bp_receivea "p" "l2" (I)) W2C)) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_send "p" "l3" (I)) W2)) /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)) /\
   coseqInR L2 (act (merge_bp_cont "p" (bp_receivea "p" "l2" (I)) W2C)) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
+       rewrite dpfend_dn.
        rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        left. pfold.
        constructor. simpl. left. easy.
@@ -1581,12 +1582,14 @@ Proof. exists listW3.
        
        split.
        constructor.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
+       rewrite dpfend_dn.
        apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
        rewrite(coseq_eq (act W2)). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("p", rcv)) (ys := (act W2C)). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2 ))). unfold coseq_id. simpl.
        constructor.
+       rewrite dpfend_dn.
        apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
        constructor.
        
@@ -1605,19 +1608,20 @@ Qed.
 
 Lemma act_eqp31_4:
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2)) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)) L1 /\
   coseqInLC (act W2) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2)) /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)) /\
   coseqInR L2 (act W2) /\ (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split. pfold.
-       rewrite(coseq_eq (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2))). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2)) ). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)) ). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
-       left. pfold. rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
+       left. pfold.
+       rewrite dpfend_dn.  rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        constructor. simpl. left. easy.
        left. pcofix CIH.
        pfold.
@@ -1634,16 +1638,17 @@ Proof. exists listW3.
        right. exact CIH.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2))). unfold coseq_id. simpl.
        unfold listW3.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl.
+       rewrite dpfend_dn. easy. easy.
        rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("p", rcv)) (ys := (act W2C)). simpl. easy. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). simpl. easy. easy.
        constructor.
        
        split.
@@ -1660,25 +1665,26 @@ Qed.
 
 Lemma act_eqp31_5:
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2)) L1 /\
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) W2)) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2)) /\
-  coseqInR L2 (act (merge_dp_cont (dp_send "p" "l3" (I)) W2)) /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2)) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2)) /\
+  coseqInR L2 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
-       left. pfold. rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
+       left. pfold.
+       rewrite dpfend_dn. rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        constructor. simpl. left. easy.
        left. pcofix CIH.
        pfold. rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
@@ -1686,9 +1692,9 @@ Proof. exists listW3.
        right. exact CIH.
        
        split. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
-       left. pfold. rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
+       left. pfold. rewrite dpfend_dn. rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        constructor. simpl. left. easy.
        left. pcofix CIH.
        pfold. rewrite(coseq_eq(act W2C)). unfold coseq_id. simpl.
@@ -1697,37 +1703,37 @@ Proof. exists listW3.
        
        split.
        constructor.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2))).
        unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2)) ). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2))). unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)) ). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. rewrite dpfend_dn. easy. easy.
        rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("p", rcv)) (ys := (act W2C)). simpl. easy. easy.
        constructor.
-       rewrite(coseq_eq (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2))).
+       rewrite(coseq_eq (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end) ) W2))). simpl. easy. easy.
        constructor.
        
        split.
        constructor.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))). unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act W2)). simpl. rewrite dpfend_dn. easy. easy.
        rewrite(coseq_eq(act W2)). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("p", rcv)) (ys := (act W2C)). simpl. easy. easy.
        constructor.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) W2))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2)). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act W2)). simpl. rewrite dpfend_dn. easy. easy.
        constructor.
        easy.
 Qed.
 
 
-Lemma actp31_B1H1: forall k n, coseqInLC (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)) listW3.
+Lemma actp31_B1H1: forall k n, coseqInLC (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)) listW3.
 Proof. intro k.
        induction k; intros.
        - simpl. induction n; intros.
@@ -1739,50 +1745,53 @@ Proof. intro k.
            constructor. simpl. right. left. easy.
            right. exact CIH.
          + simpl.
-           pfold. rewrite(coseq_eq(act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))). unfold coseq_id. simpl.
+           pfold. rewrite(coseq_eq(act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))). unfold coseq_id. simpl.
            constructor. simpl. left. easy.
            left. pfold.
-           rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))). unfold coseq_id. simpl.
+           rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))). unfold coseq_id. simpl.
            constructor. simpl. right. left. easy.
            left. pfold.
-           rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+           rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
            unfold coseq_id. simpl. constructor. simpl. right. left. easy.
            left. pfold.
-           rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). unfold coseq_id. simpl.
+           rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). unfold coseq_id. simpl.
            constructor. simpl. right. left. easy.
-           left. unfold coseqInLC in IHn. exact IHn.
+           left. unfold coseqInLC in IHn.
+           rewrite dpfend_dn. exact IHn.
         - simpl. unfold pi1 at 1.
-          rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           unfold coseq_id. simpl.
           pfold.
           constructor. simpl. left. easy.
           left. pfold. 
-          rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           unfold coseq_id. simpl.
           constructor. simpl. right. left. easy.
-          left. specialize(IHk n). unfold coseqInLC in IHk. exact IHk.
+          left. specialize(IHk n). unfold coseqInLC in IHk.
+          rewrite dpfend_dn.
+          exact IHk.
 Qed.
 
 Lemma actp31_B1H2: forall k n,
 coseqInLC
   (act
-     (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-        (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))) listW3.
+     (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+        (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))) listW3.
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl. pfold.
        constructor. simpl. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left.
        specialize(actp31_B1H1 k n); intro Hk.
-       unfold coseqInLC in Hk. exact Hk.
+       unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
 Qed.
 
 Lemma actp31_B1H3: forall k n,
-coseqInR listW3 (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)).
+coseqInR listW3 (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)).
 Proof. intro k.
        induction k; intros.
        - simpl. induction n; intros.
@@ -1797,65 +1806,65 @@ Proof. intro k.
            constructor.
          + simpl. unfold pi3 at 1.
            inversion IHn. subst.
-           rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                                (merge_dp_contn pi3 W2 n)))).
+           rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                                (merge_dpf_contn pi3 W2 n)))).
            unfold coseq_id. simpl.
            constructor.
-           apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))
-                                                          (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+           apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))
+                                                          (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
            constructor.
-           apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+           apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
            simpl. easy. easy.
-           rewrite(coseq_eq (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+           rewrite(coseq_eq (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
            unfold coseq_id. simpl.
-           apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+           apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
            constructor.
         - simpl. unfold pi1 at 1.
-          rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           unfold coseq_id, listW3. simpl.
           constructor.
-          apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           simpl. easy. easy.
           constructor.
-          apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           simpl. easy. easy.
-          rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+          rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
           unfold coseq_id. simpl.
-          apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
-          simpl. easy. easy.
+          apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
+          simpl. rewrite dpfend_dn. easy. easy.
           constructor.
 Qed.
 
 Lemma actp31_B1H4: forall k n,
-coseqInR listW3 (act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
+coseqInR listW3 (act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        simpl. easy. easy.
-       rewrite(coseq_eq (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
-       simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
+       simpl. rewrite dpfend_dn. easy. easy.
        constructor.
 Qed.
 
 Lemma actp31_B1: forall n k,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k)) k)) L1 /\
+  coseqInLC (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k)) k)) L1 /\
   coseqInLC
     (act
-       (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-          (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k - 1)) k))) L2 /\
-  coseqInR L1 (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k)) k)) /\
+       (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+          (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k - 1)) k))) L2 /\
+  coseqInR L1 (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k)) k)) /\
   coseqInR L2
     (act
-       (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-          (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k - 1)) k))) /\
+       (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+          (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k - 1)) k))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. intros.
        exists listW3.
@@ -1872,89 +1881,91 @@ Proof. intros.
 Qed.
 
 Lemma actp31_B2H1: forall k n,
-coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))) listW3.
+coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))) listW3.
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left.
        specialize(actp31_B1H1 k n); intros Hk.
-       unfold coseqInLC in Hk. exact Hk.
+       unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
 Qed.
 
 Lemma actp31_B2H2: forall k n,
 coseqInLC
   (act
-     (merge_dp_cont (dp_send "p" "l3" (I))
-        (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-           (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))) listW3.
+     (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+        (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+           (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))) listW3.
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))))).
        unfold coseq_id. simpl.
        pfold. constructor.
        simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite dpfend_dn.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
        constructor. simpl. left. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
        left. pfold. constructor. simpl. right. left. easy.
        left.
        specialize(actp31_B1H1 k n); intros Hk.
-       unfold coseqInLC in Hk. exact Hk.
+       unfold coseqInLC in Hk.
+       rewrite dpfend_dn. exact Hk.
 Qed.
 
 Lemma actp31_B2H3: forall k n,
-coseqInR listW3 (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
+coseqInR listW3 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
-       simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
+       simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 k n); intro Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))).
-       simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))).
+       simpl. rewrite dpfend_dn. easy. easy.
        constructor.
 Qed.
 
 Lemma actp31_B2H4: forall k n,
 coseqInR listW3
   (act
-     (merge_dp_cont (dp_send "p" "l3" (I))
-        (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-           (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+     (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+        (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+           (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
 Proof. intros.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
-       simpl. easy. easy.
-       rewrite(coseq_eq (act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
+       simpl. rewrite dpfend_dn. easy. easy.
+       rewrite(coseq_eq (act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k))) ).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k))) ).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) k)))).
-       simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) k)))).
+       simpl. rewrite dpfend_dn. easy. easy.
        constructor.
 Qed.
 
 Lemma actp31_B2: forall n k,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k)) k))) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k)) k))) L1 /\
   coseqInLC
     (act
-       (merge_dp_cont (dp_send "p" "l3" (I))
-          (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k - 1)) k)))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k)) k))) /\
+       (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+          (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k - 1)) k)))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k)) k))) /\
   coseqInR L2
     (act
-       (merge_dp_cont (dp_send "p" "l3" (I))
-          (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - S k - 1)) k)))) /\
+       (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+          (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - S k - 1)) k)))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. intros.
        exists listW3.
@@ -1972,150 +1983,150 @@ Qed.
 
 Lemma act_eqpi3B1: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))) L1 /\
-  coseqInLC (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))) L2 /\
-  coseqInR L1 (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))) /\
-  coseqInR L2 (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))) /\
+  coseqInLC (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))) L1 /\
+  coseqInLC (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))) /\
+  coseqInR L2 (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
        unfold pi3 at 1.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. unfold coseqInLC in Hk. exact Hk.
+       simpl in Hk. unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. unfold coseqInLC in Hk. exact Hk.
+       simpl in Hk. unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
        constructor.
        
        split.
-       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit2 with (y := ("p", rcv)) (ys := act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))).
+       apply CoInSplit2 with (y := ("p", rcv)) (ys := act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))).
-       simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))).
+       simpl. rewrite dpfend_dn. easy. easy.
        constructor.
        easy.
 Qed.
 
 Lemma act_eqpi3B2: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act ("p" ! [("l3", I, merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))])) L1 /\
-  coseqInLC (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))) L2 /\
-  coseqInR L1 (act ("p" ! [("l3", I, merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))])) /\
-  coseqInR L2 (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))) /\
+  coseqInLC (act ("p" ! [("l3", I, merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))])) L1 /\
+  coseqInLC (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))) L2 /\
+  coseqInR L1 (act ("p" ! [("l3", I, merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))])) /\
+  coseqInR L2 (act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act ("p" ! [("l3", I, merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))]))).
+       rewrite(coseq_eq(act ("p" ! [("l3", I, merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))]))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. unfold coseqInLC in Hk. exact Hk.
+       simpl in Hk. unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. 
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. unfold coseqInLC in Hk. exact Hk.
+       simpl in Hk. unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act ("p" ! [("l3", I, merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))]))).
+       rewrite(coseq_eq(act ("p" ! [("l3", I, merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))]))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))) ).
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))) ).
        simpl. easy. easy.
        constructor.
        
        split.
-       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit1 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
        constructor.
-       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", rcv)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. 
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        simpl. easy. easy.
        constructor.
        easy.
@@ -2123,41 +2134,41 @@ Qed.
 
 Lemma act_eqpi3B3: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) L1 /\
-  coseqInLC (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) /\
-  coseqInR L2 (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))) /\ (forall x : participant * dir, In x L1 <-> In x L2).
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) L1 /\
+  coseqInLC (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) /\
+  coseqInR L2 (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))) /\ (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 (S n)); intro Hk.
-       simpl in Hk. unfold coseqInLC in Hk. exact Hk.
+       simpl in Hk. unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
        specialize(actp31_B1H1 0 (S n)); intro Hk.
        simpl in Hk. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
-       simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
+       simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 (S n)); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        simpl. easy. easy.
        constructor.
       
@@ -2169,72 +2180,72 @@ Qed.
 
 Lemma act_eqpi3B4: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) L1 /\
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) /\
-  coseqInR L2 (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))) /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) /\
+  coseqInR L2 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split. 
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl. 
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 (S n)); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 (S n)); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
-       simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
+       simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 (S n)); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        simpl. easy. easy.
        constructor.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n))))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n))))).
        unfold coseq_id. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
-       simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
+       simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 (S n)); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont pi3 (merge_dp_contn pi3 W2 n)))).
-       simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont pi3 (merge_dpf_contn pi3 W2 n)))).
+       simpl. rewrite dpfend_dn. easy. easy.
        constructor.
        easy.
 Qed.
 
-Lemma refpi3pi1: forall n, refinement (merge_dp_contn pi3 W2 (S n)) (merge_dp_cont pi1 (merge_dp_contn pi3 W2 n)).
+Lemma refpi3pi1: forall n, refinement (merge_dpf_contn pi3 W2 (S n)) (merge_dpf_cont pi1 (merge_dpf_contn pi3 W2 n)).
 Proof. pcofix CIH.
        intro n.
        induction n; intros.
@@ -2242,12 +2253,12 @@ Proof. pcofix CIH.
          clear CIH.
          pfold. 
          unfold pi3, pi1.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2)).
-         rewrite(st_eq  (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) W2)).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2)).
+         rewrite(st_eq  (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)).
          simpl.
          specialize(ref_a (upaco2 refinementR r)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2)
-                          (merge_dp_cont (dp_send "p" "l3" (I)) W2)
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2)
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)
                           "p" "l1" (I) (I) (ap_end) 1
          ); intro Ha.
          simpl in Ha. rewrite !apend_an in Ha.
@@ -2255,24 +2266,25 @@ Proof. pcofix CIH.
          constructor.
 
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) W2)).
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) W2)).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) W2)).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)).
          simpl. 
          specialize(ref_b (upaco2 refinementR r)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2)
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)
                           W2
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb. simpl in Hb.
          rewrite !bpend_an in Hb.
+         rewrite dpfend_dn.
          apply Hb; clear Hb.
          constructor.
 
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) W2)).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) W2)).
          setoid_rewrite(st_eq W2) at 2. simpl.
          rewrite(st_eq W2C). simpl.
          specialize(ref_b (upaco2 refinementR r)
-                          (merge_dp_cont (dp_send "p" "l3" (I)) W2)
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)
                           W2C
                           "p" "l3" (I) (I) (bp_receivea "p" "l2" (I)) 1
          ); intro Hb. simpl in Hb.
@@ -2282,7 +2294,7 @@ Proof. pcofix CIH.
          constructor.
 
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) W2)).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) W2)).
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l2" (I)) W2C)).
          rewrite(st_eq W2C).
          simpl.
@@ -2293,6 +2305,7 @@ Proof. pcofix CIH.
          ); intro Hb. simpl in Hb.
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l2" (I)) ("p" ! [("l3", I, W2C)]))) in Hb.
          simpl in Hb.
+         rewrite dpfend_dn.
          apply Hb; clear Hb.
          constructor.
 
@@ -2329,21 +2342,21 @@ Proof. pcofix CIH.
        - simpl in *.
          unfold pi3, pi1.
          pfold. simpl.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-                      (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+                      (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
          specialize(ref_a (upaco2 refinementR r)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))
-                              (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                              (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))
-                          (merge_dp_cont (dp_send "p" "l3" (I))
-                              (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                              (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))
+                              (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                              (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+                              (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                              (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))
                           "p" "l1" (I) (I) (ap_end) 1
          ); intro Ha.
          simpl in Ha. rewrite !apend_an in Ha.
@@ -2351,81 +2364,82 @@ Proof. pcofix CIH.
          constructor.
 
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))
-                      (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))
+                      (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
          specialize(ref_b (upaco2 refinementR r)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                              (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                              (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))
-                          (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                              (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                              (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                              (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))
+                          (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                              (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
+         rewrite dpfend_dn.
          apply Hb; clear Hb.
          constructor.
 
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                      (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                      (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I))
-                      (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+                      (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         setoid_rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))) at 2.
+         setoid_rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))) at 2.
          simpl.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) 
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) 
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))).
          simpl.
          specialize(ref_b (upaco2 refinementR r)
-                          ("p"! [("l3", I, merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                          (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))])
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                              (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))
+                          ("p"! [("l3", I, merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                          (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))])
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                              (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))
                           "p" "l3" (I) (I) (bp_receivea "p" "l1" (I)) 1
          ); intro Hb.
          simpl in Hb.
-         rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) ("p" ! [("l3", I,  merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))]))) in Hb.
-         simpl in Hb. apply Hb; clear Hb.
+         rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) ("p" ! [("l3", I,  merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))]))) in Hb.
+         simpl in Hb. rewrite dpfend_dn. apply Hb; clear Hb.
          constructor.
 
          left. pfold.
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I))
-                      (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+                      (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))
-                      (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))
+                      (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))).
          simpl.
          specialize(ref_b (upaco2 refinementR r)
-                          (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))))
-                             (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))
-                          (merge_dp_cont (dp_send "p" "l3" (I))
-                             (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))
+                          (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))))
+                             (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+                             (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))
                            "p" "l3" (I) (I) (bp_receivea "p" "l1" (I)) 1
          ); intro Hb.
          simpl in Hb.
          rewrite(st_eq(merge_bp_cont "p" (bp_receivea "p" "l1" (I)) ("p"! [("l3", I,
-                      merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn (dp_mergea "p" "l1" (I) 
-                      (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))]))) in Hb.
+                      merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn (dpf_receive "p" "l1" (I) 
+                      (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))]))) in Hb.
          simpl in Hb. apply Hb; clear Hb.
          constructor.
          left.
 
          unfold pi3, pi1 in IHn.
-         rewrite(st_eq  (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n)))).
+         rewrite(st_eq  (merge_bp_cont "p" (bp_receivea "p" "l1" (I)) (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n)))).
          simpl.
-         rewrite(st_eq (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I)))
-           (merge_dp_contn (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) W2 n))) in IHn.
+         rewrite(st_eq (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end))
+           (merge_dpf_contn (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) W2 n))) in IHn.
          simpl in IHn.
          apply IHn.
          fold pi1.
@@ -2442,7 +2456,7 @@ Proof. pcofix CIH.
          apply act_eqpi3B4.
 Qed.
 
-Lemma refpi3pi1A: forall (n k: nat), (n - k >= 1) -> refinement (merge_dp_contn pi3 W2 (n-k)) (merge_dp_cont pi1 (merge_dp_contn pi3 W2 (n-k-1))).
+Lemma refpi3pi1A: forall (n k: nat), (n - k >= 1) -> refinement (merge_dpf_contn pi3 W2 (n-k)) (merge_dpf_cont pi1 (merge_dpf_contn pi3 W2 (n-k-1))).
 Proof. intros.
        specialize(refpi3pi1 (n - k - 1)); intro Ha.
        simpl in Ha.
@@ -2453,7 +2467,7 @@ Proof. intros.
        apply Ha.
 Qed.
 
-Lemma refpi3pi1A2: forall n, n > 0 -> refinement (merge_dp_contn pi3 W2 n) (merge_dp_cont pi1 (merge_dp_contn pi3 W2 (n-1))).
+Lemma refpi3pi1A2: forall n, n > 0 -> refinement (merge_dpf_contn pi3 W2 n) (merge_dpf_cont pi1 (merge_dpf_contn pi3 W2 (n-1))).
 Proof. intros. 
        specialize(refpi3pi1 (n - 1)); intro Ha.
        assert(S (n - 1) = n).
@@ -2467,8 +2481,8 @@ Qed.
 
 
 
-Lemma refpi3pi1B: forall k n, (n - k >= 1) -> refinement (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n-k)) k) 
-                                                         (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n-k-1)) (S k)).
+Lemma refpi3pi1B: forall k n, (n - k >= 1) -> refinement (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n-k)) k) 
+                                                         (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n-k-1)) (S k)).
 Proof. intro k.
        induction k; intros.
        - simpl.
@@ -2482,14 +2496,14 @@ Proof. intro k.
        - simpl. unfold pi1 at 1.
          unfold pi1 at 3.
          pfold.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k))) k))).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k))) k))).
          simpl.
-         rewrite(st_eq(merge_dp_cont pi1 (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k) - 1)) k)))).
+         rewrite(st_eq(merge_dpf_cont pi1 (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k) - 1)) k)))).
          simpl.
          specialize(ref_a (upaco2 refinementR bot2)
-                          (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k))) k))
-                          (merge_dp_cont (dp_send "p" "l3" (I))
-                            (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k) - 1)) k)))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k))) k))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end)
+                            (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k) - 1)) k)))
                           "p" "l1" (I) (I) (ap_end) 1
          ); intro Ha.
          simpl in Ha. rewrite !apend_an in Ha.
@@ -2497,15 +2511,16 @@ Proof. intro k.
          constructor.
          
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k))) k))).
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k) - 1)) k)))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k))) k))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k) - 1)) k)))).
          simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                          (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k))) k)
-                          (merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - (S k) - 1)) k))
+                          (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k))) k)
+                          (merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - (S k) - 1)) k))
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
+         rewrite !dpfend_dn.
          apply Hb; clear Hb.
          constructor.
          left.
@@ -2526,10 +2541,10 @@ Qed.
 
 Lemma act_eqw21: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_contn pi3 W2 n)) L1 /\
-  coseqInLC (act (merge_dp_contn pi3 W2 n)) L2 /\
-  coseqInR L1 (act (merge_dp_contn pi3 W2 n)) /\
-  coseqInR L2 (act (merge_dp_contn pi3 W2 n)) /\ (forall x : participant * dir, In x L1 <-> In x L2).
+  coseqInLC (act (merge_dpf_contn pi3 W2 n)) L1 /\
+  coseqInLC (act (merge_dpf_contn pi3 W2 n)) L2 /\
+  coseqInR L1 (act (merge_dpf_contn pi3 W2 n)) /\
+  coseqInR L2 (act (merge_dpf_contn pi3 W2 n)) /\ (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
@@ -2552,193 +2567,193 @@ Qed.
 
 Lemma act_eqw22: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))) L1 /\
-  coseqInLC (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))) /\
-  coseqInR L2 (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))) /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))) /\
+  coseqInR L2 (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. pfold. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite !dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. pfold. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite !dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        constructor.
 
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        constructor.
        easy.
 Qed.
 
 Lemma act_eqw23: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))) L1 /\
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))) /\
-  coseqInR L2 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))) /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))) /\
+  coseqInR L2 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
        constructor.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
        constructor.
        easy.
 Qed.
 
 Lemma act_eqw24: forall n,
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))) L1 /\
-  coseqInLC (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))) L2 /\
-  coseqInR L1 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))) /\
-  coseqInR L2 (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))) /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))) L1 /\
+  coseqInLC (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))) L2 /\
+  coseqInR L1 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))) /\
+  coseqInR L2 (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))) /\
   (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists listW3.
        exists listW3.
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
 
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        pfold. constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor. simpl. right. left. easy.
        left. pfold.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl. constructor. simpl. right. left. easy.
        left. specialize(actp31_B1H1 0 n); intro Hk.
-       simpl in Hk. exact Hk.
+       simpl in Hk. rewrite dpfend_dn. exact Hk.
        
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
        constructor.
 
        split.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n)))).
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id. simpl.
        constructor.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
-       rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n)))).
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
+       rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n)))).
        unfold coseq_id, listW3. simpl.
-       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi3 W2 n))). simpl. easy. easy.
+       apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi3 W2 n))). simpl. rewrite dpfend_dn. easy. easy.
        specialize(actp31_B1H3 0 n); intro Hk. simpl in Hk.
        inversion Hk. subst. easy.
        constructor.
-       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n)))). simpl. easy. easy.
+       apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n)))). simpl. easy. easy.
        constructor.
        easy.
 Qed.
 
-Lemma ref_w2n: forall n, refinement (merge_dp_contn pi3 W2 n) (merge_dp_contn pi3 W2 n).
+Lemma ref_w2n: forall n, refinement (merge_dpf_contn pi3 W2 n) (merge_dpf_contn pi3 W2 n).
 Proof. intro n.
        induction n; intros.
        - simpl. apply refw2_refl.
        - simpl. 
          unfold pi3 at 1. unfold pi3 at 2.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))))) (merge_dp_contn pi3 W2 n))).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)))) (merge_dpf_contn pi3 W2 n))).
          simpl.
          pfold.
          specialize(ref_a (upaco2 refinementR bot2)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))
                           "p" "l1" (I) (I) (ap_end) 1
          ); intro Ha.
          simpl in Ha. rewrite !apend_an in Ha.
@@ -2746,11 +2761,11 @@ Proof. intro n.
          constructor.
          
          left. pfold.
-         rewrite(st_eq (merge_dp_cont (dp_merge "p" "l3" (I) (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I)))) (merge_dp_contn pi3 W2 n))).
+         rewrite(st_eq (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end))) (merge_dpf_contn pi3 W2 n))).
          simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))
-                          (merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
@@ -2758,10 +2773,10 @@ Proof. intro n.
          constructor.
          
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_merge "p" "l3" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi3 W2 n))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi3 W2 n))). simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                          (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))
-                          (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))
+                          (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
@@ -2769,13 +2784,14 @@ Proof. intro n.
          constructor.
          
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi3 W2 n))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi3 W2 n))). simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                          (merge_dp_contn pi3 W2 n)
-                          (merge_dp_contn pi3 W2 n)
+                          (merge_dpf_contn pi3 W2 n)
+                          (merge_dpf_contn pi3 W2 n)
                           "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
+         rewrite !dpfend_dn.
          apply Hb; clear Hb.
          constructor.
          left. unfold refinement in IHn. exact IHn.
@@ -2785,18 +2801,18 @@ Proof. intro n.
          apply act_eqw24.
 Qed.
 
-Lemma ref_transpippi3: forall m n, refinement (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m) 
-                                              (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m).
+Lemma ref_transpippi3: forall m n, refinement (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m) 
+                                              (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m).
 Proof. intro m.
        induction m; intros.
        - simpl. apply ref_w2n.
        - simpl. unfold pi1 at 1. unfold pi1 at 2.
-         rewrite(st_eq(merge_dp_cont (dp_mergea "p" "l1" (I) (dp_send "p" "l3" (I))) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "p" "l1" (I) (dpf_send "p" "l3" (I) dpf_end)) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
          simpl.
          pfold.
          specialize(ref_a (upaco2 refinementR bot2)
-                    (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))
-                    (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))
+                    (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))
+                    (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))
                     "p" "l1" (I) (I) (ap_end) 1
          ); intro Ha.
          simpl in Ha. rewrite !apend_an in Ha.
@@ -2804,14 +2820,15 @@ Proof. intro m.
          constructor. 
          
          left. pfold.
-         rewrite(st_eq(merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
+         rewrite(st_eq(merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
          simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                    (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)
-                    (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)
+                    (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)
+                    (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)
                     "p" "l3" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
+         rewrite !dpfend_dn.
          apply Hb; clear Hb.
          constructor.
          left.
@@ -2832,55 +2849,55 @@ Proof. intro m.
          exists listW3.
          exists listW3.
          split.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
          pfold. constructor. simpl. right. left. easy.
          left.
          specialize(actp31_B1H1 m n); intro Hk.
-         unfold coseqInLC in Hk. exact Hk.
+         unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
          
          split.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
          pfold. constructor. simpl. right. left. easy.
          left.
          specialize(actp31_B1H1 m n); intro Hk.
-         unfold coseqInLC in Hk. exact Hk.
+         unfold coseqInLC in Hk. rewrite dpfend_dn. exact Hk.
          split.
          constructor.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
-         apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
-         simpl. easy. easy.
+         apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
+         simpl. rewrite dpfend_dn. easy. easy.
          specialize(actp31_B1H3 m n); intro Hk.
          inversion Hk. subst. easy.
          constructor.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
-         apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
-         simpl. easy. easy.
+         apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
+         simpl. rewrite dpfend_dn. easy. easy.
          constructor.
          
          split.
          constructor.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
-         apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
-         simpl. easy. easy.
+         apply CoInSplit2 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
+         simpl. rewrite dpfend_dn. easy. easy.
          specialize(actp31_B1H3 m n); intro Hk.
          inversion Hk. subst. easy.
          constructor.
-         rewrite(coseq_eq(act (merge_dp_cont (dp_send "p" "l3" (I)) (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m)))).
+         rewrite(coseq_eq(act (merge_dpf_cont (dpf_send "p" "l3" (I) dpf_end) (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m)))).
          unfold coseq_id. simpl.
-         apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dp_contn pi1 (merge_dp_contn pi3 W2 n) m))).
-         simpl. easy. easy.
+         apply CoInSplit1 with (y := ("p", snd)) (ys := (act (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 n) m))).
+         simpl. rewrite dpfend_dn. easy. easy.
          constructor.
          easy.
 Qed.
 
 Lemma ntrans: forall k n u, (n >= (u+k)) ->
-                            refinement (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n-u)) u) 
-                                       (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n-u-k)) (u+k)).
+                            refinement (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n-u)) u) 
+                                       (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n-u-k)) (u+k)).
 Proof. intro k.
        induction k; intros.
        - simpl. 
@@ -2908,15 +2925,15 @@ Proof. intro k.
          specialize(IHk n u H4).
          assert(S (u + k) = (u + (S k))) by lia.
          rewrite H5 in Href.
-         specialize(Ref_Trans (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u)) u)
-                              (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u - k)) (u + k))
-                              (merge_dp_contn pi1 (merge_dp_contn pi3 W2 (n - u - (S k))) (u + (S k)))
+         specialize(Ref_Trans (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - u)) u)
+                              (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - u - k)) (u + k))
+                              (merge_dpf_contn pi1 (merge_dpf_contn pi3 W2 (n - u - (S k))) (u + (S k)))
                               IHk Href); intro HT.
          apply HT.
 Qed.
 
 Lemma all_refs:
-forall m : nat, refinement (merge_dp_contn pi3 W2 m) (merge_dp_contn pi1 W2 m).
+forall m : nat, refinement (merge_dpf_contn pi3 W2 m) (merge_dpf_contn pi1 W2 m).
 Proof. intros.
        specialize(ntrans m m 0); intro HN.
        assert((m - 0) = m) by lia.
@@ -2929,7 +2946,7 @@ Proof. intros.
 Qed.
 
 Lemma st2: subtype TB TB'.
-Proof. unfold subtype.
+Proof. intros. unfold subtype.
        exists(
        [
         ((mk_siso W3 (w3singleton)),(mk_siso W1 (w1singleton)));
@@ -3014,7 +3031,10 @@ Proof. unfold subtype.
 
        easy.
        split.
-       exists dp_end. exists dp_end. intro n. rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
 
        specialize(WBRef 0); intros.
        rewrite(st_eq(merge_bp_contn "p" (bp_receivea "p" "l1" (I)) W1 0)) in H.
@@ -3025,13 +3045,18 @@ Proof. unfold subtype.
        constructor.
        
        split.
-       exists dp_end. exists dp_end. intro n. rewrite !dpend_ann.
+       exists dpf_end. exists dpf_end. intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
+
        apply refw2_refl.
        split.
        
        exists pi3.
        exists pi1.
        intro n.
+       simpl.
        apply all_refs.
 
        easy.
