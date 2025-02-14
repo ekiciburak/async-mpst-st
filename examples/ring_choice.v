@@ -1019,9 +1019,30 @@ Proof. pcofix CIH.
        apply Ha. constructor.
        rewrite apend_an.
        right. exact CIH.
-       admit.
-       admit.
-Admitted.
+       
+       rewrite apend_an.
+       exists actL. exists actL.
+       split.
+       apply acteqr1.
+       split.
+       apply acteqr2.
+       split.
+       apply acteqr3.
+       split.
+       apply acteqr4.
+       easy.
+       
+       exists actL. exists actL.
+       split.
+       apply acteqr5.
+       split.
+       apply acteqr6.
+       split.
+       apply acteqr7.
+       split.
+       apply acteqr8.
+       easy.
+Qed.
 
 Lemma refw7w5: forall k n m, refinement (w7 n m k) (w5 n m k).
 Proof. unfold w5, w7.
