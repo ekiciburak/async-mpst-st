@@ -193,6 +193,11 @@ Proof. intro m.
        assert((p & [(l, s, w)]) = 
               (merge_apf_cont apf_end (p & [(l, s, w)]))).
        { rewrite apfend_an. easy. }
+       assert(isInA (ApnA3 a n) p = false) as Hnin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InN; easy.
+       }
        destruct Hc as [Hc | Hc].
        + exists l1. exists l2.
          split.
@@ -204,7 +209,9 @@ Proof. intro m.
          easy. rewrite <- InN; easy.
 
          specialize(actionExL _ _ _ Hc H4); intro Hac.
-         admit.
+         apply csInRAG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+
          easy.
          split.
          rewrite H5.
@@ -216,7 +223,8 @@ Proof. intro m.
          easy. rewrite <- InN; easy.
 
          specialize(actionExL _ _ _ Hc H4); intro Hac.
-         admit.
+         apply csInRAG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
          easy.
          easy.
        + exists ((p, rcv)::l1). exists ((p, rcv)::l2).
@@ -230,7 +238,9 @@ Proof. intro m.
          apply actdRNER.
          case_eq n; intros Hn.
          easy. rewrite <- InN; easy.
-         admit.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy.
          easy.
          split.
          rewrite H5.
@@ -239,13 +249,90 @@ Proof. intro m.
          apply IactdRNER.
          case_eq n; intros Hn.
          easy. rewrite <- InN; easy.
-         admit. easy.
-         admit.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy.
+         easy.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
 
        (*send*)
-       admit.
+       rewrite <- meqBp3.
+       rewrite <- meqBp3 in H1, H4, H5.
+       destruct H5 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+       assert((p ! [(l, s, w)]) = 
+              (merge_bpf_cont bpf_end (p ! [(l, s, w)]))).
+       { rewrite bpfend_bn. easy. }
+       assert(isInB (BpnB3 b n) p = false) as Hnin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InNS; easy.
+       }
+       specialize(classic (coseqIn (p, snd) (act w))); intro Hc.
+       destruct Hc as [Hc | Hc].
+       + exists l1. exists l2.
+         split.
+         rewrite H5.
+         apply actdSER. simpl. easy. easy.
+         rewrite bpfend_bn. easy.
+         split.
+         apply actdSER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+         easy.
+         split.
+         apply coseqSendIn. easy.
+         split.
+         apply IactdSER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+         easy.
+         easy.
+       + exists ((p, snd)::l1). exists ((p, snd)::l2).
+         split.
+         rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+         pfold.
+         constructor. simpl. left. easy.
+         left.
+         apply coseqINGA. easy.
+         split.
+         apply actdSNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy.
+         easy.
+         split.
+         rewrite H5.
+         apply IactdSNER. simpl. easy. easy. rewrite bpfend_bn. easy.
+         split.
+         apply IactdSNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy. easy.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
+         
        (*end*)
-       admit.
+       exists nil. exists nil.
+       rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
+       split. pfold. constructor.
+       split. pfold. constructor.
+       split. constructor.
+       split. constructor. easy.
        apply refinementR3_mon.
        
        (*2nd goal*)
@@ -262,58 +349,52 @@ Proof. intro m.
               (merge_apf_cont apf_end (p & [(l, s, w)]))).
        { rewrite apfend_an. easy. }
        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_apf_cont (ApnA3 a n) (p & [(l, s', w')])))). simpl.
-       
+       assert(isInA (ApnA3 a n) p = false) as Hin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InN; easy.
+       }
        destruct Hc as [Hc | Hc].
        + exists (("A", rcv)::l1). exists (("A", rcv)::l2).
          split. 
          rewrite(coseq_eq (act ("A" & [("add", I, p & [(l, s, w)])]))). unfold coseq_id. simpl.
          pfold. constructor. simpl. left. easy.
          left.
+         apply coseqINGA.
          rewrite H5.
          apply actdRER. simpl. easy. easy.
-         rewrite apfend_an. apply coseqINGA. easy.
+         rewrite apfend_an. easy.
          split.
          rewrite(coseq_eq(act ("A" & [("add", I, merge_apf_cont (ApnA3 a n) (p & [(l, s', w')]))]))). unfold coseq_id. simpl.
          pfold. constructor. simpl. left. easy.
          left.
-         apply actdRER. simpl. admit. admit.
+         apply actdRER. simpl.
+         easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInRAG in Hac.
+         rewrite Hin in Hac. destruct Hac; easy.
          apply coseqINGA. easy.
          split.
-         case_eq(eqb p "A"); intros.
-         ++ rewrite eqb_eq in H6. subst.
-            assert(("A" & [("add", I, "A" & [(l, s, w)])]) =
-                   merge_apf_cont apf_end (("A" & [("add", I, "A" & [(l, s, w)])]))).
-            { (* rewrite(st_eq(merge_apf_cont (apf_receive "A" "add" (I) apf_end) ("A" & [(l, s, w)]))). simpl. *)
-              rewrite apfend_an. easy.
-            }
-            rewrite H6.
-            apply IactdRER. simpl. easy.
-            admit.
-            apply IactdRER. simpl. easy.
-            easy.
-            rewrite apfend_an.
-            apply InList. easy. easy.
-         ++ assert(("A" & [("add", I, p & [(l, s, w)])]) =
-                   merge_apf_cont (apf_receive "A" "add" (I) apf_end) (p & [(l, s, w)])).
-            { rewrite(st_eq(merge_apf_cont (apf_receive "A" "add" (I) apf_end) (p & [(l, s, w)]))). simpl.
-              rewrite apfend_an. easy.
-            }
-            rewrite H7.
-            apply IactdRER.
-            simpl. rewrite H6. easy.
-            easy.
-            apply InList. admit.
-            rewrite(st_eq(merge_apf_cont (apf_receive "A" "add" (I) apf_end) w)). simpl.
-            rewrite apfend_an.
-            apply coseqRecvIn. easy.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, p & [(l, s, w)])]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (p & [(l, s, w)]))). simpl. easy. easy.
+         apply coseqRecvIn.
+         apply coseqRecvIn. easy.
          split.
-         constructor. admit.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_apf_cont (ApnA3 a n) (p & [(l, s', w')]))]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (merge_apf_cont (ApnA3 a n) (p & [(l, s', w')])))). simpl. easy. easy.
          apply coseqRecvIn.
          apply IactdRER.
-         admit.
-         admit.
          easy.
-         admit.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInRAG in Hac.
+         rewrite Hin in Hac. destruct Hac; easy.
+         easy.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
        + exists(("A",rcv)::(p,rcv)::l1). exists(("A",rcv)::(p,rcv)::l2).
          split. pfold.
          rewrite(coseq_eq(act ("A" & [("add", I, p & [(l, s, w)])]))). unfold coseq_id. simpl.
@@ -329,26 +410,163 @@ Proof. intro m.
          pfold. constructor. simpl. left. easy.
          left.
          apply coseqINGA.
-         apply actdRNER. admit. admit.
+         apply actdRNER.
+         easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy. 
          easy.
          split.
-         constructor. admit.
-         constructor. admit.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, p & [(l, s, w)])]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (p & [(l, s, w)]))). simpl. easy. easy.
+         constructor.
+         case_eq(eqb p "A"); intro Heq.
+         ++ rewrite eqb_eq in Heq. subst.
+            rewrite(coseq_eq(act ("A" & [("add", I, "A" & [(l, s, w)])]))). unfold coseq_id. simpl.
+            apply CoInSplit1 with (y := ("A",rcv)) (ys := (act ("A" & [(l, s, w)]))). simpl. easy. easy.
+         ++ rewrite eqb_neq in Heq. subst.
+            rewrite(coseq_eq(act ("A" & [("add", I, p & [(l, s, w)])]))). unfold coseq_id. simpl.
+            apply CoInSplit2 with (y := ("A",rcv)) (ys := (act (p & [(l, s, w)]))). simpl. easy.
+            intro Hn. apply Heq. inversion Hn. easy.
+            rewrite(coseq_eq (act (p & [(l, s, w)]))). unfold coseq_id. simpl.
+            apply CoInSplit1 with (y := (p,rcv)) (ys := (act w)). simpl. easy. easy.
          apply coseqRecvIn. apply coseqRecvIn. easy.
          split.
          constructor.
-         admit.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_apf_cont (ApnA3 a n) (p & [(l, s', w')]))]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (merge_apf_cont (ApnA3 a n) (p & [(l, s', w')])))). simpl. easy. easy.
          apply coseqRecvIn. 
-         apply IactdRNER. admit. admit.
-         easy.
-         admit.
-         
+         apply IactdRNER. easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy. 
+         easy. simpl.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. destruct H6. right. left. easy. right. right. apply Hz. easy.
+         intro Hx.
+         destruct Hx. left. easy. destruct H6. right. left. easy. right. right. apply Hz. easy.
+
        (*send*)
-       admit.
+       rewrite <- meqBp3.
+       rewrite <- meqBp3 in H1, H4, H5.
+       destruct H5 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+       assert((p ! [(l, s, w)]) = 
+              (merge_bpf_cont bpf_end (p ! [(l, s, w)]))).
+       { rewrite bpfend_bn. easy. }
+       rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')])))). simpl.
+       assert(isInB (BpnB3 b n) p = false) as Hin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InNS; easy.
+       }
+       specialize(classic (coseqIn (p, snd) (act w))); intro Hc.
+       destruct Hc as [Hc | Hc].
+       + exists (("A", rcv)::l1). exists (("A", rcv)::l2).
+         split.
+         rewrite(coseq_eq(act ("A" & [("add", I, p ! [(l, s, w)])]))). unfold coseq_id. simpl.
+         pfold. constructor. simpl. left. easy.
+         left.
+         rewrite H5.
+         apply actdSER. simpl. easy. easy. rewrite bpfend_bn.
+         apply coseqINGA.  easy.
+         split.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')]))]))). unfold coseq_id. simpl.
+         pfold. constructor. simpl. left. easy.
+         left.
+         apply actdSER. 
+         easy. 
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hin in Hac. destruct Hac; easy.
+         apply coseqINGA. easy.
+         split.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, p ! [(l, s, w)])]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (p ! [(l, s, w)])) ). simpl. easy. easy.
+         apply coseqRecvIn.
+         apply coseqSendIn. easy.
+         split.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')]))]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')])))). simpl. easy. easy.
+         apply coseqRecvIn.
+         apply IactdSER. easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hin in Hac. destruct Hac; easy.
+         easy.
+         simpl. 
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
+       + exists(("A",rcv)::(p,snd)::l1). exists(("A",rcv)::(p,snd)::l2).
+         split. pfold.
+         rewrite(coseq_eq(act ("A" & [("add", I, p ! [(l, s, w)])]))). unfold coseq_id. simpl.
+         constructor. simpl. left. easy.
+         left.
+         rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+         pfold.
+         constructor. simpl. right. left. easy.
+         left.
+         apply coseqINGA. apply coseqINGA. easy.
+         split.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')]))])) ). unfold coseq_id. simpl.
+         pfold. constructor. simpl. left. easy.
+         left.
+         apply coseqINGA.
+         apply actdSNER.
+         easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy.
+         easy.
+         split.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, p ! [(l, s, w)])]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys := (act (p ! [(l, s, w)])) ). simpl. easy. easy.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, p ! [(l, s, w)])]))). unfold coseq_id. simpl.
+         apply CoInSplit2 with (y := ("A",rcv)) (ys := (act (p ! [(l, s, w)])) ). simpl. easy. easy.
+         rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := (p,snd)) (ys := (act w) ). simpl. easy. easy.
+         apply coseqRecvIn. apply coseqSendIn. easy.
+         split.
+         constructor.
+         rewrite(coseq_eq(act ("A" & [("add", I, merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')]))]))). unfold coseq_id. simpl.
+         apply CoInSplit1 with (y := ("A",rcv)) (ys :=  (act (merge_bpf_cont (BpnB3 b n) (p ! [(l, s', w')])))). simpl. easy. easy.
+         apply coseqRecvIn. 
+         apply IactdSNER. easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy.
+         easy. simpl.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. destruct H6. right. left. easy. right. right. apply Hz. easy.
+         intro Hx.
+         destruct Hx. left. easy. destruct H6. right. left. easy. right. right. apply Hz. easy.
        (*end*)
-       admit.
+       rewrite(coseq_eq(act ("A" & [("add", I, end)]))). unfold coseq_id. simpl.
+       rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (end))). simpl.
+       rewrite(coseq_eq(act ("A" & [("add", I, end)]))). unfold coseq_id. simpl.
+       rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
+       exists[("A",rcv)]. exists[("A",rcv)].
+       split. pfold. constructor. simpl. left. easy.
+       left. pfold. constructor.
+       
+       split. pfold. constructor. simpl. left. easy.
+       left. pfold. constructor.
+       split. constructor.
+       simpl.
+       apply CoInSplit1 with (y := ("A",rcv)) (ys := {| force := conil |} ). simpl. easy. easy.
+       constructor.
+       split. constructor.
+       apply CoInSplit1 with (y := ("A",rcv)) (ys := {| force := conil |} ). simpl. easy. easy.
+       constructor.
+       easy.
        apply refinementR3_mon.
-Admitted.
+Qed.
 
 Lemma refm2: forall m W1 W2, 
   refinement W1 W2 ->
@@ -620,40 +838,6 @@ Proof. intros n m.
        unfold w7,w5 in HH. easy.
 
        easy.
-       
-
-(*        exists actL.
-       exists actL.
-       split.
-       apply acteqr1.
-       split. rewrite apend_an.
-       apply acteqr2.
-       split.
-       apply acteqr3.
-       rewrite apend_an.
-       split.
-       apply acteqr4.
-       easy.
-
-       clear Hb.
-       exists actL.
-       exists actL.
-       split.
-       apply acteqr5.
-       split.
-       apply acteqr6.
-       split.
-       apply acteqr7.
-       split.
-       apply acteqr8.
-       easy. *)
-       
-       
-       
-       
-       
-       
-
 Qed.
 
 Lemma ltB_rcp: lt2stC ltB rcp.
