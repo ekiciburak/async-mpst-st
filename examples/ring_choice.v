@@ -54,6 +54,18 @@ Proof. unfold actL.
        right. exact CIH.
 Qed.
 
+Lemma acteqr9: coseqInLC (act w3) actL.
+Proof. unfold actL.
+       pcofix CIH.
+       rewrite(st_eq w3). simpl.
+       rewrite(coseq_eq(act ("A" & [("add", I, "C" ! [("sub", I, w3)])]))). unfold coseq_id. simpl.
+       pfold. constructor. simpl.  left. easy.
+       left. 
+       rewrite(coseq_eq(act ("C" ! [("sub", I, w3)]))). unfold coseq_id. simpl.
+       pfold. constructor. simpl. right. left. easy.
+       right. exact CIH.
+Qed.
+
 Lemma acteqr2: coseqInLC (act w1) actL.
 Proof. unfold actL.
        pcofix CIH.
@@ -66,6 +78,19 @@ Proof. unfold actL.
        right. exact CIH.
 Qed.
 
+Lemma acteqr10: coseqInLC (act w4) actL.
+Proof. unfold actL.
+       pcofix CIH.
+       rewrite(st_eq w4). simpl.
+       rewrite(coseq_eq(act ("C" ! [("sub", I, "A" & [("add", I, w4)])]))). unfold coseq_id. simpl.
+       pfold. constructor. simpl. right. left. easy.
+       left. 
+       rewrite(coseq_eq(act ("A" & [("add", I, w4)]))). unfold coseq_id. simpl.
+       pfold. constructor. simpl. left. easy.
+       right. exact CIH.
+Qed.
+
+
 Lemma acteqr3: coseqInR actL (act w2).
 Proof. unfold actL.
        rewrite(st_eq w2). simpl.
@@ -76,6 +101,19 @@ Proof. unfold actL.
        apply CoInSplit1 with (y := ("A", rcv)) (ys := (act w2)). simpl. easy. easy.
        constructor.
        apply CoInSplit1 with (y := ("C", snd)) (ys := (act ("A" & [("add", I, w2)]))). simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma acteqr11: coseqInR actL (act w3).
+Proof. unfold actL.
+       rewrite(st_eq w3). simpl.
+       rewrite(coseq_eq(act ("A" & [("add", I, "C" ! [("sub", I, w3)])]))). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("A", rcv)) (ys := (act ("C" ! [("sub", I, w3)]))). simpl. easy. easy.
+       constructor.
+       apply CoInSplit2 with (y := ("A", rcv)) (ys := (act ("C" ! [("sub", I, w3)]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("C" ! [("sub", I, w3)]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("C", snd)) (ys := (act w3)). simpl. easy. easy.
        constructor.
 Qed.
 
@@ -92,6 +130,19 @@ Proof. unfold actL.
        constructor.
 Qed.
 
+Lemma acteqr12: coseqInR actL (act w4).
+Proof. unfold actL.
+       rewrite(st_eq w4). simpl.
+       rewrite(coseq_eq(act ("C" ! [("sub", I, "A" & [("add", I, w4)])]))). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit2 with (y := ("C", snd)) (ys := (act ("A" & [("add", I, w4)]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("A" & [("add", I, w4)]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("A", rcv)) (ys := (act w4)). simpl. easy. easy.
+       constructor.
+       apply CoInSplit1 with (y := ("C", snd)) (ys :=  (act ("A" & [("add", I, w4)]))). simpl. easy. easy.
+       constructor.
+Qed.
+
 Lemma acteqr5: coseqInLC (act ("A" & [("add", I, w2)])) actL.
 Proof. unfold actL.
        rewrite(coseq_eq(act ("A" & [("add", I, w2)]))). unfold coseq_id. simpl.
@@ -101,6 +152,15 @@ Proof. unfold actL.
        apply acteqr1.
 Qed.
 
+Lemma acteqr13: coseqInLC (act ("A" & [("add", I, w4)])) actL.
+Proof. unfold actL.
+       rewrite(coseq_eq(act ("A" & [("add", I, w4)]))). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       left.
+       apply acteqr10.
+Qed.
+
 Lemma acteqr6: coseqInLC (act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1)) actL.
 Proof. unfold actL.
        rewrite(coseq_eq(act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1))). unfold coseq_id. simpl.
@@ -108,6 +168,15 @@ Proof. unfold actL.
        constructor. simpl. left. easy.
        left.
        apply acteqr2.
+Qed.
+
+Lemma acteqr14: coseqInLC (act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w3)) actL.
+Proof. unfold actL.
+       rewrite(coseq_eq(act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w3))). unfold coseq_id. simpl.
+       pfold.
+       constructor. simpl. left. easy.
+       left.
+       apply acteqr9.
 Qed.
 
 Lemma acteqr7: coseqInR actL (act ("A" & [("add", I, w2)])).
@@ -123,6 +192,19 @@ Proof. unfold actL.
        constructor.
 Qed.
 
+Lemma acteqr15: coseqInR actL (act ("A" & [("add", I, w4)])).
+Proof. unfold actL.
+       rewrite(st_eq w4). simpl.
+       rewrite(coseq_eq(act ("A" & [("add", I, "C" ! [("sub", I, "A" & [("add", I, w4)])])]))). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("A", rcv)) (ys := (act ("C" ! [("sub", I, "A" & [("add", I, w4)])]))). simpl. easy. easy.
+       constructor.
+       apply CoInSplit2 with (y := ("A", rcv)) (ys := (act ("C" ! [("sub", I, "A" & [("add", I, w4)])]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("C" ! [("sub", I, "A" & [("add", I, w4)])]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("C", snd)) (ys := (act ("A" & [("add", I, w4)]))). simpl. easy. easy.
+       constructor.
+Qed.
+
 Lemma acteqr8: coseqInR actL (act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1)).
 Proof. unfold actL.
        rewrite(coseq_eq(act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w1))). unfold coseq_id. simpl.
@@ -135,6 +217,21 @@ Proof. unfold actL.
        apply CoInSplit2 with (y := ("A", rcv)) (ys := (act ("C" ! [("add", I, w1)]))). simpl. easy. easy.
        rewrite(coseq_eq(act ("C" ! [("add", I, w1)]))). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("C", snd)) (ys := (act w1)). simpl. easy. easy.
+       constructor.
+Qed.
+
+Lemma acteqr16: coseqInR actL (act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w3)).
+Proof. unfold actL.
+       rewrite(coseq_eq(act (merge_bp_cont "C" (bp_receivea "A" "add" (I)) w3))). unfold coseq_id. simpl.
+       constructor.
+       apply CoInSplit1 with (y := ("A", rcv)) (ys := (act w3)). simpl. easy. easy.
+       constructor.
+       apply CoInSplit2 with (y := ("A", rcv)) (ys := (act w3)). simpl. easy. easy.
+       rewrite(st_eq w3). simpl.
+       rewrite(coseq_eq(act ("A" & [("add", I, "C" ! [("sub", I, w3)])]))). unfold coseq_id. simpl.
+       apply CoInSplit2 with (y := ("A", rcv)) (ys := (act ("C" ! [("sub", I, w3)]))). simpl. easy. easy.
+       rewrite(coseq_eq(act ("C" ! [("sub", I, w3)]))). unfold coseq_id. simpl.
+       apply CoInSplit1 with (y := ("C", snd)) (ys := (act w3)). simpl. easy. easy.
        constructor.
 Qed.
 
@@ -1088,9 +1185,30 @@ Proof. pcofix CIH.
        apply Ha. constructor.
        rewrite apend_an.
        right. exact CIH.
-       admit.
-       admit.
-Admitted.
+
+       rewrite apend_an.
+       exists actL. exists actL.
+       split.
+       apply acteqr10.
+       split.
+       apply acteqr9.
+       split.
+       apply acteqr12.
+       split.
+       apply acteqr11.
+       easy.
+
+       exists actL. exists actL.
+       split.
+       apply acteqr13.
+       split.
+       apply acteqr14.
+       split.
+       apply acteqr15.
+       split.
+       apply acteqr16.
+       easy.
+Qed.
 
 Lemma refw8w6: forall k n m, refinement (w8 n m k) (w6 n m k).
 Proof. unfold w8, w6.
