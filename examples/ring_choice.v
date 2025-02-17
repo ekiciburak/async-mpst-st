@@ -905,13 +905,12 @@ Proof. intro l.
        apply refinementR3_mon.
 Qed.
 
-Lemma refmG1w2w1k: forall k l,
-  refinement (merge_dpf_contn (sShape l) w2 k) (merge_dpf_contn (rShape l) w1 k).
-Proof. Admitted.
+Fixpoint consK {A} (k: nat) (l: list A): list A :=
+  match k with
+    | 0   => nil
+    | S m => l ++ (consK m l)
+  end. 
 
-Lemma refmG1w4w3k: forall k l,
-  refinement (merge_dpf_contn (sShape l) w4 k) (merge_dpf_contn (rShape l) w3 k).
-Proof. Admitted.
 
 Definition actL := [("A",rcv); ("C",snd)].
 
@@ -2104,6 +2103,30 @@ Proof. unfold w8, w6.
          rewrite <- !meqDpf in IHk. easy.
 Qed.
 
+Lemma refmG1w2w1k: forall k l,
+  refinement (merge_dpf_contn (sShape l) w2 k) (merge_dpf_contn (rShape l) w1 k).
+Proof. intros.
+       rewrite <- !meqDpf.
+       revert l.
+       induction k; intros.
+       - simpl. rewrite !dpfend_dn. apply refw2w1.
+       - rewrite !DpnD3C !merge_mergeD.
+         apply refmG1.
+         easy.
+Qed.
+
+Lemma refmG1w4w3k: forall k l,
+  refinement (merge_dpf_contn (sShape l) w4 k) (merge_dpf_contn (rShape l) w3 k).
+Proof. intros.
+       rewrite <- !meqDpf.
+       revert l.
+       induction k; intros.
+       - simpl. rewrite !dpfend_dn. apply refw4w3.
+       - rewrite !DpnD3C !merge_mergeD.
+         apply refmG1.
+         easy.
+Qed.
+
 Lemma st_rcp: forall (l: list bool), subtype rcop rcp.
 Proof. intro l.
        unfold subtype.
@@ -2232,6 +2255,7 @@ Proof. intro l.
 
        easy.
 Qed.
+
 
 
 Lemma ltB_rcp: lt2stC ltB rcp.
