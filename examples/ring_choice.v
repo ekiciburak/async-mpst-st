@@ -60,36 +60,34 @@ Fixpoint sShape (l: list bool): Dpf :=
 
 Lemma refmG1: forall l W1 W2,
   refinement W1 W2 ->
-  exists l', refinement (merge_dpf_cont (sShape l) W1) (merge_dpf_cont (rShape l') W2).
+  refinement (merge_dpf_cont (sShape l) W1) (merge_dpf_cont (rShape l) W2).
 Proof. intro l.
        induction l; intros.
-       - simpl. exists nil. simpl. rewrite !dpfend_dn. easy.
+       - simpl. rewrite !dpfend_dn. easy.
        - case_eq a; intros.
          + subst. simpl.
            apply IHl in H.
-           destruct H as (l',H).
-           exists(true::l'). simpl.
            pfold.
            rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) (sShape l))) W1)). 
-           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) (rShape l'))) W2)). simpl.
-           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) (rShape l')) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) (rShape l))) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) (rShape l)) W2)). simpl.
            specialize(ref_b (upaco2 refinementR bot2)
            (merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)
-           (merge_dpf_cont (rShape l') W2)
+           (merge_dpf_cont (rShape l) W2)
            "C" "add" (I) (I)
            (bp_receivea "A" "add" (I)) 1
            ); intro HS.
            simpl in HS.
-           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("add", I, merge_dpf_cont (rShape l') W2)]))) in HS. simpl in HS.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("add", I, merge_dpf_cont (rShape l) W2)]))) in HS. simpl in HS.
            apply HS.
            constructor.
            left.
-           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l') W2))). simpl.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l) W2))). simpl.
            rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)). simpl.
            pfold.
            specialize(ref_a (upaco2 refinementR bot2)
            (merge_dpf_cont (sShape l) W1)
-           (merge_dpf_cont (rShape l') W2)
+           (merge_dpf_cont (rShape l) W2)
            "A" "add" (I) (I)
            (ap_end) 1
            ); intro HR.
@@ -489,29 +487,27 @@ Proof. intro l.
        apply refinementR3_mon.
          + subst. simpl.
            apply IHl in H.
-           destruct H as (l',H).
-           exists(false::l'). simpl.
            pfold.
            rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) (sShape l))) W1)).
-           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) (rShape l'))) W2)). simpl.
-           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) (rShape l')) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) (rShape l))) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) (rShape l)) W2)). simpl.
            specialize(ref_b (upaco2 refinementR bot2)
            (merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)
-           (merge_dpf_cont (rShape l') W2)
+           (merge_dpf_cont (rShape l) W2)
            "C" "sub" (I) (I)
            (bp_receivea "A" "add" (I)) 1
            ); intro HS.
            simpl in HS.
-           rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("sub", I, merge_dpf_cont (rShape l') W2)])))) in HS. simpl in HS.
+           rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("sub", I, merge_dpf_cont (rShape l) W2)])))) in HS. simpl in HS.
            apply HS.
            constructor.
            left.
-           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l') W2))). simpl.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l) W2))). simpl.
            rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)). simpl.
            pfold.
            specialize(ref_a (upaco2 refinementR bot2)
            (merge_dpf_cont (sShape l) W1)
-           (merge_dpf_cont (rShape l') W2)
+           (merge_dpf_cont (rShape l) W2)
            "A" "add" (I) (I)
            (ap_end) 1
            ); intro HR.
@@ -908,6 +904,14 @@ Proof. intro l.
        easy.
        apply refinementR3_mon.
 Qed.
+
+Lemma refmG1w2w1k: forall k l,
+  refinement (merge_dpf_contn (sShape l) w2 k) (merge_dpf_contn (rShape l) w1 k).
+Proof. Admitted.
+
+Lemma refmG1w4w3k: forall k l,
+  refinement (merge_dpf_contn (sShape l) w4 k) (merge_dpf_contn (rShape l) w3 k).
+Proof. Admitted.
 
 Definition actL := [("A",rcv); ("C",snd)].
 
@@ -2100,9 +2104,8 @@ Proof. unfold w8, w6.
          rewrite <- !meqDpf in IHk. easy.
 Qed.
 
-
-Lemma st_rcp: forall (n m: nat), subtype rcop rcp.
-Proof. intros n m.
+Lemma st_rcp: forall (l: list bool), subtype rcop rcp.
+Proof. intro l.
        unfold subtype.
        assert (singleton w2) as Hw2.
        { pcofix CIH. rewrite(st_eq w2). simpl.
@@ -2209,11 +2212,10 @@ Proof. intros n m.
        apply refw2w1.
        
        split.
-       exists (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)).
-       exists (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)).
+       exists (sShape l).
+       exists (rShape l).
        intro k.
-       specialize (refw7w5 k n m); intro HH.
-       unfold w7,w5 in HH. easy.
+       apply refmG1w2w1k.
 
        split.
        exists dpf_end. exists dpf_end. intro k.
@@ -2223,14 +2225,14 @@ Proof. intros n m.
        apply refw4w3.
 
        split.
-       exists (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)).
-       exists (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)).
+       exists (sShape l).
+       exists (rShape l).
        intro k.
-       specialize (refw8w6 k n m); intro HH.
-       unfold w7,w5 in HH. easy.
+       apply refmG1w4w3k.
 
        easy.
 Qed.
+
 
 Lemma ltB_rcp: lt2stC ltB rcp.
 Proof. unfold ltB.
@@ -2337,7 +2339,7 @@ Proof. unfold ltBOp.
        easy.
 Qed.
 
-Lemma ltB_ltBop: forall (n m: nat), subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
+Lemma ltB_ltBop: forall (l: list bool), subltype ltBOp ltB rcop rcp ltBop_rcop ltB_rcp.
 Proof. unfold subltype.
        exact st_rcp.
 Qed.
