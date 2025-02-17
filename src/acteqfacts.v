@@ -263,6 +263,22 @@ Proof. intro s.
        destruct s; intros; easy.
 Qed.
 
+Lemma dpf_eqb_refl: forall a, Dpf_eqb a a = true.
+Proof. intro a.
+       induction a; intros.
+       - simpl. rewrite !eqb_refl. rewrite eqbs_refl.
+         rewrite IHa. easy.
+       - simpl. rewrite !eqb_refl. rewrite eqbs_refl.
+         rewrite IHa. easy.
+       - simpl. easy.
+Qed.
+
+Lemma dpf_eqb_eq: forall a b, Dpf_eqb a b <-> a = b.
+Admitted.
+
+Lemma dpf_eqb_neq: forall a b, Dpf_eqb a b = false <-> a <> b.
+Admitted.
+
 Lemma apf_eqb_eq: forall a b, Apf_eqb a b <-> a = b.
 Proof. intro a.
        induction a; intros.

@@ -5,6 +5,7 @@ From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
 Require Import Setoid.
+Require Import Coq.Arith.Arith.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
@@ -39,6 +40,299 @@ Definition w6 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d1 n) (DpnD3
 Definition w7 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w2 k.
 Definition w8 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w4 k.
 
+
+Print Dpf.
+
+Fixpoint Dshape12 (d: Dpf): bool :=
+  match d with
+    | dpf_receive p l s d' => 
+      (eqb p "A") && (eqb l "add") && (eqbs s (I)) &&
+      match d' with
+        | dpf_send p l s d'' => 
+          (eqb p "C") && ((eqb l "add") || (eqb l "sub")) && (eqbs s (I)) && Dshape12 d''
+        | _                     => false
+      end
+    | dpf_end              => true
+    | _                    => false
+  end.
+
+Fixpoint Dshape34 (d: Dpf): bool :=
+  match d with
+    | dpf_send p l s d' => 
+      (eqb p "C") && ((eqb l "add") || (eqb l "sub")) && (eqbs s (I)) &&
+      match d' with
+        | dpf_receive p l s d'' => 
+          (eqb p "A") && (eqb l "add") && (eqbs s (I)) && Dshape34 d''
+        | _                     => false
+      end
+    | dpf_end           => true
+    | _                 => false
+  end.
+
+Fixpoint Dshapes (d1 d2: Dpf) (n: nat): bool :=
+  match (d1, d2) with
+    | (dpf_send p1 l1 s1 d1', dpf_receive q1 l2 s2 d2') =>
+      (eqb p1 q1) && (eqb l1 l2) && (eqbs s1 s2) && 
+      match (d1', d2') with
+        | (dpf_receive p1' l1' s1' d1'', dpf_send q1' l2' s2' d2'') => 
+          (eqb p1' q1') && (eqb l1' l2') && (eqbs s1' s2') &&  Dshapes d1'' d2'' (S (S n))
+        | _                       => false
+      end
+    | (dpf_end, dpf_end) => true
+    | _                  => false
+  end.
+
+Fixpoint rShape (l: list bool): Dpf :=
+  match l with
+    | nil   => dpf_end
+    | x::xs => if x then 
+               dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) (rShape xs))
+               else
+               dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) (rShape xs))
+  end.
+
+Fixpoint sShape (l: list bool): Dpf :=
+  match l with
+    | nil   => dpf_end
+    | x::xs => if x then 
+               dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) (sShape xs))
+               else
+               dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) (sShape xs))
+  end.
+
+Lemma refmG1: forall l W1 W2,
+  refinement W1 W2 ->
+  exists l', refinement (merge_dpf_cont (sShape l) W1) (merge_dpf_cont (rShape l') W2).
+Proof. intro l.
+       induction l; intros.
+       - simpl. exists nil. simpl. rewrite !dpfend_dn. easy.
+       - case_eq a; intros.
+         + subst. simpl.
+           apply IHl in H.
+           destruct H as (l',H).
+           exists(true::l'). simpl.
+           pfold.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) (sShape l))) W1)). 
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) (rShape l'))) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) (rShape l')) W2)). simpl.
+           specialize(ref_b (upaco2 refinementR bot2)
+           (merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)
+           (merge_dpf_cont (rShape l') W2)
+           "C" "add" (I) (I)
+           (bp_receivea "A" "add" (I)) 1
+           ); intro HS.
+           simpl in HS.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("add", I, merge_dpf_cont (rShape l') W2)]))) in HS. simpl in HS.
+           apply HS.
+           constructor.
+           left.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l') W2))). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)). simpl.
+           pfold.
+           specialize(ref_a (upaco2 refinementR bot2)
+           (merge_dpf_cont (sShape l) W1)
+           (merge_dpf_cont (rShape l') W2)
+           "A" "add" (I) (I)
+           (ap_end) 1
+           ); intro HR.
+           simpl in HR. rewrite !apend_an in HR.
+           apply HR.
+           constructor.
+           left. easy.
+           
+           clear HS HR.
+           
+(*        apply IHl in H. *)
+       apply refEquivR in H.
+       pinversion H.
+       (*receive*)
+       rewrite <- meqAp3 in H1, H4, H5.
+       rewrite <- meqAp3.
+       subst.
+       destruct H5 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+       specialize(classic (coseqIn (p, rcv) (act w))); intro Hc.
+       assert((p & [(l0, s, w)]) = 
+              (merge_apf_cont apf_end (p & [(l0, s, w)]))).
+       { rewrite apfend_an. easy. }
+       assert(isInA (ApnA3 a n) p = false) as Hnin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InN; easy.
+       }
+       destruct Hc as [Hc | Hc].
+       + exists l1. exists l2.
+         split.
+         rewrite H5. apply actdRER. easy. easy.
+         rewrite apfend_an. easy.
+         split.
+         apply actdRER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InN; easy.
+
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInRAG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+
+         easy.
+         split.
+         rewrite H5.
+         apply IactdRER. simpl. easy. easy.
+         rewrite apfend_an. easy.
+         split.
+         apply IactdRER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InN; easy.
+
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInRAG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+         easy.
+         easy.
+       + exists ((p, rcv)::l1). exists ((p, rcv)::l2).
+         split.
+         rewrite(coseq_eq(act (p & [(l0, s, w)]))). unfold coseq_id. simpl.
+         pfold.
+         constructor. simpl. left. easy.
+         left.
+         apply coseqINGA. easy.
+         split.
+         apply actdRNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InN; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy.
+         easy.
+         split.
+         rewrite H5.
+         apply IactdRNER. simpl. easy. easy. rewrite apfend_an. easy.
+         split.
+         apply IactdRNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InN; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInRARevG. right. easy.
+         easy.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
+       (*send*)
+       rewrite <- meqBp3.
+       rewrite <- meqBp3 in H1, H4, H5.
+       destruct H5 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
+       assert((p ! [(l0, s, w)]) = 
+              (merge_bpf_cont bpf_end (p ! [(l0, s, w)]))).
+       { rewrite bpfend_bn. easy. }
+       assert(isInB (BpnB3 b n) p = false) as Hnin.
+       { case_eq n; intros.
+         - easy.
+         - rewrite <- InNS; easy.
+       }
+       specialize(classic (coseqIn (p, snd) (act w))); intro Hc.
+       destruct Hc as [Hc | Hc].
+       + exists l1. exists l2.
+         split.
+         rewrite H5.
+         apply actdSER. simpl. easy. easy.
+         rewrite bpfend_bn. easy.
+         split.
+         apply actdSER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+         easy.
+         split.
+         apply coseqSendIn. easy.
+         split.
+         apply IactdSER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExL _ _ _ Hc H4); intro Hac.
+         apply csInSBG in Hac.
+         rewrite Hnin in Hac. destruct Hac; easy.
+         easy.
+         easy.
+       + exists ((p, snd)::l1). exists ((p, snd)::l2).
+         split.
+         rewrite(coseq_eq(act (p ! [(l0, s, w)]))). unfold coseq_id. simpl.
+         pfold.
+         constructor. simpl. left. easy.
+         left.
+         apply coseqINGA. easy.
+         split.
+         apply actdSNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy.
+         easy.
+         split.
+         rewrite H5.
+         apply IactdSNER. simpl. easy. easy. rewrite bpfend_bn. easy.
+         split.
+         apply IactdSNER.
+         case_eq n; intros Hn.
+         easy. rewrite <- InNS; easy.
+         specialize(actionExLN _ _ _ Hc H4); intro Hac.
+         intro HH. apply Hac.
+         apply csInSBRevG. right. easy. easy.
+         intro x. split. simpl. intro Hx.
+         destruct Hx. left. easy. right. apply Hz. easy.
+         simpl. intro Hx. 
+         destruct Hx. left. easy. right. apply Hz. easy.
+         
+       (*end*)
+       exists nil. exists nil.
+       rewrite(coseq_eq(act (end))). unfold coseq_id. simpl.
+       split. pfold. constructor.
+       split. pfold. constructor.
+       split. constructor.
+       split. constructor. easy.
+       apply refinementR3_mon.
+
+       (*2nd goal*)
+           clear HS.
+
+           admit.
+         + subst. simpl.
+           apply IHl in H.
+           destruct H as (l',H).
+           exists(false::l'). simpl.
+           pfold.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) (sShape l))) W1)).
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) (rShape l'))) W2)). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) (rShape l')) W2)). simpl.
+           specialize(ref_b (upaco2 refinementR bot2)
+           (merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)
+           (merge_dpf_cont (rShape l') W2)
+           "C" "sub" (I) (I)
+           (bp_receivea "A" "add" (I)) 1
+           ); intro HS.
+           simpl in HS.
+           rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [("sub", I, merge_dpf_cont (rShape l') W2)])))) in HS. simpl in HS.
+           apply HS.
+           constructor.
+           left.
+           rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (rShape l') W2))). simpl.
+           rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (sShape l)) W1)). simpl.
+           pfold.
+           specialize(ref_a (upaco2 refinementR bot2)
+           (merge_dpf_cont (sShape l) W1)
+           (merge_dpf_cont (rShape l') W2)
+           "A" "add" (I) (I)
+           (ap_end) 1
+           ); intro HR.
+           simpl in HR. rewrite !apend_an in HR.
+           apply HR.
+           constructor. left. easy.
+           admit.
+           admit.
+Admitted.
 
 Definition actL := [("A",rcv); ("C",snd)].
 

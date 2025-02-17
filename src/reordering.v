@@ -644,6 +644,13 @@ Arguments dp_mergea {_} _ _ _. *)
 (* Arguments dp_receive _ _ _.
 Arguments dp_send _ _ _. *)
 
+Fixpoint Dpf_eqb (a: Dpf) (b: Dpf): bool :=
+  match (a, b) with
+    | (dpf_receive p l s a', dpf_receive q l' s' b') => eqb p q && eqb l l' && eqbs s s' && Dpf_eqb a' b'
+    | (dpf_send p l s a', dpf_send q l' s' b')       => eqb p q && eqb l l' && eqbs s s' && Dpf_eqb a' b'
+    | (dpf_end, dpf_end)                             => true
+    | _                                              => false
+  end.
 
 CoFixpoint merge_dp_cont (d: Dp) (w: st): st :=
   match d with 
