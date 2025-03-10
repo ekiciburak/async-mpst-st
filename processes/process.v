@@ -53,7 +53,7 @@ Inductive session: Type :=
   | spar: session -> session -> session.
 
 Notation "p '<--' P '|' h" :=  (sind p P h) (at level 50, no associativity).
-Notation "s1 '|||' s2" :=  (spar s1 s2) (at level 50, no associativity): type_scope.
+Notation "s1 '||||' s2" :=  (spar s1 s2) (at level 50, no associativity): type_scope.
 
 Lemma congr_ps_end  : ps_end  = ps_end.
 Proof. congruence. Qed.

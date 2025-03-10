@@ -10,22 +10,22 @@ Require Import Morphisms.
 Local Open Scope string_scope.
 
 Definition M1 (p q: participant) (l: label): session :=
-  (p <-- ps_receive q [(l,isae(aevar "x"),ps_end)] | nilq) ||| (q <-- ps_send p l (isval (vint 42%Z)) ps_end | nilq).
+  (p <-- ps_receive q [(l,isae(aevar "x"),ps_end)] | nilq) |||| (q <-- ps_send p l (isval (vint 42%Z)) ps_end | nilq).
 
 Definition M1' (p q: participant) (l: label): session :=
-  (p <-- ps_end | nilq) ||| (q <-- ps_end | nilq).
+  (p <-- ps_end | nilq) |||| (q <-- ps_end | nilq).
 
 Example redM1: forall (p q: participant) (l: label), beta_multistep (M1 p q l) (M1' p q l).
 Proof. intros.
        unfold beta_multistep, M1, M1'.
        setoid_rewrite scomm.
        apply multi_step with (y := 
-         ((q <-- ps_end | (conq nilq (mesq p l (vint 42) nilq))) ||| 
+         ((q <-- ps_end | (conq nilq (mesq p l (vint 42) nilq))) ||||
           (p <-- ps_receive q [(l, isae (aevar "x"), ps_end)] | nilq))).
        apply r_send with (c := estate). simpl.
        setoid_rewrite scomm.
        apply multi_step with (y := 
-         (((p <-- subst_expr (ps_receive q [(l, isae (aevar "x"), ps_end)]) l (isval (vint 42)) | nilq) ||| 
+         (((p <-- subst_expr (ps_receive q [(l, isae (aevar "x"), ps_end)]) l (isval (vint 42)) | nilq) |||| 
           (q <-- ps_end | nilq)))).
        specialize (r_rcv p q l ([(l, isae (aevar "x"), ps_end)])
                          (vint 42) (ps_end) nilq nilq
@@ -51,16 +51,16 @@ Definition PBob: process :=
 Definition PCarol: process :=
   ps_receive "Bob" [("l2",isae (aevar "x"),ps_send "Alice" "l3" (isae (aesucc (aevar "x")))  ps_end)].
 
-Definition MS: session := ("Alice" <-- PAlice | nilq) ||| ("Bob" <-- PBob | nilq) ||| ("Carol" <-- PCarol | nilq).
+Definition MS: session := ("Alice" <-- PAlice | nilq) |||| ("Bob" <-- PBob | nilq) |||| ("Carol" <-- PCarol | nilq).
 
-Definition MS': session := ("Alice" <-- ps_end | nilq) ||| ("Bob" <-- ps_end | nilq) ||| ("Carol" <-- ps_end | nilq).
+Definition MS': session := ("Alice" <-- ps_end | nilq) |||| ("Bob" <-- ps_end | nilq) |||| ("Carol" <-- ps_end | nilq).
 
 Example redMS: beta_multistep MS MS'.
 Proof. intros.
        unfold beta_multistep, MS, MS', PAlice.
        apply multi_step with
-       (y := (("Alice" <-- (ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)]) | conq nilq (mesq "Bob" "l1" (vint 50) nilq)) ||| 
-             ("Bob" <-- PBob | nilq)) ||| ("Carol" <-- PCarol | nilq)).
+       (y := (("Alice" <-- (ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)]) | conq nilq (mesq "Bob" "l1" (vint 50) nilq)) ||||
+             ("Bob" <-- PBob | nilq)) |||| ("Carol" <-- PCarol | nilq)).
        setoid_rewrite sassoc.
        apply r_send with (c := estate). simpl.
 
@@ -71,8 +71,8 @@ Proof. intros.
 
        apply multi_step with
        (y := ("Bob" <-- subst_expr (PBob) "l1" (isval (vint 50)) | nilq)
-              ||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq)
-              ||| ("Carol" <-- PCarol | nilq)).
+              |||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq)
+              |||| ("Carol" <-- PCarol | nilq)).
        apply r_rcv.
        simpl. unfold exprR. 
        unfold PCarol.
@@ -82,8 +82,8 @@ Proof. intros.
 
        apply multi_step with
        (y := ((("Bob" <-- ps_end | conq nilq (mesq "Carol" "l2" (vint 100) nilq) )
-               ||| ("Carol" <-- ps_receive "Bob" [("l2", isae (aevar "x"), ps_send "Alice" "l3" (isae (aesucc (aevar "x"))) ps_end)] | nilq))
-               ||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))).
+               |||| ("Carol" <-- ps_receive "Bob" [("l2", isae (aevar "x"), ps_send "Alice" "l3" (isae (aesucc (aevar "x"))) ps_end)] | nilq))
+               |||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))).
        setoid_rewrite sassoc.
        apply r_send with (c := estate). simpl.
 
@@ -94,8 +94,8 @@ Proof. intros.
 
        apply multi_step with
        (y := ((("Carol" <-- subst_expr (ps_receive "Bob" [("l2", isae (aevar "x"), ps_send "Alice" "l3" (isae (aesucc (aevar "x")) ) ps_end)]) "l2" (isval (vint 100)) | nilq)
-                 ||| ("Bob" <-- ps_end | nilq))
-                 ||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))).
+                 |||| ("Bob" <-- ps_end | nilq))
+                 |||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))).
        apply r_rcv. simpl. unfold exprR.
        simpl.
 
@@ -104,8 +104,8 @@ Proof. intros.
 
        apply multi_step with
        (y := ((("Carol" <-- ps_end | conq nilq (mesq "Alice" "l3" (eval estate (isae (aesucc (aeval 100)))) nilq) )
-               ||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))
-               ||| ("Bob" <-- ps_end | nilq))).
+               |||| ("Alice" <-- ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)] | nilq))
+               |||| ("Bob" <-- ps_end | nilq))).
        setoid_rewrite sassoc.
        apply r_send with (c := estate). simpl.
 
@@ -116,8 +116,8 @@ Proof. intros.
 
       apply multi_step with
       (y := ((("Alice" <-- subst_expr (ps_receive "Carol" [("l3", isae (aevar "x"), ps_end)]) "l3" (isval (vint 101)) | nilq) 
-             ||| ("Carol" <-- ps_end | nilq))
-             ||| ("Bob" <-- ps_end | nilq))).
+             |||| ("Carol" <-- ps_end | nilq))
+             |||| ("Bob" <-- ps_end | nilq))).
       apply r_rcv. simpl.
 
       apply multi_refl.

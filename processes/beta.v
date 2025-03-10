@@ -138,21 +138,21 @@ Inductive pcong: relation process :=
   | pmuUnf: forall p, pcong (ps_mu p) (unfold_muP p).
 
 Inductive scong: relation session :=
-  | sann   : forall p M, scong ((p <-- ps_end | nilq) ||| M) M
-  | scomm  : forall M1 M2, scong (M1 ||| M2) (M2 ||| M1)
-  | sassoc : forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M2 ||| M3))
+  | sann   : forall p M, scong ((p <-- ps_end | nilq) |||| M) M
+  | scomm  : forall M1 M2, scong (M1 |||| M2) (M2 |||| M1)
+  | sassoc : forall M1 M2 M3, scong (M1 |||| M2 |||| M3) (M1 |||| (M2 |||| M3))
 (*   | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) ((M1 ||| M2) ||| M3) *)
-  | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) (M1 ||| (M3 ||| M2)) 
+  | sassoc2: forall M1 M2 M3, scong (M1 |||| M2 |||| M3) (M1 |||| (M3 |||| M2)) 
   | scongl : forall p P Q h1 h2 M, pcong P Q -> qcong h1 h2 -> 
-                                   scong ((p <-- P | h1) ||| M) ((p <-- Q | h2) ||| M).
+                                   scong ((p <-- P | h1) |||| M) ((p <-- Q | h2) |||| M).
 
 Inductive beta: relation session :=
-  | r_send : forall p q l e P hp M c, beta ((p <-- (ps_send q l e P) | hp) ||| M) 
-                                           ((p <-- P | conq hp (mesq q l (eval c e) nilq)) ||| M)
-  | r_rcv   : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) ||| (q <-- Q | conq (mesq p l v nilq) hq) ||| M)
-                                                ((p <-- subst_expr (ps_receive q xs) l (isval v) | hp)  ||| (q <-- Q | hq) ||| M)
-  | r_cond_t: forall p e P Q h M c, eval c e = vbool true  -> beta ((p <-- ps_ite e P Q | h) ||| M) ((p <-- P | h) ||| M)
-  | r_cond_f: forall p e P Q h M c, eval c e = vbool false -> beta ((p <-- ps_ite e P Q | h) ||| M) ((p <-- Q | h) ||| M)
+  | r_send : forall p q l e P hp M c, beta ((p <-- (ps_send q l e P) | hp) |||| M) 
+                                           ((p <-- P | conq hp (mesq q l (eval c e) nilq)) |||| M)
+  | r_rcv   : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | conq (mesq p l v nilq) hq) |||| M)
+                                                ((p <-- subst_expr (ps_receive q xs) l (isval v) | hp)  |||| (q <-- Q | hq) |||| M)
+  | r_cond_t: forall p e P Q h M c, eval c e = vbool true  -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- P | h) |||| M)
+  | r_cond_f: forall p e P Q h M c, eval c e = vbool false -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- Q | h) |||| M)
   | r_struct: forall M1 M1' M2 M2', scong M1 M1' -> scong M2' M2 -> beta M1' M2' -> beta M1 M2.
 
 Declare Instance Equivalence_beta : Equivalence beta.

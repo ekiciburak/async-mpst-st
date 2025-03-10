@@ -1,4 +1,4 @@
-Require Import ST.processes.process ST.types.local ST.subtyping.subtyping.
+Require Import ST.processes.process ST.types.local ST.subtyping.subtyping ST.src.st ST.negations.nsubtyping.
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream.
@@ -124,7 +124,7 @@ Inductive tcP: theta -> process -> local -> Prop :=
                                     tcP c (ps_receive q (zip (zip L E) P)) (lt_receive q (zip (zip L S) T))
   | tc_condt: forall c e P Q T, tcE c e sbool -> tcP c P T -> tcP c Q T -> tcP c (ps_ite e P Q) T
   | tc_mu   : forall c P T, tcP (extendp c (ps_var 0) (lt_var 0)) P T -> tcP c (ps_mu P) (lt_mu T)
-  | tc_sst  : forall c P T T' p q r s, tcP c P T -> subltype2 T T' p q r s -> tcP c P T'.
+  | tc_sst  : forall c P T T' Tr Tr', tcP c P T -> lt2stC T Tr -> lt2stC T' Tr' -> subtype3 Tr Tr'  -> tcP c P T'.
 
 Lemma remark4_5: forall c e, tcE c (isbe e) sbool ->
                              tcP c (ps_ite (isbe e) (ps_send "q" "l1" (isval (vint 1%Z)) (ps_send "r" "l2" (isval (vint 2)) ps_end)) 

@@ -8,6 +8,7 @@ processes/process.v
 processes/beta.v
 types/local.v
 types/typecheck.v
+types/typenv.v
 src/stream.v
 src/st.v
 src/so.v
