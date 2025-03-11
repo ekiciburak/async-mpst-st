@@ -7,7 +7,6 @@ Local Open Scope string_scope.
 Import ListNotations.
 From MMaps Require Import MMaps.
 
-
 CoInductive coseq (A: Type): Type :=
   | conil : coseq A
   | cocons: A -> coseq A -> coseq A.
@@ -170,13 +169,13 @@ Definition enabled (F: ctx -> Prop) (pt: Path): Prop :=
 
 Definition hPR (p q: participant) (l: label) (pt: Path): Prop :=
   match pt with
-    | cocons (g, (lr p q l)) xs => True
+    | cocons (g, (lr a b l)) xs => if andb (String.eqb p a) (String.eqb q b) then True else False
     | _                         => False 
   end.
 
 Definition hPS (p q: participant) (l: label) (pt: Path): Prop :=
   match pt with
-    | cocons (g, (ls p q l)) xs => True
+    | cocons (g, (ls a b l)) xs => if andb (String.eqb p a) (String.eqb q b) then True else False
     | _                         => False 
   end.
 
@@ -214,10 +213,12 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
 
 Inductive livePath (pt: Path): Prop :=
   | L1: forall p q l s sig T,  enqueued p q l s sig T pt  -> eventually (hPR q p l) pt -> livePath pt
-  | L2: forall p q l s sig ys, dequeued p q l s sig ys pt -> eventually (hPR q p l) pt -> livePath pt.
+  | L2: forall p q l s sig ys, dequeued p q l s sig ys pt -> eventually (hPR p q l) pt -> livePath pt.
 
 Definition liveness := alwaysC livePath.
 
+
+Definition exGamma p q l s := M.add p (@conil ctx, lt_mu (lt_send q (cons (l, s, (lt_var 0)) nil))) M.empty.
 
 
 

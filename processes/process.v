@@ -8,31 +8,68 @@ Import ListNotations.
 Notation participant := string (only parsing).
 Notation label := string (only parsing).
 
-Inductive value: Type :=
- | vint : Z    -> value
- | vbool: bool -> value
- | vunit: unit -> value.
+Variant value: Type :=
+  | vint : Z    -> value
+  | vbool: bool -> value
+  | vnat : nat -> value.
 
-Inductive aexpr: Type :=
-  | aeval : Z      -> aexpr
-  | aevar : string -> aexpr
-  | aesucc: aexpr  -> aexpr
-  | aeinv : aexpr  -> aexpr.
+Inductive expr  : Type :=
+  | e_var : ( fin ) -> expr 
+  | e_val : ( value   ) -> expr 
+  | e_succ : ( expr   ) -> expr 
+  | e_neg : ( expr   ) -> expr 
+  | e_not : ( expr   ) -> expr 
+  | e_gt : ( expr   ) -> ( expr   ) -> expr
+  | e_plus: ( expr   ) -> ( expr   ) -> expr
+  | e_det : expr -> expr -> expr.
 
-Inductive bexpr: Type :=
-  | beval : bool   -> bexpr
-  | bevar : string -> bexpr
-  | beneg : bexpr  -> bexpr.
+Inductive stepE : expr -> expr -> Prop := 
+  | ec_succ  : forall e n, stepE e (e_val (vnat n)) -> stepE (e_succ e) (e_val (vnat (n+1)))
+  | ec_neg   : forall e n, stepE e (e_val (vint n)) -> stepE (e_neg e) (e_val (vint (-n)))
+  | ec_neg2  : forall e n, stepE e (e_val (vnat n)) -> stepE (e_neg e) (e_val (vint (-(Z.of_nat n)))) 
+  | ec_t_f   : forall e,   stepE e (e_val (vbool true)) -> stepE (e_not e) (e_val (vbool false))
+  | ec_f_t   : forall e,   stepE e (e_val (vbool false)) -> stepE (e_not e) (e_val (vbool true))
+  | ec_gt_t0 : forall e e' m n, Z.lt (Z.of_nat n) (Z.of_nat m) -> 
+                           stepE e (e_val (vnat m)) -> stepE e' (e_val (vnat n)) ->
+                           stepE (e_gt e e') (e_val (vbool true)) 
+  | ec_gt_t1 : forall e e' m n, Z.lt n (Z.of_nat m) -> 
+                           stepE e (e_val (vnat m)) -> stepE e' (e_val (vint n)) ->
+                           stepE (e_gt e e') (e_val (vbool true)) 
+  | ec_gt_t2 : forall e e' m n, Z.lt (Z.of_nat n) m -> 
+                           stepE e (e_val (vint m)) -> stepE e' (e_val (vnat n)) ->
+                           stepE (e_gt e e') (e_val (vbool true)) 
+  | ec_gt_t3 : forall e e' m n, Z.lt n m -> 
+                           stepE e (e_val (vint m)) -> stepE e' (e_val (vint n)) ->
+                           stepE (e_gt e e') (e_val (vbool true)) 
+  | ec_gt_f0 : forall e e' m n, Z.le (Z.of_nat m) (Z.of_nat n) -> 
+                           stepE e (e_val (vnat m)) -> stepE e' (e_val (vnat n)) ->
+                           stepE (e_gt e e') (e_val (vbool false)) 
+  | ec_gt_f1 : forall e e' m n, Z.le (Z.of_nat m) n -> 
+                           stepE e (e_val (vnat m)) -> stepE e' (e_val (vint n)) ->
+                           stepE (e_gt e e') (e_val (vbool false)) 
+  | ec_gt_f2 : forall e e' m n, Z.le m (Z.of_nat n) -> 
+                           stepE e (e_val (vint m)) -> stepE e' (e_val (vnat n)) ->
+                           stepE (e_gt e e') (e_val (vbool false)) 
+  | ec_gt_f3 : forall e e' m n, Z.le m n -> 
+                           stepE e (e_val (vint m)) -> stepE e' (e_val (vint n)) ->
+                           stepE (e_gt e e') (e_val (vbool false)) 
+  | ec_plus0 : forall e e' m n, stepE e (e_val (vnat n)) -> stepE e' (e_val (vnat m)) -> 
+                           stepE (e_plus e e') (e_val (vint ((Z.of_nat n) + (Z.of_nat m))))
+  | ec_plus1 : forall e e' m n, stepE e (e_val (vnat n)) -> stepE e' (e_val (vint m)) -> 
+                           stepE (e_plus e e') (e_val (vint ((Z.of_nat n) + m)))
+  | ec_plus2 : forall e e' m n, stepE e (e_val (vint n)) -> stepE e' (e_val (vnat m)) -> 
+                           stepE (e_plus e e') (e_val (vint (n + (Z.of_nat m))))
+  | ec_plus3 : forall e e' m n, stepE e (e_val (vint n)) -> stepE e' (e_val (vint m)) -> 
+                           stepE (e_plus e e') (e_val (vint (n + m)))
+  | ec_detl  : forall m n v, stepE m v -> stepE (e_det m n) v
+  | ec_detr  : forall m n v, stepE n v -> stepE (e_det m n) v
+  | ec_refl  : forall e, stepE e e
+  | ec_trans : forall e e' e'', stepE e e' -> stepE e' e'' -> stepE e e''.
 
-Inductive expr: Type :=
-  | isval : value -> expr
-  | isae  : aexpr -> expr
-  | isbe  : bexpr -> expr
-  | isgt  : aexpr -> expr.
 
 Inductive mqueue: Type := 
   | nilq: mqueue
-  | mesq: participant -> label -> value -> mqueue -> mqueue.
+  | mesq: participant -> label -> expr -> mqueue -> mqueue.
 
 Fixpoint conq (m1 m2: mqueue): mqueue :=
   match m1 with
@@ -44,7 +81,7 @@ Inductive process  : Type :=
   | ps_var    : fin -> process 
   | ps_end    : process 
   | ps_send   : participant -> label -> expr -> process -> process 
-  | ps_receive: participant -> list(label*expr*process) -> process 
+  | ps_receive: participant -> list(label*process) -> process 
   | ps_ite    : expr -> process -> process -> process 
   | ps_mu     : process -> process.
 
@@ -58,10 +95,12 @@ Notation "s1 '||||' s2" :=  (spar s1 s2) (at level 50, no associativity): type_s
 Lemma congr_ps_end  : ps_end  = ps_end.
 Proof. congruence. Qed.
 
-Lemma congr_ps_send  { s0 : participant   } { s1 : label   } { s2 : expr   } { s3 : process   } { t0 : participant   } { t1 : label   } { t2 : expr   } { t3 : process   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) (H4 : s3 = t3) : ps_send  s0 s1 s2 s3 = ps_send  t0 t1 t2 t3 .
+Lemma congr_ps_send  { s0 : participant   } { s1 : label   } { s2 : expr   } { s3 : process   } { t0 : participant   } { t1 : label   } { t2 : expr   } { t3 : process   } 
+(H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) (H4 : s3 = t3) : ps_send  s0 s1 s2 s3 = ps_send  t0 t1 t2 t3 .
 Proof. congruence. Qed.
 
-Lemma congr_ps_receive  { s0 : participant   } { s1 : list (prod (prod (label  ) (expr  )) (process  )) } { t0 : participant   } { t1 : list (prod (prod (label  ) (expr  )) (process  )) } (H1 : s0 = t0) (H2 : s1 = t1) : ps_receive  s0 s1 = ps_receive  t0 t1 .
+Lemma congr_ps_receive  { s0 : participant   } { s1 : list (prod label process) } { t0 : participant   } { t1 : list (prod (label  ) (process  )) } 
+(H1 : s0 = t0) (H2 : s1 = t1) : ps_receive  s0 s1 = ps_receive  t0 t1 .
 Proof. congruence. Qed.
 
 Lemma congr_ps_ite  { s0 : expr   } { s1 : process   } { s2 : process   } { t0 : expr   } { t1 : process   } { t2 : process   } (H1 : s0 = t0) (H2 : s1 = t1) (H3 : s2 = t2) : ps_ite  s0 s1 s2 = ps_ite  t0 t1 t2 .
@@ -78,7 +117,7 @@ Fixpoint ren_process   (xiprocess : ( fin ) -> fin) (s : process ) : process  :=
     | ps_var  s => (ps_var ) (xiprocess s)
     | ps_end   => ps_end 
     | ps_send  s0 s1 s2 s3 => ps_send  ((fun x => x) s0) ((fun x => x) s1) ((fun x => x) s2) ((ren_process xiprocess) s3)
-    | ps_receive  s0 s1 => ps_receive  ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (ren_process xiprocess))) s1)
+    | ps_receive  s0 s1 => ps_receive  ((fun x => x) s0) ((list_map (prod_map(fun x => x) (ren_process xiprocess))) s1)
     | ps_ite  s0 s1 s2 => ps_ite  ((fun x => x) s0) ((ren_process xiprocess) s1) ((ren_process xiprocess) s2)
     | ps_mu  s0 => ps_mu  ((ren_process (upRen_process_process xiprocess)) s0)
     end.
@@ -91,7 +130,7 @@ Fixpoint subst_process   (sigmaprocess : ( fin ) -> process ) (s : process ) : p
     | ps_var  s => sigmaprocess s
     | ps_end   => ps_end 
     | ps_send  s0 s1 s2 s3 => ps_send  ((fun x => x) s0) ((fun x => x) s1) ((fun x => x) s2) ((subst_process sigmaprocess) s3)
-    | ps_receive  s0 s1 => ps_receive  ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (subst_process sigmaprocess))) s1)
+    | ps_receive  s0 s1 => ps_receive  ((fun x => x) s0) ((list_map (prod_map (fun x => x) (subst_process sigmaprocess))) s1)
     | ps_ite  s0 s1 s2 => ps_ite  ((fun x => x) s0) ((subst_process sigmaprocess) s1) ((subst_process sigmaprocess) s2)
     | ps_mu  s0 => ps_mu  ((subst_process (up_process_process sigmaprocess)) s0)
     end.
@@ -100,7 +139,7 @@ Fixpoint unfold_muP (s: process): process :=
   match s with
     | ps_mu p          => subst_process ((ps_mu p) .: ps_var) p
     | ps_send a l e p  => ps_send a l e (unfold_muP p)
-    | ps_receive s0 s1 => ps_receive ((fun x => x) s0) ((list_map (prod_map (prod_map (fun x => x) (fun x => x)) (unfold_muP))) s1)
+    | ps_receive s0 s1 => ps_receive ((fun x => x) s0) ((list_map (prod_map (fun x => x) (unfold_muP))) s1)
     | ps_ite  s0 s1 s2 => ps_ite  ((fun x => x) s0) ((unfold_muP) s1) ((unfold_muP) s2)
     | _                 => s
   end.
@@ -108,14 +147,15 @@ Fixpoint unfold_muP (s: process): process :=
 (*
 Check ps_send.
 Check vint.
-Let pr := ps_mu (ps_send "p" "l" (eval (vint 10)) (ps_var 0)).
-Let pr2 := Eval compute in unfold_muP pr.
+#[local] Definition pr := ps_mu (ps_send "p" "l" (isval (vint 10)) (ps_var 1)).
+#[local] Definition pr2 := Eval compute in unfold_muP pr.
 Compute unfold_muP pr2.
-Print pr. *)
-
+Print pr. 
+*)
 
 (* Parameters (p: process).
 Check p [ps_mu p .: ps_var]. *)
+
 
 Definition upId_process_process  (sigma : ( fin ) -> process ) (Eq : forall x, sigma x = (ps_var ) x) : forall x, (up_process_process sigma) x = (ps_var ) x :=
   fun n => match n with
@@ -128,7 +168,7 @@ Fixpoint idSubst_process  (sigmaprocess : ( fin ) -> process ) (Eqprocess : fora
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((idSubst_process sigmaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_id (prod_id (prod_id (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (idSubst_process sigmaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_id (prod_id (fun x => (eq_refl) x) (idSubst_process sigmaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((idSubst_process sigmaprocess Eqprocess) s1) ((idSubst_process sigmaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((idSubst_process (up_process_process sigmaprocess) (upId_process_process (_) Eqprocess)) s0)
     end.
@@ -144,7 +184,7 @@ Fixpoint extRen_process   (xiprocess : ( fin ) -> fin) (zetaprocess : ( fin ) ->
     | ps_var  s => (ap) (ps_var ) (Eqprocess s)
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((extRen_process xiprocess zetaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext (prod_ext (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (extRen_process xiprocess zetaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext (fun x => (eq_refl) x) (extRen_process xiprocess zetaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((extRen_process xiprocess zetaprocess Eqprocess) s1) ((extRen_process xiprocess zetaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((extRen_process (upRen_process_process xiprocess) (upRen_process_process zetaprocess) (upExtRen_process_process (_) (_) Eqprocess)) s0)
     end.
@@ -160,7 +200,7 @@ Fixpoint ext_process   (sigmaprocess : ( fin ) -> process ) (tauprocess : ( fin 
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((ext_process sigmaprocess tauprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext (prod_ext (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (ext_process sigmaprocess tauprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext  (fun x => (eq_refl) x) (ext_process sigmaprocess tauprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((ext_process sigmaprocess tauprocess Eqprocess) s1) ((ext_process sigmaprocess tauprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((ext_process (up_process_process sigmaprocess) (up_process_process tauprocess) (upExt_process_process (_) (_) Eqprocess)) s0)
     end.
@@ -173,7 +213,7 @@ Fixpoint compRenRen_process    (xiprocess : ( fin ) -> fin) (zetaprocess : ( fin
     | ps_var  s => (ap) (ps_var ) (Eqprocess s)
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((compRenRen_process xiprocess zetaprocess rhoprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (prod_comp (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (compRenRen_process xiprocess zetaprocess rhoprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (fun x => (eq_refl) x) (compRenRen_process xiprocess zetaprocess rhoprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((compRenRen_process xiprocess zetaprocess rhoprocess Eqprocess) s1) ((compRenRen_process xiprocess zetaprocess rhoprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((compRenRen_process (upRen_process_process xiprocess) (upRen_process_process zetaprocess) (upRen_process_process rhoprocess) (up_ren_ren (_) (_) (_) Eqprocess)) s0)
     end.
@@ -189,7 +229,7 @@ Fixpoint compRenSubst_process    (xiprocess : ( fin ) -> fin) (tauprocess : ( fi
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((compRenSubst_process xiprocess tauprocess thetaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (prod_comp (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (compRenSubst_process xiprocess tauprocess thetaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (fun x => (eq_refl) x) (compRenSubst_process xiprocess tauprocess thetaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((compRenSubst_process xiprocess tauprocess thetaprocess Eqprocess) s1) ((compRenSubst_process xiprocess tauprocess thetaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((compRenSubst_process (upRen_process_process xiprocess) (up_process_process tauprocess) (up_process_process thetaprocess) (up_ren_subst_process_process (_) (_) (_) Eqprocess)) s0)
     end.
@@ -205,7 +245,7 @@ Fixpoint compSubstRen_process    (sigmaprocess : ( fin ) -> process ) (zetaproce
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((compSubstRen_process sigmaprocess zetaprocess thetaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (prod_comp (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (compSubstRen_process sigmaprocess zetaprocess thetaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (fun x => (eq_refl) x) (compSubstRen_process sigmaprocess zetaprocess thetaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((compSubstRen_process sigmaprocess zetaprocess thetaprocess Eqprocess) s1) ((compSubstRen_process sigmaprocess zetaprocess thetaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((compSubstRen_process (up_process_process sigmaprocess) (upRen_process_process zetaprocess) (up_process_process thetaprocess) (up_subst_ren_process_process (_) (_) (_) Eqprocess)) s0)
     end.
@@ -221,7 +261,7 @@ Fixpoint compSubstSubst_process    (sigmaprocess : ( fin ) -> process ) (tauproc
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((compSubstSubst_process sigmaprocess tauprocess thetaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (prod_comp (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (compSubstSubst_process sigmaprocess tauprocess thetaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_comp (prod_comp (fun x => (eq_refl) x) (compSubstSubst_process sigmaprocess tauprocess thetaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((compSubstSubst_process sigmaprocess tauprocess thetaprocess Eqprocess) s1) ((compSubstSubst_process sigmaprocess tauprocess thetaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((compSubstSubst_process (up_process_process sigmaprocess) (up_process_process tauprocess) (up_process_process thetaprocess) (up_subst_subst_process_process (_) (_) (_) Eqprocess)) s0)
     end.
@@ -237,7 +277,7 @@ Fixpoint rinst_inst_process   (xiprocess : ( fin ) -> fin) (sigmaprocess : ( fin
     | ps_var  s => Eqprocess s
     | ps_end   => congr_ps_end 
     | ps_send  s0 s1 s2 s3 => congr_ps_send ((fun x => (eq_refl) x) s0) ((fun x => (eq_refl) x) s1) ((fun x => (eq_refl) x) s2) ((rinst_inst_process xiprocess sigmaprocess Eqprocess) s3)
-    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext (prod_ext (fun x => (eq_refl) x) (fun x => (eq_refl) x)) (rinst_inst_process xiprocess sigmaprocess Eqprocess))) s1)
+    | ps_receive  s0 s1 => congr_ps_receive ((fun x => (eq_refl) x) s0) ((list_ext (prod_ext (fun x => (eq_refl) x) (rinst_inst_process xiprocess sigmaprocess Eqprocess))) s1)
     | ps_ite  s0 s1 s2 => congr_ps_ite ((fun x => (eq_refl) x) s0) ((rinst_inst_process xiprocess sigmaprocess Eqprocess) s1) ((rinst_inst_process xiprocess sigmaprocess Eqprocess) s2)
     | ps_mu  s0 => congr_ps_mu ((rinst_inst_process (upRen_process_process xiprocess) (up_process_process sigmaprocess) (rinstInst_up_process_process (_) (_) Eqprocess)) s0)
     end.
