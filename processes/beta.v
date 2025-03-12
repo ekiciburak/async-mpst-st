@@ -100,19 +100,19 @@ Fixpoint subst_expr_proc (p : process) (e : expr) (lb: label) (n d : nat) : proc
   end.
  *)
 
-Inductive qcong: relation mqueue :=
+Inductive qcong: mqueue -> mqueue -> Prop :=
   | qcons : forall q1 q2 l1 l2 v1 v2 h1 h2, q1 <> q2 -> 
-                                            qcong (conq h1 (conq (mesq q1 l1 v1 nilq) (conq (mesq q2 l2 v2 nilq) h2)))
-                                                  (conq h1 (conq (mesq q2 l2 v2 nilq) (conq (mesq q1 l1 v1 nilq) h2)))
-  | qnilL : forall h, qcong (conq nilq h) h
-  | qnilR : forall h, qcong h (conq nilq h)
-  | qassoc: forall h1 h2 h3, qcong (conq h1 (conq h2 h3)) (conq (conq h1 h2) h3).
+                                            qcong (h1 ++ [(q1,l1,v1)] ++ [(q2,l2,v2)] ++ h2)
+                                                  (h1 ++ [(q2,l2,v2)] ++ [(q1,l1,v1)] ++ h2)
+  | qnilL : forall h, qcong (nil ++ h) h
+  | qnilR : forall h, qcong h (nil ++ h)
+  | qassoc: forall h1 h2 h3, qcong (h1 ++ (h2 ++ h3)) ((h1 ++ h2) ++ h3).
 
 Inductive pcong: relation process :=
   | pmuUnf: forall p, pcong (ps_mu p) (subst_process ((ps_mu p) .: ps_var) p).
 
 Inductive scong: relation session :=
-  | sann   : forall p M, scong ((p <-- ps_end | nilq) |||| M) M
+  | sann   : forall p M, scong ((p <-- ps_end | nil) |||| M) M
   | scomm  : forall M1 M2, scong (M1 |||| M2) (M2 |||| M1)
   | sassoc : forall M1 M2 M3, scong (M1 |||| M2 |||| M3) (M1 |||| (M2 |||| M3))
 (*   | sassoc2: forall M1 M2 M3, scong (M1 ||| M2 ||| M3) ((M1 ||| M2) ||| M3) *)
@@ -123,15 +123,15 @@ Inductive scong: relation session :=
 Inductive beta: relation session :=
   | r_sendl  : forall p q l e P hp v, stepE e (e_val v) -> 
                                       beta (p <-- (ps_send q l e P) | hp)
-                                           (p <-- P | conq hp (mesq q l (e_val v) nilq))
-  | r_rcvl   : forall p q l xs v Q hp hq, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | conq (mesq p l (e_val v) nilq) hq))
+                                           (p <-- P | (hp ++ ([(q,l,(e_val v))])))
+  | r_rcvl   : forall p q l xs v Q hp hq, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)))
                                                ((p <-- subst_expr_proc (ps_receive q xs) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq))
   | r_cond_tl: forall p e P Q h, stepE e (e_val (vbool true))  -> beta ((p <-- ps_ite e P Q | h)) ((p <-- P | h))
   | r_cond_fl: forall p e P Q h, stepE e (e_val (vbool false)) -> beta ((p <-- ps_ite e P Q | h)) ((p <-- Q | h))
   | r_send   : forall p q l e P hp M v, stepE e (e_val v) -> 
                                         beta ((p <-- (ps_send q l e P) | hp) |||| M) 
-                                             ((p <-- P | conq hp (mesq q l (e_val v) nilq)) |||| M)
-  | r_rcv    : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | conq (mesq p l (e_val v) nilq) hq) |||| M)
+                                             ((p <-- P | (hp ++ ([(q,l,(e_val v))]))) |||| M)
+  | r_rcv    : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)) |||| M)
                                                  ((p <-- subst_expr_proc (ps_receive q xs) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq) |||| M)
   | r_cond_t : forall p e P Q h M, stepE e (e_val (vbool true))  -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- P | h) |||| M)
   | r_cond_f : forall p e P Q h M, stepE e (e_val (vbool false)) -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- Q | h) |||| M)

@@ -1,4 +1,4 @@
-Require Import ST.processes.unscoped ST.processes.process ST.types.local ST.subtyping.subtyping ST.types.typecheck.
+Require Import ST.processes.unscoped ST.processes.process ST.types.local ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream.
@@ -78,7 +78,7 @@ End SS.
 Module M  := MMaps.WeakList.Make(SS).
 Module MF := MMaps.Facts.Properties SS M. 
 
-Definition queue := coseq (participant*label*local.sort).
+Notation queue := (list (participant*label*local.sort)) (only parsing).
 Definition ctx: Type := M.t (queue*local).
 
 Definition both (z: nat) (o:option local) (o':option local) :=
@@ -101,13 +101,13 @@ CoFixpoint capp {A: Type} (s1 s2: coseq A): coseq A :=
   end.
 
 Inductive qCong: queue -> queue -> Prop :=
-  | qcl   : forall q, qCong (capp q conil) q
-  | qcr   : forall q, qCong (capp conil q) q
-  | qassoc: forall q1 q2 q3, qCong (capp q1 (capp q2 q3)) (capp (capp q1 q2) q3)
+  | qcl   : forall q, qCong (q ++ []) q
+  | qcr   : forall q, qCong ([] ++ q) q
+  | qassoc: forall q1 q2 q3, qCong (q1 ++ (q2 ++ q3)) ((q1 ++ q2) ++ q3)
   | qcomm : forall q q' p1 p2 l1 l2 s1 s2, 
             p1 <> p2 -> 
-            qCong (capp q (capp (cocons (p1,l1,s1) conil) (capp (cocons (p2,l2,s2) conil) q'))) 
-                  (capp q (capp (cocons (p2,l2,s2) conil) (capp (cocons (p1,l1,s1) conil) q'))).
+            qCong (q ++ [(p1,l1,s1)] ++ [(p2,l2,s2)] ++ q') 
+                  (q ++ [(p2,l2,s2)] ++ [(p1,l1,s1)] ++ q').
 
 Inductive lCong: local -> local -> Prop :=
   | lunf: forall l, lCong l (unf l). 
@@ -124,7 +124,7 @@ Fixpoint retc (l: list (label*local.sort*local)) (a: label): option (local.sort*
 
 Definition cCong (g1 g2: ctx):= 
   (forall p c1 c2, M.find p g1 = Some c1 -> M.find p g2 = Some c2 -> qCong (fst c1) (fst c2) /\ lCong (snd c1) (snd c2)) \/
-  (forall p q c1 c2, M.find p g1 = Some c1 -> M.find p g2 = None -> M.find q g1 = None -> M.find q g2 = Some c2 -> qCong (fst c1) conil /\ lCong (snd c1) lt_end /\ qCong (fst c2) conil /\ lCong (snd c2) lt_end).
+  (forall p q c1 c2, M.find p g1 = Some c1 -> M.find p g2 = None -> M.find q g1 = None -> M.find q g2 = Some c2 -> qCong (fst c1) nil /\ lCong (snd c1) lt_end /\ qCong (fst c2) nil /\ lCong (snd c2) lt_end).
 
 Inductive red: ctx -> lab -> ctx -> Prop :=
   | e_recv  : forall p q sigp sigq gam l Tp s s' Tk xs,
@@ -132,11 +132,11 @@ Inductive red: ctx -> lab -> ctx -> Prop :=
               M.mem q gam = false ->
               retc xs l = Some (s, Tk) ->
               subsort s' s ->
-              red (M.add p ((cocons (q,l,s') sigp), Tp) (M.add q (sigq, lt_receive p xs) gam)) (lr q p l) (M.add p (sigp, Tp) (M.add q (sigq, Tk) gam))
+              red (M.add p (((q,l,s')::sigp), Tp) (M.add q (sigq, lt_receive p xs) gam)) (lr q p l) (M.add p (sigp, Tp) (M.add q (sigq, Tk) gam))
   | e_send  : forall p q sig gam l s Tk xs,
               M.mem p gam = false ->
               retc xs l = Some (s, Tk) ->
-              red (M.add p (sig, lt_send q xs) gam) (ls p q l) (M.add p (((capp sig (cocons (q,l,s) conil))), Tk) gam)
+              red (M.add p (sig, lt_send q xs) gam) (ls p q l) ((M.add p ((sig ++ [(q,l,s)]), Tk)) gam)
   | e_struct: forall g g1 g' g1' a,
               cCong g g1 ->
               cCong g1' g' ->
@@ -169,14 +169,14 @@ Definition enabled (F: ctx -> Prop) (pt: Path): Prop :=
 
 Definition hPR (p q: participant) (l: label) (pt: Path): Prop :=
   match pt with
-    | cocons (g, (lr a b l)) xs => if andb (String.eqb p a) (String.eqb q b) then True else False
-    | _                         => False 
+    | cocons (g, (lr a b l')) xs => if andb (String.eqb p a) (andb (String.eqb q b) (String.eqb l l')) then True else False
+    | _                          => False 
   end.
 
 Definition hPS (p q: participant) (l: label) (pt: Path): Prop :=
   match pt with
-    | cocons (g, (ls a b l)) xs => if andb (String.eqb p a) (String.eqb q b) then True else False
-    | _                         => False 
+    | cocons (g, (ls a b l')) xs => if andb (String.eqb p a) (andb (String.eqb q b) (String.eqb l l')) then True else False
+    | _                          => False 
   end.
 
 Inductive fairPath (pt: Path): Prop :=
@@ -189,7 +189,7 @@ Definition enqueued (p q: participant) (l: label) (s: local.sort) sig (T: local)
   match pt with
     | cocons (g, tl) xs => 
       match M.find p g with
-        | Some (queue, T') => qCong queue (cocons (q,l,s) sig) /\ lCong T' T
+        | Some (queue, T') => qCong queue ((q,l,s)::sig) /\ lCong T' T
         | _                => False 
       end
     | _                => False 
@@ -219,7 +219,6 @@ Definition liveness := alwaysC livePath.
 
 
 Definition exGamma p q l s := M.add p (@conil ctx, lt_mu (lt_send q (cons (l, s, (lt_var 0)) nil))) M.empty.
-
 
 
 

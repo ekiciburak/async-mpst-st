@@ -66,8 +66,9 @@ Inductive stepE : expr -> expr -> Prop :=
   | ec_refl  : forall e, stepE e e
   | ec_trans : forall e e' e'', stepE e e' -> stepE e' e'' -> stepE e e''.
 
+Notation mqueue := (list(participant*label*expr)) (only parsing).
 
-Inductive mqueue: Type := 
+(* Inductive mqueue: Type := 
   | nilq: mqueue
   | mesq: participant -> label -> expr -> mqueue -> mqueue.
 
@@ -76,7 +77,8 @@ Fixpoint conq (m1 m2: mqueue): mqueue :=
     | nilq         => m2
     | mesq p l v q => mesq p l v (conq q m2)
   end.
-
+ *)
+ 
 Inductive process  : Type :=
   | ps_var    : fin -> process 
   | ps_end    : process 
