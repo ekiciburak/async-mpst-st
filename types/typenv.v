@@ -144,7 +144,6 @@ Inductive red: ctx -> lab -> ctx -> Prop :=
 
 Definition redE l g := exists g', red g l g'.
 
-
 Notation Path := (coseq (ctx*lab)) (only parsing).
 
 Inductive eventually {A: Type} (F: coseq A -> Prop): coseq A -> Prop :=
@@ -179,11 +178,11 @@ Definition hPS (p q: participant) (l: label) (pt: Path): Prop :=
     | _                          => False 
   end.
 
-Inductive fairPath (pt: Path): Prop :=
-  | F1: forall p q l l', enabled (redE (ls p q l)) pt -> eventually (hPS p q l') pt -> fairPath pt
-  | F2: forall p q l,    enabled (redE (lr q p l)) pt -> eventually (hPR p q l) pt  -> fairPath pt.
+Definition fairPath (pt: Path): Prop :=
+  (forall p q l l', enabled (redE (ls p q l)) pt -> eventually (hPS p q l') pt) /\
+  (forall p q l,    enabled (redE (lr q p l)) pt -> eventually (hPR p q l) pt).
 
-Definition fairness := alwaysC fairPath.
+Definition fairPathC := alwaysC fairPath.
 
 Definition enqueued (p q: participant) (l: label) (s: local.sort) sig (T: local) (pt: Path): Prop :=
   match pt with
@@ -211,15 +210,19 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
     | _                => False 
   end.
 
-Inductive livePath (pt: Path): Prop :=
-  | L1: forall p q l s sig T,  enqueued p q l s sig T pt  -> eventually (hPR q p l) pt -> livePath pt
-  | L2: forall p q l s sig ys, dequeued p q l s sig ys pt -> eventually (hPR p q l) pt -> livePath pt.
+Definition livePath (pt: Path): Prop :=
+  (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventually (hPR q p l) pt) /\
+  (forall p q l s sig ys, dequeued p q l s sig ys pt -> eventually (hPR p q l) pt).
 
-Definition liveness := alwaysC livePath.
+Definition livePathC := alwaysC livePath.
 
+Definition live (g: ctx) := forall (pt: Path) (l: lab), fairPathC (cocons (g, l) pt) -> livePathC (cocons (g, l) pt).
 
-Definition exGamma p q l s := M.add p (@conil ctx, lt_mu (lt_send q (cons (l, s, (lt_var 0)) nil))) M.empty.
-
-
-
+Lemma _49: forall g l g', live g -> red g l g' -> live g'.
+Proof. pcofix CIH. intros.
+       pinversion H2.
+       subst. pfold.
+       constructor.
+       unfold live in H0.
+Admitted.
 

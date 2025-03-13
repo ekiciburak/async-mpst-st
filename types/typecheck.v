@@ -1,4 +1,4 @@
-Require Import ST.processes.process ST.types.local ST.subtyping.subtyping ST.src.st ST.negations.nsubtyping ST.types.typenv.
+Require Import ST.processes.process ST.processes.beta ST.types.local ST.subtyping.subtyping ST.src.st ST.negations.nsubtyping ST.types.typenv.
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream.
@@ -196,6 +196,21 @@ Inductive typ_proc: ctxS -> ctxT -> process -> local -> Prop :=
                                         typ_proc cs ct P T ->
                                         typ_proc cs ct (ps_send p l e P) (lt_send p (cons (l, S, T) nil)).
 
+
+(* Lemma _subst_expr_var : forall v Gs Gt P S T l,
+        typ_proc (Some S :: Gs) Gt P T -> 
+        typ_expr Gs v S -> 
+        typ_proc Gs Gt (subst_expr_proc P v l 0 0) T.
+Proof. intros v Gs Gt P.
+       revert v Gs Gt.
+       induction P; intros.
+       - simpl. inversion H. subst.
+         constructor. easy.
+         subst. constructor.
+         admit.
+       - simpl. inversion H. constructor. subst.  *)
+         
+        
 Inductive ForallT (P : participant -> process -> mqueue -> Prop) : session -> Prop := 
   | ForallT_mono: forall pt op h, P pt op h -> ForallT P (pt <-- op | h)
   | ForallT_par : forall (M1 M2 : session), ForallT P M1 -> ForallT P M2 -> ForallT P (M1 |||| M2). 
