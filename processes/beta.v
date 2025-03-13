@@ -57,22 +57,23 @@ Fixpoint subst_expr_proc (p : process) (e : expr) (lb: label) (n d : nat) : proc
   match p with 
     | ps_send pt l e' P => ps_send pt l (subst_expr n d e e') (subst_expr_proc P e lb n d)
     | ps_ite e' P Q     => ps_ite (subst_expr n d e e') (subst_expr_proc P e lb n d) (subst_expr_proc Q e lb n d)
-    | ps_receive pt lst => (* ps_receive pt (map (fun x => match x with
+    | ps_receive pt lst => ps_receive pt (map (fun x => match x with
                                                           | (l, y) => if eqb l lb then (l, subst_expr_proc y e lb (S n) (S d)) else (l, y)
-                                                        end) lst) *)
-                           let fix next lst :=
+                                                        end) lst)
+(*                         let fix next lst :=
                            match lst with
                              | nil         => p
                              | (lbl,y)::xs => if eqb lbl lb then subst_expr_proc y e lb (S n) (S d) else next xs
                            end
-                           in next lst
+                           in next lst *)
     | ps_mu P           => ps_mu (subst_expr_proc P e lb n d)
     | _ => p
   end.
 
-(* Compute (subst_expr_proc (ps_receive "Bob" (cons ("l2", 
-                          ps_send "Alice" "l3" (e_succ (e_var 1)) 
-                         (ps_send "Alice" "l4" (e_succ (e_var 1)) ps_end)) nil)) (e_val (vint 100)) "l2" 0 0). *)
+(*
+Compute (subst_expr_proc (ps_receive "Bob" (cons ("l2", 
+                          ps_send "Alice" "l3" (e_succ (e_var 0)) 
+                         (ps_send "Alice" "l4" (e_succ (e_var 0)) ps_end)) nil)) (e_val (vint 100)) "l2" 0 0). *)
 (* Fixpoint subst_expr (p: process) (l: label) (e: expr): process :=
   match p with
     | ps_receive s0 s1  => 
@@ -124,15 +125,17 @@ Inductive beta: relation session :=
   | r_sendl  : forall p q l e P hp v, stepE e (e_val v) -> 
                                       beta (p <-- (ps_send q l e P) | hp)
                                            (p <-- P | (hp ++ ([(q,l,(e_val v))])))
-  | r_rcvl   : forall p q l xs v Q hp hq, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)))
-                                               ((p <-- subst_expr_proc (ps_receive q xs) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq))
+  | r_rcvl   : forall p q l xs v Q hp hq y, Datatypes.Some y = retProc xs l ->
+                                            beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)))
+                                                 ((p <-- subst_expr_proc y (* (ps_receive q xs) *) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq))
   | r_cond_tl: forall p e P Q h, stepE e (e_val (vbool true))  -> beta ((p <-- ps_ite e P Q | h)) ((p <-- P | h))
   | r_cond_fl: forall p e P Q h, stepE e (e_val (vbool false)) -> beta ((p <-- ps_ite e P Q | h)) ((p <-- Q | h))
   | r_send   : forall p q l e P hp M v, stepE e (e_val v) -> 
                                         beta ((p <-- (ps_send q l e P) | hp) |||| M) 
                                              ((p <-- P | (hp ++ ([(q,l,(e_val v))]))) |||| M)
-  | r_rcv    : forall p q l xs v Q hp hq M, beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)) |||| M)
-                                                 ((p <-- subst_expr_proc (ps_receive q xs) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq) |||| M)
+  | r_rcv    : forall p q l xs v Q hp hq M y, Datatypes.Some y = retProc xs l ->
+                                              beta ((p <-- ps_receive q xs | hp) |||| (q <-- Q | ([(p,l,(e_val v))] ++ hq)) |||| M)
+                                                   ((p <-- subst_expr_proc y (* (ps_receive q xs) *) (e_val v) l 0 0 | hp)  |||| (q <-- Q | hq) |||| M)
   | r_cond_t : forall p e P Q h M, stepE e (e_val (vbool true))  -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- P | h) |||| M)
   | r_cond_f : forall p e P Q h M, stepE e (e_val (vbool false)) -> beta ((p <-- ps_ite e P Q | h) |||| M) ((p <-- Q | h) |||| M)
   | r_struct : forall M1 M1' M2 M2', scong M1 M1' -> scong M2' M2 -> beta M1' M2' -> beta M1 M2.

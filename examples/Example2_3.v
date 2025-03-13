@@ -27,18 +27,21 @@ Proof. intros.
 
        setoid_rewrite scomm.
        apply multi_step with (y := 
-         (((p <-- subst_expr_proc (ps_receive q [(l, ps_end)]) (e_val (vint 42)) l 0 0 | nil) |||| 
+         (((p <-- subst_expr_proc ps_end (e_val (vint 42)) l 0 0 | nil) |||| 
           (q <-- ps_end | nil)))).
        specialize (r_rcv p q l ([(l, ps_end)])
                          (vint 42) (ps_end) nil nil
                          (p <-- ps_end | nil)
+                         ps_end
        ); intro HR.
        setoid_rewrite scomm in HR.
        setoid_rewrite sann in HR.
-       exact HR.
+       simpl. simpl in HR.
+(*        rewrite String.eqb_refl. *)
+       rewrite String.eqb_refl in HR.
+       apply HR. easy.
 
        simpl.
-       rewrite String.eqb_refl.
        apply multi_refl.
 Qed.
 
@@ -51,7 +54,7 @@ Definition PBob: process :=
                       ("l4",ps_send "Carol" "l2" (e_val (vnat 2))  ps_end)].
 
 Definition PCarol: process :=
-  ps_receive "Bob" [("l2", ps_send "Alice" "l3" (e_succ (e_var 1))  ps_end)].
+  ps_receive "Bob" [("l2", ps_send "Alice" "l3" (e_succ (e_var 0))  ps_end)].
 
 Definition MS: session := ("Alice" <-- PAlice | nil) |||| ("Bob" <-- PBob | nil) |||| ("Carol" <-- PCarol | nil).
 
@@ -72,12 +75,14 @@ Proof. intros.
        setoid_rewrite sassoc2.
        setoid_rewrite <- sassoc.
 
+(* unfold PBob. *)
+
        apply multi_step with
-       (y := ("Bob" <-- subst_expr_proc (PBob) (e_val (vnat 50)) "l1"  0 0 | nil)
+       (y := ("Bob" <-- subst_expr_proc (ps_send "Carol" "l2" (e_val (vnat 100)) ps_end) (e_val (vnat 50)) "l1"  0 0 | nil)
               |||| ("Alice" <-- ps_receive "Carol" [("l3", ps_end)] | nil)
               |||| ("Carol" <-- PCarol | nil)).
        apply r_rcv.
-       simpl. 
+       simpl. easy. 
        unfold PCarol.
 
        setoid_rewrite sassoc2.
@@ -85,10 +90,10 @@ Proof. intros.
 
        apply multi_step with
        (y := ((("Bob" <-- ps_end | (nil ++ [("Carol","l2",(e_val (vnat 100)))]) )
-               |||| ("Carol" <-- ps_receive "Bob" [("l2", ps_send "Alice" "l3" (e_succ (e_var 1)) ps_end)] | nil))
+               |||| ("Carol" <-- ps_receive "Bob" [("l2", ps_send "Alice" "l3" (e_succ (e_var 0)) ps_end)] | nil))
                |||| ("Alice" <-- ps_receive "Carol" [("l3", ps_end)] | nil))).
        setoid_rewrite sassoc.
-       apply r_send.
+       apply r_send. simpl.
        constructor.
 
        setoid_rewrite sassoc.
@@ -97,11 +102,11 @@ Proof. intros.
        setoid_rewrite <- sassoc.
 
        apply multi_step with
-       (y := ((("Carol" <-- subst_expr_proc (ps_receive "Bob" [("l2", ps_send "Alice" "l3" (e_succ (e_var 1)) ps_end)]) (e_val (vnat 100)) "l2" 0 0 | nil)
+       (y := ((("Carol" <-- subst_expr_proc (ps_send "Alice" "l3" (e_succ (e_var 0)) ps_end) (e_val (vnat 100)) "l2" 0 0 | nil)
                  |||| ("Bob" <-- ps_end | nil))
                  |||| ("Alice" <-- ps_receive "Carol" [("l3", ps_end)] | nil))).
        apply r_rcv. simpl.
-       simpl.
+       simpl. easy.
 
        setoid_rewrite sassoc2.
        setoid_rewrite <- sassoc.
@@ -120,10 +125,10 @@ Proof. intros.
        setoid_rewrite <- sassoc.
 
       apply multi_step with
-      (y := ((("Alice" <-- subst_expr_proc (ps_receive "Carol" [("l3", ps_end)]) (e_val (vnat 101)) "l3" 0 0 | nil) 
+      (y := ((("Alice" <-- subst_expr_proc (ps_end) (e_val (vnat 101)) "l3" 0 0 | nil) 
              |||| ("Carol" <-- ps_end | nil))
              |||| ("Bob" <-- ps_end | nil))).
-      apply r_rcv. simpl.
+      apply r_rcv. simpl. easy.
 
       apply multi_refl.
 Qed.
