@@ -8,17 +8,29 @@ Import ListNotations.
 (* session trees *)
 CoInductive st: Type :=
   | st_end    : st
-  | st_receive: participant -> list (label*sort*st) -> st
-  | st_send   : participant -> list (label*sort*st) -> st.
+  | st_receive: participant -> (label -> option (sort*st)) -> st
+  | st_send   : participant -> (label -> option (sort*st)) -> st.
 
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
-  | eq_st_rcv: forall p l s xs ys,
-               List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
-               st_equiv R (st_receive p (zip (zip l s) xs)) (st_receive p (zip (zip l s) ys))
-  | eq_st_snd: forall p l s xs ys,
-               List.Forall (fun u => R (fst u) (snd u)) (zip xs ys) ->
-               st_equiv R (st_send p (zip (zip l s) xs)) (st_send p (zip (zip l s) ys)).
+  | eq_st_rcv: forall p f g,
+               (forall l,
+                match (f l, g l) with
+                  | (Some (s1, t1), Some (s2, t2)) => s1 = s2 /\ R t1 t2
+                  | (None, None)                   => True
+                  | _                              => False
+                end
+               ) ->
+               st_equiv R (st_receive p f) (st_receive p g)
+  | eq_st_snd: forall p f g,
+               (forall l, 
+                match (f l, g l) with
+                  | (Some (s1, t1), Some (s2, t2)) => s1 = s2 /\ R t1 t2
+                  | (None, None)                   => True
+                  | _                              => False
+                end
+               ) ->
+               st_equiv R (st_send p f) (st_send p g).
 
 Definition st_equivC: st -> st -> Prop := fun s1 s2 => paco2 st_equiv bot2 s1 s2.
 
@@ -40,7 +52,64 @@ Definition st_id (s: st): st :=
 Lemma st_eq: forall s, s = st_id s.
 Proof. intro s; destruct s; easy. Defined.
 
-Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
+Fixpoint lst2fun (l:list(label*sort*st)) (l':label): option(sort*st) :=
+  match l with
+    | (l1,s1,t1)::xs => if eqb l' l1 then Some (s1,t1) else lst2fun xs l'
+    | nil            => None
+  end.
+
+Fixpoint retLoc (l:list(label*sort*local)) (l':label): option (sort*local) :=
+  match l with
+    | (l1,s1,lt1)::ys => if eqb l' l1 then Some(s1, lt1) else retLoc ys l'
+    | nil             => None
+  end.
+
+Require Import ST.processes.unscoped.
+
+Definition unf (l: local): local :=
+  match l with
+    | lt_mu l          => subst_local ((lt_mu l) .: lt_var) l
+    | _                => l
+  end.
+
+Fixpoint rec_depth G :=
+  match G with
+  | lt_mu G => (rec_depth G).+1
+  | _ => 0
+  end.
+
+Fixpoint n_unroll d G :=
+  match d with
+  | 0    => G
+  | d.+1 =>
+    match G with
+    | lt_mu G' => n_unroll d (unf G')
+    | _        => G
+    end
+  end.
+
+CoFixpoint lt2st (l: local): st :=
+  match n_unroll (rec_depth l) l with
+    | lt_receive p xs =>
+      st_receive p 
+      (fun lb =>
+       match retLoc xs lb with
+         | Datatypes.Some (s1,lt1) => Datatypes.Some(s1, lt2st lt1)
+         | Datatypes.None          => Datatypes.None
+       end
+      )
+    | lt_send p xs =>
+      st_send  p 
+      (fun lb =>
+       match retLoc xs lb with
+         | Datatypes.Some (s1,lt1) => Datatypes.Some(s1, lt2st lt1)
+         | Datatypes.None          => Datatypes.None
+       end
+      )
+    | _               => st_end
+  end.
+
+(* Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
   | lt2st_end: lt2st R lt_end st_end
   | lt2st_rcv: forall p l s xs ys,
                length xs = length ys ->
@@ -77,7 +146,7 @@ Proof. unfold monotone2.
          apply LE, H0. exact H1.
        - apply lt2st_mu. exact IHIN.
 Qed.
-
+ *)
 (*
 Check lt_send.
 Check lt_var 0.
