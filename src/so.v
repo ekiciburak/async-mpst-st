@@ -34,9 +34,6 @@ Proof. intro s; destruct s; simpl; try easy. destruct p as ((l,srt),t). easy. De
 
 Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2. *)
 
-Definition sfun (l: label) (s: sort) (x: st): (label -> option(sort*st)) :=
-  fun l' => if eqb l l' then Some(s,x) else None. 
-
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end
   | st2so_snd: forall l s x s' y f p,
