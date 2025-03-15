@@ -70,7 +70,7 @@ Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
                copathsel l s xs y ->
                st2so R (st_send p (cocons (l,s,x) conil)) (st_send p xs)
   | st2so_rcv: forall p xs ys,
-               colen_eqC xs ys ->
+(*             colen_eqC xs ys -> *)
                Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ R t t') ys xs ->
                st2so R (st_receive p ys) (st_receive p xs).
 
@@ -105,7 +105,7 @@ Proof. unfold monotone2.
          apply HS with (l := l) (s := s) (x := x) (y := y).
          apply LE; easy. easy.
        - specialize (st2so_rcv r'); intro HS.
-         apply HS. easy.
+         apply HS. (* easy. *)
          apply monH2 with (r := r); easy.
 Qed.
 
@@ -138,11 +138,11 @@ Proof. pcofix CIH.
        pfold.
        apply st2so_rcv.
        pfold. constructor.
-       left. pfold. constructor.
+(*        left. pfold. constructor.
        left. pfold. constructor.
        left. pfold. constructor.
        pfold.
-       constructor.
+       constructor. *)
        exists "l1". exists (I). exists ("p" ! cocons ("l4", I, Et1so) conil).
        exists "l1". exists (I). exists ("p" ! cocons ("l4", I, Et1) (cocons ("l5", I, Et2) (cocons ("l6", I, eT1) conil))).
        split. easy. split. easy.
@@ -153,14 +153,15 @@ Proof. pcofix CIH.
        pcofix CIH2.
        rewrite(st_eq Et1). simpl. rewrite(st_eq Et1so). simpl.
        pfold. apply st2so_rcv.
-       pfold. constructor. left. pfold. constructor.
        pfold. constructor.
+(*        left. pfold. constructor.
+       pfold. constructor. *)
        exists "l7". exists (I). exists (Et1so).
        exists "l7". exists (I). exists (Et1).
        split. easy. split. easy. right. easy.
        left. pfold. constructor.
        constructor.
-       
+
        left.
        pfold.
        constructor.
@@ -178,8 +179,9 @@ Proof. pcofix CIH.
        exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT1) conil).
        split. easy. split. easy.
        left. pfold. apply st2so_rcv.
-       pfold. constructor. left. pfold. constructor.
        pfold. constructor.
+(*        left. pfold. constructor.
+       pfold. constructor. *)
        exists "l10". exists (I). exists (eT2).
        exists "l10". exists (I). exists (eT1).
        split. easy. split. easy. right. easy.

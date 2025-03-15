@@ -109,7 +109,7 @@ CoFixpoint lt2st (l: local): st :=
          | nil            => conil
        end
       in st_receive p (next xs)
-    | lt_send p xs =>
+    | lt_send p xs    =>
       let cofix next xs :=
        match xs with
          | (l1,s1,t1)::ys => cocons (l1,s1,lt2st t1) (next ys)

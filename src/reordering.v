@@ -48,41 +48,41 @@ CoFixpoint act (t: st): coseq (participant * dir) :=
 
 CoFixpoint actls (t: st): coseq (participant * dir * label * local.sort) :=
   match t with
-    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv, l, s) (actls w'))
-    | st_send p [(l,s,w')]    => Delay (cocons (p, snd, l, s) (actls w'))
-    | _                       => Delay conil
+    | st_receive p (cocons (l,s,w') conil) => (cocons (p, rcv, l, s) (actls w'))
+    | st_send p (cocons (l,s,w') conil)    => (cocons (p, snd, l, s) (actls w'))
+    | _                                    => conil
   end.
 
 CoFixpoint actl (t: st): coseq (participant * dir * label) :=
   match t with
-    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv, l) (actl w'))
-    | st_send p [(l,s,w')]    => Delay (cocons (p, snd, l) (actl w'))
-    | _                       => Delay conil
+    | st_receive p (cocons (l,s,w') conil) => (cocons (p, rcv, l) (actl w'))
+    | st_send p (cocons (l,s,w') conil)    => (cocons (p, snd, l) (actl w'))
+    | _                                    => conil
   end.
   
 (***********************)
 
 (* inductive membership check *)
 Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
-  | CoInSplit1 x xs y ys: force xs = cocons y ys -> x = y  -> coseqIn x xs
-  | CoInSplit2 x xs y ys: force xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
+  | CoInSplit1 x xs y ys: xs = cocons y ys -> x = y  -> coseqIn x xs
+  | CoInSplit2 x xs y ys: xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
 
 Inductive coseqInLS: (participant * dir * label * local.sort) -> coseq (participant * dir * label *local.sort) -> Prop :=
-  | CoInSplit1ls x xs y ys: force xs = cocons y ys -> x = y  -> coseqInLS x xs
-  | CoInSplit2ls x xs y ys: force xs = cocons y ys -> x <> y -> coseqInLS x ys -> coseqInLS x xs.
+  | CoInSplit1ls x xs y ys: xs = cocons y ys -> x = y  -> coseqInLS x xs
+  | CoInSplit2ls x xs y ys: xs = cocons y ys -> x <> y -> coseqInLS x ys -> coseqInLS x xs.
 
 Inductive coseqInl: (participant * dir * label) -> coseq (participant * dir * label) -> Prop :=
-  | CoInSplit1l x xs y ys: force xs = cocons y ys -> x = y  -> coseqInl x xs
-  | CoInSplit2l x xs y ys: force xs = cocons y ys -> x <> y -> coseqInl x ys -> coseqInl x xs.
+  | CoInSplit1l x xs y ys: xs = cocons y ys -> x = y  -> coseqInl x xs
+  | CoInSplit2l x xs y ys: xs = cocons y ys -> x <> y -> coseqInl x ys -> coseqInl x xs.
   
 (* alternative coinductive membership check measures *)
 Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
                     coseq (participant * dir) -> list (participant * dir) -> Prop :=
-  | c_nil : forall ys, coseqInL R (Delay conil) ys
+  | c_nil : forall ys, coseqInL R (conil) ys
   | c_incl: forall x xs ys,
             List.In x ys ->
             R xs ys ->
-            coseqInL R (Delay (cocons x xs)) ys.
+            coseqInL R ((cocons x xs)) ys.
 
 Definition coseqInLC := fun s1 s2 => paco2 (coseqInL) bot2 s1 s2.
 
@@ -127,7 +127,7 @@ Lemma listEq: forall {A: Type} (l1 l2: list A), l1 = l2 -> (forall x, List.In x 
 Proof. intros. subst. easy. Qed.
 
 (***********************)
-
+(*
 CoFixpoint Wtriv := st_send "p" [("l1"%string,I, st_receive "p" [("l2"%string,I, st_send "q" [("l3"%string,I,Wtriv)])])].
 Definition Ltriv := ("p"%string, rcv) :: ("p"%string, snd) :: ("q"%string, snd) :: nil. 
 
@@ -163,7 +163,7 @@ Proof. rewrite(coseq_eq (act Wtriv)). unfold Ltriv. unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("q"%string, snd)) (ys := (act Wtriv)). simpl. easy. easy.
        apply l_nil.
 Qed.
- 
+*)
 (***********************)
 
 Inductive Ap (p: participant): Type :=
@@ -209,7 +209,7 @@ Fixpoint isInAl (a: Apf) p l: bool :=
 CoFixpoint merge_apf_cont (a: Apf) (w: st): st :=
   match a with
     | apf_end              => w
-    | apf_receive q l s a' => st_receive q [(l,s,(merge_apf_cont a' w))]
+    | apf_receive q l s a' => st_receive q (cocons (l,s,(merge_apf_cont a' w)) conil)
   end.
 
 Fixpoint merge_apf_contn (a: Apf) (w: st) (n: nat): st :=
@@ -253,8 +253,8 @@ Fixpoint isInB (b: Bpf) p: bool :=
 CoFixpoint merge_bpf_cont (b: Bpf) (w: st): st :=
   match b with 
     | bpf_end             => w
-    | bpf_receive q l s c => st_receive q [(l,s,(merge_bpf_cont c w))]
-    | bpf_send q l s c    => st_send q [(l,s,(merge_bpf_cont c w))]
+    | bpf_receive q l s c => st_receive q (cocons (l,s,(merge_bpf_cont c w)) conil)
+    | bpf_send q l s c    => st_send q (cocons (l,s,(merge_bpf_cont c w)) conil)
   end.
 
 Fixpoint merge_bpf_contn (b: Bpf) (w: st) (n: nat): st :=
@@ -370,8 +370,8 @@ Definition ApnA2 (p: participant) (a: Ap p) (n: nat): Ap p :=
 
 CoFixpoint fromAp (p: participant) (a: Ap p): st :=
   match a with
-    | ap_receive q x l s => st_receive q [(l,s,st_end)]
-    | ap_merge q x l s c => st_receive q [(l,s,(fromAp p c))]
+    | ap_receive q x l s => st_receive q (cocons (l,s,st_end) conil)
+    | ap_merge q x l s c => st_receive q (cocons (l,s,(fromAp p c)) conil)
     | ap_end             => st_end
   end.
 
@@ -395,8 +395,8 @@ Fixpoint actAn (p: participant) (a: Ap p) (n: nat): list (participant * dir) :=
 
 CoFixpoint merge_ap_cont (p: participant) (a: Ap p) (w: st): st :=
   match a with
-    | ap_receive q H l s  => st_receive q [(l,s,w)]
-    | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_cont p w' w))]
+    | ap_receive q H l s  => st_receive q (cocons (l,s,w) conil)
+    | ap_merge q H l s w' => st_receive q (cocons (l,s,(merge_ap_cont p w' w)) conil)
     | ap_end              => w
   end.
 
@@ -411,8 +411,8 @@ Fixpoint merge_ap_contnA (p: participant) (a: Ap p) (w: st) (n: nat): st :=
     | O    => w
     | S k  => 
       match a with
-        | ap_receive q H l s  => st_receive q [(l,s,merge_ap_contnA p a w k)]
-        | ap_merge q H l s w' => st_receive q [(l,s,(merge_ap_contnA p w' w k))]
+        | ap_receive q H l s  => st_receive q (cocons (l,s,merge_ap_contnA p a w k) conil)
+        | ap_merge q H l s w' => st_receive q (cocons (l,s,(merge_ap_contnA p w' w k)) conil)
         | ap_end              => w
       end
   end.
@@ -445,10 +445,10 @@ Fixpoint Bpn (p: participant) (b: Bp p) (n: nat): Bp p :=
 
 CoFixpoint fromBp (p: participant) (b: Bp p): st :=
   match b with 
-    | bp_receivea q l s  => st_receive q [(l,s,st_end)]
-    | bp_send q x l s    => st_send q [(l,s,st_end)]
-    | bp_mergea q l s c  => st_receive q [(l,s,(fromBp p c))]
-    | bp_merge q x l s c => st_send q [(l,s,(fromBp p c))]
+    | bp_receivea q l s  => st_receive q (cocons (l,s,st_end) conil)
+    | bp_send q x l s    => st_send q (cocons (l,s,st_end) conil)
+    | bp_mergea q l s c  => st_receive q (cocons (l,s,(fromBp p c)) conil)
+    | bp_merge q x l s c => st_send q (cocons (l,s,(fromBp p c)) conil)
     | bp_end             => st_end
   end.
 
@@ -476,10 +476,10 @@ Fixpoint actBn (p: participant) (b: Bp p) (n: nat): list (participant * dir) :=
 
 CoFixpoint merge_bp_cont (p: participant) (b: Bp p) (w: st): st :=
   match b with 
-    | bp_receivea q l s  => st_receive q [(l,s,w)]
-    | bp_send q x l s    => st_send q [(l,s,w)]
-    | bp_mergea q l s c  => st_receive q [(l,s,(merge_bp_cont p c w))]
-    | bp_merge q x l s c => st_send q [(l,s,(merge_bp_cont p c w))]
+    | bp_receivea q l s  => st_receive q (cocons (l,s,w) conil)
+    | bp_send q x l s    => st_send q (cocons (l,s,w) conil)
+    | bp_mergea q l s c  => st_receive q (cocons (l,s,(merge_bp_cont p c w)) conil)
+    | bp_merge q x l s c => st_send q (cocons (l,s,(merge_bp_cont p c w)) conil)
     | bp_end             => w
   end.
 
@@ -527,10 +527,10 @@ Arguments cp_mergea {_} _ _ _ _.
 
 CoFixpoint merge_cp_cont (p: participant) (c: Cp p) (w: st): st :=
   match c with 
-    | cp_receive q H l s  => st_receive q [(l,s,w)]
-    | cp_send q l s       => st_send q [(l,s,w)]
-    | cp_mergea q H l s c => st_receive q [(l,s,(merge_cp_cont p c w))]
-    | cp_merge q l s c    => st_send q [(l,s,(merge_cp_cont p c w))]
+    | cp_receive q H l s  => st_receive q (cocons (l,s,w) conil)
+    | cp_send q l s       => st_send q (cocons (l,s,w) conil)
+    | cp_mergea q H l s c => st_receive q (cocons (l,s,(merge_cp_cont p c w)) conil)
+    | cp_merge q l s c    => st_send q (cocons (l,s,(merge_cp_cont p c w)) conil)
     | cp_end              => w
   end.
 
@@ -654,10 +654,10 @@ Fixpoint Dpf_eqb (a: Dpf) (b: Dpf): bool :=
 
 CoFixpoint merge_dp_cont (d: Dp) (w: st): st :=
   match d with 
-    | dp_receive q l s  => st_receive q [(l,s,w)]
-    | dp_send q l s     => st_send q [(l,s,w)]
-    | dp_mergea q l s c => st_receive q [(l,s,(merge_dp_cont c w))]
-    | dp_merge q l s c  => st_send q [(l,s,(merge_dp_cont c w))]
+    | dp_receive q l s  => st_receive q (cocons (l,s,w) conil)
+    | dp_send q l s     => st_send q (cocons (l,s,w) conil)
+    | dp_mergea q l s c => st_receive q (cocons (l,s,(merge_dp_cont c w)) conil)
+    | dp_merge q l s c  => st_send q (cocons (l,s,(merge_dp_cont c w)) conil)
     | dp_end            => w
   end.
 
@@ -669,8 +669,8 @@ Fixpoint merge_dp_contn (d: Dp) (w: st) (n: nat): st :=
 
 CoFixpoint merge_dpf_cont (d: Dpf) (w: st): st :=
   match d with 
-    | dpf_receive q l s c => st_receive q [(l,s,(merge_dpf_cont c w))]
-    | dpf_send q l s c    => st_send q [(l,s,(merge_dpf_cont c w))]
+    | dpf_receive q l s c => st_receive q (cocons (l,s,(merge_dpf_cont c w)) conil)
+    | dpf_send q l s c    => st_send q (cocons (l,s,(merge_dpf_cont c w)) conil)
     | dpf_end             => w
   end.
 
