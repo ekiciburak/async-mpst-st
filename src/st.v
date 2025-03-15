@@ -14,11 +14,11 @@ CoInductive st: Type :=
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p l s xs ys,
-               colen_eqC xs ys ->
+(*                colen_eqC xs ys -> *)
                Forall2C (fun u v => R u v) xs ys ->
                st_equiv R (st_receive p (cozip (cozip l s) xs)) (st_receive p (cozip (cozip l s) ys))
   | eq_st_snd: forall p l s xs ys,
-               colen_eqC xs ys ->
+(*                colen_eqC xs ys -> *)
                Forall2C (fun u v => R u v) xs ys ->
                st_equiv R (st_send p (cozip (cozip l s) xs)) (st_send p (cozip (cozip l s) ys)).
 

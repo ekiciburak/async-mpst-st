@@ -680,35 +680,35 @@ Proof. intros n.
 Qed.
 
 
-Lemma extbpns: forall {n p l s b} w, singleton w -> singleton ((merge_bp_contn p b (st_send p [(l,s,w)]) n)).
+Lemma extbpns: forall {n p l s b} w, singleton w -> singleton ((merge_bp_contn p b (st_send p (cocons (l,s,w) conil)) n)).
 Proof. intros.
        apply extbpn.
        pfold. constructor.
        unfold singleton in H. left. easy.
 Qed.
 
-Lemma extbpnr: forall {n p l s b} w, singleton w -> singleton ((merge_bp_contn p b (st_receive p [(l,s,w)]) n)).
+Lemma extbpnr: forall {n p l s b} w, singleton w -> singleton ((merge_bp_contn p b (st_receive p (cocons (l,s,w) conil)) n)).
 Proof. intros.
        apply extbpn.
        pfold. constructor.
        unfold singleton in H. left. easy.
 Qed.
 
-Lemma extapns: forall {n p l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_send p [(l,s,w)]) n)).
+Lemma extapns: forall {n p l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_send p (cocons (l,s,w) conil)) n)).
 Proof. intros.
        apply extapn.
        pfold. constructor.
        unfold singleton in H. left. easy.
 Qed.
 
-Lemma extapnr: forall {n p l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_receive p [(l,s,w)]) n)).
+Lemma extapnr: forall {n p l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_receive p (cocons (l,s,w) conil)) n)).
 Proof. intros.
        apply extapn.
        pfold. constructor.
        unfold singleton in H. left. easy.
 Qed.
 
-Lemma extapnspq: forall {n p q l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_send q [(l,s,w)]) n)).
+Lemma extapnspq: forall {n p q l s a} w, singleton w -> singleton ((merge_ap_contn p a (st_send q (cocons (l,s,w) conil)) n)).
 Proof. intros.
        apply extapn.
        pfold. constructor.
@@ -717,36 +717,51 @@ Qed.
 
 (*shapes of terms wrt membership*)
 
-Lemma invsingl: forall p l, singleton (p & l) -> exists (l': label) (s: local.sort) (w: st), l = [((l',s),w)].
+Lemma invsingl: forall p l, singleton (p & l) -> exists (l': label) (s: local.sort) (w: st), l = (cocons ((l',s),w) conil).
 Proof. intros.
-       induction l; intros.
+       pinversion H.
+       subst. exists l0. exists s. exists w. easy.
+       
+(*        induction l; intros.
        unfold singleton in H. punfold H. inversion H. 
        apply sI_mon.
        unfold singleton in H. punfold H. inversion H.
        subst. simpl in *.
-       exists l0. exists s. exists w. easy. 
+       exists l0. exists s. exists w. easy.  *)
        apply sI_mon.
 Qed.
 
-Lemma invsingl2: forall p l, singleton (p ! l) -> exists (l': label) (s: local.sort) (w: st), l = [((l',s),w)].
+Lemma invsingl2: forall p l, singleton (p ! l) -> exists (l': label) (s: local.sort) (w: st), l = (cocons ((l',s),w) conil).
 Proof. intros.
-       induction l; intros.
+       pinversion H. subst.
+       subst. exists l0. exists s. exists w. easy.
+(*        induction l; intros.
        unfold singleton in H. punfold H. inversion H. 
        apply sI_mon.
        unfold singleton in H. punfold H. inversion H.
        subst. simpl in *.
-       exists l0. exists s. exists w. easy. 
+       exists l0. exists s. exists w. easy.  *)
        apply sI_mon.
 Qed.
 
 Lemma sinv: forall w, singleton w ->
-                      (exists p l s w', w = st_send p [(l,s,w')] /\ singleton w') \/
-                      (exists p l s w', w = st_receive p [(l,s,w')] /\ singleton w') \/
+                      (exists p l s w', w = st_send p (cocons (l,s,w') conil) /\ singleton w') \/
+                      (exists p l s w', w = st_receive p (cocons (l,s,w') conil) /\ singleton w') \/
                       (w = st_end).
 Proof. intros.
        case_eq w; intros.
        subst. right. right. (*  left.  *) easy.
        subst. right. left.
+       pinversion H.
+       subst.
+       exists s. exists l. exists s0. exists w. split. easy. easy.
+       apply sI_mon.
+       subst.
+       pinversion H.
+       subst. left. 
+       exists s. exists l. exists s0. exists w. split. easy. easy.
+       apply sI_mon.
+(*        
        induction l; intros.
        punfold H. inversion H. apply sI_mon.
        punfold H. inversion H. subst.
@@ -761,7 +776,7 @@ Proof. intros.
        exists s. exists l0. exists s0. exists w.
        split. easy. unfold singleton.
        inversion H1. easy. easy.
-       apply sI_mon.
+       apply sI_mon. *)
 Qed.
 
 (* Lemma ninReceive: forall w p (Hs: singleton w) (Hnin: CoNInR (p, rcv) (act w)),
@@ -830,7 +845,7 @@ Qed.
  *)
 
 Lemma inReceive: forall w p (Hs: singleton w) (Hin: coseqIn (p, rcv) (act w)),
-  exists c l s w2, w = merge_cp_cont p c (p & [(l,s,w2)]).
+  exists c l s w2, w = merge_cp_cont p c (p & (cocons (l,s,w2) conil)).
 Proof. intros.
        remember (p, rcv) as v.
        remember (act w) as u.
@@ -838,33 +853,42 @@ Proof. intros.
        induction Hin; intros.
        rewrite Heqv in H0. rewrite <- H0 in H.
        subst. simpl in *.
-       case_eq w; intros. subst. easy.
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in Hequ. simpl in Hequ. easy.
        subst.
-       specialize(invsingl s l Hs); intros Hl.
+       specialize(invsingl s c Hs); intros Hl.
        destruct Hl as (l1,(s1,(w1, Heqw1))).
-       rewrite Heqw1 in H.
-       inversion H.
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
        subst.
        exists cp_end. exists l1. exists s1. exists w1. 
        rewrite cpend_an. easy.
 
        subst.
-       specialize(invsingl2 s l Hs); intros Hl.
+       specialize(invsingl2 s c Hs); intros Hl.
        destruct Hl as (l1,(s1,(w1, Heqw1))).
-       rewrite Heqw1 in H.
-       inversion H. 
-
-       case_eq w; intros. subst. easy.
+       rewrite Heqw1 in Hequ.
+       inversion Hequ.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
        subst.
-       specialize(invsingl s l Hs); intros Hl.
+
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in Hequ. simpl in Hequ. easy.
+       subst.
+       specialize(invsingl s c Hs); intros Hl.
        destruct Hl as (l1,(s1,(w1, Heqw1))).
-       rewrite Heqw1 in H.
-       subst. inversion H. subst.
+       rewrite Heqw1 in Hequ.
+       subst.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
        assert((p, rcv) = (p, rcv)) by easy.
        assert(singleton w1).
        { apply extrR in Hs. easy.  }
        assert((act w1) = (act w1)) by easy.
-       specialize(IHHin H1 w1 H2 H3).
+       specialize(IHHin H w1 H1 H2).
        destruct IHHin as (c,(l2,(s2,(w3,IHw3)))).
        rewrite IHw3.
        assert(p <> s).
@@ -872,29 +896,31 @@ Proof. intros.
          intro Hp.
          apply H0.
          subst. easy. }
-       exists (cp_mergea s H4 l1 s1 c). exists l2. exists s2. exists w3.
-       rewrite(st_eq( merge_cp_cont p (cp_mergea s H4 l1 s1 c) (p & [(l2, s2, w3)]))).
+       exists (cp_mergea s H3 l1 s1 c). exists l2. exists s2. exists w3.
+       rewrite(st_eq( merge_cp_cont p (cp_mergea s H3 l1 s1 c) (p & (cocons (l2, s2, w3) conil)))).
        simpl. easy.
 
        subst.
-       specialize(invsingl2 s l Hs); intros Hl.
+       specialize(invsingl2 s c Hs); intros Hl.
        destruct Hl as (l1,(s1,(w1, Heqw1))).
        rewrite Heqw1 in Hs.
        assert((p, rcv) = (p, rcv)) by easy.
        assert(singleton w1).
        { apply extsR in Hs. easy.  }
        assert((act w1) = (act w1)) by easy.
-       rewrite Heqw1 in H. simpl in H.
-       inversion H.
-       symmetry in H6.
-       specialize(IHHin H1 w1 H2 H6).
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       specialize(IHHin H w1 H1 H2).
        destruct IHHin as (c,(l2,(s2,(w3,IHw3)))).
        subst.
        exists (cp_merge s l1 s1 c). exists l2. exists s2. exists w3.
-       rewrite(st_eq(merge_cp_cont p (cp_merge s l1 s1 c) (p & [(l2, s2, w3)]))).
+       rewrite(st_eq(merge_cp_cont p (cp_merge s l1 s1 c) (p & (cocons (l2, s2, w3) conil)))).
        simpl. easy.
 Qed.
 
+(*here*)
 Lemma inSend: forall w p (Hs: singleton w) (Hin: coseqIn (p, snd) (act w)),
   exists b l s w2, w = merge_bp_cont p b (p ! [(l,s,w2)]).
 Proof. intros.
