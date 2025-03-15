@@ -65,37 +65,49 @@ Qed.
 
 Local Open Scope string_scope.
 Import CoListNotations.
-(*
+
+(* Notation "[| |]" := conil (format "[| |]").
+Notation "[| x |]" := (cocons x conil).
+Notation "[| x ; y ; .. ; z |]" := (cocons x (cocons y .. (cocons z conil) ..)). *)
+
 CoFixpoint exst := st_send "C" [| ("add", I, st_receive "A" [| ("add", I, exst); ("X",I,st_send "C" [| ("Y",I,exst); ("Z",I,exst) |]) |]); 
                                 ("sub", I, st_receive "A" [| ("add", I, exst) |]);
                                 ("mul", I, st_receive "A" [| ("add", I, exst) |]);
                                 ("div", I, "A" & [| ("X", I, exst) |]); 
                                 ("X", I, exst) |].
 
-CoFixpoint exsiso := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I,exsiso)]))])].
+CoFixpoint exsiso := st_send "C" [| ("add", I, st_receive "A" [| ("X", I, (st_send "C" [| ("Y",I,exsiso) |] )) |] ) |].
 
 Lemma example_ns: st2sisoC exsiso exst.
 Proof. pcofix CIH. pfold.
        rewrite(st_eq exst). rewrite(st_eq exsiso). simpl.
-       apply st2siso_snd. simpl. left. pfold.
-       apply st2siso_rcv. simpl. left. pfold.
-       apply st2siso_snd. simpl. 
+       apply st2siso_snd with (y := "A" & [|("add", I, exst); ("X", I, "C" ! [|("Y", I, exst); ("Z", I, exst)|])|]). simpl. left. pfold.
+       apply st2siso_rcv with (y := "C" ! [|("Y", I, exst); ("Z", I, exst)|]). simpl. left. pfold.
+       apply st2siso_snd with (y := exst). simpl. 
        right. exact CIH.
+       constructor.
+       constructor. easy. constructor.
+       constructor.
 Qed.
 
-CoFixpoint exsiso2 := st_send "C" [("add", I, st_receive "A" [("X", I, (st_send "C" [("Y",I, st_send "C" [("sub", I, st_receive "A" [("add", I, exsiso2)])])]))])].
+CoFixpoint exsiso2 := st_send "C" [| ("add", I, st_receive "A" [| ("X", I, (st_send "C" [| ("Y",I, st_send "C" [| ("sub", I, st_receive "A" [| ("add", I, exsiso2) |]) |]) |])) |]) |].
 
 Lemma example_ns2: st2sisoC exsiso2 exst.
 Proof. pcofix CIH. pfold.
        rewrite(st_eq exst). rewrite(st_eq exsiso2). simpl.
-       apply st2siso_snd. simpl. left. pfold.
-       apply st2siso_rcv. simpl. left. pfold.
-       apply st2siso_snd. simpl. left. pfold.
+       apply st2siso_snd with (y := "A" & [|("add", I, exst); ("X", I, "C" ! [|("Y", I, exst); ("Z", I, exst)|])|]). simpl. left. pfold.
+       apply st2siso_rcv with (y := "C" ! [|("Y", I, exst); ("Z", I, exst)|]). simpl. left. pfold.
+       apply st2siso_snd with (y := exst). simpl. left. pfold.
        rewrite(st_eq exst). simpl.
-       apply st2siso_snd. simpl. left. pfold.
-       apply st2siso_rcv. simpl.
+       apply st2siso_snd with (y := "A" & [|("add", I, exst)|]). simpl. left. pfold.
+       apply st2siso_rcv with (y := exst). simpl.
        right. exact CIH.
-Qed. *)
+       constructor.
+       constructor. easy. constructor.
+       constructor.
+       constructor. easy. constructor.
+       constructor.
+Qed.
 
 (**)
 

@@ -1488,6 +1488,90 @@ Proof. intros p b1.
        rewrite bpend_an. easy.
 Qed.
 
+Lemma lApnil: forall n q,
+(listAp q (napp n [])) = ap_end.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. easy.
+Qed.
+
+Lemma lBpnil: forall n q,
+(listBp q (napp n [])) = bp_end.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. easy.
+Qed.
+
+Lemma lCpnil: forall n q,
+(listCp q (napp n [])) = cp_end.
+Proof. intro n.
+       induction n; intros.
+       simpl. easy.
+       simpl. rewrite IHn. easy.
+Qed.
+
+Lemma eqscsrcv: forall l p w,
+coseqIn (p, rcv) (appendL l (act w)) ->
+In (p, rcv) l \/
+coseqIn (p, rcv) (act w).
+Proof. intro l.
+       induction l; intros.
+       - simpl. right. rewrite anl2 in H. easy.
+       - inversion H.
+         subst. simpl in H0.
+         rewrite(coseq_eq(appendL (a :: l) (act w))) in H0.
+         simpl in H0.
+         inversion H0.
+         subst.
+         simpl.
+         left. left. easy.
+         subst. simpl.
+         rewrite or_assoc.
+         right. apply IHl.
+         rewrite(coseq_eq(appendL (a :: l) (act w))) in H0.
+         simpl in H0.
+         inversion H0.
+         subst.
+         easy.
+Qed.
+
+Lemma eqscssnd: forall l p w,
+coseqIn (p, snd) (appendL l (act w)) ->
+In (p, snd) l \/
+coseqIn (p, snd) (act w).
+Proof. intro l.
+       induction l; intros.
+       - simpl. right. rewrite anl2 in H. easy.
+       - inversion H.
+         subst. simpl in H0.
+         rewrite(coseq_eq(appendL (a :: l) (act w))) in H0.
+         simpl in H0.
+         inversion H0.
+         subst.
+         simpl.
+         left. left. easy.
+         subst. simpl.
+         rewrite or_assoc.
+         right. apply IHl.
+         rewrite(coseq_eq(appendL (a :: l) (act w))) in H0.
+         simpl in H0.
+         inversion H0.
+         subst.
+         easy.
+Qed.
+
+Lemma notinA: forall q a p,
+In (p, snd) (actA q a) -> False.
+Proof. intros q a.
+       induction a; intros.
+       - simpl in H. destruct H; easy.
+       - simpl in H. destruct H. easy. 
+         apply (IHa p). easy.
+       - simpl in H. easy.
+Qed.
+
 (*here*)
 Lemma ApApeqInv2: forall p a1 a2 l s w,
 merge_ap_cont p a1 (p & [(l, s, w)]) =
@@ -2421,79 +2505,6 @@ Proof. intros p q a1.
 Qed.
 
 
-Lemma lApnil: forall n q,
-(listAp q (napp n [])) = ap_end.
-Proof. intro n.
-       induction n; intros.
-       simpl. easy.
-       simpl. rewrite IHn. easy.
-Qed.
-
-Lemma lBpnil: forall n q,
-(listBp q (napp n [])) = bp_end.
-Proof. intro n.
-       induction n; intros.
-       simpl. easy.
-       simpl. rewrite IHn. easy.
-Qed.
-
-Lemma lCpnil: forall n q,
-(listCp q (napp n [])) = cp_end.
-Proof. intro n.
-       induction n; intros.
-       simpl. easy.
-       simpl. rewrite IHn. easy.
-Qed.
-
-Lemma eqscsrcv: forall l p w,
-coseqIn (p, rcv) (appendL l (act w)) ->
-In (p, rcv) l \/
-coseqIn (p, rcv) (act w).
-Proof. intro l.
-       induction l; intros.
-       - simpl. right. rewrite anl2 in H. easy.
-       - inversion H.
-         subst. simpl in H0. inversion H0.
-         subst.
-         simpl.
-         left. left. easy.
-         subst. simpl.
-         rewrite or_assoc.
-         right. apply IHl.
-         simpl in H0. inversion H0.
-         subst.
-         easy.
-Qed.
-
-Lemma eqscssnd: forall l p w,
-coseqIn (p, snd) (appendL l (act w)) ->
-In (p, snd) l \/
-coseqIn (p, snd) (act w).
-Proof. intro l.
-       induction l; intros.
-       - simpl. right. rewrite anl2 in H. easy.
-       - inversion H.
-         subst. simpl in H0. inversion H0.
-         subst.
-         simpl.
-         left. left. easy.
-         subst. simpl.
-         rewrite or_assoc.
-         right. apply IHl.
-         simpl in H0. inversion H0.
-         subst.
-         easy.
-Qed.
-
-Lemma notinA: forall q a p,
-In (p, snd) (actA q a) -> False.
-Proof. intros q a.
-       induction a; intros.
-       - simpl in H. destruct H; easy.
-       - simpl in H. destruct H. easy. 
-         apply (IHa p). easy.
-       - simpl in H. easy.
-Qed.
 
 Lemma insndAp: forall n p q a w,
 coseqIn (p, snd) (act (merge_ap_cont q (ApnA q a n) w)) ->
@@ -3464,7 +3475,6 @@ Proof. intros p b1.
          apply insndBp in H0. easy. easy.
 Qed.
 
-
 Lemma actNeq: forall w1 w2, act_neq w1 w2 -> w1 ~< w2 -> False.
 Proof. intros.
        unfold act_neq in H.
@@ -3477,13 +3487,13 @@ Proof. intros.
            case_eq (eqb p q); intros.
            ++ rewrite eqb_eq in H3. subst.
               rewrite actApLcomb. apply eq0. right. 
-              rewrite(coseq_eq(act (q & [(l, s', w')]))). unfold coseq_id.
+              rewrite(coseq_eq(act (q & (cocons (l, s', w') conil)))). unfold coseq_id.
               simpl.
               apply CoInSplit1 with (y := (q, rcv)) (ys:= (act w')).
               simpl. easy. easy.
            ++ rewrite eqb_neq in H3.
               unfold act_eq in H2.
-              rewrite(coseq_eq(act (p & [(l, s, w)]))) in Ha.
+              rewrite(coseq_eq(act (p & (cocons (l, s, w) conil)))) in Ha.
               unfold coseq_id in Ha. simpl in Ha.
               inversion Ha. subst. simpl in H4. inversion H4.
               subst. easy.
@@ -3496,13 +3506,13 @@ Proof. intros.
               destruct H6 as [H6 | H6].
               * left. easy.
               * right.
-                rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id.
+                rewrite(coseq_eq(act (p & (cocons (l, s', w') conil)))). unfold coseq_id.
                 simpl. 
                 apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w')). simpl. easy. easy. easy.
          + subst. 
 (*          apply mem_ext in H2. *)
            rewrite actBpLcomb. apply eq0.
-           rewrite(coseq_eq(act (p ! [(l, s, w)]))) in Ha. unfold coseq_id in Ha.
+           rewrite(coseq_eq(act (p ! (cocons (l, s, w) conil)))) in Ha. unfold coseq_id in Ha.
            simpl in Ha. inversion Ha.
            subst. easy.
            subst.
@@ -3513,7 +3523,8 @@ Proof. intros.
            destruct H5 as [H5 | H5].
            left. easy.
            right.
-           apply CoInSplit2 with (y := (p, snd)) (ys:= (act w')). simpl. easy. easy. easy.
+           apply CoInSplit2 with (y := (p, snd)) (ys:= (act w')). 
+           rewrite(coseq_eq(act (p ! cocons (l, s', w') conil))). unfold coseq_id. simpl. easy. easy. easy.
          + subst. rewrite(coseq_eq(act (end))) in Ha.
            unfold coseq_id in Ha. simpl in Ha.
            inversion Ha. subst. easy. subst. easy.
@@ -3522,7 +3533,7 @@ Proof. intros.
          punfold H0. inversion H0.
          subst. 
 (*          apply mem_ext in H2. *)
-         rewrite(coseq_eq(act (p & [(l, s, w)]))) in Ha.
+         rewrite(coseq_eq(act (p & (cocons (l, s, w) conil)))) in Ha.
          unfold coseq_id in Ha. simpl in Ha. 
          inversion Ha. subst. simpl in H3. easy.
          subst. simpl in H3. inversion H3. subst.
@@ -3534,17 +3545,18 @@ Proof. intros.
          destruct H5 as [H5 | H5].
          left. easy.
          right.
-         apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w')). simpl. easy. easy. easy.
+         apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w')). simpl.
+         rewrite(coseq_eq(act (p & cocons (l, s', w') conil))). simpl. easy. easy. easy.
          subst. 
 (*          apply mem_ext in H2. *)
          case_eq (eqb p q); intros.
          ++ rewrite eqb_eq in H3. subst.
             rewrite actBpLcomb. apply eq0. right.
-            rewrite(coseq_eq(act (q ! [(l, s', w')]))). unfold coseq_id. simpl.
+            rewrite(coseq_eq(act (q ! (cocons (l, s', w') conil)))). unfold coseq_id. simpl.
             apply CoInSplit1 with (y := (q, snd)) (ys:= (act w')). easy. easy.
          ++ rewrite eqb_neq in H3.
             unfold act_eq in H2.
-            rewrite(coseq_eq(act (p ! [(l, s, w)]))) in Ha.
+            rewrite(coseq_eq(act (p ! (cocons (l, s, w) conil)))) in Ha.
             unfold coseq_id in Ha. simpl in Ha.
             inversion Ha. subst. simpl in H4. inversion H4.
             subst. easy.
@@ -3557,7 +3569,7 @@ Proof. intros.
             destruct H6 as [H6 | H6].
             left. easy.
             right.
-            rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+            rewrite(coseq_eq(act (p ! (cocons (l, s', w') conil)))). unfold coseq_id. simpl.
             apply CoInSplit2 with (y := (p, snd)) (ys:= (act w')). simpl. easy. easy. easy.
          ++ subst. rewrite(coseq_eq(act (end))) in Ha.
              unfold coseq_id in Ha. simpl in Ha.
@@ -3571,7 +3583,7 @@ Proof. intros.
 (*            apply mem_ext in H2. *)
            case_eq (eqb p q); intros.
            ++ rewrite eqb_eq in H3. subst.
-              rewrite(coseq_eq(act (q & [(l, s, w)]))). unfold coseq_id. simpl.
+              rewrite(coseq_eq(act (q & (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
               apply CoInSplit1 with (y := (q, rcv)) (ys:= (act w)). easy. easy.
            ++ rewrite eqb_neq in H3.
               unfold act_eq in H2.
@@ -3581,14 +3593,16 @@ Proof. intros.
               { destruct Ha. left. easy.
                 right.
                 inversion H4. subst. simpl in H5.
+                rewrite(coseq_eq(act (p & cocons (l, s', w') conil))) in H5. simpl in H5.
                 inversion H5. subst. easy.
+                rewrite(coseq_eq(act (p & cocons (l, s', w') conil))) in H5. simpl in H5.
                 inversion H5.
                 subst. easy.
               }
               apply eqscs in H4.
               rewrite actApLcomb in H2.
               apply H2 in H4.
-              rewrite(coseq_eq(act (p & [(l, s, w)]))). unfold coseq_id. simpl.
+              rewrite(coseq_eq(act (p & (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
               apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w)). simpl. easy.
               unfold not. intro Hx. apply H3.
               inversion Hx. easy. easy.
@@ -3600,6 +3614,7 @@ Proof. intros.
               assert(In (q, rcv) (actBn p b n) \/ coseqIn (q, rcv) (act w')).
               { destruct Ha. left. easy.
                 right.
+                rewrite(coseq_eq(act (p ! cocons (l, s', w') conil))) in H3. simpl in H3.
                 inversion H3. subst. simpl in H4. easy.
                 subst. simpl in H4. inversion H4. subst. easy.
               }
@@ -3607,7 +3622,7 @@ Proof. intros.
               unfold act_eq in H2.
               rewrite actBpLcomb in H2.
               apply H2 in H3.
-              rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+              rewrite(coseq_eq(act (p ! (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
               apply CoInSplit2 with (y := (p, snd)) (ys:= (act w)). simpl. easy. easy. easy.
               subst. rewrite(coseq_eq(act (end))) in Ha.
               unfold coseq_id in Ha. simpl in Ha.
@@ -3625,17 +3640,18 @@ Proof. intros.
            assert(In (q, snd) (actAn p a n) \/ coseqIn (q, snd) (act w')).
            { destruct Ha. left. easy.
              right.
-                inversion H3. subst. simpl in H4. easy.
-                subst. simpl in H4. inversion H4. subst. easy.
+             rewrite(coseq_eq((act (p & cocons (l, s', w') conil)))) in H3. simpl in H3.
+             inversion H3. subst. simpl in H4. easy.
+             subst. simpl in H4. inversion H4. subst. easy.
            }
            apply eqscs in H3.
            apply H2 in H3.
-           rewrite(coseq_eq(act (p & [(l, s, w)]))). unfold coseq_id. simpl.
+           rewrite(coseq_eq(act (p & (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
            apply CoInSplit2 with (y := (p, rcv)) (ys:= (act w)). simpl. easy. easy. easy.
          + subst.
          case_eq (eqb p q); intros.
          ++ rewrite eqb_eq in H3. subst.
-            rewrite(coseq_eq(act (q ! [(l, s, w)]))). unfold coseq_id. simpl.
+            rewrite(coseq_eq(act (q ! (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
             apply CoInSplit1 with (y := (q, snd)) (ys:= (act w)). simpl. easy. easy.
          ++ rewrite eqb_neq in H3.
             unfold act_eq in H2.
@@ -3647,7 +3663,10 @@ Proof. intros.
               left. easy.
               right.
                 inversion H4. subst. simpl in H5.
+                rewrite(coseq_eq(act (p ! cocons (l, s', w') conil))) in H5. simpl in H5.
                 inversion H5. subst. easy.
+                subst.
+                rewrite(coseq_eq(act (p ! cocons (l, s', w') conil))) in H5. simpl in H5.
                 inversion H5.
                 subst. easy.
             }
@@ -3655,7 +3674,7 @@ Proof. intros.
             unfold act_eq in H2.
             rewrite actBpLcomb in H2.
             apply H2 in H4.
-            rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
+            rewrite(coseq_eq(act (p ! (cocons (l, s, w) conil)))). unfold coseq_id. simpl.
             apply CoInSplit2 with (y := (p, snd)) (ys:= (act w)). simpl. easy.
             intro Hx. apply H3. inversion Hx. easy. easy.
             subst. rewrite(coseq_eq(act (end))) in Ha.

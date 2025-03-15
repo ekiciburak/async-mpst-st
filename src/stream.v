@@ -85,9 +85,9 @@ CoFixpoint nats_from (n : nat) : coseq nat :=
   Delay (cocons n (nats_from (S n))). *)
 
 Module CoListNotations.
-Notation "[| |]" := conil (format "[| |]") : colist_scope.
-Notation "[| x |]" := (cocons x conil) : colist_scope.
-Notation "[| x ; y ; .. ; z |]" := (cocons x (cocons y .. (cocons z conil) ..)) : colist_scope.
+Notation "[| |]" := conil (format "[| |]").
+Notation "[| x |]" := (cocons x conil).
+Notation "[| x ; y ; .. ; z |]" := (cocons x (cocons y .. (cocons z conil) ..)).
 End CoListNotations.
 
 CoFixpoint comap {A B: Type} (f: A -> B) (xs: coseq A): coseq B := 
