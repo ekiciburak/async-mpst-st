@@ -66,10 +66,6 @@ Qed.
 Local Open Scope string_scope.
 Import CoListNotations.
 
-(* Notation "[| |]" := conil (format "[| |]").
-Notation "[| x |]" := (cocons x conil).
-Notation "[| x ; y ; .. ; z |]" := (cocons x (cocons y .. (cocons z conil) ..)). *)
-
 CoFixpoint exst := st_send "C" [| ("add", I, st_receive "A" [| ("add", I, exst); ("X",I,st_send "C" [| ("Y",I,exst); ("Z",I,exst) |]) |]); 
                                 ("sub", I, st_receive "A" [| ("add", I, exst) |]);
                                 ("mul", I, st_receive "A" [| ("add", I, exst) |]);

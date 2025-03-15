@@ -2914,104 +2914,106 @@ Proof. intros p a.
        - rewrite apend_an in H0. inversion H0. subst. easy.
 Qed.
 
-(*here*)
 Lemma nCpeqrcv: forall p c q l1 l2 s1 s2 w1 w2, 
 p <> q ->
-q & [(l1, s1, w1)] = merge_cp_cont p c (p & [(l2, s2, w2)]) ->
+q & [|(l1, s1, w1)|] = merge_cp_cont p c (p & [|(l2, s2, w2)|]) ->
 coseqIn (p,rcv) (act w1).
 Proof. intros p c.
        induction c; intros.
-       - rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) (p & [(l2, s2, w2)]))) in H0.
+       - rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) (p & [|(l2, s2, w2)|]))) in H0.
          simpl in H0. inversion H0. subst. 
-         rewrite(coseq_eq((act (p & [(l2, s2, w2)])))).
+         rewrite(coseq_eq((act (p & [|(l2, s2, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [(l2, s2, w2)]))) in H0.
+       - rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [|(l2, s2, w2)|]))) in H0.
          simpl in H0. inversion H0. rewrite actCpL. apply eqscs. right.
-         rewrite(coseq_eq((act (p & [(l2, s2, w2)])))).
+         rewrite(coseq_eq((act (p & [|(l2, s2, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq( merge_cp_cont p (cp_send s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+       - rewrite(st_eq( merge_cp_cont p (cp_send s s0 s1) (p & [|(l2, s3, w2)|]))) in H0.
          simpl in H0. easy.
-       - rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l2, s3, w2)]))) in H0.
+       - rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [|(l2, s3, w2)|]))) in H0.
          simpl in H0. easy.
        - rewrite cpend_an in H0. inversion H0. subst. easy.
 Qed.
 
 Lemma nBpeqrcv: forall p b q l1 l2 s1 s2 w1 w2, 
 p <> q ->
-q & [(l1, s1, w1)] = merge_bp_cont p b (p & [(l2, s2, w2)]) ->
+q & [|(l1, s1, w1)|] = merge_bp_cont p b (p & [|(l2, s2, w2)|]) ->
 coseqIn (p,rcv) (act w1).
 Proof. intros p b.
        induction b; intros.
-       - rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p & [(l2, s3, w2)]))) in H0.
+       - rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p & [|(l2, s3, w2)|]))) in H0.
          simpl in H0. inversion H0. subst. 
-         rewrite(coseq_eq((act (p & [(l2, s3, w2)])))).
+         rewrite(coseq_eq((act (p & [|(l2, s3, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) (p & [(l2, s2, w2)]))) in H0.
+       - rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) (p & [|(l2, s2, w2)|]))) in H0.
          simpl in H0. inversion H0. 
-       - rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (p & [(l2, s3, w2)]))) in H0.
+       - rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (p & [|(l2, s3, w2)|]))) in H0.
          simpl in H0.
          inversion H0. rewrite actBpL. apply eqscs. right.
-         apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) (p & [(l2, s2, w2)]))) in H0.
+         apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl.
+         rewrite(coseq_eq(act (p & [|(l2, s3, w2)|]))). simpl. easy. easy.
+       - rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) (p & [|(l2, s2, w2)|]))) in H0.
          simpl in H0. easy.
        - rewrite bpend_an in H0. inversion H0. subst. easy.
 Qed.
 
 Lemma nBpeqsnd: forall p b q l1 l2 s1 s2 w1 w2, 
-q & [(l1, s1, w1)] = merge_bp_cont p b (p ! [(l2, s2, w2)]) ->
+q & [|(l1, s1, w1)|] = merge_bp_cont p b (p ! [|(l2, s2, w2)|]) ->
 coseqIn (p,snd) (act w1).
 Proof. intros p b.
        induction b; intros.
-       - rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [(l2, s3, w2)]))) in H.
+       - rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [|(l2, s3, w2)|]))) in H.
          simpl in H. inversion H. subst. 
-         rewrite(coseq_eq((act (p ! [(l2, s3, w2)])))).
+         rewrite(coseq_eq((act (p ! [|(l2, s3, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, snd)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) (p ! [(l2, s2, w2)]))) in H.
+       - rewrite(st_eq(merge_bp_cont p (bp_send q n s s0) (p ! [|(l2, s2, w2)|]))) in H.
          simpl in H.
          easy.
-       - rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (p ! [(l2, s3, w2)]))) in H.
+       - rewrite(st_eq(merge_bp_cont p (bp_mergea s s0 s1 b) (p ! [|(l2, s3, w2)|]))) in H.
          simpl in H. inversion H. subst.
          rewrite actBpL. apply eqscs. right.
-         apply CoInSplit1 with (y := (p, snd)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) (p ! [(l2, s2, w2)]))) in H.
+         apply CoInSplit1 with (y := (p, snd)) (ys := (act w2)). simpl. 
+         rewrite(coseq_eq(act (p ! [|(l2, s3, w2)|]))). simpl. easy. easy.
+       - rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b) (p ! [|(l2, s2, w2)|]))) in H.
          simpl in H. easy.
        - rewrite bpend_an in H. easy.
 Qed.
 
 Lemma Cpeqrcv: forall p c q l1 l2 s1 s2 w1 w2, 
-q ! [(l1, s1, w1)] = merge_cp_cont p c (p & [(l2, s2, w2)]) ->
+q ! [|(l1, s1, w1)|] = merge_cp_cont p c (p & [|(l2, s2, w2)|]) ->
 coseqIn (p,rcv) (act w1).
 Proof. intros p c.
        induction c; intros.
-       - rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) (p & [(l2, s2, w2)]))) in H.
+       - rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) (p & [|(l2, s2, w2)|]))) in H.
          simpl in H. easy.
-       - rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [(l2, s2, w2)]))) in H.
+       - rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) (p & [|(l2, s2, w2)|]))) in H.
          simpl in H. easy.
-       - rewrite(st_eq(merge_cp_cont p (cp_send s s0 s1) (p & [(l2, s3, w2)]))) in H.
+       - rewrite(st_eq(merge_cp_cont p (cp_send s s0 s1) (p & [|(l2, s3, w2)|]))) in H.
          simpl in H.
          inversion H. subst. 
-         rewrite(coseq_eq((act (p & [(l2, s3, w2)])))).
+         rewrite(coseq_eq((act (p & [|(l2, s3, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
-       - rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [(l2, s3, w2)]))) in H.
+       - rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 c) (p & [|(l2, s3, w2)|]))) in H.
          simpl in H. inversion H. subst.
          rewrite actCpL. apply eqscs. right.
-         rewrite(coseq_eq((act (p & [(l2, s3, w2)])))).
+         rewrite(coseq_eq((act (p & [|(l2, s3, w2)|])))).
          unfold coseq_id.
          simpl.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w2)). simpl. easy. easy.
        - rewrite cpend_an in H. easy. 
 Qed.
 
+(*here*)
 Lemma Bpeqrcv: forall p b q l1 l2 s1 s2 w1 w2, 
 q ! [(l1, s1, w1)] = merge_bp_cont p b (p & [(l2, s2, w2)]) ->
 coseqIn (p,rcv) (act w1).
