@@ -229,7 +229,20 @@ Fixpoint pathsel (u: label) (v: local.sort) (l: list (label*local.sort*st)): st 
     | nil           => st_end
   end.
 
+(*co-path selection example*)
 Inductive copathsel: label -> sort -> coseq(label*sort*st) -> st -> Prop :=
-  | psleeq : forall l s t xs, copathsel l s (cocons (l,s,t) xs) t
-  | pselneq: forall l l' s s' t t' xs, l <> l' -> s <> s' -> copathsel l' s' xs t' -> copathsel l' s' (cocons (l,s,t) xs) t'.
+  | psleeq  : forall l s t xs, copathsel l s (cocons (l,s,t) xs) t
+  | pselneql: forall l l' s s' t t' xs, l <> l' -> copathsel l' s' xs t' -> copathsel l' s' (cocons (l,s,t) xs) t'
+  | pselneqs: forall l l' s s' t t' xs, s <> s' -> copathsel l' s' xs t' -> copathsel l' s' (cocons (l,s,t) xs) t'.
+
+CoFixpoint Ext1 := st_receive "q" (cocons ("l7", sint, Ext1) conil).
+CoFixpoint Ext2 := st_send "q" (cocons ("l8", sint, Ext2) conil).
+Definition cpath := (cocons("l4",sint,Ext1) (cocons ("l5",sint,Ext2) (cocons("l6",sint,st_end) conil))).
+
+Lemma cpselC: copathsel "l6" sint cpath st_end.
+Proof. constructor. easy.
+       constructor. easy.
+       constructor.
+Qed.
+
 
