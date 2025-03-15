@@ -3,6 +3,7 @@ From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
+Import CoListNotations.
 Require Import Setoid.
 Require Import Morphisms JMeq.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
@@ -94,16 +95,16 @@ Lemma apfend_an: forall w, merge_apf_cont apf_end w = w.
 Proof. intros.
        case_eq w; intros.
        - rewrite(st_eq(merge_apf_cont apf_end (end))). simpl. easy.
-       - rewrite(st_eq(merge_apf_cont apf_end (s & l) )). simpl. easy.
-       - rewrite(st_eq(merge_apf_cont apf_end (s ! l))). simpl. easy.
+       - rewrite(st_eq(merge_apf_cont apf_end (s & c) )). simpl. easy.
+       - rewrite(st_eq(merge_apf_cont apf_end (s ! c))). simpl. easy.
 Qed.
 
 Lemma bpfend_bn: forall w, merge_bpf_cont bpf_end w = w.
 Proof. intros.
        case_eq w; intros.
        - rewrite(st_eq(merge_bpf_cont bpf_end (end))). simpl. easy.
-       - rewrite(st_eq(merge_bpf_cont bpf_end (s & l) )). simpl. easy.
-       - rewrite(st_eq(merge_bpf_cont bpf_end (s ! l))). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s & c) )). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s ! c))). simpl. easy.
 Qed.
 
 Lemma meqApH: forall a b w,
@@ -154,8 +155,8 @@ Lemma bpfend_an: forall w, merge_bpf_cont bpf_end w = w.
 Proof. intros.
        case_eq w; intros.
        - rewrite(st_eq(merge_bpf_cont bpf_end (end))). simpl. easy.
-       - rewrite(st_eq(merge_bpf_cont bpf_end (s & l) )). simpl. easy.
-       - rewrite(st_eq(merge_bpf_cont bpf_end (s ! l))). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s & c) )). simpl. easy.
+       - rewrite(st_eq(merge_bpf_cont bpf_end (s ! c))). simpl. easy.
 Qed.
 
 Lemma mcAp2Bp: forall a w, 
@@ -756,20 +757,20 @@ Qed.
 
 Lemma reOrg2: forall a1 a2 p l s w,
   merge_apf_cont (Apf_merge a1 (apf_receive p l s a2)) w =
-  merge_apf_cont a1 (p & [(l, s, merge_apf_cont a2 w)]).
+  merge_apf_cont a1 (p & [|(l, s, merge_apf_cont a2 w)|]).
 Proof. intro a1.
        induction a1; intros.
        - simpl. rewrite apfend_an.
          rewrite(st_eq(merge_apf_cont (apf_receive p l s a2) w )). simpl. easy.
        - simpl.
          rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 (Apf_merge a1 (apf_receive p l s2 a2))) w)).
-         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a1) (p & [(l, s2, merge_apf_cont a2 w)]))). simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a1) (p & [|(l, s2, merge_apf_cont a2 w)|]))). simpl.
          rewrite IHa1. easy.
 Qed.
 
 Lemma noPre: forall c p l s w w',
   isInA c p = false ->
-  p & [(l, s, w)] = merge_apf_cont c w' ->
+  p & [|(l, s, w)|] = merge_apf_cont c w' ->
   c = apf_end.
 Proof. intro c.
        induction c; intros.
@@ -784,7 +785,7 @@ Qed.
 
 Lemma noPreS: forall c p l s w w',
   isInB c p = false ->
-  p ! [(l, s, w)] = merge_bpf_cont c w' ->
+  p ! [|(l, s, w)|] = merge_bpf_cont c w' ->
   c = bpf_end.
 Proof. intro c.
        induction c; intros.
@@ -835,16 +836,16 @@ Qed.
 Lemma reOrd2: forall a q p l s l' s' w,
   p <> q ->
   isInA a p = false ->
-  merge_apf_cont a (q & [(l, s, p & [(l', s', w)])]) =
-  merge_apf_cont (Apf_merge a (apf_receive q l s apf_end)) (p & [(l', s', w)]).
+  merge_apf_cont a (q & [|(l, s, p & [|(l', s', w)|])|]) =
+  merge_apf_cont (Apf_merge a (apf_receive q l s apf_end)) (p & [|(l', s', w)|]).
 Proof. intro a.
        induction a; intros.
        - rewrite apfend_an. simpl.
-         rewrite(st_eq(merge_apf_cont (apf_receive q l s apf_end) (p & [(l', s', w)]))). simpl.
+         rewrite(st_eq(merge_apf_cont (apf_receive q l s apf_end) (p & [|(l', s', w)|]))). simpl.
          rewrite apfend_an. easy.
        - simpl.
-         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (q & [(l, s2, p & [(l', s', w)])]))).
-         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 (Apf_merge a (apf_receive q l s2 apf_end))) (p & [(l', s', w)]))).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (q & [|(l, s2, p & [|(l', s', w)|])|]))).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 (Apf_merge a (apf_receive q l s2 apf_end))) (p & [|(l', s', w)|]))).
          simpl.
          simpl in H0.
          rewrite orbtf in H0.
@@ -914,8 +915,8 @@ Qed.
 Lemma reOrg3: forall a p q l s l' s' w w',
   p <> q ->
   isInA a q = false -> 
-  p & [(l, s, w)] = merge_apf_cont a (q & [(l', s', w')]) ->
-  exists c, isInA c q = false /\ a = apf_receive p l s c /\ w = merge_apf_cont c (q & [(l', s', w')]).
+  p & [|(l, s, w)|] = merge_apf_cont a (q & [|(l', s', w')|]) ->
+  exists c, isInA c q = false /\ a = apf_receive p l s c /\ w = merge_apf_cont c (q & [|(l', s', w')|]).
 Proof. intro a.
        induction a; intros.
        - rewrite apfend_an in H1.
@@ -923,7 +924,7 @@ Proof. intro a.
        - simpl in H0. rewrite orbtf in H0.
          destruct H0 as (Ha, Hb).
          rewrite eqb_neq in Ha.
-         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (q & [(l', s', w')]))) in H1. simpl in H1.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (q & [|(l', s', w')|]))) in H1. simpl in H1.
          inversion H1. subst.
          exists a.
          split. easy. split. easy. easy.
@@ -945,16 +946,16 @@ Qed.
 
 Lemma breOrg1: forall b b2 p l s w,
   merge_bpf_cont (Bpf_merge b (bpf_send p l s b2)) w =
-  merge_bpf_cont b (p ! [(l, s, merge_bpf_cont b2 w)]).
+  merge_bpf_cont b (p ! [|(l, s, merge_bpf_cont b2 w)|]).
 Proof. intro b.
        induction b; intros.
        - simpl.
          rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge b (bpf_send p l s2 b2))) w )).
-         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l, s2, merge_bpf_cont b2 w)|]))). simpl.
          rewrite IHb. easy.
        - simpl.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Bpf_merge b (bpf_send p l s2 b2))) w )).
-         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l, s2, merge_bpf_cont b2 w)|]))). simpl.
          rewrite IHb. easy.
        - simpl. rewrite bpfend_bn.
          rewrite(st_eq(merge_bpf_cont (bpf_send p l s b2) w )). simpl. easy.
@@ -962,16 +963,16 @@ Qed.
 
 Lemma breOrg2: forall b b2 p l s w,
   merge_bpf_cont (Bpf_merge b (bpf_receive p l s b2)) w =
-  merge_bpf_cont b (p & [(l, s, merge_bpf_cont b2 w)]).
+  merge_bpf_cont b (p & [|(l, s, merge_bpf_cont b2 w)|]).
 Proof. intro b.
        induction b; intros.
        - simpl.
          rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Bpf_merge b (bpf_receive p l s2 b2))) w )).
-         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p & [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p & [|(l, s2, merge_bpf_cont b2 w)|]))). simpl.
          rewrite IHb. easy.
        - simpl.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Bpf_merge b (bpf_receive p l s2 b2))) w )).
-         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p & [(l, s2, merge_bpf_cont b2 w)]))). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p & [|(l, s2, merge_bpf_cont b2 w)|]))). simpl.
          rewrite IHb. easy.
        - simpl. rewrite bpfend_bn.
          rewrite(st_eq(merge_bpf_cont (bpf_receive p l s b2) w )). simpl. easy.
@@ -1004,7 +1005,7 @@ Proof. intro a.
 Qed.
 
 Lemma bareOrg2: forall a p l s w, 
-  merge_bpf_cont (Ap2BpSeq a) (p & [(l, s, w)]) =
+  merge_bpf_cont (Ap2BpSeq a) (p & [|(l, s, w)|]) =
   merge_bpf_cont (Ap2BpSeq (Apf_merge a (apf_receive p l s apf_end))) w.
 Proof. intro a.
        induction a; intros.
@@ -1012,7 +1013,7 @@ Proof. intro a.
          rewrite(st_eq(merge_bpf_cont (bpf_receive p l s bpf_end) w)). simpl.
          rewrite bpfend_bn. easy.
        - simpl.
-         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Ap2BpSeq a)) (p & [(l, s2, w)]))).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Ap2BpSeq a)) (p & [|(l, s2, w)|]))).
          rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Ap2BpSeq (Apf_merge a (apf_receive p l s2 apf_end)))) w)).
          simpl. rewrite IHa. easy.
 Qed.
@@ -1134,15 +1135,15 @@ Qed.
 
 Lemma coseq_ninS: forall b a p l s w,
   a <> (p, snd) ->
-  coseqIn a (act (merge_bpf_cont b (p ! [(l, s, w)]))) ->
+  coseqIn a (act (merge_bpf_cont b (p ! [|(l, s, w)|]))) ->
   coseqIn a (act (merge_bpf_cont b w)).
 Proof. intro b.
        induction b; intros.
-       - rewrite(st_eq (merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [(l, s2, w)]))) in H0. simpl in H0.
-         rewrite(coseq_eq(act (s & [(s0, s1, merge_bpf_cont b (p ! [(l, s2, w)]))]))) in H0. unfold coseq_id in H0.
+       - rewrite(st_eq (merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l, s2, w)|]))) in H0. simpl in H0.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_bpf_cont b (p ! [|(l, s2, w)|]))|]))) in H0. unfold coseq_id in H0.
          simpl in H0.
          rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)). simpl.
-         rewrite(coseq_eq(act (s & [(s0, s1, merge_bpf_cont b w)]))). unfold coseq_id. simpl.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_bpf_cont b w)|]))). unfold coseq_id. simpl.
          inversion H0.
          + subst. simpl in H1.
            inversion H1. subst.
@@ -1153,11 +1154,11 @@ Proof. intro b.
            apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))).
            easy. easy.
            apply IHb with (p := p) (l := l) (s := s2); easy.
-       - rewrite(st_eq (merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, w)]))) in H0. simpl in H0.
-         rewrite(coseq_eq(act (s ! [(s0, s1, merge_bpf_cont b (p ! [(l, s2, w)]))]))) in H0. unfold coseq_id in H0.
+       - rewrite(st_eq (merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l, s2, w)|]))) in H0. simpl in H0.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_bpf_cont b (p ! [|(l, s2, w)|]))|]))) in H0. unfold coseq_id in H0.
          simpl in H0.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
-         rewrite(coseq_eq(act (s ! [(s0, s1, merge_bpf_cont b w)]))). unfold coseq_id. simpl.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_bpf_cont b w)|]))). unfold coseq_id. simpl.
          inversion H0.
          + subst. simpl in H1.
            inversion H1. subst.
@@ -1171,8 +1172,11 @@ Proof. intro b.
        - rewrite bpfend_bn.
          rewrite bpfend_bn in H0.
          inversion H0.
-         + subst. inversion H1. subst. easy.
-         + subst. simpl in H1. inversion H1. subst. easy.
+         + subst.
+           rewrite(coseq_eq(act (p ! [|(l, s, w)|]))) in H1. simpl in H1. inversion H1. subst.
+           easy.
+         + subst. simpl in H1.
+           rewrite(coseq_eq(act (p ! [|(l, s, w)|]))) in H1. simpl in H1. inversion H1. subst. easy.
 Qed.
 
 Lemma coseq_inS: forall b p w,
@@ -1181,12 +1185,12 @@ Lemma coseq_inS: forall b p w,
 Proof. intro b.
        induction b; intros.
        - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)). simpl.
-         rewrite(coseq_eq (act (s & [(s0, s1, merge_bpf_cont b w)]))). unfold coseq_id. simpl.
+         rewrite(coseq_eq (act (s & [|(s0, s1, merge_bpf_cont b w)|]))). unfold coseq_id. simpl.
          apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))).
          simpl. easy. easy.
          apply IHb. easy.
        - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
-         rewrite(coseq_eq (act (s ! [(s0, s1, merge_bpf_cont b w)]))). unfold coseq_id. simpl.
+         rewrite(coseq_eq (act (s ! [|(s0, s1, merge_bpf_cont b w)|]))). unfold coseq_id. simpl.
          case_eq(eqb p s); intros.
          + rewrite eqb_eq in H0.
            subst.
@@ -1202,6 +1206,7 @@ Proof. intro b.
          easy.
 Qed.
 
+(*here*)
 Lemma coseq_ninSR: forall b a p l s w,
   coseqIn a (act (merge_bpf_cont b w)) ->
   coseqIn a (act (merge_bpf_cont b (p ! [(l, s, w)]))).

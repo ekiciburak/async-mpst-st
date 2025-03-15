@@ -128,12 +128,17 @@ Inductive ForallH {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> P
 
 Definition ForallC {A: Type} P xs := paco1 (@ForallH A P) bot1 xs.
 
-Inductive Forall2H {A B : Type} (P : A -> B -> Prop) (R: coseq A -> coseq B -> Prop ) : coseq A -> coseq B -> Prop :=
-  | Forall2_conil : Forall2H P R conil conil
-  | Forall2_cocons: forall x y l l',
-                    P x y -> R l l' -> Forall2H P R (cocons x l) (cocons y l').
+Inductive Forall2Ho {A B : Type} (P : A -> B -> Prop) (R: coseq A -> coseq B -> Prop ) : coseq A -> coseq B -> Prop :=
+  | Forall2o_conil : Forall2Ho P R conil conil
+  | Forall2o_cocons: forall x y l l',
+                     P x y -> R l l' -> Forall2Ho P R (cocons x l) (cocons y l').
 
-Definition Forall2C {A B: Type} P xs ys := paco2 (@Forall2H A B P) bot2 xs ys.
+Definition Forall2Co {A B: Type} P xs ys := paco2 (@Forall2Ho A B P) bot2 xs ys.
+
+Inductive Forall2C {A B : Type} (P : A -> B -> Prop): coseq A -> coseq B -> Prop :=
+  | Forall2_conil : Forall2C P conil conil
+  | Forall2_cocons: forall x y l l',
+                     P x y -> Forall2C P l l' -> Forall2C P (cocons x l) (cocons y l').
 
 Inductive Forall3H {A B C: Type} (P : A -> B -> C -> Prop) (R: coseq A -> coseq B -> coseq C -> Prop ) : coseq A -> coseq B -> coseq C -> Prop :=
   | Forall3_conil : Forall3H P R conil conil conil

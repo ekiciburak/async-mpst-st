@@ -76,7 +76,7 @@ Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
 
 Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2.
 
-Lemma monH: forall ys xs r r',
+(* Lemma monH: forall ys xs r r',
   Forall2C (fun u : st => [eta r u]) ys xs ->
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
   Forall2C (fun u : st => [eta r' u]) ys xs.
@@ -94,7 +94,7 @@ Proof. intros. revert xs ys H. pcofix CIH.
        induction IN; intros.
        constructor.
        constructor. easy. apply LE. easy.
-Qed.
+Qed. *)
 
 Lemma st2so_mon: monotone2 st2so.
 Proof. unfold monotone2.
@@ -105,7 +105,7 @@ Proof. unfold monotone2.
          apply HS with (l := l) (s := s) (x := x) (y := y).
          apply LE; easy. easy.
        - specialize (st2so_rcv r'); intro HS.
-         apply HS. (* easy. *)
+         apply HS.
          apply monH2 with (r := r); easy.
 Qed.
 
@@ -137,7 +137,7 @@ Proof. pcofix CIH.
        rewrite(st_eq eT1); rewrite(st_eq eT2); simpl.
        pfold.
        apply st2so_rcv.
-       pfold. constructor.
+       constructor.
 (*        left. pfold. constructor.
        left. pfold. constructor.
        left. pfold. constructor.
@@ -153,17 +153,15 @@ Proof. pcofix CIH.
        pcofix CIH2.
        rewrite(st_eq Et1). simpl. rewrite(st_eq Et1so). simpl.
        pfold. apply st2so_rcv.
-       pfold. constructor.
+       constructor.
 (*        left. pfold. constructor.
        pfold. constructor. *)
        exists "l7". exists (I). exists (Et1so).
        exists "l7". exists (I). exists (Et1).
        split. easy. split. easy. right. easy.
-       left. pfold. constructor.
+       constructor.
        constructor.
 
-       left.
-       pfold.
        constructor.
        exists "l2". exists (I). exists ("q" ! cocons ("l9", I, eT2) conil).
        exists "l2". exists (I). exists ("q" ! cocons ("l9", I, eT1) conil).
@@ -172,22 +170,21 @@ Proof. pcofix CIH.
        right. easy.
        constructor.
        
-       left.
-       pfold.
+
        constructor.
        exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT2) conil).
        exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT1) conil).
        split. easy. split. easy.
        left. pfold. apply st2so_rcv.
-       pfold. constructor.
+       constructor.
 (*        left. pfold. constructor.
        pfold. constructor. *)
        exists "l10". exists (I). exists (eT2).
        exists "l10". exists (I). exists (eT1).
        split. easy. split. easy. right. easy.
        
-       left. pfold. constructor.
-       left. pfold. constructor.
+       constructor.
+       constructor.
 Qed.
 
 

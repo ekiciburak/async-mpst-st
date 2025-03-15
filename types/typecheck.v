@@ -5,7 +5,7 @@ Require Import ST.src.stream.
 Require Import String List Datatypes ZArith.
 Local Open Scope string_scope.
 Import ListNotations.
-
+Import CoListNotations.
 (* Inductive theta: Type :=
   | tempt : theta
   | tconse: expr    -> local.sort -> theta -> theta
@@ -186,7 +186,7 @@ Inductive typ_proc: ctxS -> ctxT -> process -> local -> Prop :=
                                       typ_proc cs ct p1 T ->
                                       typ_proc cs ct p2 T ->
                                       typ_proc cs ct (ps_ite e p1 p2) T
-  | tc_sst  : forall cs ct P T T' Tr Tr', typ_proc cs ct P T -> lt2stC T Tr -> lt2stC T' Tr' -> subtype3 Tr Tr' -> typ_proc cs ct P T'
+  | tc_sst  : forall cs ct P T T', typ_proc cs ct P T -> subtype3 (lt2st T) (lt2st T') -> typ_proc cs ct P T'
   | tc_recv : forall cs ct p STT P,
                      length P = length STT ->
                      SList P ->

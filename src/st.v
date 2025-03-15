@@ -123,6 +123,21 @@ Lemma monH2: forall ys xs r r',
   Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
   Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
+Proof. intros.
+       induction H; intros.
+       - constructor.
+       - constructor.
+         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+         exists l1. exists s1. exists t1. exists l2. exists s2. exists t2.
+         split. easy. split. easy. apply H0. easy.
+         apply IHForall2C.
+Qed.
+
+(*
+Lemma monH2: forall ys xs r r',
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
+  (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
 Proof. intros. revert xs ys H. pcofix CIH.
        intros.
        pfold.
@@ -140,7 +155,7 @@ Proof. intros. revert xs ys H. pcofix CIH.
        induction IN; intros.
        constructor.
        constructor. easy. apply LE. easy.
-Qed.
+Qed. *)
 
 (* CoFixpoint lt2st (l: local): st :=
   match n_unroll (rec_depth l) l with
