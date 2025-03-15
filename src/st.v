@@ -8,10 +8,22 @@ Import ListNotations.
 (* session trees *)
 CoInductive st: Type :=
   | st_end    : st
-  | st_receive: participant -> (label -> option (sort*st)) -> st
-  | st_send   : participant -> (label -> option (sort*st)) -> st.
+  | st_receive: participant -> coseq (label*sort*st) -> st
+  | st_send   : participant -> coseq (label*sort*st) -> st.
 
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
+  | eq_st_end: st_equiv R st_end st_end
+  | eq_st_rcv: forall p l s xs ys,
+               colen_eqC xs ys ->
+               Forall2C (fun u v => R u v) xs ys ->
+               st_equiv R (st_receive p (cozip (cozip l s) xs)) (st_receive p (cozip (cozip l s) ys))
+  | eq_st_snd: forall p l s xs ys,
+               colen_eqC xs ys ->
+               Forall2C (fun u v => R u v) xs ys ->
+               st_equiv R (st_send p (cozip (cozip l s) xs)) (st_send p (cozip (cozip l s) ys)).
+
+
+(* Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p f g,
                (forall l,
@@ -30,7 +42,7 @@ Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
                   | _                              => False
                 end
                ) ->
-               st_equiv R (st_send p f) (st_send p g).
+               st_equiv R (st_send p f) (st_send p g). *)
 
 Definition st_equivC: st -> st -> Prop := fun s1 s2 => paco2 st_equiv bot2 s1 s2.
 
@@ -68,20 +80,20 @@ Require Import ST.processes.unscoped.
 
 Definition unf (l: local): local :=
   match l with
-    | lt_mu l          => subst_local ((lt_mu l) .: lt_var) l
-    | _                => l
+    | lt_mu l => subst_local ((lt_mu l) .: lt_var) l
+    | _       => l
   end.
 
 Fixpoint rec_depth G :=
   match G with
-  | lt_mu G => (rec_depth G).+1
-  | _ => 0
+    | lt_mu G => S (rec_depth G)
+    | _       => 0
   end.
 
 Fixpoint n_unroll d G :=
   match d with
-  | 0    => G
-  | d.+1 =>
+  | 0   => G
+  | S d =>
     match G with
     | lt_mu G' => n_unroll d (unf G')
     | _        => G
@@ -89,6 +101,48 @@ Fixpoint n_unroll d G :=
   end.
 
 CoFixpoint lt2st (l: local): st :=
+  match n_unroll (rec_depth l) l with
+    | lt_receive p xs =>
+      let cofix next xs :=
+       match xs with
+         | (l1,s1,t1)::ys => cocons (l1,s1,lt2st t1) (next ys)
+         | nil            => conil
+       end
+      in st_receive p (next xs)
+    | lt_send p xs =>
+      let cofix next xs :=
+       match xs with
+         | (l1,s1,t1)::ys => cocons (l1,s1,lt2st t1) (next ys)
+         | nil            => conil
+       end
+      in st_send p (next xs)
+    | _               => st_end
+  end.
+
+Lemma monH2: forall ys xs r r',
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
+  (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
+Proof. intros. revert xs ys H. pcofix CIH.
+       intros.
+       pfold.
+       pinversion H1. subst.
+       constructor. subst.
+       constructor.
+       destruct H as (l1,(s1,(t1,(l1',(s1',(t1',(Ha,(Hb,Hc)))))))).
+       exists l1. exists s1. exists t1. exists l1'. exists s1'. exists t1'.
+       split. easy. split. easy. apply H0; easy. 
+       right.
+       apply CIH.
+       easy. 
+       unfold monotone2.
+       intros.
+       induction IN; intros.
+       constructor.
+       constructor. easy. apply LE. easy.
+Qed.
+
+(* CoFixpoint lt2st (l: local): st :=
   match n_unroll (rec_depth l) l with
     | lt_receive p xs =>
       st_receive p 
@@ -107,7 +161,7 @@ CoFixpoint lt2st (l: local): st :=
        end
       )
     | _               => st_end
-  end.
+  end. *)
 
 (* Inductive lt2st (R: local -> st -> Prop): local -> st -> Prop :=
   | lt2st_end: lt2st R lt_end st_end
@@ -175,4 +229,7 @@ Fixpoint pathsel (u: label) (v: local.sort) (l: list (label*local.sort*st)): st 
     | nil           => st_end
   end.
 
+Inductive copathsel: label -> sort -> coseq(label*sort*st) -> st -> Prop :=
+  | psleeq : forall l s t xs, copathsel l s (cocons (l,s,t) xs) t
+  | pselneq: forall l l' s s' t t' xs, l <> l' -> s <> s' -> copathsel l' s' xs t' -> copathsel l' s' (cocons (l,s,t) xs) t'.
 

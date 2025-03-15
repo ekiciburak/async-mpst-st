@@ -33,7 +33,7 @@ Proof. intro s; destruct s; easy. Defined.
 
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2. *)
 
-Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
+(* Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
   | st2si_end: st2si R st_end st_end
   | st2si_rcv: forall l s x s' y f p,
                f l = Some(s',y) ->
@@ -49,25 +49,31 @@ Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
                 end
                ) ->
                st2si R (st_send p f) (st_send p g).
+ *)
+
+Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
+  | st2si_end: st2si R st_end st_end
+  | st2si_rcv: forall l s x xs y p,
+               R x y ->
+               copathsel l s xs y ->
+               st2si R (st_receive p (cocons (l,s,x) conil)) (st_receive p xs)
+  | st2si_snd: forall p xs ys,
+               colen_eqC xs ys ->
+               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ R t t') ys xs ->
+               st2si R (st_send p ys) (st_send p xs).
 
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2.
 
-Lemma st2si_mon: monotone2 st2si.
+Lemma st2so_mon: monotone2 st2si.
 Proof. unfold monotone2.
        intros.
        induction IN; intros.
        - apply st2si_end.
        - specialize (st2si_rcv r'); intro HS.
-         apply HS with (l := l) (s := s) (x := x) (s' := s') (y := y).
-         easy. easy. apply LE; easy.
+         apply HS with (y := y). apply LE. easy. easy.
        - specialize (st2si_snd r'); intro HS.
-         apply HS. intro l.
-         specialize(H l).
-         destruct (f l).
-         destruct (g l).
-         destruct p0, p1. split. easy.
-         apply LE. easy. easy.
-         easy.
+         apply HS. easy.
+         apply monH2 with (r := r); easy.
 Qed.
 
 (* Inductive st2siA (R: si -> st -> Prop): si -> st -> Prop :=

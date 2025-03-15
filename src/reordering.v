@@ -41,9 +41,9 @@ Qed.
 
 CoFixpoint act (t: st): coseq (participant * dir) :=
   match t with
-    | st_receive p [(l,s,w')] => Delay (cocons (p, rcv) (act w'))
-    | st_send p [(l,s,w')]    => Delay (cocons (p, snd) (act w'))
-    | _                       => Delay conil
+    | st_receive p (cocons (l,s,w') conil) => (cocons (p, rcv) (act w'))
+    | st_send p (cocons (l,s,w') conil)    => (cocons (p, snd) (act w'))
+    | _                                    => conil
   end.
 
 CoFixpoint actls (t: st): coseq (participant * dir * label * local.sort) :=
