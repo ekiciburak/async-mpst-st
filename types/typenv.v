@@ -5,39 +5,8 @@ Require Import ST.src.stream.
 Require Import List Datatypes ZArith.
 Local Open Scope string_scope.
 Import ListNotations.
+Import CoListNotations.
 From MMaps Require Import MMaps.
-
-CoInductive coseq (A: Type): Type :=
-  | conil : coseq A
-  | cocons: A -> coseq A -> coseq A.
-
-Arguments conil {_}.
-Arguments cocons {_} _ _.
-
-Definition coseq_id {A: Type} (c: coseq A): coseq A :=
-  match c with
-    | conil       => conil
-    | cocons x xs => cocons x xs
-  end.
-
-Lemma coseq_eq: forall {A: Type} (c: coseq A), c = coseq_id c.
-Proof. destruct c; easy. Defined.
-
-CoInductive coqes (A: Type): Type :=
-  | colin : coqes A
-  | cosnoc: coqes A -> A -> coqes A.
-
-Arguments colin {_}.
-Arguments cosnoc {_} _ _.
-
-Definition coqes_id {A: Type} (c: coqes A): coqes A :=
-  match c with
-    | colin       => colin
-    | cosnoc xs x => cosnoc xs x
-  end.
-
-Lemma coqes_eq: forall {A: Type} (c: coqes A), c = coqes_id c.
-Proof. destruct c; easy. Defined.
 
 Module SS.
 
@@ -92,12 +61,6 @@ Definition unf (l: local): local :=
   match l with
     | lt_mu L => subst_local ((lt_mu l) .: lt_var) L
     | _       => l
-  end.
-
-CoFixpoint capp {A: Type} (s1 s2: coseq A): coseq A :=
-  match s2 with
-    | conil       => s1
-    | cocons x xs => cocons x (capp xs s2)
   end.
 
 Inductive qCong: queue -> queue -> Prop :=

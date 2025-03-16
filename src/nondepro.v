@@ -1406,10 +1406,10 @@ Qed.
 (*here*)
 Lemma InvertAA: forall a b p l s w w', 
   isInA a p = false ->
-  paco2 refinementR3 bot2 (merge_apf_cont a (p & [(l, s, w)])) (merge_apf_cont b w') ->
+  paco2 refinementR3 bot2 (merge_apf_cont a (p & [|(l, s, w)|])) (merge_apf_cont b w') ->
   (exists a1 a2 s', isInA a1 p = false /\ subsort s' s /\ b = Apf_merge a1 (apf_receive p l s' a2))
   \/
-  (exists a1  w1 s', isInA a1 p = false /\ subsort s' s /\ isInA b p = false /\ w' = merge_apf_cont a1 (p & [(l, s', w1)])).
+  (exists a1  w1 s', isInA a1 p = false /\ subsort s' s /\ isInA b p = false /\ w' = merge_apf_cont a1 (p & [|(l, s', w1)|])).
 Proof. intro a.
        induction a; intros.
        - rewrite apfend_an in H0.
@@ -1456,7 +1456,7 @@ Proof. intro a.
                 symmetry in H5. 
                 specialize(_39_2 (ApnA3 a n) b p p
                 (merge_apf_cont b w')
-                (p & [(l, s', w'0)]) w'
+                (p & [|(l, s', w'0)|]) w'
                 H4 H2 H3 H5 H10
                 ); intro Hnin. 
                 destruct Hnin as [Hnin | Hnin].
@@ -1477,7 +1477,7 @@ Proof. intro a.
        - simpl in H.
          rewrite orbtf in H.
          destruct H as (Ha, Hb).
-         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H0. simpl in H0.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H0. simpl in H0.
          pinversion H0.
          subst.
          rewrite <- meqAp3 in H7, H4.
@@ -1521,7 +1521,7 @@ Proof. intro a.
              symmetry in H4. 
              specialize(_39_2 (ApnA3 a0 n) b s s
                 (merge_apf_cont b w')
-                (s & [(s0, s', w'0)]) w'
+                (s & [|(s0, s', w'0)|]) w'
                 H3 H1 H2 H4 H9
                 ); intro Hnin.
              destruct Hnin as [Hnin | Hnin].
@@ -1545,11 +1545,11 @@ Proof. intro a.
                 destruct Hin as (a3,(Ha3,(Ha4,Ha5))).
                 right.
                 rewrite Ha4 in Hi.
-                assert(w' = merge_apf_cont a3 (p & [(l, s'', merge_apf_cont a2 (s & [(s0, s', w'0)]))])).
+                assert(w' = merge_apf_cont a3 (p & [|(l, s'', merge_apf_cont a2 (s & [|(s0, s', w'0)|]))|])).
                 { rewrite Hi.
                   rewrite reOrg2. easy.
                 }
-                exists a3. exists (merge_apf_cont a2 (s & [(s0, s', w'0)])). exists s''.
+                exists a3. exists (merge_apf_cont a2 (s & [|(s0, s', w'0)|])). exists s''.
                 split. easy. split. easy. split. easy. easy.
          destruct IHa as (a1,(w1,(s'',(Ha1,(Ha2,(Ha3,Ha4)))))).
          case_eq(Apf_eqb (ApnA3 a0 n) b); intros.
@@ -1561,7 +1561,7 @@ Proof. intro a.
            split. simpl. rewrite Ha1. 
            rewrite orbtf. split. rewrite eqb_neq. easy. easy.
            split. easy. split. easy.
-           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [(l, s'', w1)]))). simpl.
+           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [|(l, s'', w1)|]))). simpl.
            easy.
          + rewrite Ha4 in H4.
            case_eq(isInA b s); intros.
@@ -1572,7 +1572,7 @@ Proof. intro a.
                - simpl. easy.
                - rewrite <- InN; easy.
              }
-             specialize(inH4 (ApnA3 a0 n) b s s0 s' (merge_apf_cont a1 (p & [(l, s'', w1)])) w' H2 H3 H1 H4); intro Hin.
+             specialize(inH4 (ApnA3 a0 n) b s s0 s' (merge_apf_cont a1 (p & [|(l, s'', w1)|])) w' H2 H3 H1 H4); intro Hin.
              destruct Hin as (a3,(Ha5,Ha6)).
              case_eq(Apf_eqb a1 a3); intros.
              ++ apply apf_eqb_eq in H9. subst.
@@ -1615,7 +1615,7 @@ Proof. intro a.
                 ** symmetry in Ha6.
                    assert(merge_apf_cont a3 w' = merge_apf_cont a3 w') by easy.
                    specialize(_39_2 a1 a3 p p 
-                   (merge_apf_cont a3 w') (p & [(l, s'', w1)]) w'
+                   (merge_apf_cont a3 w') (p & [|(l, s'', w1)|]) w'
                    Ha1 H11 H10 Ha6 H12
                    ); intro Hin.
                    destruct Hin as [Hin | Hin].
@@ -1651,13 +1651,13 @@ Proof. intro a.
              assert(merge_apf_cont b w' = merge_apf_cont b w') by easy.
              specialize(_39_2 (ApnA3 a0 n) b s s 
                    (merge_apf_cont b w')
-                   (s & [(s0, s', merge_apf_cont a1 (p & [(l, s'', w1)]))]) w'
+                   (s & [|(s0, s', merge_apf_cont a1 (p & [|(l, s'', w1)|]))|]) w'
                    H3 H1 H2 H4 H9
                    ); intro Hin.
              destruct Hin as [Hin | Hin].
              ++ destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
                 assert(c = apf_end).
-                { apply noPre with (p := s) (l := s0) (s := s') (w := merge_apf_cont a1 (p & [(l, s'', w1)])) (w' := w'); easy.
+                { apply noPre with (p := s) (l := s0) (s := s') (w := merge_apf_cont a1 (p & [|(l, s'', w1)|])) (w' := w'); easy.
                 }
                 rewrite H10 in Hf.
                 rewrite apfend_an in Hf.
@@ -1673,10 +1673,10 @@ Proof. intro a.
                   - rewrite <- InN; easy.
                 }
                 rewrite InMerge. rewrite Ha3. simpl. easy.
-                rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [(l, s'', w1)]))). simpl.
+                rewrite(st_eq(merge_apf_cont (apf_receive s s0 s' a1) (p & [|(l, s'', w1)|]))). simpl.
                 easy.
              ++ destruct Hin as (c,(Hc,(Hd,(He,Hf)))).
-                assert(w' =  merge_apf_cont (Apf_merge c (apf_receive s s0 s' a1)) (p & [(l, s'', w1)])).
+                assert(w' =  merge_apf_cont (Apf_merge c (apf_receive s s0 s' a1)) (p & [|(l, s'', w1)|])).
                 { rewrite Hf.
                   rewrite reOrg2.
                   easy.
@@ -1700,7 +1700,7 @@ Lemma dropRA: forall a b p l s s' w w',
   isInA a p = false ->
   isInA b p = false ->
   subsort s' s ->
-  paco2 refinementR3 bot2 (merge_apf_cont a (p & [(l, s, w)])) (merge_apf_cont b (p & [(l, s', w')])) ->
+  paco2 refinementR3 bot2 (merge_apf_cont a (p & [|(l, s, w)|])) (merge_apf_cont b (p & [|(l, s', w')|])) ->
   paco2 refinementR3 bot2 (merge_apf_cont a w) (merge_apf_cont b w').
 Proof. intro a.
        induction a; intros.
@@ -1721,16 +1721,16 @@ Proof. intro a.
            * assert((ApnA3 a n) <> b).
              { apply apf_eqb_neq. easy. } 
              symmetry in H7.
-             assert(merge_apf_cont b (p & [(l, s', w')]) = merge_apf_cont b (p & [(l, s', w')])) by easy.
+             assert(merge_apf_cont b (p & [|(l, s', w')|]) = merge_apf_cont b (p & [|(l, s', w')|])) by easy.
              specialize(_39_2 (ApnA3 a n) b p p
-             (merge_apf_cont b (p & [(l, s', w')]))
-             (p & [(l, s'0, w'0)])
-             (p & [(l, s', w')]) H3 H0 H4 H7 H5
+             (merge_apf_cont b (p & [|(l, s', w')|]))
+             (p & [|(l, s'0, w'0)|])
+             (p & [|(l, s', w')|]) H3 H0 H4 H7 H5
              ); intro HP.
              destruct HP as [HP | HP].
              * destruct HP as (c,(Ha,(Hb,(Hc,Hd)))).
                assert(c = apf_end) as HC.
-               { specialize (noPre c p l s'0 w'0 (p & [(l, s', w')]) Ha Hd); intros.
+               { specialize (noPre c p l s'0 w'0 (p & [|(l, s', w')|]) Ha Hd); intros.
                  easy.
                }
                rewrite HC in Hd. rewrite apfend_an in Hd. 
@@ -1742,7 +1742,7 @@ Proof. intro a.
                easy.
              * destruct HP as (c,(Ha,(Hb,(Hc,Hd)))).
                assert(c = apf_end) as HC.
-               { specialize (noPre c p l s' w' (p & [(l, s'0, w'0)]) Ha Hd); intros.
+               { specialize (noPre c p l s' w' (p & [|(l, s'0, w'0)|]) Ha Hd); intros.
                  easy.
                }
                rewrite HC in Hd. rewrite apfend_an in Hd.
@@ -1753,7 +1753,7 @@ Proof. intro a.
              apply refinementR3_mon.
        - pinversion H2.
          + rewrite <- meqAp3 in H4, H7, H8.
-           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H3. simpl in H3.
+           rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H3. simpl in H3.
            inversion H3. subst.
            rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)). simpl.
            assert(isInA (ApnA3 a0 n) s = false).
@@ -1768,11 +1768,11 @@ Proof. intro a.
            * assert((ApnA3 a0 n) <> b).
              { apply apf_eqb_neq. easy. } 
              symmetry in H4.
-             assert(merge_apf_cont b (p & [(l, s', w')]) = merge_apf_cont b (p & [(l, s', w')])) by easy.
+             assert(merge_apf_cont b (p & [|(l, s', w')|]) = merge_apf_cont b (p & [|(l, s', w')|])) by easy.
              specialize(_39_2 (ApnA3 a0 n) b s p 
-             (merge_apf_cont b (p & [(l, s', w')]))
-             (s & [(s0, s'0, w'0)])
-             (p & [(l, s', w')]) H9 H0 H10 H4 H11
+             (merge_apf_cont b (p & [|(l, s', w')|]))
+             (s & [|(s0, s'0, w'0)|])
+             (p & [|(l, s', w')|]) H9 H0 H10 H4 H11
              ); intro HP.
              destruct HP as [HP | HP].
              * destruct HP as (c,(Ha,(Hb,(Hc,Hd)))).
@@ -1786,7 +1786,7 @@ Proof. intro a.
                rewrite Hf in Hc.
                rewrite Hc.
                assert((merge_apf_cont (Apf_merge (ApnA3 a0 n) (apf_receive s s0 s'0 d)) w') = 
-                       merge_apf_cont (ApnA3 a0 n) (s & [(s0, s'0, merge_apf_cont d w')])).
+                       merge_apf_cont (ApnA3 a0 n) (s & [|(s0, s'0, merge_apf_cont d w')|])).
                { rewrite reOrg2. easy. }
                rewrite H13.
                pfold.
@@ -1816,8 +1816,8 @@ Proof. intro a.
                 + specialize(classic (coseqIn (p, rcv) (act w'))); intro Hcl2.
                   destruct Hcl2 as [Hcl2 | Hcl2].
                   ++ rewrite Hg in Hv, Hy.
-                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
-                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [|(l, s', w')|]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [|(l, s', w')|]))).
                      { rewrite merge_merge. easy. }
                      rewrite H8 in Hv, Hy.
                      apply actdRE in Hv.
@@ -1846,8 +1846,8 @@ Proof. intro a.
                   ++ simpl in H. rewrite orbtf in H.
                      destruct H as (Ha1, Hb1).
                      rewrite Hg in H7.
-                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
-                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [|(l, s', w')|]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [|(l, s', w')|]))).
                      { rewrite merge_merge. easy. }
                      rewrite H in H7.
                      apply IHa in H7; try easy.
@@ -1871,8 +1871,8 @@ Proof. intro a.
                   ++ simpl in H. rewrite orbtf in H.
                      destruct H as (Ha1, Hb1).
                      rewrite Hg in H7.
-                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
-                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [|(l, s', w')|]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [|(l, s', w')|]))).
                      { rewrite merge_merge. easy. }
                      rewrite H in H7.
                      apply IHa in H7; try easy.
@@ -1888,8 +1888,8 @@ Proof. intro a.
                      rewrite InMergeF in H0.
                      destruct H0 as (H0a, H0b). easy.
                   ++ rewrite Hg in Hv, Hy.
-                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [(l, s', w')]))) =
-                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [(l, s', w')]))).
+                     assert((merge_apf_cont (ApnA3 a0 n) (merge_apf_cont d (p & [|(l, s', w')|]))) =
+                            (merge_apf_cont (Apf_merge (ApnA3 a0 n) d) (p & [|(l, s', w')|]))).
                      { rewrite merge_merge. easy. }
                      rewrite H8 in Hv, Hy.
                      apply actdRNE in Hv.
@@ -1927,8 +1927,8 @@ Proof. intro a.
                 destruct HR as (d,(He,(Hf,Hg))).
                 rewrite Hg.
                 pfold.
-                assert((merge_apf_cont b (merge_apf_cont d (s & [(s0, s'0, w'0)]))) = 
-                       (merge_apf_cont (Apf_merge b d) (s & [(s0, s'0, w'0)]))).
+                assert((merge_apf_cont b (merge_apf_cont d (s & [|(s0, s'0, w'0)|]))) = 
+                       (merge_apf_cont (Apf_merge b d) (s & [|(s0, s'0, w'0)|]))).
                 { rewrite merge_merge. easy. }
                 rewrite H13.
                 specialize(ref3_a (upaco2 refinementR3 bot2) (merge_apf_cont a w) w'0
@@ -1964,7 +1964,7 @@ Proof. intro a.
                 rewrite Hf in Hc.
                 rewrite Hc in Hv, Hy.
                 assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
-                       (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                       (merge_apf_cont b (p & [|(l, s', merge_apf_cont d w'0)|]))).
                 { rewrite reOrd1.
                   rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
                 }
@@ -1990,7 +1990,7 @@ Proof. intro a.
                      destruct H as (Ha1, Hb1).
                      rewrite Hc in H7.
                      assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
-                            (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                            (merge_apf_cont b (p & [|(l, s', merge_apf_cont d w'0)|]))).
                      { rewrite reOrd1.
                        rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
                      }
@@ -2009,7 +2009,7 @@ Proof. intro a.
                      destruct H as (Ha1, Hb1).
                      rewrite Hc in H7.
                      assert((merge_apf_cont (Apf_merge b (apf_receive p l s' d)) w'0) =
-                            (merge_apf_cont b (p & [(l, s', merge_apf_cont d w'0)]))).
+                            (merge_apf_cont b (p & [|(l, s', merge_apf_cont d w'0)|]))).
                      { rewrite reOrd1.
                        rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)). simpl. easy.
                      }
@@ -2037,10 +2037,10 @@ Proof. intro a.
                      easy. simpl in H. rewrite orbtf in H. easy. easy.
                      easy. easy. easy. easy.
 (* ends here*) 
-         + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H3.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H3.
            simpl in H3.
            easy.
-         + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [(l, s2, w)]))) in H4.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H4.
            simpl in H4.
            easy.
        apply refinementR3_mon.
@@ -2049,14 +2049,14 @@ Qed.
 Lemma dropBA: forall b b2 p l s s' w w',
   isInB b p = false ->
   isInB b2 p = false ->
-  paco2 refinementR3 bot2 (merge_bpf_cont b (p ! [(l, s, w)])) (merge_bpf_cont b2 (p ! [(l, s', w')])) ->
+  paco2 refinementR3 bot2 (merge_bpf_cont b (p ! [|(l, s, w)|])) (merge_bpf_cont b2 (p ! [|(l, s', w')|])) ->
   paco2 refinementR3 bot2 (merge_bpf_cont b w) (merge_bpf_cont b2 w').
 Proof. intro b.
        induction b; intros.
-       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [(l, s2, w)]))) in H1.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l, s2, w)|]))) in H1.
          case_eq b2; intros.
          + subst. 
-           rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', w')]))) in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', w')|]))) in H1.
            simpl in H1.
            rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)).
            rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) w')). simpl.
@@ -2135,24 +2135,24 @@ Proof. intro b.
                 - rewrite <- InN; easy.
               }
               specialize(pneqq4 (ApnA3 a n) s s3 s4 s0 s5 s'0 
-              (merge_bpf_cont b0 (p ! [(l, s', w')]))
+              (merge_bpf_cont b0 (p ! [|(l, s', w')|]))
               w'0 H2 H3 H6
               ); intro HP.
               destruct HP as (a1,(HPa,(HPb,HPc))).
               case_eq(isBpSend b0); intros.
-              * assert(merge_bpf_cont b0 (p ! [(l, s', w')]) = merge_bpf_cont b0 (p ! [(l, s', w')])) by easy.
+              * assert(merge_bpf_cont b0 (p ! [|(l, s', w')|]) = merge_bpf_cont b0 (p ! [|(l, s', w')|])) by easy.
                 specialize(_39_3 b0 a1 p
-                (merge_bpf_cont b0 (p ! [(l, s', w')]))
-                (p ! [(l, s', w')])
-                (s & [(s0, s'0, w'0)]) H0 H5 HPb H4
+                (merge_bpf_cont b0 (p ! [|(l, s', w')|]))
+                (p ! [|(l, s', w')|])
+                (s & [|(s0, s'0, w'0)|]) H0 H5 HPb H4
                 ); intro HR2.
                 destruct HR2 as (c,(Hc1,(Hc2,(Hc3,Hc4)))).
                 specialize(pneqq6 c p s s0 l s'0 s' w'0 w' Hc1 Hc4); intro HQ.
                 destruct HQ as (b2,(HQ1,(HQ2,HQ3))).
                 rewrite Hc3. rewrite HQ3.
-                assert((s3 & [(s4, s5, merge_bpf_cont (Bpf_merge (Ap2BpSeq a1) (bpf_receive s s0 s'0 b2)) w')]) =
-                       merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [(s0, s'0, merge_bpf_cont b2 w')])).
-                { rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [(s0, s'0, merge_bpf_cont b2 w')]))). simpl.
+                assert((s3 & [|(s4, s5, merge_bpf_cont (Bpf_merge (Ap2BpSeq a1) (bpf_receive s s0 s'0 b2)) w')|]) =
+                       merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [|(s0, s'0, merge_bpf_cont b2 w')|])).
+                { rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [|(s0, s'0, merge_bpf_cont b2 w')|]))). simpl.
                   rewrite bareOrg1. 
                   rewrite(st_eq (merge_bpf_cont (bpf_receive s s0 s'0 b2) w')). simpl.
                   easy.
@@ -2177,8 +2177,8 @@ Proof. intro b.
                 apply InMergeFS. rewrite BisInAF. easy.
                 rewrite HQ2 in H9.
                 rewrite HPc in H9.
-                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [|(l, s', w')|]))).
                 { rewrite bareOrg1. easy. }
                 rewrite H13 in H9.
                 easy.
@@ -2186,8 +2186,8 @@ Proof. intro b.
                 rewrite HQ2 in H10.
                 rewrite HPc in H9.
                 rewrite HQ2 in H9.
-                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [|(l, s', w')|]))).
                 { rewrite breOrg3.
                   rewrite mcAp2Bp2. easy.
                 }
@@ -2244,24 +2244,24 @@ Proof. intro b.
                      easy. easy. easy. easy. rewrite InMergeFS. rewrite BisInAF. easy.
                      easy. rewrite InMergeFS. rewrite BisInAF. easy. easy.
 (* ends here*) 
-              * specialize(mcBp2Ap b0 (p ! [(l, s', w')]) H4); intro HP.
+              * specialize(mcBp2Ap b0 (p ! [|(l, s', w')|]) H4); intro HP.
                 destruct HP as (a2,(HP1,HP2)).
                 rewrite HP1 in HPb.
                 case_eq(Apf_eqb a2 a1); intros.
                 ** apply apf_eqb_eq in H5. subst.
                    apply merge_same_aeq in HPb. easy.
                 ** apply apf_eqb_neq in H5.
-                   assert(merge_apf_cont a1 (s & [(s0, s'0, w'0)]) = merge_apf_cont a1 (s & [(s0, s'0, w'0)])) by easy.
+                   assert(merge_apf_cont a1 (s & [|(s0, s'0, w'0)|]) = merge_apf_cont a1 (s & [|(s0, s'0, w'0)|])) by easy.
                    assert(a1 <> a2) by easy.
                    symmetry in HPb.
                    specialize(_39_4 a1 a2 p l s'
-                   (merge_apf_cont a1 (s & [(s0, s'0, w'0)]))
-                   (s & [(s0, s'0, w'0)])
+                   (merge_apf_cont a1 (s & [|(s0, s'0, w'0)|]))
+                   (s & [|(s0, s'0, w'0)|])
                    w' H12 H11 HPb
                    ); intro HQ.
                    destruct HQ as (c,(HQ1,HQ2)).
-                   assert(merge_apf_cont c (p ! [(l, s', w')]) = 
-                          merge_bpf_cont (Ap2BpSeq c) (p ! [(l, s', w')])).
+                   assert(merge_apf_cont c (p ! [|(l, s', w')|]) = 
+                          merge_bpf_cont (Ap2BpSeq c) (p ! [|(l, s', w')|])).
                    { rewrite mcAp2Bp2. easy. }
                    rewrite H13 in HQ2.
                    assert(isInB (Ap2BpSeq c) p = false).
@@ -2273,10 +2273,10 @@ Proof. intro b.
                    assert((Ap2BpSeq (Apf_merge a1 c))  = (Bpf_merge (Ap2BpSeq a1) (Ap2BpSeq c))).
                    { rewrite Ap2BpSeq2. easy. }
                    rewrite H15. rewrite Hb4.
-                   assert((s3 & [(s4, s5, merge_bpf_cont (Bpf_merge (Ap2BpSeq a1) (bpf_receive s s0 s'0 b2)) w')]) =
-                          merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [(s0, s'0, merge_bpf_cont b2 w')])
+                   assert((s3 & [|(s4, s5, merge_bpf_cont (Bpf_merge (Ap2BpSeq a1) (bpf_receive s s0 s'0 b2)) w')|]) =
+                          merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [|(s0, s'0, merge_bpf_cont b2 w')|])
                           ).
-                   { rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [(s0, s'0, merge_bpf_cont b2 w')]))). simpl.
+                   { rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a1) (s & [|(s0, s'0, merge_bpf_cont b2 w')|]))). simpl.
                      rewrite bareOrg1.
                      rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s'0 b2) w')). simpl. easy.
                    } 
@@ -2300,8 +2300,8 @@ Proof. intro b.
                 apply InMergeFS. rewrite BisInAF. easy.
                 rewrite HPc in H9.
                 rewrite Hb3 in H9.
-                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [|(l, s', w')|]))).
                 { rewrite bareOrg1. easy. }
                 rewrite H18 in H9.
                 easy.
@@ -2310,8 +2310,8 @@ Proof. intro b.
                 rewrite Hb3 in H10.
                 rewrite HPc in H9.
                 rewrite Hb3 in H9.
-                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [(l, s', w')]))).
+                assert((merge_apf_cont (apf_receive s3 s4 s5 a1) (merge_bpf_cont b2 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 a1)) b2) (p ! [|(l, s', w')|]))).
                 { rewrite breOrg3.
                   rewrite mcAp2Bp2. easy.
                 }
@@ -2370,7 +2370,7 @@ Proof. intro b.
 (* ends here*)
                 apply refinementR3_mon.
          + subst.
-           rewrite(st_eq (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', w')]))) in H1. simpl in H1.
+           rewrite(st_eq (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', w')|]))) in H1. simpl in H1.
            rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)).
            rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) w')). simpl.
            simpl in H. simpl in H0.
@@ -2380,7 +2380,7 @@ Proof. intro b.
            case_eq((ApnA3 a n)); intros.
            rewrite H2 in H6. rewrite apfend_an in H6. easy.
            rewrite H2 in H6.
-           rewrite(st_eq(merge_apf_cont (apf_receive s6 s7 s8 a0) (s & [(s0, s'0, w'0)]))) in H6. simpl in H6. easy.
+           rewrite(st_eq(merge_apf_cont (apf_receive s6 s7 s8 a0) (s & [|(s0, s'0, w'0)|]))) in H6. simpl in H6. easy.
            apply refinementR3_mon.
          + rewrite H2 in H1. rewrite bpfend_bn in H1. simpl in H1.
            rewrite bpfend_bn.
@@ -2391,13 +2391,13 @@ Proof. intro b.
            case_eq((ApnA3 a n)); intros.
            rewrite H2 in H7. rewrite apfend_an in H7. easy.
            rewrite H2 in H7.
-           rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a0) (s & [(s0, s'0, w'0)]))) in H7. simpl in H7.
+           rewrite(st_eq(merge_apf_cont (apf_receive s3 s4 s5 a0) (s & [|(s0, s'0, w'0)|]))) in H7. simpl in H7.
            easy.
            apply refinementR3_mon.
        - case_eq b2; intros.
          + subst. simpl in H. simpl in H0.
-           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, w)]))) in H1.
-           rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', w')]))) in H1. simpl in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l, s2, w)|]))) in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', w')|]))) in H1. simpl in H1.
            rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)).
            rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) w')). simpl.
            pinversion H1.
@@ -2413,7 +2413,7 @@ Proof. intro b.
              - rewrite <- InNS; easy.
            }
            specialize(pneqq6 (BpnB3 b1 n) s s3 s4 s0 s5 s'0
-           (merge_bpf_cont b0 (p ! [(l, s', w')]))
+           (merge_bpf_cont b0 (p ! [|(l, s', w')|]))
            w'0 H H6
            ); intro HP.
            destruct HP as (b2,(HP1,(HP2,HP3))).
@@ -2421,31 +2421,31 @@ Proof. intro b.
            ++ assert(b0 = b2).
               { apply bpf_eqb_eq. easy. }
               subst.
-              assert((p ! [(l, s', w')]) = (s ! [(s0, s'0, w'0)])).
+              assert((p ! [|(l, s', w')|]) = (s ! [|(s0, s'0, w'0)|])).
               { apply merge_same_beq in HP2. easy. }
               inversion H3. subst. easy.
            ++ assert(b0 <> b2).
               { apply bpf_eqb_neq. easy. }
-              assert(merge_bpf_cont b0 (p ! [(l, s', w')]) = merge_bpf_cont b0 (p ! [(l, s', w')]) ) by easy.
+              assert(merge_bpf_cont b0 (p ! [|(l, s', w')|]) = merge_bpf_cont b0 (p ! [|(l, s', w')|]) ) by easy.
               specialize(_39_1 b0 b2 p s
-              (merge_bpf_cont b0 (p ! [(l, s', w')]))
-              (p ! [(l, s', w')])
-              (s ! [(s0, s'0, w'0)]) H0 HP1 H3 H4 HP2
+              (merge_bpf_cont b0 (p ! [|(l, s', w')|]))
+              (p ! [|(l, s', w')|])
+              (s ! [|(s0, s'0, w'0)|]) H0 HP1 H3 H4 HP2
               ); intro HQ.
               destruct HQ as [HQ | HQ].
               * destruct HQ as (c,(HQ1,(HQ2,(HQ3,HQ4)))).
                 assert(s <> p) by easy.
                 specialize(pneqq7 c s p l s0 s' s'0 w' w'0 H5 HQ1 HQ4); intro HP.
                 destruct HP as (b3,(HPa,(HPb,HPc))).
-                assert((s3 & [(s4, s5, merge_bpf_cont b0 w')]) = 
+                assert((s3 & [|(s4, s5, merge_bpf_cont b0 w')|]) = 
                        (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b0) w')).
                 { rewrite(st_eq(merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b0) w')). simpl.
                   easy.
                 }
                 rewrite H11.
                 rewrite HPb.
-                assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b0) (merge_bpf_cont b3 (s ! [(s0, s'0, w'0)]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) (Bpf_merge b0 b3)) (s ! [(s0, s'0, w'0)]))).
+                assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b0) (merge_bpf_cont b3 (s ! [|(s0, s'0, w'0)|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) (Bpf_merge b0 b3)) (s ! [|(s0, s'0, w'0)|]))).
                 { rewrite !bareOrg1.
                   rewrite breOrg3. easy.
                 }
@@ -2474,10 +2474,10 @@ Proof. intro b.
                 rewrite HQ3 in H9.
                 rewrite HPc in H9.
                 assert((merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
-                       (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))
                 ).
                 { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0)).
-                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))).
                   simpl.
                   rewrite breOrg3.
                   rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)).
@@ -2490,9 +2490,9 @@ Proof. intro b.
                 rewrite HQ3 in H10 H9.
                 rewrite HPc in H10 H9.
                 assert((merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
-                       (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))).
                 { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0 )). simpl.
-                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))). simpl.
                   rewrite breOrg3. 
                   rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
                 }
@@ -2556,7 +2556,7 @@ Proof. intro b.
                 assert(s <> p) by easy.
                 specialize(pneqq7 c p s s0 l s'0 s' w'0 w' Ha HQ1 HQ4); intro HP.
                 destruct HP as (b3,(HPa,(HPb,HPc))).
-                assert((s3 & [(s4, s5, merge_bpf_cont b0 w')]) =
+                assert((s3 & [|(s4, s5, merge_bpf_cont b0 w')|]) =
                        (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b0) w')).
                 { rewrite breOrg3. simpl.
                   rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 bpf_end) (merge_bpf_cont b0 w'))). simpl.
@@ -2566,7 +2566,7 @@ Proof. intro b.
                 rewrite HQ3.
                 rewrite HPc.
                 assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) (Bpf_merge b2 (bpf_send s s0 s'0 b3))) w') =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b2) (s ! [(s0, s'0, merge_bpf_cont b3 w')]))).
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (apf_receive s3 s4 s5 apf_end)) b2) (s ! [|(s0, s'0, merge_bpf_cont b3 w')|]))).
                 { rewrite !bareOrg1.
                   rewrite breOrg3.
                   rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s'0 b3) w')). simpl.
@@ -2599,10 +2599,10 @@ Proof. intro b.
 
                 rewrite HP3 in H9.
                 rewrite HPb in H9.
-                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')])) ).
-                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')])))).
-                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))). simpl.
+                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|])) ).
+                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|])))).
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|]))). simpl.
                   rewrite breOrg3. easy.
                 }
                 rewrite H14 in H9.
@@ -2610,10 +2610,10 @@ Proof. intro b.
                 
                 rewrite HP3 in H10 H9.
                 rewrite HPb in H10 H9.
-                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))).
-                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')])))). simpl.
-                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))). simpl.
+                assert((merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|]))).
+                { rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|])))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|]))). simpl.
                   rewrite merge_mergeS. easy.
                 }
                 rewrite H13 in H10 H9.
@@ -2688,8 +2688,8 @@ Proof. intro b.
            rewrite orbtf in H0.
            destruct H0 as (Ha, Hb).
            rewrite eqb_neq in Ha.
-           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, w)]))) in H1.
-           rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', w')]))) in H1. simpl in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l, s2, w)|]))) in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', w')|]))) in H1. simpl in H1.
            rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) w')).
            rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
            rewrite orbtf in H.
@@ -2772,22 +2772,22 @@ Proof. intro b.
                 - rewrite <- InNS; easy.
               }
               specialize(pneqq7 (BpnB3 b1 n) s s3 s4 s0 s5 s'0 
-              (merge_bpf_cont b0 (p ! [(l, s', w')])) w'0 H H0 H4); intro HQ.
+              (merge_bpf_cont b0 (p ! [|(l, s', w')|])) w'0 H H0 H4); intro HQ.
               destruct HQ as (b2,(HQ1,(HQ2,HQ3))).
               case_eq(Bpf_eqb b0 b2); intros.
               * assert (b0 = b2).
                 { apply bpf_eqb_eq. easy. }
                 subst.
-                assert((p ! [(l, s', w')]) = (s ! [(s0, s'0, w'0)])).
+                assert((p ! [|(l, s', w')|]) = (s ! [|(s0, s'0, w'0)|])).
                 { apply merge_same_beq in HQ2. easy. }
                 inversion H3. subst. easy.
               * assert (b0 <> b2).
                 { apply bpf_eqb_neq. easy. }
-                assert(merge_bpf_cont b0 (p ! [(l, s', w')]) = merge_bpf_cont b0 (p ! [(l, s', w')])) by easy.
+                assert(merge_bpf_cont b0 (p ! [|(l, s', w')|]) = merge_bpf_cont b0 (p ! [|(l, s', w')|])) by easy.
                 specialize(_39_1 b0 b2 p s
-                (merge_bpf_cont b0 (p ! [(l, s', w')]))
-                (p ! [(l, s', w')])
-                (s ! [(s0, s'0, w'0)]) Hb HQ1 H3 H9 HQ2
+                (merge_bpf_cont b0 (p ! [|(l, s', w')|]))
+                (p ! [|(l, s', w')|])
+                (s ! [|(s0, s'0, w'0)|]) Hb HQ1 H3 H9 HQ2
                 ); intro HP.
                 destruct HP as [HP | HP].
                 ** destruct HP as (c,(HPa,(HPb,(HPc,HPd)))).
@@ -2795,9 +2795,9 @@ Proof. intro b.
                    specialize(pneqq7 c s p l s0 s' s'0 w' w'0 H10 HPa HPd); intro HQ.
                    destruct HQ as (b3,(HQa,(HQb,HQc))).
                    rewrite HQb.
-                   assert((s3 ! [(s4, s5, merge_bpf_cont b0 (merge_bpf_cont b3 (s ! [(s0, s'0, w'0)])))]) =
-                          (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) (s ! [(s0, s'0, w'0)]))).
-                   { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) (s ! [(s0, s'0, w'0)]))). simpl.
+                   assert((s3 ! [|(s4, s5, merge_bpf_cont b0 (merge_bpf_cont b3 (s ! [|(s0, s'0, w'0)|])))|]) =
+                          (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) (s ! [|(s0, s'0, w'0)|]))).
+                   { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 b3)) (s ! [|(s0, s'0, w'0)|]))). simpl.
                      rewrite breOrg3. easy.
                    }
                    rewrite H11.
@@ -2828,9 +2828,9 @@ Proof. intro b.
                    rewrite HPc in H7.
                    rewrite HQc in H7.
                    assert((merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
-                          (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                          (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))).
                    { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0)).
-                     rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))). simpl.
+                     rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))). simpl.
                      rewrite breOrg3.
                      rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
                    }
@@ -2840,9 +2840,9 @@ Proof. intro b.
                 rewrite HPc in H8 H7.
                 rewrite HQc in H8 H7.
                 assert((merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0) =
-                       (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+                       (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))).
                 { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b0 (bpf_send p l s' b3))) w'0 )). simpl.
-                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [(l, s', merge_bpf_cont b3 w'0)]))). simpl.
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))). simpl.
                   rewrite breOrg3. 
                   rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
                 }
@@ -2915,9 +2915,9 @@ Proof. intro b.
                    destruct HQ as (b3,(HQa,(HQb,HQc))).
                    rewrite HPc.
                    rewrite HQc.
-                   assert((s3 ! [(s4, s5, merge_bpf_cont (Bpf_merge b2 (bpf_send s s0 s'0 b3)) w')]) =
-                          (merge_bpf_cont (bpf_send s3 s4 s5 b2) (s ! [(s0, s'0, merge_bpf_cont b3 w')]))).
-                   { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (s ! [(s0, s'0, merge_bpf_cont b3 w')]))). simpl.
+                   assert((s3 ! [|(s4, s5, merge_bpf_cont (Bpf_merge b2 (bpf_send s s0 s'0 b3)) w')|]) =
+                          (merge_bpf_cont (bpf_send s3 s4 s5 b2) (s ! [|(s0, s'0, merge_bpf_cont b3 w')|]))).
+                   { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (s ! [|(s0, s'0, merge_bpf_cont b3 w')|]))). simpl.
                      rewrite breOrg3.
                      rewrite(st_eq (merge_bpf_cont (bpf_send s s0 s'0 b3) w')). simpl. easy.
                    }
@@ -2944,18 +2944,18 @@ Proof. intro b.
                    easy.
                    rewrite HQ3 in H7.
                    rewrite HQb in H7.
-                   assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
-                          (merge_bpf_cont (Bpf_merge (bpf_send s3 s4 s5 b2) b3) (p ! [(l, s', w')]))
+                   assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|]))) =
+                          (merge_bpf_cont (Bpf_merge (bpf_send s3 s4 s5 b2) b3) (p ! [|(l, s', w')|]))
                    ).
                    { rewrite breOrg3. easy. }
                    rewrite H12 in H7. easy.
 
                 rewrite HQ3 in H7 H8.
                 rewrite HQb in H7 H8.
-                assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')]))) =
-                       (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')])) ).
-                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [(l, s', w')])))).
-                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [(l, s', w')]))). simpl.
+                assert((merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|]))) =
+                       (merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|])) ).
+                { rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 b2) (merge_bpf_cont b3 (p ! [|(l, s', w')|])))).
+                  rewrite(st_eq(merge_bpf_cont (bpf_send s3 s4 s5 (Bpf_merge b2 b3)) (p ! [|(l, s', w')|]))). simpl.
                   rewrite breOrg3. easy.
                 }
                 rewrite H11 in H7 H8.
@@ -3048,7 +3048,7 @@ Proof. intro b.
            destruct H as (Ha, Hb).
            rewrite eqb_neq in Ha.
            rewrite bpfend_bn in H1.
-           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [(l, s2, w)]))) in H1. simpl in H1.
+           rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l, s2, w)|]))) in H1. simpl in H1.
            rewrite bpfend_bn.
            rewrite(st_eq (merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
            pinversion H1.
@@ -3080,8 +3080,8 @@ Proof. intro b.
 
               rewrite HQc in H8 H9.
               rewrite(st_eq((merge_bpf_cont (bpf_send p l s' b3) w'0))) in H8 H9. simpl in H8, H9.
-              assert( (p ! [(l, s', merge_bpf_cont b3 w'0)]) =
-                      (merge_bpf_cont bpf_end (p ! [(l, s', merge_bpf_cont b3 w'0)]))).
+              assert( (p ! [|(l, s', merge_bpf_cont b3 w'0)|]) =
+                      (merge_bpf_cont bpf_end (p ! [|(l, s', merge_bpf_cont b3 w'0)|]))).
               { rewrite bpfend_bn. easy. }
               rewrite H3 in H8 H9.
                 destruct H9 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
@@ -3134,13 +3134,13 @@ Proof. intro b.
         + assert((BpnB3 b n) = b2).
           { apply bpf_eqb_eq. easy. }
           subst.
-          assert((p ! [(l, s'0, w'0)]) = (p ! [(l, s', w')])).
+          assert((p ! [|(l, s'0, w'0)|]) = (p ! [|(l, s', w')|])).
           { apply merge_same_beq in H6. easy. }
           inversion H3. subst.
           easy.
         + assert((BpnB3 b n) <> b2).
           { apply bpf_eqb_neq. easy. }
-          assert(merge_bpf_cont b2 (p ! [(l, s', w')]) = merge_bpf_cont b2 (p ! [(l, s', w')])) by easy.
+          assert(merge_bpf_cont b2 (p ! [|(l, s', w')|]) = merge_bpf_cont b2 (p ! [|(l, s', w')|])) by easy.
           symmetry in H6.
           assert(isInB (BpnB3 b n) p = false).
            { case_eq n; intros.
@@ -3149,9 +3149,9 @@ Proof. intro b.
            }
           assert(b2 <> BpnB3 b n) by easy.
           specialize(_39_1 b2 (BpnB3 b n) p p
-          (merge_bpf_cont b2 (p ! [(l, s', w')]))
-          (p ! [(l, s', w')])
-          (p ! [(l, s'0, w'0)]) H0 H5 H11 H4 H6
+          (merge_bpf_cont b2 (p ! [|(l, s', w')|]))
+          (p ! [|(l, s', w')|])
+          (p ! [|(l, s'0, w'0)|]) H0 H5 H11 H4 H6
           ); intro HP.
           destruct HP as [HP | HP].
           ++ destruct HP as (c,(HPa,(HPb,(HPc,HPd)))).
@@ -3181,12 +3181,12 @@ Proof. intro b.
 Qed.
 
 Lemma end_send_false: forall b p l s w,
-  end = merge_bpf_cont b (p ! [(l, s, w)]) -> False.
+  end = merge_bpf_cont b (p ! [|(l, s, w)|]) -> False.
 Proof. intros.
        case_eq b; intros.
-       - subst. rewrite(st_eq(merge_bpf_cont (bpf_receive s0 s1 s2 b0) (p ! [(l, s, w)]))) in H.
+       - subst. rewrite(st_eq(merge_bpf_cont (bpf_receive s0 s1 s2 b0) (p ! [|(l, s, w)|]))) in H.
          simpl in H. easy.
-       - subst. rewrite(st_eq(merge_bpf_cont (bpf_send s0 s1 s2 b0) (p ! [(l, s, w)]))) in H.
+       - subst. rewrite(st_eq(merge_bpf_cont (bpf_send s0 s1 s2 b0) (p ! [|(l, s, w)|]))) in H.
          simpl in H. easy.
        - subst. rewrite bpfend_bn in H. easy.
 Qed.
@@ -3267,12 +3267,12 @@ Proof. red. pcofix CIH.
              destruct HIn as (a1,(a2,(s'',(Hc,(Hd,He))))).
              rewrite He.
              rewrite reOrd1.
-             rewrite(st_eq(merge_apf_cont (apf_receive p l s'' a2) (q & [(l0, s'0, w'0)]))).
+             rewrite(st_eq(merge_apf_cont (apf_receive p l s'' a2) (q & [|(l0, s'0, w'0)|]))).
              simpl.
              pfold.
              assert(subsort s'' s).
              { apply ssTrans with (s2 := s'); easy. }
-             specialize(ref3_a (upaco2 refinementR3 r) w (merge_apf_cont a2 (q & [(l0, s'0, w'0)]))
+             specialize(ref3_a (upaco2 refinementR3 r) w (merge_apf_cont a2 (q & [|(l0, s'0, w'0)|]))
              p l s s'' a1 1 H11 Hc
              ); intro HR.
              simpl in HR.
@@ -3281,7 +3281,7 @@ Proof. red. pcofix CIH.
              rewrite HR2 in H1.
              rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H1. simpl in H1.
              right.
-             apply CIH with (y:= (q & [(l0, s0, merge_apf_cont a' w')])).
+             apply CIH with (y:= (q & [|(l0, s0, merge_apf_cont a' w')|])).
              easy.
              rewrite merge_merge.
              assert(isInA (ApnA3 a0 n0) q = false).
@@ -3311,7 +3311,7 @@ Proof. red. pcofix CIH.
 
              rewrite He in H7 H6.
              assert((merge_apf_cont (Apf_merge a1 (apf_receive p l s'' a2)) w'0) =
-                    (merge_apf_cont a1 (p & [(l, s'', merge_apf_cont a2 w'0)]))).
+                    (merge_apf_cont a1 (p & [|(l, s'', merge_apf_cont a2 w'0)|]))).
              { rewrite reOrd1.
                rewrite(st_eq (merge_apf_cont (apf_receive p l s'' a2) w'0)). simpl. easy.
              }
@@ -3369,13 +3369,13 @@ Proof. red. pcofix CIH.
 
              rewrite He in H7 H6.
              assert((merge_apf_cont (Apf_merge a1 (apf_receive p l s'' a2)) w'0) =
-                    (merge_apf_cont a1 (p & [(l, s'', merge_apf_cont a2 w'0)]))).
+                    (merge_apf_cont a1 (p & [|(l, s'', merge_apf_cont a2 w'0)|]))).
              { rewrite reOrd1.
                rewrite(st_eq (merge_apf_cont (apf_receive p l s'' a2) w'0)). simpl. easy.
              }
              rewrite H12 in H7 H6.
-             assert((merge_apf_cont a1 (merge_apf_cont a2 (q & [(l0, s'0, w'0)]))) =
-                    (merge_apf_cont (Apf_merge a1 a2) (q & [(l0, s'0, w'0)]))).
+             assert((merge_apf_cont a1 (merge_apf_cont a2 (q & [|(l0, s'0, w'0)|]))) =
+                    (merge_apf_cont (Apf_merge a1 a2) (q & [|(l0, s'0, w'0)|]))).
              { rewrite merge_merge. easy. }
              rewrite H13.
 (*action eq -- big*)
@@ -3391,21 +3391,21 @@ Proof. red. pcofix CIH.
                 simpl in Hv1, Hy1.
                 assert(In (p,rcv) l1) as HIN1.
                 { apply coseqInA with (p := p) in Hu. easy.
-                  rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p & [|(l, s', w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,rcv)) (ys := (act w')). easy. easy.
                 }
                 assert(In (p,rcv) l2) as HIN2.
                 { apply coseqInA with (p := p) in Hv. easy.
-                  rewrite(coseq_eq(act (p & [(l, s'', merge_apf_cont a2 w'0)]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p & [|(l, s'', merge_apf_cont a2 w'0)|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,rcv)) (ys := (act (merge_apf_cont a2 w'0))). easy. easy.
                 }
-                assert( (q & [(l0, s0, merge_apf_cont a' w')]) =
-                         merge_apf_cont apf_end (q & [(l0, s0, merge_apf_cont a' w')])).
+                assert( (q & [|(l0, s0, merge_apf_cont a' w')|]) =
+                         merge_apf_cont apf_end (q & [|(l0, s0, merge_apf_cont a' w')|])).
                 { rewrite apfend_an. easy. }
                 rewrite H2 in Hy1 Hv1.
                 assert(In (q,rcv) l4) as HIN3.
                 { apply coseqInA with (p := q) in Hv1. easy.
-                  rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_apf_cont a' w'))). easy. easy.
                 }
                 rewrite <- H2 in Hv1, Hy1.
@@ -3415,7 +3415,7 @@ Proof. red. pcofix CIH.
                 destruct Hcl1 as [Hcl1 | Hcl1].
                 + assert(coseqIn (p, rcv) (act (merge_apf_cont a' w'))) as Hin1.
                   { apply actionExL with (a := (p, rcv)) in H1.
-                    rewrite(coseq_eq (act (q & [(l0, s0, merge_apf_cont a' w')]))) in H1.
+                    rewrite(coseq_eq (act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in H1.
                     unfold coseq_id in H1. simpl in H1.
                     inversion H1. subst.
                     inversion H7. subst. easy.
@@ -3619,7 +3619,7 @@ Proof. red. pcofix CIH.
                      apply notInCoseq. easy.
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3643,7 +3643,7 @@ Proof. red. pcofix CIH.
                      easy.
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3658,7 +3658,7 @@ Proof. red. pcofix CIH.
                      apply csInRARevG. right. easy. easy.
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3693,7 +3693,7 @@ Proof. red. pcofix CIH.
                      easy. 
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3709,7 +3709,7 @@ Proof. red. pcofix CIH.
 
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3742,7 +3742,7 @@ Proof. red. pcofix CIH.
                      
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3758,7 +3758,7 @@ Proof. red. pcofix CIH.
                      
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3798,7 +3798,7 @@ Proof. red. pcofix CIH.
 
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3876,7 +3876,7 @@ Proof. red. pcofix CIH.
                      
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3892,7 +3892,7 @@ Proof. red. pcofix CIH.
                      
                      specialize(actionExLN _ _ _ Hcl1 H1); intro HHa1.
                      assert(coseqIn (p, rcv) (act (merge_apf_cont a' w')) -> False) as HHa2.
-                     { rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HHa1.
+                     { rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HHa1.
                        unfold coseq_id in HHa1. simpl in HHa1.
                        intro Hnew.
                        apply HHa1.
@@ -3908,8 +3908,8 @@ Proof. red. pcofix CIH.
              destruct HIn as (a1,(w1,(s'',(Hc,(Hd,(He,Hf)))))).
              rewrite Hf.
              assert(
-             merge_apf_cont (ApnA3 a0 n0) (q & [(l0, s'0, merge_apf_cont a1 (p & [(l, s'', w1)]))]) =
-             merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) (p & [(l, s'', w1)])
+             merge_apf_cont (ApnA3 a0 n0) (q & [|(l0, s'0, merge_apf_cont a1 (p & [|(l, s'', w1)|]))|]) =
+             merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) (p & [|(l, s'', w1)|])
              ).
              { rewrite reOrg2. easy. }
              rewrite H11.
@@ -3933,11 +3933,11 @@ Proof. red. pcofix CIH.
              right.
              assert(
                merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) w1 =
-               merge_apf_cont (ApnA3 a0 n0) (q & [(l0, s'0, merge_apf_cont a1 w1)])
+               merge_apf_cont (ApnA3 a0 n0) (q & [|(l0, s'0, merge_apf_cont a1 w1)|])
              ).
              { rewrite reOrg2. easy. }
              rewrite H13.
-             apply CIH with (y := (q & [(l0, s0, merge_apf_cont a' w')])).
+             apply CIH with (y := (q & [|(l0, s0, merge_apf_cont a' w')|])).
              easy.
              rewrite Hf in H6.
              rewrite merge_merge in H6.
@@ -3961,8 +3961,8 @@ Proof. red. pcofix CIH.
              rewrite Hf in H7.
              rewrite HR1 in H7.
              rewrite HR2 in H2.
-             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 (p & [(l, s'', w1)])) =
-                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) (p & [(l, s'', w1)]))).
+             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 (p & [|(l, s'', w1)|])) =
+                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) (p & [|(l, s'', w1)|]))).
              { rewrite merge_merge. easy. }
              rewrite H15 in H7.
              rewrite(st_eq(merge_apf_cont (apf_receive q l0 s0 a') w')) in H2. simpl in H2.
@@ -3974,21 +3974,21 @@ Proof. red. pcofix CIH.
              destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
              assert(In (p,rcv) l1) as HIN1.
              { apply coseqInA with (p := p) in Hu. easy.
-               rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (p & [|(l, s', w')|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (p,rcv)) (ys := (act w')). easy. easy.
              }
              assert(In (p,rcv) l2) as HIN2.
              { apply coseqInA with (p := p) in Hv. easy.
-               rewrite(coseq_eq(act (p & [(l, s'', w1)]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (p & [|(l, s'', w1)|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (p,rcv)) (ys := (act w1)). easy. easy.
              }
-             assert((q & [(l0, s0, merge_apf_cont a' w')]) =
-                    (merge_apf_cont apf_end (q & [(l0, s0, merge_apf_cont a' w')]))).
+             assert((q & [|(l0, s0, merge_apf_cont a' w')|]) =
+                    (merge_apf_cont apf_end (q & [|(l0, s0, merge_apf_cont a' w')|]))).
              { rewrite apfend_an. easy. }
              rewrite H2 in Hv1.
              assert(In (q,rcv) l4) as HIN3.
              { apply coseqInA with (p := q) in Hv1. easy.
-               rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_apf_cont a' w'))). easy. easy.
              }
              specialize(classic (coseqIn (p, rcv) (act w1))); intro Hcl1.
@@ -4115,13 +4115,13 @@ Proof. red. pcofix CIH.
              rewrite Hf in H7 H6.
              rewrite HR1 in H7 H6.
              rewrite HR2 in H2 H1.
-             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 (p & [(l, s'', w1)])) =
-                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) (p & [(l, s'', w1)]))).
+             assert(merge_apf_cont (ApnA3 a0 n0) (merge_apf_cont a1 (p & [|(l, s'', w1)|])) =
+                   (merge_apf_cont (Apf_merge (ApnA3 a0 n0) a1) (p & [|(l, s'', w1)|]))).
              { rewrite merge_merge. easy. }
              rewrite H13 in H7 H6.
              apply dropRA in H6.
              assert((merge_apf_cont (Apf_merge (ApnA3 a0 n0) (apf_receive q l0 s'0 a1)) w1) =
-                    (merge_apf_cont (ApnA3 a0 n0) (q & [(l0, s'0, merge_apf_cont a1 w1)]))).
+                    (merge_apf_cont (ApnA3 a0 n0) (q & [|(l0, s'0, merge_apf_cont a1 w1)|]))).
              { rewrite reOrd1.
                rewrite(st_eq (merge_apf_cont (apf_receive q l0 s'0 a1) w1)). simpl. easy.
              }
@@ -4131,21 +4131,21 @@ Proof. red. pcofix CIH.
              destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
              assert(In (p,rcv) l1) as HIN1.
              { apply coseqInA with (p := p) in Hu. easy.
-               rewrite(coseq_eq(act (p & [(l, s', w')]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (p & [|(l, s', w')|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (p,rcv)) (ys := (act w')). easy. easy.
              }
              assert(In (p,rcv) l2) as HIN2.
              { apply coseqInA with (p := p) in Hv. easy.
-               rewrite(coseq_eq(act (p & [(l, s'', w1)]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (p & [|(l, s'', w1)|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (p,rcv)) (ys := (act w1)). easy. easy.
              }
-             assert((q & [(l0, s0, merge_apf_cont a' w')]) =
-                    (merge_apf_cont apf_end (q & [(l0, s0, merge_apf_cont a' w')]))).
+             assert((q & [|(l0, s0, merge_apf_cont a' w')|]) =
+                    (merge_apf_cont apf_end (q & [|(l0, s0, merge_apf_cont a' w')|]))).
              { rewrite apfend_an. easy. }
              rewrite H2 in Hv1.
              assert(In (q,rcv) l4) as HIN3.
              { apply coseqInA with (p := q) in Hv1. easy.
-               rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))). unfold coseq_id. simpl.
+               rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))). unfold coseq_id. simpl.
                apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_apf_cont a' w'))). easy. easy.
              }
              assert(isInA (ApnA3 a0 n0) q = false) as Hn1.
@@ -4313,9 +4313,9 @@ Proof. red. pcofix CIH.
                       + easy.
                      }
                      specialize(actionExRN _ _ _ HRI H6); intros HIJ.
-                     assert(coseqIn (p, rcv) (act (q & [(l0, s0, merge_apf_cont a' w')])) -> False).
+                     assert(coseqIn (p, rcv) (act (q & [|(l0, s0, merge_apf_cont a' w')|])) -> False).
                      { intro HH. apply HIJ.
-                       rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HH.
+                       rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HH.
                        unfold coseq_id in HH. simpl in HH.
                        inversion HH. subst. inversion H7. easy.
                        subst. inversion H7. subst. easy.
@@ -4416,9 +4416,9 @@ Proof. red. pcofix CIH.
                       + easy.
                      }
                      specialize(actionExRN _ _ _ HRI H6); intros HIJ.
-                     assert(coseqIn (p, rcv) (act (q & [(l0, s0, merge_apf_cont a' w')])) -> False).
+                     assert(coseqIn (p, rcv) (act (q & [|(l0, s0, merge_apf_cont a' w')|])) -> False).
                      { intro HH. apply HIJ.
-                       rewrite(coseq_eq(act (q & [(l0, s0, merge_apf_cont a' w')]))) in HH.
+                       rewrite(coseq_eq(act (q & [|(l0, s0, merge_apf_cont a' w')|]))) in HH.
                        unfold coseq_id in HH. simpl in HH.
                        inversion HH. subst. inversion H7. easy.
                        subst. inversion H7. subst. easy.
@@ -4515,7 +4515,7 @@ Proof. red. pcofix CIH.
                + subst. simpl in H3. rewrite apfend_an in H3. easy.
                + subst. rewrite ApnA3C in H3. simpl in H3.
                  rewrite(st_eq(merge_apf_cont (apf_receive s1 s2 s3 (Apf_merge a0 (ApnA3 (apf_receive s1 s2 s3 a0) n1)))
-                        (p & [(l, s', w')]))) in H3.
+                        (p & [|(l, s', w')|]))) in H3.
                simpl in H3. easy.
              subst.
              rewrite <- meqAp3 in H4.
@@ -4527,7 +4527,7 @@ Proof. red. pcofix CIH.
                + subst. simpl in H4. rewrite apfend_an in H4. easy.
                + subst. rewrite ApnA3C in H4. simpl in H4.
                  rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 (Apf_merge a0 (ApnA3 (apf_receive s0 s1 s2 a0) n0)))
-                        (p & [(l, s', w')]))) in H4.
+                        (p & [|(l, s', w')|]))) in H4.
                simpl in H4. easy.
              apply refinementR3_mon.
              subst.
@@ -4538,7 +4538,7 @@ Proof. red. pcofix CIH.
              subst.
              rewrite <- meqBp3 in H3.
              rewrite <- meqAp3.
-             specialize(mcAp2Bp2 (ApnA3 a n0) (p0 & [(l0, s'0, w'0)])); intro HHa.
+             specialize(mcAp2Bp2 (ApnA3 a n0) (p0 & [|(l0, s'0, w'0)|])); intro HHa.
              rewrite HHa.
              rename p0 into q.
              case_eq(eqb p q); intros.
@@ -4552,7 +4552,7 @@ Proof. red. pcofix CIH.
                destruct HP as (b2,(HP1,(HP2,HP3))).
                rewrite <- meqAp3 in H6, H7.
                rewrite <- meqBp3 in H1, H2.
-               assert(merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (q & [(l0, s'0, w'0)]) =
+               assert(merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (q & [|(l0, s'0, w'0)|]) =
                       merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 bpf_end)) w'0).
                { rewrite breOrg3.
                  rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 bpf_end) w'0)). simpl. 
@@ -4564,11 +4564,11 @@ Proof. red. pcofix CIH.
                destruct HQ as (b1,(w1,(s1,(Hb1,(Hb2,Hb3))))).
                rewrite Hb3.
                pfold.
-               assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 bpf_end)) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
-                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) (q ! [(l, s1, w1)]))).
+               assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 bpf_end)) (merge_bpf_cont b1 (q ! [|(l, s1, w1)|]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) (q ! [|(l, s1, w1)|]))).
                { rewrite !breOrg3.
-                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 bpf_end) (merge_bpf_cont b1 (q ! [(l, s1, w1)])))).
-                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b1) (q ! [(l, s1, w1)]))).
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 bpf_end) (merge_bpf_cont b1 (q ! [|(l, s1, w1)|])))).
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b1) (q ! [|(l, s1, w1)|]))).
                  simpl.
                  rewrite bpfend_bn. easy.
                }
@@ -4597,15 +4597,15 @@ Proof. red. pcofix CIH.
                }
                rewrite H11.
                assert((merge_apf_cont (Apf_merge (ApnA3 a n0) (apf_receive q l0 s'0 apf_end)) (merge_bpf_cont b1 w1)) =
-                      (merge_apf_cont (ApnA3 a n0) (q & [(l0, s'0, (merge_bpf_cont b1 w1))]))).
+                      (merge_apf_cont (ApnA3 a n0) (q & [|(l0, s'0, (merge_bpf_cont b1 w1))|]))).
                { rewrite reOrd1.
                  rewrite(st_eq(merge_apf_cont (apf_receive q l0 s'0 apf_end) (merge_bpf_cont b1 w1))). simpl.
                  rewrite apfend_an. easy.
                }
                rewrite H12.
                rewrite Hb3 in H6.
-               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
-                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [(l, s1, w1)]))).
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [|(l, s1, w1)|]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [|(l, s1, w1)|]))).
                { rewrite bareOrg1. easy. }
                rewrite H13 in H6.
                apply dropBA in H6.
@@ -4627,8 +4627,8 @@ Proof. red. pcofix CIH.
                rewrite HP3 in H2 H1.
                rewrite HP2 Hb3 in H7.
                rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s0 b2) w')) in H2 H1. simpl in H2, H1.
-               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
-                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [(l, s1, w1)]))).
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [|(l, s1, w1)|]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [|(l, s1, w1)|]))).
                { rewrite breOrg3.
                  rewrite mcAp2Bp2. easy.
                }
@@ -4643,21 +4643,21 @@ Proof. red. pcofix CIH.
                destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
                assert(In (q,snd) l1) as HIN1.
                { apply coseqInB with (p := q) in Hu. easy.
-                 rewrite(coseq_eq(act (q ! [(l, s', w')]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,snd)) (ys := (act w')). easy. easy.
                }
                assert(In (q,snd) l2) as HIN2.
                { apply coseqInB with (p := q) in Hv. easy.
-                 rewrite(coseq_eq(act (q ! [(l, s1, w1)]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q ! [|(l, s1, w1)|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,snd)) (ys := (act w1)). easy. easy.
                }
-               assert((q & [(l0, s0, merge_bpf_cont b2 w')]) =
-                      (merge_apf_cont apf_end (q & [(l0, s0, merge_bpf_cont b2 w')]))).
+               assert((q & [|(l0, s0, merge_bpf_cont b2 w')|]) =
+                      (merge_apf_cont apf_end (q & [|(l0, s0, merge_bpf_cont b2 w')|]))).
                { rewrite apfend_an. easy. }
                rewrite H2 in Hv1.
                assert(In (q,rcv) l4) as HIN3.
                { apply coseqInA with (p := q) in Hv1. easy.
-                 rewrite(coseq_eq(act (q & [(l0, s0, merge_bpf_cont b2 w')]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q & [|(l0, s0, merge_bpf_cont b2 w')|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_bpf_cont b2 w'))). easy. easy.
                }
 
@@ -4784,14 +4784,14 @@ Proof. red. pcofix CIH.
                rewrite HP3 in H2 H1.
                rewrite HP2 Hb3 in H7 H6.
                rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s0 b2) w')) in H2 H1. simpl in H2, H1.
-               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [(l, s1, w1)]))) =
-                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [(l, s1, w1)]))).
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b1 (q ! [|(l, s1, w1)|]))) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b1) (q ! [|(l, s1, w1)|]))).
                { rewrite breOrg3.
                  rewrite mcAp2Bp2. easy.
                }
                rewrite H11 in H7 H6.
                assert((merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) (bpf_receive q l0 s'0 b1)) w1) =
-                      (merge_bpf_cont (Ap2BpSeq (ApnA3 a n0))) (q & [(l0, s'0, merge_bpf_cont b1 w1)])).
+                      (merge_bpf_cont (Ap2BpSeq (ApnA3 a n0))) (q & [|(l0, s'0, merge_bpf_cont b1 w1)|])).
                { rewrite breOrg3.
                  rewrite (st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b1) w1)). simpl. easy.
                }
@@ -4800,21 +4800,21 @@ Proof. red. pcofix CIH.
                destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
                assert(In (q,snd) l1) as HIN1.
                { apply coseqInB with (p := q) in Hu. easy.
-                 rewrite(coseq_eq(act (q ! [(l, s', w')]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,snd)) (ys := (act w')). easy. easy.
                }
                assert(In (q,snd) l2) as HIN2.
                { apply coseqInB with (p := q) in Hv. easy.
-                 rewrite(coseq_eq(act (q ! [(l, s1, w1)]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q ! [|(l, s1, w1)|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,snd)) (ys := (act w1)). easy. easy.
                }
-               assert((q & [(l0, s0, merge_bpf_cont b2 w')]) =
-                      (merge_apf_cont apf_end (q & [(l0, s0, merge_bpf_cont b2 w')]))).
+               assert((q & [|(l0, s0, merge_bpf_cont b2 w')|]) =
+                      (merge_apf_cont apf_end (q & [|(l0, s0, merge_bpf_cont b2 w')|]))).
                { rewrite apfend_an. easy. }
                rewrite H2 in Hv1.
                assert(In (q,rcv) l4) as HIN3.
                { apply coseqInA with (p := q) in Hv1. easy.
-                 rewrite(coseq_eq(act (q & [(l0, s0, merge_bpf_cont b2 w')]))). unfold coseq_id. simpl.
+                 rewrite(coseq_eq(act (q & [|(l0, s0, merge_bpf_cont b2 w')|]))). unfold coseq_id. simpl.
                  apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_bpf_cont b2 w'))). easy. easy.
                }
                apply dropBA in H6; try easy.
@@ -5121,17 +5121,17 @@ Proof. red. pcofix CIH.
                destruct HIn as (b2,(w1,(s'',(Hc,(Hd,He))))).
                (* use "InLBA" here *)
                rewrite He.
-               assert((merge_bpf_cont (Ap2BpSeq (ApnA3 a n0))  (q & [(l0, s'0, merge_bpf_cont b2 (p ! [(l, s'', w1)]))])) =
-                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0))  (bpf_receive q l0 s'0 b2)) (p ! [(l, s'', w1)]))).
+               assert((merge_bpf_cont (Ap2BpSeq (ApnA3 a n0))  (q & [|(l0, s'0, merge_bpf_cont b2 (p ! [|(l, s'', w1)|]))|])) =
+                      (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0))  (bpf_receive q l0 s'0 b2)) (p ! [|(l, s'', w1)|]))).
                { rewrite breOrg3.
-                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b2) (p ! [(l, s'', w1)]))). simpl.
+                 rewrite(st_eq(merge_bpf_cont (bpf_receive q l0 s'0 b2) (p ! [|(l, s'', w1)|]))). simpl.
                  easy.
                }
                rewrite H10.
                rewrite HR2 in H1.
                rewrite He in H6.
-               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [(l, s'', w1)]))) =
-                      (merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (merge_bpf_cont b2 (p ! [(l, s'', w1)])))).
+               assert((merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [|(l, s'', w1)|]))) =
+                      (merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (merge_bpf_cont b2 (p ! [|(l, s'', w1)|])))).
                { rewrite mcAp2Bp2. easy. }
                rewrite H11 in H6.
 (*                rewrite <- H8 in H6. *)
@@ -5153,8 +5153,8 @@ Proof. red. pcofix CIH.
                  rewrite breOrg3. easy.
                }
                rewrite H12.
-               assert((merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (merge_bpf_cont b2 (p ! [(l, s'', w1)]))) =
-                      (merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [(l, s'', w1)])))).
+               assert((merge_bpf_cont (Ap2BpSeq (ApnA3 a n0)) (merge_bpf_cont b2 (p ! [|(l, s'', w1)|]))) =
+                      (merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [|(l, s'', w1)|])))).
                { rewrite mcAp2Bp2. easy. }
                rewrite H13 in H6.
                unfold refinement3.
@@ -5170,8 +5170,8 @@ Proof. red. pcofix CIH.
                - simpl. easy.
                - rewrite <- InN; easy.
                left.
-               assert( (merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [(l, s'', w1)]))) =
-                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b2) (p ! [(l, s'', w1)]))).
+               assert( (merge_apf_cont (ApnA3 a n0) (merge_bpf_cont b2 (p ! [|(l, s'', w1)|]))) =
+                       (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n0)) b2) (p ! [|(l, s'', w1)|]))).
                { rewrite mcAp2Bp2. rewrite breOrg3. easy. }
                rewrite H14 in H6.
                apply dropBA in H6.
@@ -5198,21 +5198,21 @@ Proof. red. pcofix CIH.
 
                 assert(In (p,snd) l1) as HIN1.
                 { apply coseqInB with (p := p) in Hu. easy.
-                  rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,snd)) (ys := (act w')). easy. easy.
                 }
                 assert(In (p,snd) l2) as HIN2.
                 { apply coseqInB with (p := p) in Hv. easy.
-                  rewrite(coseq_eq(act (p ! [(l, s'', w1)]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p ! [|(l, s'', w1)|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,snd)) (ys := (act w1)). easy. easy.
                 }
-                assert((q & [(l0, s0, merge_bpf_cont b' w')]) =
-                       (merge_apf_cont apf_end (q & [(l0, s0, merge_bpf_cont b' w')]))).
+                assert((q & [|(l0, s0, merge_bpf_cont b' w')|]) =
+                       (merge_apf_cont apf_end (q & [|(l0, s0, merge_bpf_cont b' w')|]))).
                 { rewrite apfend_an. easy. }
                 rewrite H2 in Hv1.
                 assert(In (q,rcv) l4) as HIN3.
                 { apply coseqInA with (p := q) in Hv1. easy.
-                  rewrite(coseq_eq(act (q & [(l0, s0, merge_bpf_cont b' w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (q & [|(l0, s0, merge_bpf_cont b' w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_bpf_cont b' w'))). easy. easy.
                 }
                 assert(isInA (ApnA3 a n0) q = false).
@@ -5353,21 +5353,21 @@ Proof. red. pcofix CIH.
                 destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
                 assert(In (p,snd) l1) as HIN1.
                 { apply coseqInB with (p := p) in Hu. easy.
-                  rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,snd)) (ys := (act w')). easy. easy.
                 }
                 assert(In (p,snd) l2) as HIN2.
                 { apply coseqInB with (p := p) in Hv. easy.
-                  rewrite(coseq_eq(act (p ! [(l, s'', w1)]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (p ! [|(l, s'', w1)|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (p,snd)) (ys := (act w1)). easy. easy.
                 }
-                assert((q & [(l0, s0, merge_bpf_cont b' w')]) =
-                       (merge_apf_cont apf_end (q & [(l0, s0, merge_bpf_cont b' w')]))).
+                assert((q & [|(l0, s0, merge_bpf_cont b' w')|]) =
+                       (merge_apf_cont apf_end (q & [|(l0, s0, merge_bpf_cont b' w')|]))).
                 { rewrite apfend_an. easy. }
                 rewrite H2 in Hv1.
                 assert(In (q,rcv) l4) as HIN3.
                 { apply coseqInA with (p := q) in Hv1. easy.
-                  rewrite(coseq_eq(act (q & [(l0, s0, merge_bpf_cont b' w')]))). unfold coseq_id. simpl.
+                  rewrite(coseq_eq(act (q & [|(l0, s0, merge_bpf_cont b' w')|]))). unfold coseq_id. simpl.
                   apply CoInSplit1 with (y := (q,rcv)) (ys := (act (merge_bpf_cont b' w'))). easy. easy.
                 }
                 assert(isInA (ApnA3 a n0) q = false).
@@ -5717,16 +5717,16 @@ Proof. red. pcofix CIH.
                destruct HBB as [HBB | HBB].
                ++ destruct HBB as (b2,(b3,(s2,(HBa,(HBb,HBc))))).
                   rewrite HBc.
-                  assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l s2 b3)) (p0 ! [(l0, s'0, w'0)])) =
-                         (merge_bpf_cont b2 (p ! [(l, s2, merge_bpf_cont b3  (p0 ! [(l0, s'0, w'0)]))]))).
+                  assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l s2 b3)) (p0 ! [|(l0, s'0, w'0)|])) =
+                         (merge_bpf_cont b2 (p ! [|(l, s2, merge_bpf_cont b3  (p0 ! [|(l0, s'0, w'0)|]))|]))).
                   { rewrite breOrg3.
-                    rewrite(st_eq(merge_bpf_cont (bpf_send p l s2 b3) (p0 ! [(l0, s'0, w'0)]))). simpl.
+                    rewrite(st_eq(merge_bpf_cont (bpf_send p l s2 b3) (p0 ! [|(l0, s'0, w'0)|]))). simpl.
                     easy.
                   }
                   rewrite H11.
                   pfold.
                   specialize(ref3_b (upaco2 refinementR3 r)
-                  w (merge_bpf_cont b3 (p0 ! [(l0, s'0, w'0)]))
+                  w (merge_bpf_cont b3 (p0 ! [|(l0, s'0, w'0)|]))
                   p l s s2 b2 1
                   ); intro HR.
                   simpl in HR.
@@ -5738,8 +5738,8 @@ Proof. red. pcofix CIH.
                   easy.
                   rewrite HPc.
                   rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s0 b1) w')). simpl.
-                  assert((merge_bpf_cont b2 (merge_bpf_cont b3 (p0 ! [(l0, s'0, w'0)]))) =
-                         (merge_bpf_cont (Bpf_merge b2 b3) (p0 ! [(l0, s'0, w'0)]))).
+                  assert((merge_bpf_cont b2 (merge_bpf_cont b3 (p0 ! [|(l0, s'0, w'0)|]))) =
+                         (merge_bpf_cont (Bpf_merge b2 b3) (p0 ! [|(l0, s'0, w'0)|]))).
                   { rewrite breOrg3. easy. }
                   rewrite H12.
                   pfold.
@@ -5762,7 +5762,7 @@ Proof. red. pcofix CIH.
                   left. 
                   rewrite HBc in H6.
                   assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l s2 b3)) w'0) =
-                         (merge_bpf_cont b2 (p ! [(l, s2, merge_bpf_cont b3 w'0)]))).
+                         (merge_bpf_cont b2 (p ! [|(l, s2, merge_bpf_cont b3 w'0)|]))).
                   { rewrite breOrg1. easy. }
                   rewrite H13 in H6.
                   apply dropBA in H6.
@@ -5788,21 +5788,21 @@ Proof. red. pcofix CIH.
                   
                   assert(In (p,snd) l1) as HIN1.
                   { apply coseqInB with (p := p) in Hu. easy.
-                    rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (p ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (p,snd)) (ys := (act w')). easy. easy.
                   }
                   assert(In (p,snd) l2) as HIN2.
                   { apply coseqInB with (p := p) in Hv. easy.
-                    rewrite(coseq_eq(act (p ! [(l, s2, merge_bpf_cont b3 w'0)]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (p ! [|(l, s2, merge_bpf_cont b3 w'0)|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (p,snd)) (ys := (act (merge_bpf_cont b3 w'0))). easy. easy.
                   }
-                  assert((q ! [(l0, s0, merge_bpf_cont b1 w')]) =
-                         (merge_bpf_cont bpf_end (q ! [(l0, s0, merge_bpf_cont b1 w')]))).
+                  assert((q ! [|(l0, s0, merge_bpf_cont b1 w')|]) =
+                         (merge_bpf_cont bpf_end (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))).
                   { rewrite bpfend_an. easy. }
                   rewrite H2 in Hv1.
                   assert(In (q,snd) l4) as HIN3.
                   { apply coseqInB with (p := q) in Hv1. easy.
-                    rewrite(coseq_eq(act (q ! [(l0, s0, merge_bpf_cont b1 w')]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (q,snd)) (ys := (act (merge_bpf_cont b1 w'))). easy. easy.
                   }
                   assert(isInB (BpnB3 b0 n0) q = false).
@@ -5917,21 +5917,21 @@ Proof. red. pcofix CIH.
                   destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
                   assert(In (p,snd) l1) as HIN1.
                   { apply coseqInB with (p := p) in Hu. easy.
-                    rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (p ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (p,snd)) (ys := (act w')). easy. easy.
                   }
                   assert(In (p,snd) l2) as HIN2.
                   { apply coseqInB with (p := p) in Hv. easy.
-                    rewrite(coseq_eq(act (p ! [(l, s2, merge_bpf_cont b3 w'0)]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (p ! [|(l, s2, merge_bpf_cont b3 w'0)|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (p,snd)) (ys := (act (merge_bpf_cont b3 w'0))). easy. easy.
                   }
-                  assert((q ! [(l0, s0, merge_bpf_cont b1 w')]) =
-                         (merge_bpf_cont bpf_end (q ! [(l0, s0, merge_bpf_cont b1 w')]))).
+                  assert((q ! [|(l0, s0, merge_bpf_cont b1 w')|]) =
+                         (merge_bpf_cont bpf_end (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))).
                   { rewrite bpfend_an. easy. }
                   rewrite H2 in Hv1.
                   assert(In (q,snd) l4) as HIN3.
                   { apply coseqInB with (p := q) in Hv1. easy.
-                    rewrite(coseq_eq(act (q ! [(l0, s0, merge_bpf_cont b1 w')]))). unfold coseq_id. simpl.
+                    rewrite(coseq_eq(act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))). unfold coseq_id. simpl.
                     apply CoInSplit1 with (y := (q,snd)) (ys := (act (merge_bpf_cont b1 w'))). easy. easy.
                   }
                   assert(isInB (BpnB3 b0 n0) q = false).
@@ -6087,10 +6087,10 @@ Proof. red. pcofix CIH.
                       rewrite Hneed in Hin. destruct Hin; easy.
                       
                       rewrite <- merge_mergeS. easy.
-                      assert(~ coseqIn (p, snd) (act (q ! [(l0, s0, merge_bpf_cont b1 w')]))) as Hget.
+                      assert(~ coseqIn (p, snd) (act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))) as Hget.
                       { intro HH.
                         apply Hcl1.
-                        rewrite(coseq_eq(act (q ! [(l0, s0, merge_bpf_cont b1 w')]))) in HH. unfold coseq_id in HH. simpl in HH.
+                        rewrite(coseq_eq(act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))) in HH. unfold coseq_id in HH. simpl in HH.
                         inversion HH. subst.
                         inversion H12. subst. easy.
                         subst. inversion H12. subst.
@@ -6209,10 +6209,10 @@ Proof. red. pcofix CIH.
                             apply csInSBRevG. right. easy. easy. easy.
                ++ destruct HBB as (b2,(w2,(s2,(HBa,(HBb,(HBc,HBd)))))).
                   rewrite HBd.
-                  assert((merge_bpf_cont (BpnB3 b0 n0) (p0 ! [(l0, s'0, merge_bpf_cont b2 (p ! [(l, s2, w2)]))])) =
-                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) (p ! [(l, s2, w2)]))).
+                  assert((merge_bpf_cont (BpnB3 b0 n0) (p0 ! [|(l0, s'0, merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))|])) =
+                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) (p ! [|(l, s2, w2)|]))).
                   { rewrite breOrg3.
-                    rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s'0 b2) (p ! [(l, s2, w2)]))). simpl. easy.
+                    rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s'0 b2) (p ! [|(l, s2, w2)|]))). simpl. easy.
                   }
                   rewrite H11.
                   pfold.
@@ -6231,7 +6231,7 @@ Proof. red. pcofix CIH.
                   rewrite HPc.
                   rewrite(st_eq(merge_bpf_cont (bpf_send p0 l0 s0 b1) w')). simpl.
                   assert((merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) (bpf_send p0 l0 s'0 b2)) w2) =
-                         (merge_bpf_cont (BpnB3 b0 n0) (p0 ! [(l0, s'0, merge_bpf_cont b2 w2)]))).
+                         (merge_bpf_cont (BpnB3 b0 n0) (p0 ! [|(l0, s'0, merge_bpf_cont b2 w2)|]))).
                   { rewrite breOrg3.
                     rewrite(st_eq (merge_bpf_cont (bpf_send p0 l0 s'0 b2) w2)). simpl. easy.
                   }
@@ -6248,8 +6248,8 @@ Proof. red. pcofix CIH.
                   - rewrite <- InNS; easy.
                   left.
                   rewrite HBd in H6.
-                  assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                  assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                         (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                   { rewrite breOrg3. easy. }
                   rewrite H13 in H6.
                   apply dropBA in H6.
@@ -6266,8 +6266,8 @@ Proof. red. pcofix CIH.
                     destruct Hcl2 as [Hcl2 | Hcl2].
                     ++ specialize(actdSE b1 l1 p l s' w' HPa Hcl1 Hla); intro HP.
                        specialize(coseqInB _ _ _ _ Hcl1 HP); intro HH.
-                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                        { rewrite breOrg3. easy. }
                        rewrite H7 in Hlb.
                        assert(isInB (Bpf_merge (BpnB3 b0 n0) b2) p = false).
@@ -6289,16 +6289,16 @@ Proof. red. pcofix CIH.
                        rewrite H14. easy. easy. easy. easy.
                     ++ specialize(actdSE b1 l1 p l s' w' HPa Hcl1 Hla); intro HP.
                        specialize(coseqInB _ _ _ _ Hcl1 HP); intro HH.
-                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                        { rewrite breOrg3. easy. }
                        rewrite H7 in Hlb.
                        assert(isInB (Bpf_merge (BpnB3 b0 n0) b2) p = false).
                        { apply InMergeFS. easy. }
 (*                        specialize(actdSNE (Bpf_merge (BpnB3 b0 n0) b2) l2 p l s2 w2 H13 Hcl2 Hlb); intro HP2. *)
                        rewrite HBd in H6.
-                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                       assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                              (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                        { rewrite breOrg3. easy. }
                        rewrite H7 in H6.
                        apply dropBA in H6.
@@ -6314,8 +6314,8 @@ Proof. red. pcofix CIH.
                      destruct Hcl2 as [Hcl2 | Hcl2].
                      ++ assert(isInB (Bpf_merge (BpnB3 b0 n0) b2) p = false).
                         { apply InMergeFS; easy. }
-                        assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                               (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                        assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                               (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                         { rewrite breOrg3. easy. }
                         rewrite H13 in Hlb.
                         specialize(actdSE (Bpf_merge (BpnB3 b0 n0) b2) l2 p l s2 w2 H7 Hcl2 Hlb); intro HP2.
@@ -6334,8 +6334,8 @@ Proof. red. pcofix CIH.
                        easy. apply InMergeFS. easy.
                      ++ assert(isInB (Bpf_merge (BpnB3 b0 n0) b2) p = false).
                         { apply InMergeFS; easy. }
-                        assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [(l, s2, w2)]))) =
-                               (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [(l, s2, w2)]))).
+                        assert((merge_bpf_cont (BpnB3 b0 n0) (merge_bpf_cont b2 (p ! [|(l, s2, w2)|]))) =
+                               (merge_bpf_cont (Bpf_merge (BpnB3 b0 n0) b2) (p ! [|(l, s2, w2)|]))).
                         { rewrite breOrg3. easy. }
                         rewrite H13 in Hlb.
                         specialize(actdSNE (Bpf_merge (BpnB3 b0 n0) b2) l2 p l s2 w2 H7 Hcl2 Hlb); intro HP2.
@@ -6370,21 +6370,21 @@ Proof. red. pcofix CIH.
                     destruct H2 as (l3,(l4,(Hu1,(Hv1,(Hw1,(Hy1,Hz1)))))).
                     assert(In (p,snd) l1) as HIN1.
                     { apply coseqInB with (p := p) in Hu. easy.
-                      rewrite(coseq_eq(act (p ! [(l, s', w')]))). unfold coseq_id. simpl.
+                      rewrite(coseq_eq(act (p ! [|(l, s', w')|]))). unfold coseq_id. simpl.
                       apply CoInSplit1 with (y := (p,snd)) (ys := (act w')). easy. easy.
                     }
                     assert(In (p,snd) l2) as HIN2.
                     { apply coseqInB with (p := p) in Hv. easy.
-                      rewrite(coseq_eq(act (p ! [(l, s2, w2)]))). unfold coseq_id. simpl.
+                      rewrite(coseq_eq(act (p ! [|(l, s2, w2)|]))). unfold coseq_id. simpl.
                       apply CoInSplit1 with (y := (p,snd)) (ys := (act w2)). easy. easy.
                     }
-                    assert((q ! [(l0, s0, merge_bpf_cont b1 w')]) =
-                           (merge_bpf_cont bpf_end (q ! [(l0, s0, merge_bpf_cont b1 w')]))).
+                    assert((q ! [|(l0, s0, merge_bpf_cont b1 w')|]) =
+                           (merge_bpf_cont bpf_end (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))).
                     { rewrite bpfend_an. easy. }
                     rewrite H2 in Hv1.
                     assert(In (q,snd) l4) as HIN3.
                     { apply coseqInB with (p := q) in Hv1. easy.
-                      rewrite(coseq_eq(act (q ! [(l0, s0, merge_bpf_cont b1 w')]))). unfold coseq_id. simpl.
+                      rewrite(coseq_eq(act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))). unfold coseq_id. simpl.
                       apply CoInSplit1 with (y := (q,snd)) (ys := (act (merge_bpf_cont b1 w'))). easy. easy.
                     }
                     assert(isInB (BpnB3 b0 n0) q = false).
@@ -6541,10 +6541,10 @@ Proof. red. pcofix CIH.
                         apply csInSBG in Hin.
                         rewrite H7 in Hin. destruct Hin; easy.
                         rewrite merge_mergeS. easy.
-                        assert(~ coseqIn (p, snd) (act (q ! [(l0, s0, merge_bpf_cont b1 w')]))) as Hget.
+                        assert(~ coseqIn (p, snd) (act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))) as Hget.
                         { intro HH.
                           apply Hcl1.
-                          rewrite(coseq_eq(act (q ! [(l0, s0, merge_bpf_cont b1 w')]))) in HH. unfold coseq_id in HH. simpl in HH.
+                          rewrite(coseq_eq(act (q ! [|(l0, s0, merge_bpf_cont b1 w')|]))) in HH. unfold coseq_id in HH. simpl in HH.
                           inversion HH. subst.
                           inversion H12. subst. easy.
                           subst. inversion H12. subst.
