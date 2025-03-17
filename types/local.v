@@ -1,4 +1,4 @@
-Require Import ST.processes.unscoped ST.processes.process.
+Require Import ST.aux.unscoped.
 (* From mathcomp Require Import all_ssreflect. *)
 From Paco Require Import paco.
 Require Import ST.src.stream.
@@ -6,8 +6,8 @@ Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
 
-(* Notation label := string. *)
-(* Notation participant := string. *)
+Notation label := string.
+Notation participant := string.
 
 Inductive sort: Type :=
   | sunit: sort

@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si 
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si 
                ST.src.reordering ST.src.siso ST.types.local
                ST.subtyping.refinement ST.src.reorderingfacts.
 From mathcomp Require Import all_ssreflect seq.
@@ -220,7 +220,7 @@ Lemma nRefR: forall w w', nRefinement w w' -> ((@und w) ~< (@und w') -> False).
 Proof. intros w w' Ha H.
        revert Ha.
        unfold refinement in H.
-       punfold H; [ | apply refinementR2_mon].
+       punfold H; [ | apply refinementR_mon].
        intro Ha.
        induction Ha; intros.
        { simpl in H.
@@ -401,7 +401,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqAp2 in H6.
          apply ApApeqInv in H6.
          inversion H6. subst. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
        { inversion H.
@@ -417,7 +417,7 @@ Proof. intros w w' Ha H.
          apply ApApeqInv in H6.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
        { apply IHHa.
@@ -439,7 +439,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqAp in H1.
          rewrite <- H2.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
        { inversion H.
@@ -462,7 +462,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqBp in H6.
          apply BpBpeqInv2 in H6.
          inversion H6. subst. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
        { inversion H.
@@ -477,7 +477,7 @@ Proof. intros w w' Ha H.
          apply BpBpeqInv2 in H6.
          inversion H6. subst.
          apply ssnssL in H0. easy. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
        { apply IHHa.
@@ -501,7 +501,7 @@ Proof. intros w w' Ha H.
          rewrite <- meqBp in H1.
          rewrite <- H2.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
        }
 Qed.
@@ -760,7 +760,7 @@ Proof. intros.
          easy. easy. easy.
 Qed.
 
-Lemma nRefLH: forall w w', (nRefinement w w' -> False) -> refinement2 (@und w) (@und w').
+Lemma nRefLH: forall w w', (nRefinement w w' -> False) -> refinement (@und w) (@und w').
 Proof. destruct w as (w, Pw).
        destruct w' as (w', Pw').
        intro H.
@@ -788,7 +788,7 @@ Proof. destruct w as (w, Pw).
 
          specialize(classic(act_eq w1 w2)); intros Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref2_b (upaco2 refinementR2 r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
+         specialize(ref_b (upaco2 refinementR r) w1 w2 q l' s s' (bp_end) 1); intros HSR.
          rewrite bpend_ann in HSR.
          rewrite bpend_ann in HSR.
          simpl in HSR.
@@ -843,7 +843,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref2_b (upaco2 refinementR2 r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -928,7 +928,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_bp_cont p b w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref2_b (upaco2 refinementR2 r) w1 w3 p l1 s s1 b 1); intro Hrb.
+         specialize(ref_b (upaco2 refinementR r) w1 w3 p l1 s s1 b 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 
@@ -1036,7 +1036,7 @@ Proof. destruct w as (w, Pw).
          pfold.
          specialize(classic (act_eq w1 ((merge_ap_cont p a w3)))); intro Hact.
          destruct Hact as [Hact | Hact].
-         specialize(ref2_a (upaco2 refinementR2 r) w1 w3 p l1 s s1 a 1); intro Hrb.
+         specialize(ref_a (upaco2 refinementR r) w1 w3 p l1 s s1 a 1); intro Hrb.
          simpl in Hrb.
          eapply Hrb. easy.
 

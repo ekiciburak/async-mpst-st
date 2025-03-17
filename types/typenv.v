@@ -1,4 +1,4 @@
-Require Import ST.processes.unscoped ST.processes.process ST.types.local ST.subtyping.subtyping.
+Require Import ST.aux.unscoped ST.types.local ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream.

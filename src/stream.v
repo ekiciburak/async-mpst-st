@@ -3,22 +3,6 @@ Require Import Setoid List.
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
-(* Inductive colistF (a : Type) (x : Type) :=
-  | conil : colistF a x
-  | cocons: a -> x -> colistF a x.
-
-CoInductive coseq (a : Type) : Type :=
-  Delay
-  {
-    force: colistF a (coseq a) 
-  }.
-
-Arguments force {_} _.
-Arguments conil { _ _ } .
-Arguments cocons { _ _ } _ _.
-Arguments Delay {_} _.
- *)
- 
 CoInductive coseq (a : Type) :=
   | conil : coseq a
   | cocons: a -> coseq a -> coseq a.
@@ -26,22 +10,6 @@ CoInductive coseq (a : Type) :=
 Arguments conil { _ } .
 Arguments cocons { _ } _ _.
 
-(* Inductive optionF (a : Type) :=
-  | none: optionF a
-  | some: a -> optionF a.
-
-CoInductive cooption (a : Type) : Type :=
-  DelayO
-  {
-    forceO: optionF a
-  }.
-
-Arguments none {_}.
-Arguments some {_} _.
-Arguments DelayO {_} _.
-Arguments cooption {_}.
- *)
- 
 Definition coseq_id {A: Type} (s: coseq A): coseq A :=
   match s with
     | conil       => conil
@@ -54,35 +22,6 @@ Proof. intros A s.
        destruct s.
        simpl. easy. easy.
 Qed.
-
-(* Definition stream_id {A: Type} (s: stream A): stream A :=
-  match s with
-    | conils       => conils
-    | coconss x xs => coconss x xs
-  end.
-
-Lemma stream_eq: forall {A} s, s = @stream_id A s.
-Proof. intros A s.
-       unfold stream_id.
-       destruct s; easy.
-Qed.
-
-Fixpoint conth {A: Type} (s: coseq A) (n: nat): option A :=
-  match n with
-    | O   => 
-      match force s with
-        | conil       => None
-        | cocons x xs => Some x
-      end 
-    | S k =>
-      match force s with
-        | conil       => None
-        | cocons x xs => conth xs k
-      end
-  end.
-
-CoFixpoint nats_from (n : nat) : coseq nat := 
-  Delay (cocons n (nats_from (S n))). *)
 
 Module CoListNotations.
 Notation "[| |]" := conil (format "[| |]").
@@ -119,8 +58,6 @@ CoFixpoint appendL {A: Type} (l: list A) (ys: coseq A): coseq A :=
     | nil       => ys
     | cons x xs => (cocons x (appendL xs ys))
   end.
-
-Print Forall.
 
 Inductive ForallH {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> Prop :=
   | Forall_conil  : ForallH P R conil

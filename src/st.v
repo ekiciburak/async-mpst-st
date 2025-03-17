@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
-Require Import ST.src.stream ST.processes.process ST.types.local.
+Require Import ST.src.stream ST.types.local.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
@@ -54,7 +54,7 @@ Fixpoint retLoc (l:list(label*sort*local)) (l':label): option (sort*local) :=
     | nil             => None
   end.
 
-Require Import ST.processes.unscoped.
+Require Import ST.aux.unscoped.
 
 Definition unf (l: local): local :=
   match l with

@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local ST.subtyping.refinement.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
@@ -3556,7 +3556,7 @@ Proof. intros.
          + subst. rewrite(coseq_eq(act (end))) in Ha.
            unfold coseq_id in Ha. simpl in Ha.
            inversion Ha. subst. easy. subst. easy.
-           apply refinementR2_mon.
+           apply refinementR_mon.
        - subst. apply Hb.
          punfold H0. inversion H0.
          subst. 
@@ -3602,7 +3602,7 @@ Proof. intros.
          ++ subst. rewrite(coseq_eq(act (end))) in Ha.
              unfold coseq_id in Ha. simpl in Ha.
              inversion Ha. subst. easy. subst. easy.
-             apply refinementR2_mon.
+             apply refinementR_mon.
 
        - case_eq ac; intros.
          + subst. apply Hb.
@@ -3655,7 +3655,7 @@ Proof. intros.
               subst. rewrite(coseq_eq(act (end))) in Ha.
               unfold coseq_id in Ha. simpl in Ha.
               inversion Ha. subst. easy. subst. easy.
-              apply refinementR2_mon.
+              apply refinementR_mon.
          + subst.
            apply Hb.
            punfold H0. inversion H0.
@@ -3708,7 +3708,7 @@ Proof. intros.
             subst. rewrite(coseq_eq(act (end))) in Ha.
             unfold coseq_id in Ha. simpl in Ha.
             inversion Ha. subst. easy. subst. easy.
-            apply refinementR2_mon.
+            apply refinementR_mon.
 Qed.
 
 Lemma extdp: forall {d} w, singleton w -> singleton (merge_dp_cont d w).
@@ -3953,9 +3953,9 @@ Proof. intro d.
          rewrite H5a in H6. rewrite apend_an in H6.
          unfold upaco2 in H6.
          destruct H6. punfold H0. pfold. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
        - setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) und)) in H. simpl in H.
          punfold H. inversion H.
          subst. 
@@ -3967,9 +3967,9 @@ Proof. intro d.
          rewrite H5a in H6. rewrite bpend_an in H6.
          unfold upaco2 in H6.
          destruct H6. punfold H0. pfold. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
        - apply IHd. 
          setoid_rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) und)) in H. simpl in H.
          punfold H. inversion H.
@@ -3986,9 +3986,9 @@ Proof. intro d.
          apply ApApeqInv in H5.
          inversion H5. subst.
          rewrite H5a in H0. rewrite apend_an in H0. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
 
          apply IHd.
          setoid_rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) und)) in H. simpl in H.
@@ -4006,9 +4006,9 @@ Proof. intro d.
          apply BpBpeqInv2 in H5.
          inversion H5. subst.
          rewrite H5a in H0. rewrite bpend_an in H0. easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          easy.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          setoid_rewrite(st_eq(merge_dp_cont dp_end und)) in H. simpl in H.
          destruct und, und; easy.
 Qed.
@@ -4023,11 +4023,11 @@ Proof. intros.
        - setoid_rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w)).
          setoid_rewrite(st_eq(merge_dp_cont (dp_receive s s0 s1) w')). simpl.
          pfold.
-         specialize (ref2_a (upaco2 refinementR2 bot2) w w' s s0 s1 s1 (ap_end) 1); intro Ha.
+         specialize (ref_a (upaco2 refinementR bot2) w w' s s0 s1 s1 (ap_end) 1); intro Ha.
          rewrite !apend_ann in Ha.
          apply Ha. constructor. left. pfold.
          punfold H.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          specialize(classic(act_eq w w')); intros Hact.
          destruct Hact. easy.
          apply act_eq_neq in H0.
@@ -4036,11 +4036,11 @@ Proof. intros.
        - setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w )).
          setoid_rewrite(st_eq(merge_dp_cont (dp_send s s0 s1) w')). simpl.
          pfold.
-         specialize (ref2_b (upaco2 refinementR2 bot2) w w' s s0 s1 s1 (bp_end) 1); intro Ha.
+         specialize (ref_b (upaco2 refinementR bot2) w w' s s0 s1 s1 (bp_end) 1); intro Ha.
          rewrite !bpend_ann in Ha.
          apply Ha. constructor. left. pfold.
          punfold H.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          specialize(classic(act_eq w w')); intros Hact.
          destruct Hact. easy.
          apply act_eq_neq in H0.
@@ -4049,14 +4049,14 @@ Proof. intros.
        - rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w)).
          rewrite(st_eq(merge_dp_cont (dp_mergea s s0 s1 d) w')). simpl.
          pfold.
-         specialize (ref2_a (upaco2 refinementR2 bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (ap_end) 1); intro Ha.
+         specialize (ref_a (upaco2 refinementR bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (ap_end) 1); intro Ha.
          rewrite !apend_ann in Ha.
          apply Ha. constructor.
          specialize(IHd w w' Hw Hw').
          left.
-         unfold refinement2 in IHd. apply IHd.
+         unfold refinement in IHd. apply IHd.
          pfold. punfold H.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          specialize(classic(act_eq (merge_dp_cont d w) (merge_dp_cont d w'))); intros Hact.
          destruct Hact.
          easy.
@@ -4066,14 +4066,14 @@ Proof. intros.
        - rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w)).
          rewrite(st_eq(merge_dp_cont (dp_merge s s0 s1 d) w')). simpl.
          pfold.
-         specialize (ref2_b (upaco2 refinementR2 bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (bp_end) 1); intro Ha.
+         specialize (ref_b (upaco2 refinementR bot2) (merge_dp_cont d w) (merge_dp_cont d w') s s0 s1 s1 (bp_end) 1); intro Ha.
          rewrite !bpend_ann in Ha.
          apply Ha. constructor.
          specialize(IHd w w' Hw Hw').
          left.
-         unfold refinement2 in IHd. apply IHd.
+         unfold refinement in IHd. apply IHd.
          pfold. punfold H.
-         apply refinementR2_mon.
+         apply refinementR_mon.
          specialize(classic(act_eq (merge_dp_cont d w) (merge_dp_cont d w'))); intros Hact.
          destruct Hact.
          easy.

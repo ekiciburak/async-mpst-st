@@ -1,4 +1,4 @@
-Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.types.local ST.src.reordering.
+Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.types.local ST.src.reordering.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.

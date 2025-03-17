@@ -1,6 +1,6 @@
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import ST.src.stream ST.processes.process ST.src.st ST.types.local.
+Require Import ST.src.stream ST.src.st ST.types.local.
 Require Import String List.
 Import ListNotations.
 Require Import Setoid.
