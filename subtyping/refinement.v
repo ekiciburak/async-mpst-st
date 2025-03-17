@@ -16,7 +16,7 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                                          coseqInR L2 (act (merge_ap_contn p a w' n)) /\
                                          (forall x, List.In x L1 <-> List.In x L2)
                                         ) ->
-                                       refinementR seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
+                                       refinementR seq (st_receive p (cocons (l,s,w) conil)) (merge_ap_contn p a (st_receive p (cocons (l,s',w') conil)) n)
   | ref_b  : forall w w' p l s s' b n, subsort s s' ->
                                        seq w (merge_bp_contn p b w' n) ->
                                        ( exists L1, exists L2,
@@ -26,7 +26,7 @@ Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
                                          coseqInR L2 (act (merge_bp_contn p b w' n)) /\
                                          (forall x, List.In x L1 <-> List.In x L2)
                                        ) ->
-                                       refinementR seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
+                                       refinementR seq (st_send p (cocons (l,s,w) conil)) (merge_bp_contn p b (st_send p (cocons (l,s',w') conil)) n)
   | ref_end: refinementR seq st_end st_end.
 
 Definition refinement: st -> st -> Prop := fun s1 s2 => paco2 refinementR bot2 s1 s2.
@@ -48,11 +48,11 @@ Inductive refinementR2 (seq: st -> st -> Prop): st -> st -> Prop :=
   | ref2_a  : forall w w' p l s s' a n, subsort s' s ->
                                         seq w (merge_ap_contn p a w' n)  ->
                                         act_eq w (merge_ap_contn p a w' n) ->
-                                        refinementR2 seq (st_receive p [(l,s,w)]) (merge_ap_contn p a (st_receive p [(l,s',w')]) n)
+                                        refinementR2 seq (st_receive p (cocons (l,s,w) conil)) (merge_ap_contn p a (st_receive p (cocons (l,s',w') conil)) n)
   | ref2_b  : forall w w' p l s s' b n, subsort s s' ->
                                         seq w (merge_bp_contn p b w' n) ->
                                         act_eq w (merge_bp_contn p b w' n) ->
-                                        refinementR2 seq (st_send p [(l,s,w)]) (merge_bp_contn p b (st_send p [(l,s',w')]) n)
+                                        refinementR2 seq (st_send p (cocons (l,s,w) conil)) (merge_bp_contn p b (st_send p (cocons (l,s',w') conil)) n)
   | ref2_end: refinementR2 seq st_end st_end.
 
 Definition refinement2: st -> st -> Prop := fun s1 s2 => paco2 refinementR2 bot2 s1 s2.
@@ -85,7 +85,7 @@ Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
                                           (forall x, List.In x L1 <-> List.In x L2)
                                          ) ->
 (*                                         act_eq w (merge_apf_contn a w' n) -> *)
-                                        refinementR3 seq (st_receive p [(l,s,w)]) (merge_apf_contn a (st_receive p [(l,s',w')]) n)
+                                        refinementR3 seq (st_receive p (cocons (l,s,w) conil)) (merge_apf_contn a (st_receive p (cocons (l,s',w') conil)) n)
   | ref3_b  : forall w w' p l s s' b n, subsort s s' ->
                                         isInB b p = false ->
                                         seq w (merge_bpf_contn b w' n) -> 
@@ -97,7 +97,7 @@ Inductive refinementR3 (seq: st -> st -> Prop): st -> st -> Prop :=
                                           (forall x, List.In x L1 <-> List.In x L2)
                                         ) ->
 (*                                         act_eq w (merge_bpf_contn b w' n) -> *)
-                                        refinementR3 seq (st_send p [(l,s,w)]) (merge_bpf_contn b (st_send p [(l,s',w')]) n)
+                                        refinementR3 seq (st_send p (cocons (l,s,w) conil)) (merge_bpf_contn b (st_send p (cocons (l,s',w') conil)) n)
   | ref3_end: refinementR3 seq st_end st_end.
 
 Definition refinement3: st -> st -> Prop := fun s1 s2 => paco2 refinementR3 bot2 s1 s2.

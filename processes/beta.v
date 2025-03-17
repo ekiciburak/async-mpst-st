@@ -60,46 +60,10 @@ Fixpoint subst_expr_proc (p : process) (e : expr) (lb: label) (n d : nat) : proc
     | ps_receive pt lst => ps_receive pt (map (fun x => match x with
                                                           | (l, y) => if eqb l lb then (l, subst_expr_proc y e lb (S n) (S d)) else (l, y)
                                                         end) lst)
-(*                         let fix next lst :=
-                           match lst with
-                             | nil         => p
-                             | (lbl,y)::xs => if eqb lbl lb then subst_expr_proc y e lb (S n) (S d) else next xs
-                           end
-                           in next lst *)
     | ps_mu P           => ps_mu (subst_expr_proc P e lb n d)
     | _ => p
   end.
 
-(*
-Compute (subst_expr_proc (ps_receive "Bob" (cons ("l2", 
-                          ps_send "Alice" "l3" (e_succ (e_var 0)) 
-                         (ps_send "Alice" "l4" (e_succ (e_var 0)) ps_end)) nil)) (e_val (vint 100)) "l2" 0 0). *)
-(* Fixpoint subst_expr (p: process) (l: label) (e: expr): process :=
-  match p with
-    | ps_receive s0 s1  => 
-      let fix next lst :=
-      match lst with
-        | (lbl,(isae (aevar x)),P)::xs => if eqb lbl l then
-                                          match P with
-                                            | ps_send pt l e1 P => ps_send pt l (exprR e1 x e) (subst_expr P l e)
-                                            | ps_ite e1 P Q     => ps_ite (exprR e1 x e) (subst_expr P l e) (subst_expr Q l e)
-                                            | _                 => subst_expr P l e
-                                          end
-                                          else next xs
-        | (lbl,(isbe (bevar x)),P)::xs => if eqb lbl l then
-                                          match P with
-                                            | ps_send pt l e1 P => ps_send pt l (exprR e1 x e) (subst_expr P l e)
-                                            | ps_ite e1 P Q     => ps_ite (exprR e1 x e) (subst_expr P l e) (subst_expr Q l e)
-                                            | _                 => subst_expr P l e
-                                          end
-                                          else next xs
-       | (lbl,_,P)::xs                 => next xs
-       | _                             => p
-     end
-     in next s1
-    | _                                => p
-  end.
- *)
 
 Inductive qcong: mqueue -> mqueue -> Prop :=
   | qcons : forall q1 q2 l1 l2 v1 v2 h1 h2, q1 <> q2 -> 
