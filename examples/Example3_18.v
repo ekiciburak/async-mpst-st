@@ -4,6 +4,7 @@ Require Import Lia.
 From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
+Import CoListNotations.
 Require Import Setoid.
 Require Import Morphisms.
 
@@ -13,11 +14,11 @@ Definition ltype1: local := lt_send "p" [("l1",I,lt_receive "q" [("l3",I,lt_end)
 
 Definition ltype2: local := lt_send "p" [("l1",I,lt_receive "q" [("l3",I,lt_end)]);("l2",I,lt_end)].
 
-Definition type1: st := st_send "p" [("l1",I,st_receive "q" [("l3",I,st_end);("l4",I,end)])].
+Definition type1: st := st_send "p" [|("l1",I,st_receive "q" [|("l3",I,st_end);("l4",I,end)|])|].
 
-Definition type2: st := st_send "p" [("l1",I,st_receive "q" [("l3",I,st_end)]);("l2",I,end)].
+Definition type2: st := st_send "p" [|("l1",I,st_receive "q" [|("l3",I,st_end)|]);("l2",I,end)|].
 
-Definition dec12 := st_send "p" [("l1",I,st_receive "q" [("l3",I,end)])].
+Definition dec12 := st_send "p" [|("l1",I,st_receive "q" [|("l3",I,end)|])|].
 
 Lemma singl12: singleton dec12.
 Proof. pfold.
@@ -44,24 +45,24 @@ Qed.
 
 Lemma act_eqt1t22:
 exists L1 L2 : list (participant * dir),
-  coseqInLC (act ("q" & [("l3", I, end)])) L1 /\
-  coseqInLC (act ("q" & [("l3", I, end)])) L2 /\
-  coseqInR L1 (act ("q" & [("l3", I, end)])) /\
-  coseqInR L2 (act ("q" & [("l3", I, end)])) /\ (forall x : participant * dir, In x L1 <-> In x L2).
+  coseqInLC (act ("q" & [|("l3", I, end)|])) L1 /\
+  coseqInLC (act ("q" & [|("l3", I, end)|])) L2 /\
+  coseqInR L1 (act ("q" & [|("l3", I, end)|])) /\
+  coseqInR L2 (act ("q" & [|("l3", I, end)|])) /\ (forall x : participant * dir, In x L1 <-> In x L2).
 Proof. exists [("q",rcv)].
        exists [("q",rcv)].
-       split. rewrite(coseq_eq(act ("q" & [("l3", I, end)]))). unfold coseq_id. simpl.
+       split. rewrite(coseq_eq(act ("q" & [|("l3", I, end)|]))). unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. pfold. rewrite(coseq_eq(act (end))).
        unfold coseq_id. simpl. constructor.
-       split. rewrite(coseq_eq(act ("q" & [("l3", I, end)]))). unfold coseq_id. simpl.
+       split. rewrite(coseq_eq(act ("q" & [|("l3", I, end)|]))). unfold coseq_id. simpl.
        pfold. constructor. simpl. left. easy.
        left. pfold. rewrite(coseq_eq(act (end))).
        unfold coseq_id. simpl. constructor.
-       split. constructor. rewrite(coseq_eq(act ("q" & [("l3", I, end)]))). unfold coseq_id. simpl.
+       split. constructor. rewrite(coseq_eq(act ("q" & [|("l3", I, end)|]))). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("q", rcv)) (ys := (act (end))). simpl. easy. easy.
        constructor.
-       split. constructor. rewrite(coseq_eq(act ("q" & [("l3", I, end)]))). unfold coseq_id. simpl.
+       split. constructor. rewrite(coseq_eq(act ("q" & [|("l3", I, end)|]))). unfold coseq_id. simpl.
        apply CoInSplit1 with (y := ("q", rcv)) (ys := (act (end))). simpl. easy. easy.
        constructor.
        easy.
@@ -72,11 +73,23 @@ Proof. unfold subtype.
        exists [(mk_siso dec12 singl12, mk_siso dec12 singl12)].
        split.
        - simpl. split.
-         + pfold. constructor. simpl.
-           left. pfold. constructor. simpl. constructor. pfold. constructor.
-         + split. pfold. constructor. simpl.
-           left. pfold. constructor. simpl. constructor. pfold. constructor.
-           easy.
+         + pfold.
+           rewrite(st_eq(dec12)). simpl.
+           rewrite(st_eq(type1)). simpl.
+           apply st2siso_snd with (y := "q" & [|("l3", I, end); ("l4", I, end)|]).
+           left. pfold.
+           apply st2siso_rcv with (y := end). left. pfold. constructor.
+           constructor.
+           constructor.
+           split.
+           rewrite(st_eq(dec12)). simpl.
+           rewrite(st_eq(type2)). simpl.
+           pfold.
+           apply st2siso_snd with (y := "q" & [|("l3", I, end)|]).
+           left. pfold.
+           apply st2siso_rcv with (y := end). left. pfold. constructor.
+           constructor.
+           constructor. easy.
        - simpl. split. exists dpf_end. exists dpf_end.
          intro n.
          rewrite <- !meqDpf.
@@ -85,8 +98,8 @@ Proof. unfold subtype.
 
          pfold. rewrite(st_eq(dec12)). simpl.
          specialize(ref_b (upaco2 refinementR bot2)
-                          ("q" & [("l3", I, end)])
-                          ("q" & [("l3", I, end)])
+                          ("q" & [|("l3", I, end)|])
+                          ("q" & [|("l3", I, end)|])
                           "p" "l1" (I) (I) (bp_end) 1
          ); intro Hb.
          simpl in Hb. rewrite !bpend_an in Hb.
@@ -108,72 +121,114 @@ Proof. unfold subtype.
          easy.
 Qed.
 
-Lemma lt1t1: lt2stC ltype1 type1.
-Proof. pfold. unfold ltype1.
+Lemma lt1t1: lt2st ltype1 = type1.
+Proof. apply stExt.
+       pfold. unfold ltype1.
        rewrite(st_eq type1). simpl.
-       specialize (lt2st_snd (upaco2 lt2st bot2)
-       "p" ["l1"] [(I)]
-       [lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)]]
-       ["q" & [("l3", I, end); ("l4", I, end)]]
-       ); intro HS.
-       simpl in HS. apply HS; clear HS.
-       easy.
-       apply Forall_forall.
-       intros (l,s) H.
-       destruct H as [H | H]. inversion H. subst.
-       left. pfold. simpl.
-       specialize (lt2st_rcv (upaco2 lt2st bot2)
-       "q" ["l3";"l4"] [(I);(I)]
-       [lt_end; lt_end]
-       [(end); (end)]
-       ); intro HR. simpl in HR.
-       apply HR; clear HR.
-       easy.
-       apply Forall_forall.
-       intros (l,s) H1.
-       simpl in H1.
-       destruct H1 as [H1 | H1]. inversion H1. subst.
-       left. pfold. simpl. constructor.
-       destruct H1 as [H1 | H1]. inversion H1. subst.
-       left. pfold. simpl. constructor.
-       easy.
-       simpl in H. easy.
+       rewrite(st_eq(lt2st (lt_send "p" [("l1", I, lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)])]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+        match xs with
+        | [] => [||]
+        | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+        end) [("l1", I, lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l3", I, lt_end); ("l4", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("l4", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq(lt2st lt_end)). simpl.
+       constructor.
+       constructor.
+       exists "l1". exists (I). exists("q" & [|("l3", I, end); ("l4", I, end)|]).
+       exists "l1". exists (I). exists("q" & [|("l3", I, end); ("l4", I, end)|]).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
+       exists "l3". exists (I). exists(end).
+       exists "l3". exists (I). exists(end).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
+       exists "l4". exists (I). exists(end).
+       exists "l4". exists (I). exists(end).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
+       constructor.
 Qed.
 
-Lemma lt2t2: lt2stC ltype2 type2.
-Proof. pfold. unfold ltype2.
+Lemma lt2t2: lt2st ltype2 = type2.
+Proof. apply stExt.
+       pfold. unfold ltype2.
        rewrite(st_eq type2). simpl.
-       specialize (lt2st_snd (upaco2 lt2st bot2)
-       "p" ["l1";"l2"] [(I);(I)]
-       [lt_receive "q" [("l3", I, lt_end)];lt_end]
-       ["q" & [("l3", I, end)]; end]
-       ); intro HS.
-       simpl in HS. apply HS; clear HS.
-       easy.
-       apply Forall_forall.
-       intros (l,s) H.
-       destruct H as [H | H]. inversion H. subst.
-       left. pfold. simpl.
-       specialize (lt2st_rcv (upaco2 lt2st bot2)
-       "q" ["l3"] [(I)]
-       [lt_end]
-       [(end)]
-       ); intro HR.
-       simpl in HR. apply HR; clear HR.
-       easy.
-       apply Forall_forall.
-       intros (l,s) H1.
-       destruct H1 as [H1 | H1]. inversion H1. subst.
-       left. pfold. simpl. constructor.
-       simpl in H1. easy.
-       simpl in H.
-       destruct H as [H | H]. inversion H. subst.
-       left. pfold. simpl. constructor.
-       easy.
+       rewrite(st_eq(lt2st (lt_send "p" [("l1", I, lt_receive "q" [("l3", I, lt_end)]); ("l2", I, lt_end)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+        match xs with
+        | [] => [||]
+        | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+        end) [("l1", I, lt_receive "q" [("l3", I, lt_end)]); ("l2", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l2", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "q" [("l3", I, lt_end)]))). simpl.
+       rewrite(st_eq(lt2st lt_end)). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l3", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st lt_end)). simpl.
+       constructor.
+       constructor.
+       exists "l1". exists (I). exists("q" & [|("l3", I, end)|]).
+       exists "l1". exists (I). exists("q" & [|("l3", I, end)|]).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
+       exists "l3". exists (I). exists(end).
+       exists "l3". exists (I). exists(end).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
+       constructor.
+       exists "l2". exists (I). exists(end).
+       exists "l2". exists (I). exists(end).
+       split. easy. split. easy. split. easy. split. easy.
+       left. pfold. constructor.
+       constructor.
 Qed.
 
-Lemma lT1_lT2: subltype ltype1 ltype2 type1 type2 lt1t1 lt2t2.
+Lemma lT1_lT2: subltype ltype1 ltype2.
 Proof. unfold subltype.
+       rewrite lt1t1, lt2t2.
        exact subtypet1t2.
 Qed.
 
