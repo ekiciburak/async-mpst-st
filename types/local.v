@@ -479,38 +479,18 @@ Proof. intro e.
          specialize(IHe (lt_mu e[lt_var 0;; sigma >> ⟨↑⟩];; sigma) (S i)).
          rewrite IHe. asimpl. easy. easy.
 Qed.
- 
-  
+
 Lemma full_unf_subst : forall e, full_unf (lt_mu e) = full_unf (e [lt_mu e .: lt_var]).
-Proof. intro e.
-       induction e; intros.
-       - asimpl. unfold full_unf. asimpl.
-         rewrite iterSr. simpl. asimpl.
-         destruct n. asimpl. simpl.
-         easy. 
-         simpl. easy.
-       - asimpl. unfold full_unf. simpl. easy.
-       - asimpl. unfold full_unf. simpl. easy.
-       - asimpl. unfold full_unf. simpl. easy.
-       - unfold full_unf in *.
-         rewrite iterS.
-         rewrite iterSr.
-         rewrite iterSr.
-         rewrite iterSr in IHe.
-         fold depth. fold subst_local. fold depth in IHe.
-         case_eq(guarded e 0); intros.
-         + admit.
-         + erewrite <- mu_height_unf2 with (i := 0).
-           asimpl.
-           rewrite addnC.
-           rewrite iterD. simpl. asimpl.
-           erewrite guarded_test with (i := 0).
-           simpl. 
-(*            rewrite <- iterS. simpl.
-           erewrite guarded_test.
-           asimpl. simpl.
-           erewrite guarded_test with (i := 0).
-           easy.
-           unfold negb. simpl in H. rewrite H. easy. *)
-Admitted.
-  
+Proof.
+  intros. rewrite /full_unf. 
+  intros. simpl.  rewrite -iterS iterSr. simpl. 
+  destruct (guarded e 0) eqn:Heqn.  rewrite mu_height_unf. done. done.
+  erewrite guarded_test with (i := 0).  2 : { unfold negb. rewrite Heqn. easy. } 
+  simpl. 
+  erewrite <-mu_height_unf2 with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. }  simpl. 
+  rewrite addnC.  
+  rewrite iterD. erewrite guarded_test with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. }  simpl.
+  rewrite -iterS iterSr /=. 
+  erewrite guarded_test with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. } done.
+Qed.
+
