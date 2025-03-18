@@ -494,3 +494,23 @@ Proof.
   erewrite guarded_test with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. } done.
 Qed.
 
+Lemma full_unf2 : forall n e, full_unf (iter n unf e) = full_unf e. 
+Proof. 
+elim. done. 
+intros. rewrite iterS. 
+destruct (if (iter n unf e) is lt_mu _ then true else false) eqn:Heqn. 
+destruct ((iter n unf e))eqn:Heqn2;try done. simpl. 
+rewrite -(H e) Heqn2. rewrite full_unf_subst. done. 
+have : unf (iter n unf e) = iter n unf e. destruct ((iter n unf e));try done. 
+move=>->. rewrite H. done. 
+Qed.
+
+Definition idemp {A : Type} (f : A -> A) := forall a, f (f a) = f a. 
+
+Lemma full_unf_idemp : idemp full_unf. 
+Proof. 
+intros. rewrite /idemp. intros. rewrite {2}/full_unf. rewrite full_unf2. done. 
+Qed.
+
+
+

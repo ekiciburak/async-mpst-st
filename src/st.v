@@ -73,6 +73,25 @@ CoFixpoint lt2st (l: local): st :=
     | _               => st_end
   end.
 
+Lemma sameTree : forall l, lt2st l = lt2st (full_unf l). 
+Proof. 
+  intros. 
+  rewrite(st_eq(lt2st (full_unf l))). simpl.
+  rewrite full_unf_idemp.
+  destruct l.
+  rewrite(st_eq(lt2st (lt_var n))). simpl. easy.
+  simpl.
+  rewrite(st_eq(lt2st lt_end)). simpl. easy.
+  simpl.
+  rewrite(st_eq(lt2st (lt_send s l))). simpl.
+  easy.
+  simpl.
+  rewrite(st_eq(lt2st (lt_receive s l))). simpl.
+  easy.
+  rewrite(st_eq(lt2st (lt_mu l) )). simpl.
+  easy.
+Qed.
+
 Lemma monH2: forall ys xs r r',
   Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
