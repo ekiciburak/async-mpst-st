@@ -123,7 +123,7 @@ Print lr2.  *)
 
 Definition sfun (l: label) (s: sort) (x: st): (label -> option(sort*st)) :=
   fun l' => if eqb l l' then Datatypes.Some(s,x) else Datatypes.None. 
-  
+
 Definition sort_eqb (s1 s2: local.sort): bool :=
   match (s1,s2) with
     | (sunit, sunit) => true
