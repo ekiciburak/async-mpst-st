@@ -1,7 +1,7 @@
 From mathcomp Require Import all_ssreflect.
 From Paco Require Import paco.
 Require Import ST.src.stream ST.processes.process ST.types.local.
-Require Import String List.
+Require Import String List Nat.
 Local Open Scope string_scope.
 Import ListNotations.
 
@@ -44,42 +44,18 @@ Proof. intro s; destruct s; easy. Defined.
 
 Fixpoint lst2fun (l:list(label*sort*st)) (l':label): option(sort*st) :=
   match l with
-    | (l1,s1,t1)::xs => if eqb l' l1 then Some (s1,t1) else lst2fun xs l'
+    | (l1,s1,t1)::xs => if String.eqb l' l1 then Some (s1,t1) else lst2fun xs l'
     | nil            => None
   end.
 
 Fixpoint retLoc (l:list(label*sort*local)) (l':label): option (sort*local) :=
   match l with
-    | (l1,s1,lt1)::ys => if eqb l' l1 then Some(s1, lt1) else retLoc ys l'
+    | (l1,s1,lt1)::ys => if String.eqb l' l1 then Some(s1, lt1) else retLoc ys l'
     | nil             => None
   end.
 
-Require Import ST.processes.unscoped.
-
-Definition unf (l: local): local :=
-  match l with
-    | lt_mu l => subst_local ((lt_mu l) .: lt_var) l
-    | _       => l
-  end.
-
-Fixpoint rec_depth G :=
-  match G with
-    | lt_mu G => S (rec_depth G)
-    | _       => 0
-  end.
-
-Fixpoint n_unroll d G :=
-  match d with
-  | 0   => G
-  | S d =>
-    match G with
-    | lt_mu G' => n_unroll d (unf G)
-    | _        => G
-    end
-  end.
-
 CoFixpoint lt2st (l: local): st :=
-  match n_unroll (rec_depth l) l with
+  match full_unf l with
     | lt_receive p xs =>
       let cofix next xs :=
        match xs with
@@ -122,7 +98,7 @@ Print lr.
 Print lr2.  *)
 
 Definition sfun (l: label) (s: sort) (x: st): (label -> option(sort*st)) :=
-  fun l' => if eqb l l' then Datatypes.Some(s,x) else Datatypes.None. 
+  fun l' => if String.eqb l l' then Datatypes.Some(s,x) else Datatypes.None. 
 
 Definition sort_eqb (s1 s2: local.sort): bool :=
   match (s1,s2) with
@@ -135,7 +111,7 @@ Definition sort_eqb (s1 s2: local.sort): bool :=
 
 Fixpoint pathsel (u: label) (v: local.sort) (l: list (label*local.sort*st)): st :=
   match l with
-    | (lbl,s,x)::xs => if andb (eqb u lbl) (sort_eqb v s) then x else pathsel u v xs
+    | (lbl,s,x)::xs => if andb (String.eqb u lbl) (sort_eqb v s) then x else pathsel u v xs
     | nil           => st_end
   end.
 
