@@ -135,3 +135,24 @@ Proof. intros.
        apply (nRefR W W'); easy.
 Qed.
 
+Definition subltype3 (T T': local): Prop := subtype3 (lt2st T) (lt2st T').
+
+Definition nsubltype3 (T T': local): Prop := nsubtype3 (lt2st T) (lt2st T').
+
+Lemma sublNeq3L: forall T T', (subltype3 T T' -> False) -> nsubltype3 T T'.
+Proof. intros.
+       unfold subltype3, nsubltype3 in *.
+       apply subNeq3L. easy.
+Qed.
+
+Lemma sublNeq3R: forall T T', nsubltype3 T T' -> (subltype3 T T' -> False).
+Proof. intros.
+       unfold subltype3, nsubltype3 in *.
+       apply subNeq3R with (T := lt2st T) (T' := lt2st T'); easy.
+Qed.
+
+
+
+
+
+

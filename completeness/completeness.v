@@ -29,17 +29,15 @@ Proof. split.
        apply (subNeqL T T').
        intros. apply (subNeqR T T'); easy.
 Qed.
-
-(* Theorem lcompleteness: forall T T' T1 T2 (P: lt2stC T T1) (Q: lt2stC T' T2), 
-  (subltype2 T T' T1 T2 P Q -> False) <-> nsubltype T T' T1 T2 P Q.
-Proof. unfold subltype2, nsubltype.
-       intros T T' T1 T2 P Q.
-       apply completeness.
-Qed.
- *)
  
 Theorem completeness3: forall T T', (subtype3 T T' -> False) <-> nsubtype3 T T'.
 Proof. split.
        apply (subNeq3L T T').
        intros. apply (subNeq3R T T'); easy.
+Qed.
+
+Theorem lcompleteness3: forall T T', (subltype3 T T' -> False) <-> nsubltype3 T T'.
+Proof. split.
+       apply (sublNeq3L T T').
+       intros. apply (sublNeq3R T T'); easy.
 Qed.
