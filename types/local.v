@@ -482,34 +482,49 @@ Qed.
 
 Lemma full_unf_subst : forall e, full_unf (lt_mu e) = full_unf (e [lt_mu e .: lt_var]).
 Proof.
-  intros. rewrite /full_unf. 
-  intros. simpl.  rewrite -iterS iterSr. simpl. 
-  destruct (guarded e 0) eqn:Heqn.  rewrite mu_height_unf. done. done.
-  erewrite guarded_test with (i := 0).  2 : { unfold negb. rewrite Heqn. easy. } 
-  simpl. 
-  erewrite <-mu_height_unf2 with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. }  simpl. 
-  rewrite addnC.  
-  rewrite iterD. erewrite guarded_test with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. }  simpl.
-  rewrite -iterS iterSr /=. 
-  erewrite guarded_test with (i := 0). 2 : { unfold negb. rewrite Heqn. easy. } done.
+  intros. unfold full_unf. 
+  simpl.
+  rewrite -iterS iterSr. simpl. 
+  case_eq (guarded e 0); intros Heqn.
+  - rewrite mu_height_unf. easy. easy.
+  - erewrite guarded_test with (i := 0).
+    simpl.
+    erewrite <- mu_height_unf2 with (i := 0).
+    simpl.
+    rewrite addnC iterD.
+    erewrite guarded_test with (i := 0).
+    simpl.
+    rewrite <- iterS. rewrite iterSr. simpl.
+    erewrite guarded_test with (i := 0). simpl. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
 Qed.
 
 Lemma full_unf2 : forall n e, full_unf (iter n unf e) = full_unf e. 
-Proof. 
-elim. done. 
-intros. rewrite iterS. 
-destruct (if (iter n unf e) is lt_mu _ then true else false) eqn:Heqn. 
-destruct ((iter n unf e))eqn:Heqn2;try done. simpl. 
-rewrite -(H e) Heqn2. rewrite full_unf_subst. done. 
-have : unf (iter n unf e) = iter n unf e. destruct ((iter n unf e));try done. 
-move=>->. rewrite H. done. 
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - rewrite iterS. 
+         case_eq (if (iter n unf e) is lt_mu _ then true else false); intros.
+         destruct ((iter n unf e))eqn:Heqn2;try done. simpl.
+         rewrite <- (IHn e). rewrite Heqn2.
+         rewrite full_unf_subst. easy.
+         assert(unf (iter n unf e) = iter n unf e).
+         { destruct ((iter n unf e)); try easy. }
+         rewrite H0. easy. 
 Qed.
 
 Definition idemp {A : Type} (f : A -> A) := forall a, f (f a) = f a. 
 
 Lemma full_unf_idemp : idemp full_unf. 
-Proof. 
-intros. rewrite /idemp. intros. rewrite {2}/full_unf. rewrite full_unf2. done. 
+Proof. intros.
+       unfold idemp.
+       intro a.
+       unfold full_unf at 2.
+       rewrite full_unf2. 
+       easy. 
 Qed.
 
 
