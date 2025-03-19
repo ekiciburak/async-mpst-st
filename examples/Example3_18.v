@@ -228,8 +228,111 @@ Qed.
 
 Lemma lT1_lT2: subltype ltype1 ltype2.
 Proof. unfold subltype.
-       rewrite lt1t1, lt2t2.
-       exact subtypet1t2.
+       unfold subtype.
+       exists [(mk_siso dec12 singl12, mk_siso dec12 singl12)].
+       simpl.
+       split.
+       split.
+       pcofix CIH. pfold.
+       unfold dec12. rewrite(st_eq(lt2st ltype1)). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+        match xs with
+        | [] => [||]
+        | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+        end) [("l1", I, lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "q" [("l3", I, lt_end); ("l4", I, lt_end)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l3", I, lt_end); ("l4", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("l4", I, lt_end)])). simpl.
+       rewrite(coseq_eq ((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq(lt2st lt_end)). simpl.
+       apply st2siso_snd with (y := "q" & [|("l3", I, end); ("l4", I, end)|]).
+       left. pfold.
+       apply st2siso_rcv with (y := end). left. pfold. constructor.
+       constructor.
+       constructor.
+       split.
+       unfold dec12. rewrite(st_eq(lt2st ltype2)). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+        match xs with
+        | [] => [||]
+        | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+        end) [("l1", I, lt_receive "q" [("l3", I, lt_end)]); ("l2", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l2", I, lt_end)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "q" [("l3", I, lt_end)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("l3", I, lt_end)])). simpl.
+       rewrite(coseq_eq(((cofix next (xs : list (string * sort * local)) : coseq (string * sort * st) :=
+              match xs with
+              | [] => [||]
+              | (l1, s1, t1) :: ys => cocons (l1, s1, lt2st t1) (next ys)
+              end) []))). simpl.
+       rewrite(st_eq(lt2st lt_end)). simpl.
+       pfold.
+       apply st2siso_snd with (y := "q" & [|("l3", I, end)|]).
+       left. pfold.
+       apply st2siso_rcv with (y := end). left. pfold. constructor.
+       constructor.
+       constructor.
+       easy.
+       
+       split. exists dpf_end. exists dpf_end.
+       intro n.
+       rewrite <- !meqDpf.
+       rewrite !dpEnd.
+       rewrite !dpfend_dn.
+
+       pfold. rewrite(st_eq(dec12)). simpl.
+       specialize(ref_b (upaco2 refinementR bot2)
+                        ("q" & [|("l3", I, end)|])
+                        ("q" & [|("l3", I, end)|])
+                        "p" "l1" (I) (I) (bp_end) 1
+       ); intro Hb.
+       simpl in Hb. rewrite !bpend_an in Hb.
+       apply Hb; clear Hb.
+       constructor.
+
+       left. pfold.
+       specialize(ref_a (upaco2 refinementR bot2)
+                        (end)
+                        (end)
+                        "q" "l3" (I) (I) (ap_end) 1
+       ); intro Ha.
+       simpl in Ha. rewrite !apend_an in Ha.
+       apply Ha; clear Ha.
+       constructor.
+       left. pfold. constructor.
+       apply act_eqt1t21.
+       apply act_eqt1t22.
+       easy.
 Qed.
 
 

@@ -2437,8 +2437,387 @@ Qed.
 
 Lemma ltB_ltBop: forall (l: list bool), subltype ltBOp ltB.
 Proof. unfold subltype.
-       rewrite ltB_rcp ltBop_rcop.
-       exact st_rcp.
+       intro l.
+       unfold subtype.
+       assert (singleton w2) as Hw2.
+       { pcofix CIH. rewrite(st_eq w2). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w1) as Hw1.
+       { pcofix CIH. rewrite(st_eq w1). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w3) as Hw3.
+       { pcofix CIH. rewrite(st_eq w3). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       assert (singleton w4) as Hw4.
+       { pcofix CIH. rewrite(st_eq w4). simpl.
+         pfold. constructor. left. pfold. constructor.
+         right. exact CIH.
+       }
+       exists [((mk_siso w2 Hw2),(mk_siso w1 Hw1));((mk_siso w2 Hw2),(mk_siso w1 Hw1));
+               ((mk_siso w4 Hw4),(mk_siso w3 Hw3));((mk_siso w4 Hw4),(mk_siso w3 Hw3))].       
+       simpl.
+ 
+       split. split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+        match xs with
+        | [] => [||]
+        | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+        end)
+       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltBOp)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       
+       pfold.
+       rewrite(st_eq w2). simpl.
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       left. pfold.
+       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor.
+       
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+                match xs with
+                | [] => [||]
+                | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+         match xs with
+         | [] => [||]
+         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+         end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                   coseq (string * local.sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq w1). simpl.
+       pfold.
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       left. pfold.
+       apply st2siso_snd with (y := (lt2st ltB)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor.
+       
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+        match xs with
+        | [] => [||]
+        | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+        end)
+       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltBOp)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       pfold.
+       rewrite(st_eq w2). simpl.
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       left. pfold.
+       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor.
+       
+
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+                match xs with
+                | [] => [||]
+                | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+         match xs with
+         | [] => [||]
+         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+         end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                   coseq (string * local.sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq w1). simpl.
+       pfold.
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       left. pfold.
+       apply st2siso_snd with (y := (lt2st ltB)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor.
+       
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+        match xs with
+        | [] => [||]
+        | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+        end)
+       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltBOp)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       pfold.
+       rewrite(st_eq w4). simpl.
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       left. pfold.
+       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor. easy.
+       constructor.
+
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+                match xs with
+                | [] => [||]
+                | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+         match xs with
+         | [] => [||]
+         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+         end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                   coseq (string * local.sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq w3). simpl.
+       pfold.
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       left. pfold.
+       apply st2siso_snd with (y := (lt2st ltB)).
+       simpl. right. apply CIH.
+       constructor. easy. 
+       constructor.
+       constructor.
+
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+        match xs with
+        | [] => [||]
+        | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+        end)
+       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltBOp)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [])). simpl.
+       pfold.
+       rewrite(st_eq w4). simpl.
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       left. pfold.
+       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       simpl. right. apply CIH.
+       constructor. 
+       constructor. easy.
+       constructor.
+
+       split.
+       pcofix CIH.
+       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+                match xs with
+                | [] => [||]
+                | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+         match xs with
+         | [] => [||]
+         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+         end) [])). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                coseq (string * local.sort * st) :=
+              match xs with
+              | [] => [||]
+              | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+              end) [("sub", I, ltB)])). simpl.
+       rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
+                   coseq (string * local.sort * st) :=
+                 match xs with
+                 | [] => [||]
+                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
+                 end) [])). simpl.
+       rewrite(st_eq w3). simpl.
+       pfold.
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       left. pfold.
+       apply st2siso_snd with (y := (lt2st ltB)).
+       simpl. right. apply CIH.
+       constructor. easy. 
+       constructor.
+       constructor. 
+       
+       easy.
+
+       split.
+       exists dpf_end. exists dpf_end. intro k.
+       rewrite <- !meqDpf.
+       rewrite dpEnd.
+       rewrite !dpfend_dn.
+       apply refw2w1.
+       
+       split.
+       exists (sShape l).
+       exists (rShape l).
+       intro k.
+       apply refmG1w2w1k.
+
+       split.
+       exists dpf_end. exists dpf_end. intro k.
+       rewrite <- !meqDpf.
+       rewrite dpEnd.
+       rewrite !dpfend_dn.
+       apply refw4w3.
+
+       split.
+       exists (sShape l).
+       exists (rShape l).
+       intro k.
+       apply refmG1w4w3k.
+
+       easy.
 Qed.
 
 

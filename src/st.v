@@ -73,7 +73,7 @@ CoFixpoint lt2st (l: local): st :=
     | _               => st_end
   end.
 
-Lemma sameTree : forall l, lt2st l = lt2st (full_unf l). 
+Lemma sameTree: forall l, lt2st l = lt2st (full_unf l). 
 Proof. 
   intros. 
   rewrite(st_eq(lt2st (full_unf l))). simpl.

@@ -4,6 +4,7 @@ Require Import Lia.
 From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
+Import CoListNotations.
 Require Import Setoid.
 Require Import Morphisms.
 
@@ -29,24 +30,24 @@ Definition lTB': local :=
   ]).
 
 CoFixpoint TS: st :=
-  st_send "p" [("l3",sint,TS)].
+  st_send "p" [|("l3",sint,TS)|].
 
 CoFixpoint TB: st :=
   st_receive "p"
-  [
-   ("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,TB)])])]);
+  [|
+   ("l1",sint,st_send "p" [|("l3",sint,st_send "p" [|("l3",sint,st_send "p" [|("l3",sint,TB)|])|])|]);
    ("l2",sint,TS)
-  ].
+  |].
 
 CoFixpoint TB': st :=
   st_receive "p"
-  [
-   ("l1",sint,st_send "p" [("l3",sint,TB')]);
+  [|
+   ("l1",sint,st_send "p" [|("l3",sint,TB')|]);
    ("l2",sint,TS)
-  ].
+  |].
 
 CoFixpoint W3: st :=
-  st_receive "p" [("l1",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,st_send "p" [("l3",sint,W3)])])])].
+  st_receive "p" [|("l1",sint,st_send "p" [|("l3",sint,st_send "p" [|("l3",sint,st_send "p" [|("l3",sint,W3)|])|])|])|].
 
 Lemma w3singleton: singleton W3.
 Proof. pcofix CIH.
