@@ -10,63 +10,86 @@ Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 
 Definition nsubtype (T T': st): Prop :=
-  exists U,  (st2soC T U) ->
-  exists V', (st2siC T' V') ->
-  forall W,  (st2sisoC U (@und W)) ->
-  forall W', (st2sisoC V' (@und W')) -> nRefinement W W'.
+  exists U,  (st2soC U T) /\
+  exists V', (st2siC V' T') /\
+  (forall W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ nRefinement W W').
 
-Lemma subNeqL: forall T T', (subtype T T' -> False) -> nsubtype T T'.
-Proof. intros.
-       unfold subtype, nsubtype in *.
-       apply not_all_ex_not in H.
-       destruct H as (U, H).
-       exists U.
-       intro Ha.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       easy.
-       apply not_all_ex_not in H.
-       destruct H as (V', H).
-       exists V'. 
-       apply not_and_or in H.
-       destruct H as [H | H].
-       intro Hb.
-       easy.
-       intros Hb W.
-       apply not_ex_all_not with (n := W) in H.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       intro Hc.
-       easy.
-       intros Hc W'.
-       apply not_ex_all_not with (n := W') in H.
-       apply not_and_or in H.
-       destruct H as [H | H].
-       intro Hd. easy.
-       intro Hd.
-       apply nRefL. easy.
-Qed.
+Definition nsubltype (T T': local): Prop := nsubtype (lt2st T) (lt2st T').
 
-Lemma subNeqR: forall T T', nsubtype T T' -> (subtype T T' -> False).
+Lemma subNeqR: forall T T', subtype T T' -> (nsubtype T T' -> False).
 Proof. intros.
-       unfold subtype, nsubtype in *.
-       rename H into Ha.
-       rename H0 into H.
-       rename Ha into H0.
-       destruct H0 as (U, H0).
-       specialize(H U).
-       destruct H as (p, Ha).
-       specialize(H0 p).
-       destruct H0 as (V', H0).
-       specialize(Ha V').
-       destruct Ha as (q, Ha).
-       specialize(H0 q).
-       destruct Ha as (W, Ha).
-       destruct Ha as (r, Ha).
-       specialize(H0 W r).
-       destruct Ha as (W', Ha).
-       destruct Ha as (s, Ha).
-       specialize(H0 W' s).
+       unfold nsubtype in *.
+       destruct H0 as (U,(Ha,(V',(Hb,Hc)))).
+       inversion H.
+       subst.
+       specialize(H0 U Ha V' Hb).
+       destruct H0 as (W,(W',Hd)).
+       specialize(Hc W W').
+       destruct Hc as (Hc,(He,Hf)).
+       specialize(Hd Hc He).
        apply (nRefR W W'); easy.
 Qed.
 
+Lemma nexfl: forall (X: Type) (P: X -> Prop),
+  ~ (exists (x: X), P x) -> (forall (x: X), ~P x).
+Proof. intros X P H x.
+       unfold not in *.
+       intro px.
+       apply H.
+       exists x.
+       exact px.
+Qed.
+
+Lemma dne: forall (P: Prop), ((P -> False) -> False) -> P.
+Proof. intros.
+       specialize (classic P).
+       intro HP.
+       destruct HP as [ HP | HP ].
+       - exact HP.
+       - unfold not in *.
+         specialize (H HP).
+         contradiction.
+Qed.
+
+Lemma subNeqL: forall T T', (subtype T T' -> False) -> nsubtype T T'.
+Proof. intros.
+       specialize(classic (nsubtype T T')); intro Heq.
+       destruct Heq as [Heq | Heq].
+       - easy.
+       - destruct H.
+         unfold nsubtype in *.
+         unshelve econstructor.
+         intros.
+         eapply nexfl with (x := U) in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         eapply nexfl with (x := V') in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W, Heq).
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W', Heq).
+         exists W. exists W'.
+         intros.
+         apply not_and_or in Heq.
+         destruct Heq as [Ha | Heq].
+         easy.
+         apply not_and_or in Heq.
+         destruct Heq as [Ha | Heq].
+         easy.
+         apply nRefLH.
+         easy.
+Qed.
+
+Lemma sublNeqL: forall T T', (subltype T T' -> False) -> nsubltype T T'.
+Proof. intros.
+       apply subNeqL. easy.
+Qed.
+
+Lemma sublNeqR: forall T T', nsubltype T T' -> (subltype T T' -> False).
+Proof. intros.
+       apply subNeqR with (T := lt2st T) (T' := lt2st T'); easy.
+Qed.

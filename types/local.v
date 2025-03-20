@@ -339,3 +339,184 @@ Tactic Notation "asimpl" "in" "*" := auto_unfold in *; repeat first [progress re
 Ltac substify := auto_unfold; try repeat (erewrite rinstInst_local).
 
 Ltac renamify := auto_unfold; try repeat (erewrite <- rinstInst_local).
+
+Require Import ST.aux.unscoped.
+From mathcomp Require Import all_ssreflect.
+Require Import Lia.
+
+Fixpoint guarded (l: local) (i: nat) := 
+  match l with
+    | lt_var j        => negb (Nat.eqb j i)
+    | lt_end          => true
+    | lt_receive p xs => true
+    | lt_send p xs    => true
+    | lt_mu l0        => guarded l0 (S i)
+  end.
+
+Definition unf l := if l is lt_mu l' then l' [l .: lt_var]  else l.
+
+Fixpoint depth G :=
+  match G with
+    | lt_mu G => S (depth G)
+    | _       => 0
+  end.
+
+Definition full_unf g := (iter (depth g) unf g).
+
+Lemma mu_height_ren : forall g (sigma: nat -> nat), depth (g ⟨sigma⟩) = depth g.
+Proof. intro g.
+       induction g; intros.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. 
+         f_equal.
+         rewrite IHg.
+         easy.
+Qed.
+
+Lemma feqb_refl: forall (n: fin), Nat.eqb n n = true.
+Proof. intro n.
+       induction n; intros.
+       - easy.
+       - simpl. easy.
+Qed.
+
+Lemma neg_negb: forall b, ~~ ~~ b -> b.
+Proof. intro b.
+       induction b; easy.
+Qed.
+
+Lemma feqb_eq: forall (n m: fin), Nat.eqb n m = true <-> n = m.
+Proof. intro n.
+       induction n; intros.
+       - case_eq m; intros.
+         + easy.
+         + easy.
+       - case_eq m; intros.
+         + simpl. easy.
+         + simpl. rewrite IHn. 
+           lia.
+Qed.
+
+Lemma mu_height_subst : forall l sigma, (forall n, ~~ guarded l n -> depth (sigma n) = 0) ->  depth (l[sigma]) = depth l.
+Proof. intro l.
+       induction l; intros.
+       - simpl. asimpl. apply H. simpl.
+         rewrite feqb_refl. easy.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. easy.
+       - simpl. 
+         f_equal. 
+         apply IHl.
+         intros.
+         asimpl.
+         case_eq n; intros.
+         + simpl. easy.
+         + asimpl.
+           unfold shift.
+           asimpl.
+           rewrite mu_height_ren.
+           apply H.
+           simpl. subst. easy.
+Qed.
+
+Lemma mu_height_unf : forall l, guarded l 0 -> depth l = depth (l[lt_mu l .: lt_var]).
+Proof. intros. rewrite mu_height_subst. easy.
+       intro n.
+       induction n; intros.
+       - asimpl.
+         case_eq(guarded l 0); intros.
+         + rewrite H1 in H H0. easy.
+         + rewrite H1 in H. easy.
+       - asimpl. simpl. easy.
+Qed.
+
+Lemma mu_height_unf2 : forall l sigma i, ~~ guarded l i -> (depth l) + depth (sigma i) = depth (l [sigma]).
+Proof. intro l.
+       induction l; intros.
+       - asimpl. simpl. simpl in H.
+         assert(n = i).
+         { apply neg_negb in H.
+           apply feqb_eq in H. easy.
+         }
+         subst. easy.
+       - simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H. simpl in *.
+         f_equal.
+         asimpl.
+         unfold shift.
+         rewrite <- IHl with (i := i.+1).
+         rewrite mu_height_ren. easy. easy.
+Qed.
+
+Lemma guarded_test : forall (e: local) sigma i, ~~ guarded e i -> ssrnat.iter (depth e) unf e [ sigma ] = sigma i.
+Proof. intro e.
+       induction e; intros.
+       - asimpl. simpl.
+         assert(n = i).
+         { apply neg_negb in H.
+           apply feqb_eq in H. easy.
+         } subst. easy.
+       - asimpl. simpl. simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H.
+         rewrite iterSr.
+         simpl.
+         asimpl.
+         fold depth.
+         specialize(IHe (lt_mu e[lt_var 0;; sigma >> ⟨↑⟩];; sigma) (S i)).
+         rewrite IHe. asimpl. easy. easy.
+Qed.
+
+Lemma full_unf_subst : forall e, full_unf (lt_mu e) = full_unf (e [lt_mu e .: lt_var]).
+Proof.
+  intros. unfold full_unf. 
+  simpl.
+  rewrite -iterS iterSr. simpl. 
+  case_eq (guarded e 0); intros Heqn.
+  - rewrite mu_height_unf. easy. easy.
+  - erewrite guarded_test with (i := 0).
+    simpl.
+    erewrite <- mu_height_unf2 with (i := 0).
+    simpl.
+    rewrite addnC iterD.
+    erewrite guarded_test with (i := 0).
+    simpl.
+    rewrite <- iterS. rewrite iterSr. simpl.
+    erewrite guarded_test with (i := 0). simpl. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
+    unfold negb. rewrite Heqn. easy.
+Qed.
+
+Lemma full_unf2 : forall n e, full_unf (iter n unf e) = full_unf e. 
+Proof. intro n.
+       induction n; intros.
+       - simpl. easy.
+       - rewrite iterS. 
+         case_eq (if (iter n unf e) is lt_mu _ then true else false); intros.
+         destruct ((iter n unf e))eqn:Heqn2;try done. simpl.
+         rewrite <- (IHn e). rewrite Heqn2.
+         rewrite full_unf_subst. easy.
+         assert(unf (iter n unf e) = iter n unf e).
+         { destruct ((iter n unf e)); try easy. }
+         rewrite H0. easy. 
+Qed.
+
+Definition idemp {A : Type} (f : A -> A) := forall a, f (f a) = f a. 
+
+Lemma full_unf_idemp: idemp full_unf. 
+Proof. intros.
+       unfold idemp.
+       intro a.
+       unfold full_unf at 2.
+       rewrite full_unf2. 
+       easy. 
+Qed.

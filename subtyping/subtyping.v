@@ -9,11 +9,9 @@ Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 Require Import ProofIrrelevance.
 
-Definition subtype (T T': st): Prop :=
-  forall U, st2soC T U /\ 
-  forall V', st2siC T' V' /\
-  exists (W: siso), st2sisoC U  (@und W) /\
-  exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
+Inductive subtype: st -> st -> Prop :=
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
+                      subtype T T'.
 
 Definition subltype (T T': local) := subtype (lt2st T) (lt2st T').
 
