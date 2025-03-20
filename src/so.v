@@ -4,8 +4,37 @@ Require Import ST.src.stream ST.processes.process ST.src.st ST.types.local.
 Require Import String List.
 Local Open Scope string_scope.
 Import ListNotations.
+Import CoListNotations.
 Require Import Setoid.
 Require Import Morphisms.
+
+
+CoFixpoint st2soH (t: st): st :=
+  match t with
+    | st_send p xs =>
+      match xs with
+        | cocons (l,s,t') ys => st_send p [|(l,s,st2soH t')|] 
+        | conil              => st_send p conil
+      end
+    | st_receive p xs =>
+      let cofix next xs :=
+        match xs with
+          | cocons (l,s,t') ys => cocons (l,s,st2soH t') (next ys)
+          | conil              => conil
+        end
+      in st_receive p (next xs) 
+    | _           => st_end
+  end.
+
+CoFixpoint st2soF (t: st): coseq st :=
+  match t with
+    | st_send p xs => 
+      match xs with
+        | cocons(l,s,t') ys => cocons (st_send p [|(l,s,st2soH t')|]) (st2soF (st_send p ys))
+        | conil             => conil
+      end
+    | _            => [|st2soH t|]
+  end.
 
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end

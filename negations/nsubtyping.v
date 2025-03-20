@@ -67,18 +67,17 @@ Proof. intro l.
          apply IHl. easy. easy.
 Qed.
 
-(*talk*)
 Definition subtype3 (T T': st): Prop :=
-  forall U, st2soC T U /\ 
-  forall V', st2siC T' V' /\
-  exists (W: siso), st2sisoC U  (@und W) /\
-  exists (W':siso), st2sisoC V' (@und W') /\ (@und W) ~< (@und W').
+  forall U, st2soC U T /\ 
+  forall V', st2siC V' T'/\
+  exists (W: siso), st2sisoC (@und W) U /\
+  exists (W':siso), st2sisoC (@und W') V' /\ (@und W) ~< (@und W').
 
 Definition nsubtype3 (T T': st): Prop :=
-  exists U,  (st2soC T U) ->
-  exists V', (st2siC T' V') ->
-  forall W,  (st2sisoC U (@und W)) ->
-  forall W', (st2sisoC V' (@und W')) -> nRefinement W W'.
+  exists U,  (st2soC U T) ->
+  exists V', (st2siC V' T') ->
+  forall W,  (st2sisoC (@und W) U) ->
+  forall W', (st2sisoC (@und W') V') -> nRefinement W W'.
 
 Lemma subNeq3L: forall T T', (subtype3 T T' -> False) -> nsubtype3 T T'.
 Proof. intros.
@@ -150,6 +149,181 @@ Proof. intros.
        unfold subltype3, nsubltype3 in *.
        apply subNeq3R with (T := lt2st T) (T' := lt2st T'); easy.
 Qed.
+
+(*npc*)
+Inductive subtypeI: st -> st -> Prop :=
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
+                      subtypeI T T'.
+
+Definition nsubtypeI (T T': st): Prop :=
+  exists U,  (st2soC U T) /\
+  exists V', (st2siC V' T') /\
+  (forall W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ nRefinement W W').
+
+Lemma subNeqIR: forall T T', subtypeI T T' -> (nsubtypeI T T' -> False).
+Proof. intros.
+       unfold nsubtypeI in *.
+       destruct H0 as (U,(Ha,(V',(Hb,Hc)))).
+       inversion H.
+       subst.
+       specialize(H0 U Ha V' Hb).
+       destruct H0 as (W,(W',Hd)).
+       specialize(Hc W W').
+       destruct Hc as (Hc,(He,Hf)).
+       specialize(Hd Hc He).
+       apply (nRefR W W'); easy.
+Qed.
+
+Lemma nexfl: forall (X: Type) (P: X -> Prop),
+  ~ (exists (x: X), P x) -> (forall (x: X), ~P x).
+Proof. intros X P H x.
+       unfold not in *.
+       intro px.
+       apply H.
+       exists x.
+       exact px.
+Qed.
+
+Lemma dne: forall (P: Prop), ((P -> False) -> False) -> P.
+Proof. intros.
+       specialize (classic P).
+       intro HP.
+       destruct HP as [ HP | HP ].
+       - exact HP.
+       - unfold not in *.
+         specialize (H HP).
+         contradiction.
+Qed.
+
+Lemma subNeqIL: forall T T', (subtypeI T T' -> False) -> nsubtypeI T T'.
+Proof. intros.
+       specialize(classic (nsubtypeI T T')); intro Heq.
+       destruct Heq as [Heq | Heq].
+       - easy.
+       - destruct H.
+         unfold nsubtypeI in *.
+         unshelve econstructor.
+         intros.
+         eapply nexfl with (x := U) in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         eapply nexfl with (x := V') in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W, Heq).
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W', Heq).
+         exists W. exists W'.
+         intros.
+         apply not_and_or in Heq.
+         destruct Heq as [Ha | Heq].
+         easy.
+         apply not_and_or in Heq.
+         destruct Heq as [Ha | Heq].
+         easy.
+         apply nRefLH.
+         easy.
+Qed.
+
+Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T').
+
+Definition nsubltypeI (T T': local): Prop := nsubtypeI (lt2st T) (lt2st T').
+
+Lemma sublNeqL: forall T T', (subltypeI T T' -> False) -> nsubltypeI T T'.
+Proof. intros.
+       apply subNeqIL. easy.
+Qed.
+
+Lemma sublNeqR: forall T T', nsubltypeI T T' -> (subltypeI T T' -> False).
+Proof. intros.
+       apply subNeqIR with (T := lt2st T) (T' := lt2st T'); easy.
+Qed.
+
+(* Inductive subtypeI: st -> st -> Prop :=
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
+                      subtypeI T T'.
+
+Definition nsubtypeI (T T': st): Prop :=
+  exists U,  (st2soC U T) /\
+  exists V', (st2siC V' T') /\
+  (forall W W', ((st2sisoC (@und W) U) -> False) \/ ((st2sisoC (@und W') V')  -> False) \/ nRefinement W W').
+
+Lemma subNeq3IR: forall T T', subtypeI T T' -> (nsubtypeI T T' -> False).
+Proof. intros.
+       unfold nsubtypeI in *.
+       destruct H0 as (U,(Ha,(V',(Hb,Hc)))).
+       inversion H.
+       subst.
+       specialize(H0 U Ha V' Hb).
+       destruct H0 as (W,(W',(Hd,(He,Hf)))).
+       specialize(Hc W W').
+       destruct Hc as [Hc | [Hc | Hc]].
+       easy. easy.
+       apply (nRefR W W'); easy.
+Qed.
+
+Lemma nexfl: forall (X: Type) (P: X -> Prop),
+  ~ (exists (x: X), P x) -> (forall (x: X), ~P x).
+Proof. intros X P H x.
+       unfold not in *.
+       intro px.
+       apply H.
+       exists x.
+       exact px.
+Qed.
+
+Lemma dne: forall (P: Prop), ((P -> False) -> False) -> P.
+Proof. intros.
+       specialize (classic P).
+       intro HP.
+       destruct HP as [ HP | HP ].
+       - exact HP.
+       - unfold not in *.
+         specialize (H HP).
+         contradiction.
+Qed.
+
+Lemma subNeq3IL: forall T T', (subtypeI T T' -> False) -> nsubtypeI T T'.
+Proof. intros.
+       specialize(classic (nsubtypeI T T')); intro Heq.
+       destruct Heq as [Heq | Heq].
+       - easy.
+       - destruct H.
+         unfold nsubtypeI in *.
+         unshelve econstructor.
+         intros.
+         eapply nexfl with (x := U) in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         eapply nexfl with (x := V') in Heq.
+         apply not_and_or in Heq.
+         destruct Heq as [Heq | Heq].
+         easy.
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W, Heq).
+         apply not_all_ex_not  in Heq.
+         destruct Heq as (W', Heq).
+         exists W. exists W'.
+         simpl.
+         apply not_or_and in Heq.
+         destruct Heq as (Ha, Heq).
+         unfold not in Ha.
+         apply dne in Ha.
+         split.
+         easy.
+         apply not_or_and in Heq.
+         destruct Heq as (Hb, Heq).
+         unfold not in Hb.
+         apply dne in Hb.
+         split.
+         easy.
+         apply nRefLH.
+         easy.
+Qed. *)
 
 
 

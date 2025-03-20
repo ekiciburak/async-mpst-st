@@ -518,7 +518,7 @@ Qed.
 
 Definition idemp {A : Type} (f : A -> A) := forall a, f (f a) = f a. 
 
-Lemma full_unf_idemp : idemp full_unf. 
+Lemma full_unf_idemp: idemp full_unf. 
 Proof. intros.
        unfold idemp.
        intro a.
