@@ -26,6 +26,14 @@ CoInductive coseq (a : Type) :=
 Arguments conil { _ } .
 Arguments cocons { _ } _ _.
 
+Inductive coseq_bisim {A: Type} (R: coseq A -> coseq A -> Prop): coseq A -> coseq A -> Prop :=
+  | bisimN: coseq_bisim R conil conil
+  | bisimC: forall x xs y ys, R xs ys -> x = y -> coseq_bisim R (cocons x xs) (cocons y ys).
+
+Definition coseq_bisimC {A: Type} c1 c2 := paco2 (@coseq_bisim A) bot2 c1 c2.
+
+Axiom cext: forall {A} (c1 c2: coseq A), coseq_bisimC c1 c2 -> c1 = c2.
+
 (* Inductive optionF (a : Type) :=
   | none: optionF a
   | some: a -> optionF a.
@@ -120,13 +128,19 @@ CoFixpoint appendL {A: Type} (l: list A) (ys: coseq A): coseq A :=
     | cons x xs => (cocons x (appendL xs ys))
   end.
 
-Print Forall.
+Inductive ForallHo {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> Prop :=
+  | Forall_conil  : ForallHo P R conil
+  | Forall_cocons : forall x l, P x -> R l -> ForallHo P R (cocons x l).
 
-Inductive ForallH {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> Prop :=
-  | Forall_conil  : ForallH P R conil
-  | Forall_cocons : forall x l, P x -> R l -> ForallH P R (cocons x l).
+Definition ForallCo {A: Type} P xs := paco1 (@ForallHo A P) bot1 xs.
 
-Definition ForallC {A: Type} P xs := paco1 (@ForallH A P) bot1 xs.
+Lemma mon_fHo: forall {A: Type} (f: A -> Prop), monotone1 (ForallHo f).
+Proof. intros. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. easy. apply LE; easy.
+Qed.
 
 Inductive Forall2Ho {A B : Type} (P : A -> B -> Prop) (R: coseq A -> coseq B -> Prop ) : coseq A -> coseq B -> Prop :=
   | Forall2o_conil : Forall2Ho P R conil conil
@@ -138,7 +152,7 @@ Definition Forall2Co {A B: Type} P xs ys := paco2 (@Forall2Ho A B P) bot2 xs ys.
 Inductive Forall2C {A B : Type} (P : A -> B -> Prop): coseq A -> coseq B -> Prop :=
   | Forall2_conil : Forall2C P conil conil
   | Forall2_cocons: forall x y l l',
-                     P x y -> Forall2C P l l' -> Forall2C P (cocons x l) (cocons y l').
+                    P x y -> Forall2C P l l' -> Forall2C P (cocons x l) (cocons y l').
 
 Inductive Forall3H {A B C: Type} (P : A -> B -> C -> Prop) (R: coseq A -> coseq B -> coseq C -> Prop ) : coseq A -> coseq B -> coseq C -> Prop :=
   | Forall3_conil : Forall3H P R conil conil conil
