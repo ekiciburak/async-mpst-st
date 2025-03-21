@@ -23,6 +23,14 @@ Proof. intros A s.
        simpl. easy. easy.
 Qed.
 
+Inductive coseq_bisim {A: Type} (R: coseq A -> coseq A -> Prop): coseq A -> coseq A -> Prop :=
+  | bisimN: coseq_bisim R conil conil
+  | bisimC: forall x xs y ys, R xs ys -> x = y -> coseq_bisim R (cocons x xs) (cocons y ys).
+
+Definition coseq_bisimC {A: Type} c1 c2 := paco2 (@coseq_bisim A) bot2 c1 c2.
+
+Axiom cext: forall {A} (c1 c2: coseq A), coseq_bisimC c1 c2 -> c1 = c2.
+
 Module CoListNotations.
 Notation "[| |]" := conil (format "[| |]").
 Notation "[| x |]" := (cocons x conil).
@@ -59,11 +67,19 @@ CoFixpoint appendL {A: Type} (l: list A) (ys: coseq A): coseq A :=
     | cons x xs => (cocons x (appendL xs ys))
   end.
 
-Inductive ForallH {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> Prop :=
-  | Forall_conil  : ForallH P R conil
-  | Forall_cocons : forall x l, P x -> R l -> ForallH P R (cocons x l).
+  Inductive ForallHo {A : Type} (P : A -> Prop) (R: coseq A -> Prop) : coseq A -> Prop :=
+  | Forall_conil  : ForallHo P R conil
+  | Forall_cocons : forall x l, P x -> R l -> ForallHo P R (cocons x l).
 
-Definition ForallC {A: Type} P xs := paco1 (@ForallH A P) bot1 xs.
+Definition ForallCo {A: Type} P xs := paco1 (@ForallHo A P) bot1 xs.
+
+Lemma mon_fHo: forall {A: Type} (f: A -> Prop), monotone1 (ForallHo f).
+Proof. intros. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. easy. apply LE; easy.
+Qed.
 
 Inductive Forall2Ho {A B : Type} (P : A -> B -> Prop) (R: coseq A -> coseq B -> Prop ) : coseq A -> coseq B -> Prop :=
   | Forall2o_conil : Forall2Ho P R conil conil

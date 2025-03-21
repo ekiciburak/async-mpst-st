@@ -13,7 +13,7 @@ Inductive st2si (R: st -> st -> Prop): st -> st -> Prop :=
                copathsel l s xs y ->
                st2si R (st_receive p (cocons (l,s,x) conil)) (st_receive p xs)
   | st2si_snd: forall p xs ys,
-               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ R t t') ys xs ->
                st2si R (st_send p ys) (st_send p xs).
 
 Definition st2siC s1 s2 := paco2 (st2si) bot2 s1 s2.
@@ -27,5 +27,5 @@ Proof. unfold monotone2.
          apply HS with (y := y). apply LE. easy. easy.
        - specialize (st2si_snd r'); intro HS.
          apply HS. 
-         apply monH2 with (r := r); easy.
+         apply monHo2 with (r := r); easy.
 Qed.

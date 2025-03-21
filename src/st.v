@@ -4,12 +4,63 @@ Require Import ST.src.stream ST.types.local.
 Require Import String List Nat.
 Local Open Scope string_scope.
 Import ListNotations.
+Import CoListNotations.
 
 (* session trees *)
 CoInductive st: Type :=
   | st_end    : st
   | st_receive: participant -> coseq (label*sort*st) -> st
   | st_send   : participant -> coseq (label*sort*st) -> st.
+
+(* well-foundedness *)
+Inductive wfH (R: st -> Prop): st -> Prop :=
+  | wf_end: wfH R st_end
+  | wf_rcv: forall p xs,
+            xs <> [||] ->
+            ForallCo (fun u => exists l s t, u = (l,s,t) /\ R t) xs ->
+            wfH R (st_receive p xs)
+  | wf_snd: forall p xs,
+            xs <> [||] ->
+            ForallCo (fun u => exists l s t, u = (l,s,t) /\ R t) xs ->
+            wfH R (st_send p xs).
+
+Definition wfC: st -> Prop := fun s1 => paco1 wfH bot1 s1.
+
+Lemma fHo_forall: forall l r r',
+  (forall x0 : st, r x0 -> r' x0) ->
+  paco1 (ForallHo (fun u : string * sort * st => exists (l : string) (s : sort) (t : st), u = (l, s, t) /\ r t)) bot1 l ->
+  paco1 (ForallHo (fun u : string * sort * st => exists (l0 : string) (s : sort) (t : st), u = (l0, s, t) /\ r' t)) bot1 l.
+Proof. intros.
+       revert l H0.
+       pcofix CIH. intros.
+       pinversion H1. pfold. constructor.
+       subst. pfold. constructor.
+       destruct H0 as (l1,(s1,(t1,(Ha,Hb)))).
+       exists l1. exists s1. exists t1. split. easy. apply H; easy.
+       right. apply CIH. easy.
+       apply mon_fHo.
+Qed.
+
+Lemma mon_wfH: monotone1 wfH.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. easy.
+         pinversion H0. subst. easy. subst.
+         pfold. constructor.
+         destruct H1 as (l1,(s1,(t1,(Ha,Hb)))).
+         exists l1. exists s1. exists t1. split. easy. apply LE; easy.
+         left. apply fHo_forall with (r := r); easy.
+         apply mon_fHo.
+       - constructor. easy.
+         pinversion H0. subst. easy. subst.
+         pfold. constructor.
+         destruct H1 as (l1,(s1,(t1,(Ha,Hb)))).
+         exists l1. exists s1. exists t1. split. easy. apply LE; easy.
+         left. apply fHo_forall with (r := r); easy.
+         apply mon_fHo.
+Qed.
 
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
@@ -67,17 +118,11 @@ Proof.
   rewrite(st_eq(lt2st (full_unf l))). simpl.
   rewrite full_unf_idemp.
   destruct l.
-  rewrite(st_eq(lt2st (lt_var n))). simpl. easy.
-  simpl.
-  rewrite(st_eq(lt2st lt_end)). simpl. easy.
-  simpl.
-  rewrite(st_eq(lt2st (lt_send s l))). simpl.
-  easy.
-  simpl.
-  rewrite(st_eq(lt2st (lt_receive s l))). simpl.
-  easy.
-  rewrite(st_eq(lt2st (lt_mu l) )). simpl.
-  easy.
+  rewrite(st_eq(lt2st (lt_var n))). simpl. easy. simpl.
+  rewrite(st_eq(lt2st lt_end)). simpl. easy. simpl.
+  rewrite(st_eq(lt2st (lt_send s l))). simpl. easy. simpl.
+  rewrite(st_eq(lt2st (lt_receive s l))). simpl. easy.
+  rewrite(st_eq(lt2st (lt_mu l) )). simpl. easy.
 Qed.
 
 Lemma monH2: forall ys xs r r',
@@ -85,13 +130,45 @@ Lemma monH2: forall ys xs r r',
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
   Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
 Proof. intros.
-       induction H; intros.
-       - constructor.
-       - constructor.
-         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-         exists l1. exists s1. exists t1. exists l2. exists s2. exists t2.
-         split. easy. split. easy. apply H0. easy.
-         apply IHForall2C.
+        induction H; intros.
+        - constructor.
+        - constructor.
+          destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+          exists l1. exists s1. exists t1. exists l2. exists s2. exists t2.
+          split. easy. split. easy. apply H0. easy.
+          apply IHForall2C.
+Qed.
+
+Lemma monHo2: forall ys xs r r',
+  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
+  (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
+  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
+Proof. intros. revert xs ys H. pcofix CIH.
+        intros.
+        pfold.
+        pinversion H1.
+        subst.
+        constructor.
+        subst.
+        constructor.
+        destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+        exists l1. exists s1. exists t1.
+        exists l2. exists s2. exists t2. 
+        split. easy. split. easy.
+        apply H0; easy.
+        right. apply CIH.
+        easy.
+        unfold monotone2.
+        intros.
+        induction IN; intros.
+        - constructor.
+        - constructor. 
+          destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+        exists l1. exists s1. exists t1.
+        exists l2. exists s2. exists t2. 
+        split. easy. split. easy.
+        easy.
+        apply LE; easy.
 Qed.
 
 (*co-path selection example*)
