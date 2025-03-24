@@ -28,7 +28,7 @@ Module SS.
                 subst. rewrite eqb_refl. easy.
              ++ rewrite H2 in H0. easy.
            + rewrite H1 in H. easy. 
-  Qed.
+  Defined.
 
   Lemma dec : forall x y : string, {eq x y} + {~ eq x y}.
   Proof. intros.
@@ -36,7 +36,7 @@ Module SS.
          case_eq(x =? y ); intros.
          + left. easy.
          + right. easy.
-  Qed.
+  Defined.
 
   Definition eq_equiv := equiv.
 
@@ -72,8 +72,14 @@ Inductive qCong: queue -> queue -> Prop :=
             qCong (q ++ [(p1,l1,s1)] ++ [(p2,l2,s2)] ++ q') 
                   (q ++ [(p2,l2,s2)] ++ [(p1,l1,s1)] ++ q').
 
+Declare Instance Equivalence_qcong : Equivalence qCong.
+#[global] Declare Instance RWQC: Proper (qCong ==> qCong ==> impl) qCong.
+
 Inductive lCong: local -> local -> Prop :=
-  | lunf: forall l, lCong l (unf l). 
+  | lunf: forall l, lCong l (unf l).
+
+Declare Instance Equivalence_lcong : Equivalence lCong.
+#[global] Declare Instance RWLC: Proper (lCong ==> lCong ==> impl) lCong.
 
 Inductive lab: Type :=
   | ls: participant -> participant -> label -> lab
@@ -86,17 +92,94 @@ Fixpoint retc (l: list (label*local.sort*local)) (a: label): option (local.sort*
   end.
 
 Definition cCong (g1 g2: ctx):= 
-  (forall p c1 c2, M.find p g1 = Some c1 -> M.find p g2 = Some c2 -> qCong (fst c1) (fst c2) /\ lCong (snd c1) (snd c2)) \/
-  (forall p q c1 c2, M.find p g1 = Some c1 -> M.find p g2 = None -> M.find q g1 = None -> M.find q g2 = Some c2 -> qCong (fst c1) nil /\ lCong (snd c1) lt_end /\ qCong (fst c2) nil /\ lCong (snd c2) lt_end).
+  (forall p c1 c2 t1 t2, M.find p g1 = Some (c1,t1) -> M.find p g2 = Some (c2,t2) -> qCong c1 c2 /\ lCong t1 t2) /\
+  (forall p c t, M.find p g1 = Some (c,t) -> M.find p g2 = None -> qCong c nil /\ lCong t lt_end) /\
+  (forall p c t, M.find p g1 = None -> M.find p g2 = Some (c,t) -> qCong c nil /\ lCong t lt_end).
+
+Lemma ccT: Transitive cCong.
+Proof. repeat intro.
+       destruct H as (Ha,(Hb,Hc)).
+       destruct H0 as (Hd,(He,Hf)).
+       split.
+       + intros.
+         case_eq(M.find p y); intros.
+         destruct p0 as (c3,t3).
+         specialize(Ha p c1 c3 t1 t3 H H1).
+         specialize(Hd p c3 c2 t3 t2 H1 H0).
+         destruct Ha as (Ha1,Ha2).
+         destruct Hd as (Hd1,Hd2).
+         rewrite Ha1 Hd1 Ha2 Hd2. easy.
+         specialize(Hb p c1 t1 H H1).
+         specialize(Hf p c2 t2 H1 H0).
+         destruct Hb as (Hb1,Hb2).
+         destruct Hf as (Hf1,Hf2).
+         rewrite Hb1 Hf1 Hb2 Hf2. easy.
+       split.
+       + intros.
+         case_eq(M.find p y); intros.
+         destruct p0 as (c3,t3).
+         specialize(Ha p c c3 t t3 H H1).
+         specialize(He p c3 t3 H1 H0).
+         destruct Ha as (Ha1,Ha2).
+         destruct He as (He1,He2).
+         rewrite Ha1 He1 Ha2 He2. easy.
+         specialize(Hb p c t H H1). easy.
+       + intros.
+         case_eq(M.find p y); intros.
+         destruct p0 as (c3,t3).
+         specialize(Hc p c3 t3 H H1).
+         specialize(Hd p c3 c t3 t H1 H0).
+         destruct Hc as (Hc1,Hc2).
+         destruct Hd as (Hd1,Hd2).
+         rewrite <- Hd1, <- Hd2. easy.
+         specialize(Hf p c t H1 H0).
+         easy.
+Qed.
+
+Lemma ccS: Symmetric cCong.
+Proof. repeat intro.
+       unfold cCong in H.
+       destruct H as (Ha,(Hb,Hc)).
+       split.
+       + intros.
+         specialize(Ha p c2 c1 t2 t1 H0 H).
+         destruct Ha as (Ha1, Ha2).
+         rewrite Ha1 Ha2. easy.
+       split.
+       + intros.
+         specialize(Hc p c t H0 H). easy.
+       + intros.
+         specialize(Hb p c t H0 H). easy.
+Qed.
+
+Lemma ccR: Reflexive cCong.
+Proof. repeat intro.
+       split.
+       + intros. rewrite H in H0. inversion H0. subst. easy.
+       split.
+       + intros. rewrite H in H0. inversion H0.
+       + intros. rewrite H in H0. inversion H0.
+Qed.
+
+Instance Equivalence_ccong : Equivalence cCong.
+Proof. unshelve econstructor.
+       - exact ccR.
+       - exact ccS.
+       - exact ccT.
+Defined.
+
+#[global] Declare Instance RWCC: Proper (cCong ==> cCong ==> impl) cCong.
 
 Inductive red: ctx -> lab -> ctx -> Prop :=
   | e_recv  : forall p q sigp sigq gam l Tp s s' Tk xs,
+              p <> q ->
               M.mem p gam = false ->
               M.mem q gam = false ->
               retc xs l = Some (s, Tk) ->
               subsort s' s ->
               red (M.add p (((q,l,s')::sigp), Tp) (M.add q (sigq, lt_receive p xs) gam)) (lr q p l) (M.add p (sigp, Tp) (M.add q (sigq, Tk) gam))
   | e_send  : forall p q sig gam l s Tk xs,
+              p <> q ->
               M.mem p gam = false ->
               retc xs l = Some (s, Tk) ->
               red (M.add p (sig, lt_send q xs) gam) (ls p q l) ((M.add p ((sig ++ [(q,l,s)]), Tk)) gam)
@@ -155,7 +238,7 @@ Definition enqueued (p q: participant) (l: label) (s: local.sort) sig (T: local)
         | _                => False 
       end
     | _                => False 
-  end.
+  end. 
 
 Fixpoint inL (l: list (label*local.sort*local)) (a: label): bool :=
   match l with
@@ -180,6 +263,24 @@ Definition livePath (pt: Path): Prop :=
 Definition livePathC := alwaysC livePath.
 
 Definition live (g: ctx) := forall (pt: Path) (l: lab), fairPathC (cocons (g, l) pt) -> livePathC (cocons (g, l) pt).
+
+Lemma cong_red: forall g g' gr l, red g l gr -> cCong g g' -> red g' l gr.
+Proof. intros. revert g' H0. 
+       induction H; intros.
+       - apply e_struct with (g1  := (M.add p ((q, l, s') :: sigp, Tp) (M.add q (sigq, lt_receive p xs) gam))) 
+                             (g1' := (M.add p (sigp, Tp) (M.add q (sigq, Tk) gam))).
+         rewrite <- H4. easy. easy.
+       - apply e_recv with (s := s); try easy.
+       - eapply e_struct with (g1  := (M.add p (sig, lt_send q xs) gam)) 
+                              (g1' := (M.add p (sig ++ [(q, l, s)], Tk) gam)).
+         rewrite <- H2. easy. easy.
+         apply e_send; easy.
+       - apply e_struct with (g1 := g) (g1' := g1').
+         rewrite H2. easy.
+         rewrite H0. easy.
+         apply IHred. rewrite H. easy.
+Qed.
+
 
 Lemma _49: forall g l g', live g -> red g l g' -> live g'.
 Proof. pcofix CIH. intros.

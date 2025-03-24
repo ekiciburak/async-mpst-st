@@ -77,7 +77,7 @@ Proof. intros.
        destruct xs.
        - rewrite(coseq_eq(comap (prod_map (prod_map id id) st2soH) [||])). simpl.
          rewrite(coseq_eq( (next [||]))). simpl. constructor.
-         rewrite(coseq_eq(next (cocons p xs))).
+       - rewrite(coseq_eq(next (cocons p xs))).
          rewrite(coseq_eq(comap (prod_map (prod_map id id) st2soH) (cocons p xs))). simpl.
          destruct p as ((l1,s1),t1).
          constructor.

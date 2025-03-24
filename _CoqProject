@@ -19,6 +19,7 @@ subtyping/refinement.v
 src/reorderingfacts.v
 src/acteqfacts.v
 src/nondepro.v
+src/inversion.v
 subtyping/subtyping.v
 examples/Example2_3.v
 examples/ring_choice.v

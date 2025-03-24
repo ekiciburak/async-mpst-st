@@ -3034,7 +3034,6 @@ Proof. intros p b.
        - simpl. rewrite bpfend_an. rewrite bpend_an. easy.
 Qed.
 
-
 Lemma refEquivL: forall w w', refinement3 w w' -> refinement w w'.
 Proof. pcofix CIH. intros.
        pinversion H0.
@@ -3129,6 +3128,82 @@ Proof. pcofix CIH. intros.
          apply refinementR_mon.
 Qed.
 
+Lemma refEquivL2: forall w w', refinement4 w w' -> refinement2 w w'.
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       - rewrite <- meqAp3.
+         rewrite <- meqAp3 in H2.
+         assert(isInA (ApnA3 a n) p = false).
+         { case_eq n; intros.
+           - easy.
+           - rewrite <- InN; easy.
+         }
+         specialize(mgApf2Ap p (ApnA3 a n) (p & [|(l, s', w'0)|]) H6); intro HP.
+         rewrite <- HP.
+         specialize(ref2_a (upaco2 refinementR2 r) w0 w'0 p l s s' (Apf2Ap (ApnA3 a n) p H6) 1); intro Href.
+         simpl in Href.
+         pfold. apply Href.
+         easy.
+         right. 
+         apply CIH.
+         rewrite mgApf2Ap. easy.
+         rewrite <- meqAp3 in H3.
+         rewrite mgApf2Ap. easy.
+       - rewrite <- meqBp3.
+         rewrite <- meqBp3 in H2.
+         assert(isInB (BpnB3 b n) p = false).
+         { case_eq n; intros.
+           - easy.
+           - rewrite <- InNS; easy.
+         }
+         specialize(mgBpf2Bp p (BpnB3 b n) (p ! [|(l, s', w'0)|]) H6); intro HP.
+         rewrite <- HP.
+         specialize(ref2_b (upaco2 refinementR2 r) w0 w'0 p l s s' (Bpf2Bp (BpnB3 b n) p H6) 1); intro Href.
+         simpl in Href.
+         pfold. apply Href.
+         easy.
+         right. 
+         apply CIH.
+         rewrite mgBpf2Bp. easy.
+         rewrite <- meqBp3 in H3.
+         rewrite mgBpf2Bp. easy.
+       - pfold. constructor.
+         apply refinementR4_mon.
+Qed.
+
+Lemma refEquivR2: forall w w', refinement2 w w' -> refinement4 w w'.
+Proof. pcofix CIH. intros.
+       pinversion H0.
+       - rewrite <- meqAp2.
+         rewrite <- meqAp2 in H2.
+         rewrite mgAp2Apf.
+         specialize(ref4_a (upaco2 refinementR4 r) w0 w'0 p l s s' (Ap2Apf p (ApnA p a n)) 1); intro Href.
+         simpl in Href.
+         pfold.
+         apply Href.
+         easy. apply notInA.
+         right.
+         apply CIH.
+         rewrite <- meqAp2 in H1.
+         rewrite mgAp2Apf in H1. easy.
+         rewrite mgAp2Apf in H2. easy.
+       - rewrite <- meqBp.
+         rewrite <- meqBp in H2.
+         rewrite mgBp2Bpf.
+         specialize(ref4_b (upaco2 refinementR4 r) w0 w'0 p l s s' (Bp2Bpf p (BpnA p b n)) 1); intro Href.
+         simpl in Href.
+         pfold.
+         apply Href.
+         easy. apply notInB.
+         right.
+         apply CIH.
+         rewrite <- meqBp in H1.
+         rewrite mgBp2Bpf in H1. easy.
+         rewrite mgBp2Bpf in H2. easy.
+       - pfold. constructor.
+         apply refinementR2_mon.
+Qed.
+
 Print local.
 Fixpoint actL (t: local): list (participant * dir) :=
   match t with
@@ -3162,56 +3237,4 @@ Proof. pcofix CIH.
          apply CIH in H. right. easy.
        - apply st2siso_mon.
 Qed.
-
-(*
-Lemma help: forall t xs p,
-  lt2stC (unfold_muL (lt_mu t)) (p ! xs) ->
-  In (p, snd) (actL t).
-Proof. intro t.
-       induction t; intros.
-       - simpl in H.
-         unfold unscoped.scons in H.
-         destruct n.
-         pinversion H.
-         subst.
-          easy.
-       induction H; intros. 
-Lemma muAct: forall t xs p,
-  lt2stC (lt_mu t) (p ! xs) ->
-  In (p, snd) (actL t).
-Proof. intros.
-       pinversion H. subst.
-       
-       induction t; intros.
-       - pinversion H. subst. simpl in H1.
-         unfold unscoped.scons in H1.
-         destruct n. easy.
-         easy.
-         subst.
-         unfold unscoped.scons in H0.
-         destruct n. simpl. inversion H0.
-         subst.
-         inversion H1. subst.
-         easy.
-        simpl. simpl in H.
-
-Lemma actBring: forall t T W, 
-  lt2stC t T ->
-  st2sisoC W T ->
-  coseqInLC (act W) (actL t).
-Proof. pcofix CIH.
-       intros.
-       specialize(singletonnes T W H1); intro Hs.
-       specialize(sinv W Hs); intro Hinv.
-       destruct Hinv as [(p,(l,(s,(w,(Hinv1, Hinv2))))) | [Hinv | Hinv]].
-       - subst.
-         pinversion H1.
-         + subst.
-           rewrite(coseq_eq(act (p ! [(l, s, w)]))). unfold coseq_id. simpl.
-           pinversion H0.
-           ++ subst. admit.
-           ++ subst. simpl.
-              simpl in H.
-              pfold. constructor.
-*)
 

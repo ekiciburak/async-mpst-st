@@ -112,3 +112,29 @@ Proof. unfold monotone2.
          apply LE. exact H1.
        - constructor.
 Qed.
+
+Inductive refinementR4 (seq: st -> st -> Prop): st -> st -> Prop :=
+  | ref4_a  : forall w w' p l s s' a n, subsort s' s ->
+                                        isInA a p = false ->
+                                        seq w (merge_apf_contn a w' n)  -> 
+                                        act_eq w (merge_apf_contn a w' n) -> 
+                                        refinementR4 seq (st_receive p (cocons (l,s,w) conil)) (merge_apf_contn a (st_receive p (cocons (l,s',w') conil)) n)
+  | ref4_b  : forall w w' p l s s' b n, subsort s s' ->
+                                        isInB b p = false ->
+                                        seq w (merge_bpf_contn b w' n) -> 
+                                        act_eq w (merge_bpf_contn b w' n) -> 
+                                        refinementR4 seq (st_send p (cocons (l,s,w) conil)) (merge_bpf_contn b (st_send p (cocons (l,s',w') conil)) n)
+  | ref4_end: refinementR4 seq st_end st_end.
+
+Definition refinement4: st -> st -> Prop := fun s1 s2 => paco2 refinementR4 bot2 s1 s2.
+
+Lemma refinementR4_mon: monotone2 refinementR4.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - specialize(ref4_a r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H1. 
+       - specialize(ref4_b r'); intro Ha. apply Ha; try easy.
+         apply LE. exact H1.
+       - constructor.
+Qed.
