@@ -242,6 +242,67 @@ Proof. intros.
        apply subNeqIR with (T := lt2st T) (T' := lt2st T'); easy.
 Qed.
 
+Lemma _314_sing: forall T V W,
+  st2siC V T ->
+  st2soC W V -> singleton W.
+Proof. pcofix CIH.
+       intros.
+       case_eq T; intros.
+       - subst.
+         pinversion H0. subst.
+         pinversion H1. subst. pfold. constructor.
+         admit. admit.
+       - subst. pinversion H0.
+         subst. pinversion H1. subst.
+         pinversion H3. subst.
+         destruct H7 as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+         inversion Hb. subst.
+         pinversion H8. subst.
+         pfold. constructor.
+         right. apply CIH with (T := y) (V := t2).
+         easy.
+         easy.
+         admit. admit.
+         admit. admit.
+       - subst. pinversion H0.
+         subst. pinversion H1. subst.
+         pinversion H3. subst.
+         
+(*          inversion H6.
+         subst.
+         pfold. constructor.
+         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+         subst.
+         right. 
+
+         subst. 
+         inversion H6. subst.
+         apply CIH with (T := t2) (V := y).
+         destruct Hc. easy. easy.
+         easy.
+         subst.
+         easy.
+         admit. admit.
+         admit. admit. *)
+Admitted.
+
+(* Lemma _314: forall T V W,
+  st2siC V T ->
+  st2soC W V ->
+  exists U, st2soC U T /\ st2siC W U.
+Proof. intros.
+       case_eq T; intros.
+       - subst.
+         pinversion H. subst.
+         pinversion H0. subst. exists (end). split. pfold. constructor. pfold. constructor.
+         admit. admit.
+       - subst. pinversion H.
+         subst. pinversion H0. subst.
+         pinversion H3. subst.
+         destruct H7 as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+         inversion Hb. subst. *)
+         
+
 (* Inductive subtypeI: st -> st -> Prop :=
   | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
                       subtypeI T T'.

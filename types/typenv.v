@@ -192,17 +192,53 @@ Definition redE l g := exists g', red g l g'.
 
 Notation Path := (coseq (ctx*lab)) (only parsing).
 
-Inductive eventually {A: Type} (F: coseq A -> Prop): coseq A -> Prop :=
-  | evh: forall xs, F xs -> eventually F xs
-  | evc: forall x xs, eventually F xs -> eventually F (cocons x xs).
+Inductive pathRed (R: Path -> Prop): Path -> Prop :=
+  | rpn: pathRed R [||]
+  | rps: forall x, pathRed R [|x|]
+  | rpc: forall x y ys, R (cocons y ys) -> (exists l, red (fst x) l (fst y)) -> pathRed R (cocons x (cocons y ys)).
+
+Lemma mon_pr: monotone1 pathRed.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       constructor.
+       constructor.
+       constructor. apply LE, H.
+       destruct H0 as (l,H0).
+       exists l. apply H0.
+Qed.
+
+Definition pathRedC pt := paco1 (pathRed) bot1 pt. 
+
+Inductive eventually {A: Type} (F: coseq A -> Prop) (R: coseq A -> Prop): coseq A -> Prop :=
+  | evh: forall x xs, F xs -> eventually F R (cocons x xs)
+  | evc: forall x xs, R xs -> eventually F R (cocons x xs).
 
 Definition eventualyP := @eventually (ctx*lab).
+
+Lemma mon_ev: forall F, monotone1 (eventualyP F).
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - apply evh. easy.
+       - apply evc, LE, H. 
+Qed.
+
+Definition eventuallyC F p := paco1 (eventualyP F) bot1 p.
 
 Inductive alwaysG {A: Type} (F: coseq A -> Prop) (R: coseq A -> Prop): coseq A -> Prop :=
   | alwn: F conil -> alwaysG F R conil
   | alwc: forall x xs, F (cocons x xs) -> R xs -> alwaysG F R (cocons x xs).
 
 Definition alwaysP := @alwaysG (ctx*lab).
+
+Lemma mon_alw: forall F, monotone1 (alwaysP F).
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - apply alwn. easy.
+       - apply alwc. easy. apply LE, H0. 
+Qed.
 
 Definition alwaysC F p := paco1 (alwaysP F) bot1 p.
 
@@ -225,10 +261,10 @@ Definition hPS (p q: participant) (l: label) (pt: Path): Prop :=
   end.
 
 Definition fairPath (pt: Path): Prop :=
-  (forall p q l l', enabled (redE (ls p q l)) pt -> eventually (hPS p q l') pt) /\
-  (forall p q l,    enabled (redE (lr q p l)) pt -> eventually (hPR p q l) pt).
+  (forall p q l l', enabled (redE (ls p q l)) pt -> eventuallyC (hPS p q l') pt) /\
+  (forall p q l,    enabled (redE (lr q p l)) pt -> eventuallyC (hPR p q l) pt).
 
-Definition fairPathC := alwaysC fairPath.
+Definition fairPathC pt := pathRedC pt /\ alwaysC fairPath pt.
 
 Definition enqueued (p q: participant) (l: label) (s: local.sort) sig (T: local) (pt: Path): Prop :=
   match pt with
@@ -257,10 +293,10 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
   end.
 
 Definition livePath (pt: Path): Prop :=
-  (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventually (hPR q p l) pt) /\
-  (forall p q l s sig ys, dequeued p q l s sig ys pt -> eventually (hPR p q l) pt).
+  (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventuallyC (hPR q p l) pt) /\
+  (forall p q l s sig ys, dequeued p q l s sig ys pt -> eventuallyC (hPR p q l) pt).
 
-Definition livePathC := alwaysC livePath.
+Definition livePathC pt := pathRedC pt /\ alwaysC livePath pt.
 
 Definition live (g: ctx) := forall (pt: Path) (l: lab), fairPathC (cocons (g, l) pt) -> livePathC (cocons (g, l) pt).
 
@@ -281,12 +317,234 @@ Proof. intros. revert g' H0.
          apply IHred. rewrite H. easy.
 Qed.
 
+Lemma cong_fair: forall g g' l pt,
+  fairPathC (cocons (g,l) pt) ->
+  cCong g g' ->
+  fairPathC (cocons (g',l) pt).
+Proof. (* pcofix CIH. *)
+       intros. destruct H as (Hr,H).
+       pinversion H.
+       subst.
+       split.
+       pinversion Hr. subst.
+       pfold. constructor.
+       subst. destruct H6 as (l1, H6). simpl in H6. 
+       pfold. constructor. left. easy.
+       exists l1. simpl. eapply cong_red with (g' := g') in H6; easy.
+       apply mon_pr.
+       pfold. constructor.
+       split. destruct H3 as (H3a,H3b).
+       intros. simpl in H1.
+       destruct H1 as (g'',H1).
+       specialize(H3a p q l0 l').
+       assert(enabled (redE (ls p q l0)) (cocons (g, l) pt)).
+       { simpl. exists g''. apply cong_red with (g := g'). easy. easy. }
+       apply H3a in H2.
+
+       pinversion H2. subst. pfold. constructor. easy.
+       subst. pfold. apply evc. left. easy.
+       apply mon_ev.
+
+       intros. simpl in H1.
+       destruct H1 as (g'',H1).
+       destruct H3 as (H3a,H3b).
+       specialize(H3b p q l0).
+       assert(enabled (redE (lr q p l0)) (cocons (g, l) pt)).
+       { simpl. exists g''. apply cong_red with (g := g'). easy. easy. }
+       apply H3b in H2.
+
+       pinversion H2. subst. pfold. constructor. easy.
+       subst. pfold. apply evc. left. easy.
+       apply mon_ev.
+
+       left. easy.
+       apply mon_alw.
+Qed.
+
+Lemma qinvF: forall sig a, qCong nil (a :: sig) -> False. 
+Proof. intro xs.
+       induction xs; intros.
+       - inversion H.
+         assert(q = nil).
+         { case_eq q; intros; subst; easy. }
+         subst. easy.
+         assert(q = nil).
+         { case_eq q; intros; subst; easy. }
+         subst. easy.
+         assert(q1 = nil /\ q2 = nil /\ q3 = nil).
+         { case_eq q1; case_eq q2; case_eq q3; intros; subst; easy. }
+         destruct H0 as (Ha,(Hb,Hc)).
+         subst. easy.
+         assert(q = nil /\ [:: (p1, l1, s1), (p2, l2, s2) & q'] = nil).
+         { case_eq q; intros; subst; easy. }
+         destruct H3 as (Ha,Hb). subst. easy.
+      - inversion H.
+         assert(q = nil).
+         { case_eq q; intros; subst; easy. }
+         subst. easy.
+         assert(q = nil).
+         { case_eq q; intros; subst; easy. }
+         subst. easy.
+         assert(q1 = nil /\ q2 = nil /\ q3 = nil).
+         { case_eq q1; case_eq q2; case_eq q3; intros; subst; easy. }
+         destruct H0 as (Ha,(Hb,Hc)).
+         subst. easy.
+         assert(q = nil /\ [:: (p1, l1, s1), (p2, l2, s2) & q'] = nil).
+         { case_eq q; intros; subst; easy. }
+         destruct H3 as (Ha,Hb). subst. easy.
+Qed.
+
+Lemma _B_1: forall g g', live g -> cCong g g' -> live g'.
+Proof. intros.
+       unfold live. intros.
+       symmetry in H0.
+       specialize(cong_fair g' g l pt H1 H0); intro Hf.
+       unfold live in H.
+       apply H in Hf.
+       destruct Hf as (Hr, Hf).
+       pinversion Hf.
+       subst. 
+       split. 
+       pinversion Hr. subst. pfold. constructor. subst. pfold. constructor. left. easy.
+       destruct H7 as (l',H7).
+       simpl in H7.
+       exists l'. simpl. eapply cong_red with (g' := g') in H7; easy.
+       apply mon_pr.
+       pfold. constructor.
+       destruct H4 as (H4a,H4b).
+       split.
+
+       intros.
+       specialize(H4a p q l0 s sig T).
+       assert(enqueued p q l0 s sig T (cocons (g, l) pt) ).
+       { simpl. simpl in H2.
+         destruct H0 as (Ha,(Hb,Hc)).
+         case_eq(M.find p g'); intros.
+         destruct p0 as (c1,t1).
+         rewrite H0 in H2.
+         case_eq(M.find p g); intros.
+         destruct p0 as (c2,t2).
+         specialize(Ha p c1 c2 t1 t2 H0 H3).
+         destruct Ha as (Ha1,Ha2).
+         rewrite <- Ha1, <- Ha2. easy.
+         specialize(Hb p c1 t1 H0 H3).
+         destruct Hb as (Hb1,Hb2).
+         destruct H2 as (H2a,H2b).
+         rewrite Hb1 in H2a.
+         apply qinvF in H2a. easy.
+         rewrite H0 in H2.
+         easy.
+       } 
+       apply H4a in H3.
+       pinversion H3. subst. pfold. constructor. easy.
+       subst. pfold. apply evc. left. easy.
+       apply mon_ev.
+       
+       intros.
+       specialize(H4b p q l0 s sig ys).
+       assert(dequeued p q l0 s sig ys (cocons (g, l) pt)).
+       { simpl. simpl in H2.
+         destruct H0 as (Ha,(Hb,Hc)).
+         case_eq(M.find p g'); intros.
+         destruct p0 as (c1,t1).
+         rewrite H0 in H2.
+         case_eq(M.find p g); intros.
+         destruct p0 as (c2,t2).
+         specialize(Ha p c1 c2 t1 t2 H0 H3).
+         destruct Ha as (Ha1,Ha2).
+         rewrite <- Ha1, <- Ha2. easy.
+         specialize(Hb p c1 t1 H0 H3).
+         destruct Hb as (Hb1,Hb2).
+         destruct H2 as (H2a,(H2b,H2c)).
+         rewrite Hb2 in H2c.
+         inversion H2c.
+         rewrite H0 in H2.
+         easy.
+       }
+       apply H4b in H3.
+       pinversion H3. subst. pfold. constructor. easy.
+       subst. pfold. apply evc. left. easy.
+       apply mon_ev.
+
+       left. easy.
+       apply mon_alw.
+Qed.
+
+(* Lemma fair_red: forall g g' l l0 pt,
+  fairPathC (cocons (g', l0) pt) ->
+  red g l g' ->
+  fairPathC (cocons (g, l) (cocons (g', l0) pt)).
+Proof. intros.
+       destruct H as (Hr,H).
+       pinversion H.
+       split. admit.
+       subst. pfold. constructor.
+       split. intros.
+       simpl in H1.
+       destruct H3 as (H3a, H3b).
+       pfold. apply evc. left.
+       apply H3a with (l := l1).
+       simpl. unfold redE in H1.
+       unfold redE.
 
 Lemma _49: forall g l g', live g -> red g l g' -> live g'.
-Proof. pcofix CIH. intros.
-       pinversion H2.
-       subst. pfold.
-       constructor.
-       unfold live in H0.
-Admitted.
+Proof. unfold live.
+       intros.
+       specialize(H (cocons (g', l0) pt) l).
+       
+
+
+         intros.
+         unfold live.
+         intros.
+         unfold live in H.
+
+         split. admit.
+         pfold. constructor. split. intros.
+         simpl in H2.
+         destruct H1 as (Hr, H1).
+         pinversion H1. subst.
+         destruct H5 as (H5a,H5b).
+         apply H5b.
+         simpl.
+         unfold redE.
+         inversion H0.
+         subst.
+       
+       revert H.
+       induction H0; intros.
+       - subst. unfold live. intros.
+         unfold live in H4.
+         pfold. constructor.
+         split.
+         intros.
+         simpl in H6.
+         pinversion H5. subst.
+         destruct H9 as (H9a,H9b). apply H9b.
+         simpl.
+         case_eq(String.eqb p0 p); intros.
+         + rewrite String.eqb_eq in H7.
+           subst. rewrite M.add_spec1 in H6.
+           
+           Search M.find.
+         pfold. .
+          destruct H6 as (g,Hg).
+         assert(fairPathC (cocons (M.add p ((q, l, s') :: sigp, Tp) (M.add q (sigq, lt_receive p xs) gam), l0) pt) ).
+         { pfold. constructor.
+           split.
+           intros. simpl in H6.
+           destruct H6 as (g,Hg).
+           inversion Hg. subst.
+           pfold. apply evc. left. 
+           pinversion H5. subst.
+           split.
+           destruct H8 as (H8a, H8b).
+           intros.
+           pfold. apply evc. simpl in H6.
+           
+         
+       specialize(H  (cocons (g', l0) pt) l).
+
+       
+Admitted. *)
 
