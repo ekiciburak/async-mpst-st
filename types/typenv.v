@@ -195,7 +195,7 @@ Notation Path := (coseq (ctx*lab)) (only parsing).
 Inductive pathRed (R: Path -> Prop): Path -> Prop :=
   | rpn: pathRed R [||]
   | rps: forall x, pathRed R [|x|]
-  | rpc: forall x y ys, R (cocons y ys) -> (exists l, red (fst x) l (fst y)) -> pathRed R (cocons x (cocons y ys)).
+  | rpc: forall x y ys, R (cocons y ys) -> red (fst x) (snd x) (fst y) -> pathRed R (cocons x (cocons y ys)).
 
 Lemma mon_pr: monotone1 pathRed.
 Proof. unfold monotone1.
@@ -204,14 +204,13 @@ Proof. unfold monotone1.
        constructor.
        constructor.
        constructor. apply LE, H.
-       destruct H0 as (l,H0).
-       exists l. apply H0.
+       apply H0.
 Qed.
 
 Definition pathRedC pt := paco1 (pathRed) bot1 pt. 
 
 Inductive eventually {A: Type} (F: coseq A -> Prop) (R: coseq A -> Prop): coseq A -> Prop :=
-  | evh: forall x xs, F xs -> eventually F R (cocons x xs)
+  | evh: forall x xs, F (cocons x xs) -> eventually F R (cocons x xs)
   | evc: forall x xs, R xs -> eventually F R (cocons x xs).
 
 Definition eventualyP := @eventually (ctx*lab).
@@ -262,7 +261,7 @@ Definition hPS (p q: participant) (l: label) (pt: Path): Prop :=
 
 Definition fairPath (pt: Path): Prop :=
   (forall p q l l', enabled (redE (ls p q l)) pt -> eventuallyC (hPS p q l') pt) /\
-  (forall p q l,    enabled (redE (lr q p l)) pt -> eventuallyC (hPR p q l) pt).
+  (forall p q l,    enabled (redE (lr p q l)) pt -> eventuallyC (hPR p q l) pt).
 
 Definition fairPathC pt := pathRedC pt /\ alwaysC fairPath pt.
 
@@ -328,9 +327,9 @@ Proof. (* pcofix CIH. *)
        split.
        pinversion Hr. subst.
        pfold. constructor.
-       subst. destruct H6 as (l1, H6). simpl in H6. 
+       subst. simpl in H6. 
        pfold. constructor. left. easy.
-       exists l1. simpl. eapply cong_red with (g' := g') in H6; easy.
+       simpl. eapply cong_red with (g' := g') in H6; easy.
        apply mon_pr.
        pfold. constructor.
        split. destruct H3 as (H3a,H3b).
@@ -349,7 +348,7 @@ Proof. (* pcofix CIH. *)
        destruct H1 as (g'',H1).
        destruct H3 as (H3a,H3b).
        specialize(H3b p q l0).
-       assert(enabled (redE (lr q p l0)) (cocons (g, l) pt)).
+       assert(enabled (redE (lr p q l0)) (cocons (g, l) pt)).
        { simpl. exists g''. apply cong_red with (g := g'). easy. easy. }
        apply H3b in H2.
 
@@ -406,9 +405,8 @@ Proof. intros.
        subst. 
        split. 
        pinversion Hr. subst. pfold. constructor. subst. pfold. constructor. left. easy.
-       destruct H7 as (l',H7).
        simpl in H7.
-       exists l'. simpl. eapply cong_red with (g' := g') in H7; easy.
+       simpl. eapply cong_red with (g' := g') in H7; easy.
        apply mon_pr.
        pfold. constructor.
        destruct H4 as (H4a,H4b).
@@ -470,26 +468,33 @@ Proof. intros.
        apply mon_alw.
 Qed.
 
-(* Lemma fair_red: forall g g' l l0 pt,
-  fairPathC (cocons (g', l0) pt) ->
+(*
+Lemma fair_red: forall g g' l l0 pt,
+  fairPathC (cocons (g',l0) pt) ->
   red g l g' ->
-  fairPathC (cocons (g, l) (cocons (g', l0) pt)).
+  fairPathC (cocons (g,l) (cocons (g',l0) pt)).
 Proof. intros.
        destruct H as (Hr,H).
-       pinversion H.
-       split. admit.
-       subst. pfold. constructor.
-       split. intros.
-       simpl in H1.
-       destruct H3 as (H3a, H3b).
-       pfold. apply evc. left.
+       pinversion H. subst.
+       case_eq l; intros.
+       - subst. exists((ls s s0 s1)).  split. admit.
+         subst. pfold. constructor.
+         split. intros.
+         simpl in H1.  pfold. apply evh. simpl.
+       left.
        apply H3a with (l := l1).
        simpl. unfold redE in H1.
        unfold redE.
+       pinversion Hr. subst.
+       
+       
 
 Lemma _49: forall g l g', live g -> red g l g' -> live g'.
 Proof. unfold live.
        intros.
+       split. admit.
+       pfold. constructor.
+       split.
        specialize(H (cocons (g', l0) pt) l).
        
 
