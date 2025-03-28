@@ -471,6 +471,34 @@ Proof. intro xs.
          destruct H3 as (Ha,Hb). subst. easy.
 Qed.
 
+Lemma qcong_app: forall xs ys a b,
+  qCong xs (b::ys) ->
+  qCong (xs ++ [a]) (b::ys++[a]). 
+Proof. intro xs.
+       induction xs; intros.
+       - apply qinvF in H. easy.
+       - inversion H.
+         rewrite app_nil_r in H1.
+         subst. inversion H1. subst.
+         rewrite app_nil_r.
+         easy.
+         rewrite app_nil_l in H0.
+         subst. inversion H0. subst. easy.
+         rewrite <- app_assoc in H2.
+         rewrite H1 in H2. inversion H2. subst. rewrite H1. easy.
+         rewrite app_comm_cons.
+         rewrite <- H1.
+         assert(((q ++ [:: (p1, l1, s1), (p2, l2, s2) & q']) ++ [a0]) =
+                ((q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ (q' ++ [a0])))).
+         { simpl. rewrite <- app_assoc. f_equal. }
+         rewrite H3.
+         assert(((q ++ [:: (p2, l2, s2), (p1, l1, s1) & q']) ++ [a0]) =
+                ((q ++ [(p2, l2, s2)] ++ [(p1, l1, s1)] ++ (q' ++ [a0])))).
+         { simpl. rewrite <- app_assoc. f_equal. }
+         rewrite H4.
+         constructor. easy.
+Qed.
+
 Lemma _B_1: forall g g', live g -> cCong g g' -> live g'.
 Proof. intros.
        unfold live. intros.
@@ -559,104 +587,95 @@ Qed.
 Lemma red_rcv_inv: forall g g' p r l l',
   l = lr p r l' -> 
   red g l g' ->
+  exists ys s t s' sigp,
   match M.find p g with
-    | Some (que, T) => exists ys, lCong T (lt_receive r ys) 
-(*       /\
-      match M.find p g' with
-        | Some(que', T') => exists s Tk, retc ys l' = Some(s, Tk) /\ lCong T' Tk /\ qCong que' que
-        | _              => False
-      end *)
+    | Some (que, T) => lCong T (lt_receive r ys) /\ Some (s, t) = retc ys l' /\ p <> r
     | _             => False
   end /\
   match M.find r g with
-    | Some (que, T) => exists l s sigp, qCong que ((p,l,s)::sigp) 
-(*       /\
-      match M.find r g' with
-        | Some(que', T') => qCong que' sigp /\ lCong T' T
-        | _              => False
-      end *)
+    | Some (que, T) => qCong que ((p,l',s')::sigp) /\ subsort s' s /\ p <> r
     | _             => False
   end.
 Proof. intros.
        induction H0; intros.
-       - split. inversion H. subst.
+       - inversion H. subst.
          destruct (M.find p gam). destruct p0.
-         exists xs. easy. easy. 
-         inversion H. subst.
+         exists xs. exists s. exists Tk. exists s'. exists sigp. split. easy.
          destruct (M.find r gam). destruct p0.
-         exists l'. exists s'. exists sigp. easy. easy.
+         easy. easy. easy.
        - easy.
-         subst. split.
+         subst.
          assert(lr p r l' = lr p r l') by easy.
          specialize(IHred H).
-         destruct IHred as (IH1, IH2).
+         destruct IHred as (ys,(s,(t,(s',(sig',(IH1, IH2)))))).
+         exists ys. exists s. exists t. exists s'. exists sig'.
          case_eq(M.find p g1); intros.
          + destruct p0 as (c1, t1).
            rewrite H3 in IH1.
-           destruct IH1 as (ys, Hys).
+           destruct IH1 as (Hys,(Hys1,Hys2)).
            case_eq(M.find p g); intros.
            ++ destruct p0 as (c2, t2).
+              pose proof H0 as Haa.
               destruct H0 as (Ha,(Hb,Hc)).
               specialize(Ha p c2 c1 t2 t1 H4 H3).
-              exists ys.
-              rewrite <- Hys. easy.
-              destruct H0 as (Ha,(Hb,Hc)).
+              rewrite <- Hys. split. easy.
+              case_eq(M.find r g1); intros.
+              * destruct p0 as (c3, t3).
+                rewrite H0 in IH2.
+                destruct IH2 as (Hs,Hs1).
+                case_eq(M.find r g); intros.
+                ** destruct p0 as (c4,t4).
+                   destruct Haa as (Haa,(Hab,Hac)).
+                   specialize(Haa r c4 c3 t4 t3 H5 H0).
+                   destruct Haa as (Haa1, Haa2).
+                   rewrite <- Hs. easy.
+                ** destruct Haa as (Haa,(Hab,Hac)).
+                   specialize(Hac r c3 t3 H5 H0).
+                   destruct Hac as (Hac1,Hac2).
+                   rewrite Hac1 in Hs.
+                   apply qinvF in Hs. easy.
+              * rewrite H0 in IH2. easy.
+           ++ destruct H0 as (Ha,(Hb,Hc)).
               specialize(Hc p c1 t1 H4 H3).
-              destruct Hc as (Hc1,Hc2).
-              rewrite Hc2 in Hys. easy.
-         + rewrite H3 in IH1. easy. 
-         destruct IHred as (IH1, IH2).
-         easy.
-         case_eq(M.find r g1); intros.
-         + destruct p0 as (c1, t1).
-           rewrite H in IH2.
-           destruct IH2 as (l,(s,(sigq,Hs))).
-           case_eq(M.find r g); intros.
-           ++ destruct p0 as (c2,t2).
-              destruct H0 as (Ha,(Hb,Hc)).
-              specialize(Ha r c2 c1 t2 t1 H3 H).
-              destruct Ha as (Ha1, Ha2).
-              exists l. exists s. exists sigq.
-              rewrite Ha1. easy.
-              destruct H0 as (Ha,(Hb,Hc)).
-              specialize(Hc r c1 t1 H3 H).
-              destruct Hc as (Hc1, Hc2).
-              rewrite Hc1 in Hs.
-              apply qinvF in Hs. easy.
-           ++ rewrite H in IH2. easy.
+              rewrite Hys in Hc. easy.
+         + rewrite H3 in IH1. easy.
 Qed.
 
 Lemma red_snd_inv: forall g g' p r l l',
   l = ls p r l' -> 
   red g l g' ->
+  exists ys s t,
   match M.find p g with
-    | Some (que, T) => exists ys s t, lCong T (lt_send r ys) /\ Some (s, t) = retc ys l'
+    | Some (que, T) => lCong T (lt_send r ys) /\ Some (s, t) = retc ys l' /\ p <> r
     | _             => False
   end.
 Proof. intros.
        induction H0; intros.
        - easy.
        - inversion H. subst.
-         destruct(M.find p gam). destruct p0. exists xs. exists s. exists Tk. easy. easy.
+         exists xs. exists s. exists Tk.
+         destruct(M.find p gam). destruct p0. easy. easy.
        - inversion H. subst.
          assert(ls p r l' = ls p r l') by easy.
          specialize(IHred H).
+         destruct IHred as (ys, (s, (t, IHred))).
+         exists ys. exists s. exists t.
          case_eq(M.find p g1); intros.
          + destruct p0 as (c1, t1).
            rewrite H4 in IHred.
-           destruct IHred as (ys, (s, (t, (Hys, Hys2)))).
            case_eq(M.find p g); intros.
            ++ destruct p0 as (c2, t2).
               destruct H0 as (Ha,(Hb,Hc)).
               specialize(Ha p c2 c1 t2 t1 H5 H4).
-              exists ys. exists s. exists t.
+              destruct IHred as (Hys,(Hys1,Hys2)).
               rewrite <- Hys. easy.
               destruct H0 as (Ha,(Hb,Hc)).
               specialize(Hc p c1 t1 H5 H4).
               destruct Hc as (Hc1,Hc2).
+              destruct IHred as (Hys,(Hys1,Hys2)).
               rewrite Hc2 in Hys. easy.
          + rewrite H4 in IHred. easy.
-Qed. 
+Qed.
 
 Lemma _B_2_1a: forall g g' g'' p q r l l' l1 l2,
   l1 = ls p q l ->
@@ -668,7 +687,7 @@ Proof. intros.
        - easy.
        - inversion H. subst.
          apply red_rcv_inv with (p := p) (r := r) (l' := l') in H4.
-         destruct H4 as (H4a, H4b).
+         destruct H4 as (ys,(s1,(t1,(s2,(sigp,(H4a, H4b)))))).
          destruct( M.find p gam). destruct p0.
          destruct H4a. rewrite H3 in H2. easy. easy. easy.
        - subst.
@@ -678,35 +697,96 @@ Qed.
 
 Lemma _B_2_1b: forall g p q r r' lb1 lb2 l1 l2,
   p <> r ->
-  r <> r' ->
   lb1 = ls p q l1 -> 
   lb2 = ls r r' l2 ->
   (exists g', red g lb2 g') -> (forall g', red g lb1 g' -> exists g'', red g' lb2 g'').
 Proof. intros.
-       induction H4; intros.
+       induction H3; intros.
        - easy.
-       - inversion H1. subst. 
-         destruct H3 as (g'',H3).
-         apply red_snd_inv with (p := r) (r := r') (l' := l2) in H3.
+       - inversion H0. subst.
+         destruct H2 as (g'',H2).
+         apply red_snd_inv with (p := r) (r := r') (l' := l2) in H2.
+         destruct H2 as (ys, (s', (t', H2))).
          case_eq(M.find r gam); intros.
          + destruct p0 as (c1, t1).
-           rewrite H2 in H3.
-           destruct H3 as (ys, (s', (t', (Hys, Hys2)))).
+           rewrite H1 in H2.
            exists(M.add r (c1++[(r',l2,s')], t') ((M.add p (sig ++ [(q, l1, s)], Tk) gam))).
            apply e_send with (xs := ys). easy. easy.
-           rewrite M.add_spec2. rewrite H2. easy.
+           rewrite M.add_spec2. rewrite H1. easy.
            apply String.eqb_neq in H. rewrite H. easy.
-           rewrite H2 in H3. easy.
+           rewrite H1 in H2. easy.
            easy.
        - subst.
-         destruct H3 as (g'', H3).
+         destruct H2 as (g'', H2).
          assert(ls p q l1 = ls p q l1 ) by easy.
          assert((exists g' : ctx, red g1 (ls r r' l2) g') ).
          { exists g''.
            apply e_struct with (g1 := g) (g1' := g'').
            easy. easy. easy.
          }
-         specialize(IHred H1 H2).
+         specialize(IHred H0 H1).
+         destruct IHred as (g''', H3').
+         exists g'''.
+         apply e_struct with (g1 := g1') (g1' := g'''); easy.
+Qed.
+
+Lemma _B_2_1c: forall g p q r r' lb1 lb2 l1 l2,
+  lb1 = ls p q l1 -> 
+  lb2 = lr r r' l2 ->
+  (exists g', red g lb2 g') -> (forall g', red g lb1 g' -> exists g'', red g' lb2 g'').
+Proof. intros.
+       case_eq(String.eqb r p); intros Hneq.
+       rewrite String.eqb_eq in Hneq. subst. 
+       destruct H1.
+       assert((ls p q l1) = (ls p q l1)) by easy.
+       assert(lr p r' l2 = lr p r' l2) by easy.
+       specialize(_B_2_1a g g' x p q r' l1 l2 (ls p q l1) (lr p r' l2) H0 H1 H2 H); intros. easy.
+       induction H2; intros.
+       - easy.
+       - inversion H. subst. 
+         case_eq(M.find p gam); intros.
+         + destruct p0 as (c1, t1).
+           destruct H1 as (g',H1).
+           rewrite H0 in H4.
+           apply red_rcv_inv with (p := r) (r := r') (l' := l2) in H1.
+           destruct H1 as (ys,(s',(t',(s1,(sigp,(H1a, H1b)))))).
+           case_eq(M.find r gam); intros.
+           ++ destruct p0 as (c2, t2).
+              rewrite H1 in H1a.
+              case_eq(String.eqb r' p); intros Heq.
+              rewrite String.eqb_eq in Heq. subst.
+              rewrite H0 in H1b.
+              exists(M.add p ((sigp++[(q, l1, s)]), Tk) (M.add r (c2,t') ((M.add p (sig ++ [(q, l1, s)], Tk) gam)))).
+              apply e_recv with (s := s') (s' := s1) (xs := ys). easy. easy. easy.
+              rewrite M.add_spec1. 
+              destruct H4 as (H4a, H4b). 
+              destruct H1b as (H1b,H1b1).
+              rewrite H4a in H1b.
+              apply qcong_app with (a := (q, l1, s)) in H1b. easy.
+              rewrite M.add_spec2. rewrite H1. easy.
+              rewrite String.eqb_sym. rewrite Hneq. easy.
+              case_eq(M.find r' gam); intros.
+              * destruct p0 as (c3,t3).
+                rewrite H5 in H1b.
+                destruct H1b as (H1b1,(H1b2,H1b3)).
+                exists(M.add r' (sigp, t3) (M.add r (c2,t') ((M.add p (sig ++ [(q, l1, s)], Tk) gam)))).
+                apply e_recv with (s := s') (s' := s1) (xs := ys). easy. easy. easy.
+                rewrite M.add_spec2. rewrite H5. easy.
+                rewrite String.eqb_sym. rewrite Heq. easy.
+                rewrite M.add_spec2. rewrite H1. easy.
+                rewrite String.eqb_sym. rewrite Hneq. easy.
+              * rewrite H5 in H1b. easy.
+           ++ rewrite H1 in H1a. easy. easy.
+         + rewrite H0 in H4. easy.
+       - subst.
+         destruct H1 as (g'', H1).
+         assert(ls p q l1 = ls p q l1 ) by easy.
+         assert((exists g' : ctx, red g1 (lr r r' l2) g') ).
+         { exists g''.
+           apply e_struct with (g1 := g) (g1' := g'').
+           easy. easy. easy.
+         }
+         specialize(IHred H H0).
          destruct IHred as (g''', H3').
          exists g'''.
          apply e_struct with (g1 := g1') (g1' := g'''); easy.
