@@ -850,3 +850,108 @@ Proof. intros.
          apply e_struct with (g1 := g1') (g1' := g'''); easy.
 Qed.
 
+Lemma _B_2_2c: forall g p q r r' lb1 lb2 l1 l2,
+  p <> r ->
+  lb1 = lr p q l1 -> 
+  lb2 = lr r r' l2 ->
+  (exists g', red g lb2 g') -> (forall g', red g lb1 g' -> exists g'', red g' lb2 g'').
+Proof. intros.
+       induction H3; intros.
+       - inversion H0. subst.
+         destruct H2 as (g'',H2).
+         apply red_rcv_inv with (p := r) (r := r') (l' := l2) in H2.
+         destruct H2 as (ys, (s1, (t1, (s2, (sig, (H2a, H2b)))))).
+         case_eq(M.find r gam); intros.
+         + destruct p0 as (c2, t2).
+           rewrite H1 in H2a.
+           case_eq(M.find r' gam); intros.
+           ++ destruct p0 as (c3,t3).
+              rewrite H2 in H2b.
+              case_eq(String.eqb r' q); intros.
+              * rewrite String.eqb_eq in H8. subst.
+                rewrite H2 in H6.
+                destruct H6 as (H6a,H6b).
+                destruct H2b as (H2b1,(H2b2,H2b3)).
+                rewrite H6a in H2b1.
+                inversion H2b1.
+                rewrite app_nil_r in H8. rewrite H6 in H8. inversion H8. subst. easy.
+                rewrite app_nil_l in H6. rewrite H6 in H8. inversion H8. subst. easy.
+                rewrite <- app_assoc in H9. rewrite H9 in H8. inversion H8. subst. easy.
+                case_eq(q0); intros.
+                ** subst. rewrite app_nil_l in H6. rewrite app_nil_l in H8.
+                   inversion H6. subst. inversion H8. subst.
+                   exists(M.add q (q', t3) (M.add r (c2, t1) (M.add q ((r, l2, s2) :: q', Tp) (M.add p (sigq, Tk) gam)))).
+                   apply e_recv with (s := s1) (s' := s2) (xs := ys). easy. easy. easy.
+                   rewrite M.add_spec1. easy.
+                   rewrite M.add_spec2. rewrite M.add_spec2. rewrite H1. easy.
+                   apply String.eqb_neq in H. rewrite H. easy.
+                   apply String.eqb_neq in H2b3. rewrite String.eqb_sym. rewrite H2b3. easy.
+               ** subst.
+                  inversion H8. inversion H6. subst. inversion H13. subst. easy.
+               case_eq(String.eqb r' p); intros.
+               * rewrite String.eqb_eq in H9. subst.
+                 rewrite H2 in H7.
+                 case_eq(String.eqb r q); intros.
+                 ** rewrite String.eqb_eq in H9. subst.
+                    rewrite H1 in H6.
+                    exists(M.add p (sig, Tk) (M.add q (sigp, t1) (M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+                    apply e_recv with (s := s1) (s' := s2) (xs := ys). easy. easy. easy.
+                    rewrite M.add_spec2. rewrite M.add_spec1. 
+                    destruct H7 as (H7a,H7b).
+                    rewrite <- H7a. easy.
+                    apply String.eqb_neq in H3. rewrite H3. easy.
+                    rewrite M.add_spec1. 
+                    destruct H6 as (H6a,H6b).
+                    rewrite <- H6b. easy.
+                 ** exists(M.add p (sig, Tk) (M.add r (c2, t1) (M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+                    apply e_recv with (s := s1) (s' := s2) (xs := ys). easy. easy. easy.
+                    rewrite M.add_spec2. rewrite M.add_spec1.
+                    destruct H7 as (H7a,H7b).
+                    rewrite <- H7a. easy.
+                    rewrite String.eqb_sym. rewrite H8. easy.
+                    rewrite M.add_spec2. rewrite M.add_spec2.
+                    rewrite H1.
+                    easy.
+                    apply String.eqb_neq in H. rewrite H. easy.
+                    rewrite String.eqb_sym. rewrite H9. easy.
+                 * case_eq(String.eqb r q); intros.
+                   ** rewrite String.eqb_eq in H10. subst.
+                      rewrite H1 in H6. 
+                      exists(M.add r' (sig, t3) (M.add q (sigp, t1) (M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+                      apply e_recv with (s := s1) (s' := s2) (xs := ys). easy. easy. easy.
+                      rewrite M.add_spec2. rewrite M.add_spec2.
+                      rewrite H2. easy.
+                      rewrite String.eqb_sym. rewrite H9. easy.
+                      rewrite String.eqb_sym. rewrite H8. easy.
+                      rewrite M.add_spec1.
+                      destruct H6 as (H6a,H6b).
+                      rewrite <- H6b. easy.
+                   ** exists(M.add r' (sig, t3) (M.add r (c2, t1) (M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+                      apply e_recv with (s := s1) (s' := s2) (xs := ys). easy. easy. easy.
+                      rewrite M.add_spec2. rewrite M.add_spec2.
+                      rewrite H2. easy.
+                      rewrite String.eqb_sym. rewrite H9. easy.
+                      rewrite String.eqb_sym. rewrite H8. easy.
+                      rewrite M.add_spec2. rewrite M.add_spec2.
+                      rewrite H1. easy.
+                      apply String.eqb_neq in H. rewrite H. easy.
+                      rewrite String.eqb_sym. rewrite H10. easy.
+                      rewrite H2 in H2b. easy.
+                      rewrite H1 in H2a. easy.
+                      easy.
+       - easy.
+       - destruct H2 as (g'', H2).
+         subst.
+         assert(lr p q l1 = lr p q l1) by easy.
+         assert(exists g' : ctx, red g1 (lr r r' l2) g').
+         { exists g''. 
+           apply e_struct with (g1 := g) (g1' := g'').
+           easy. easy. easy.
+         }
+         specialize(IHred H0 H1).
+         destruct IHred as (g''', H3').
+         exists g'''.
+         apply e_struct with (g1 := g1') (g1' := g'''); easy.
+Qed.
+
+
