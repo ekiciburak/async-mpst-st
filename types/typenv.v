@@ -792,3 +792,61 @@ Proof. intros.
          apply e_struct with (g1 := g1') (g1' := g'''); easy.
 Qed.
 
+Lemma _B_2_2a: forall g g' g'' p q r l l' l1 l2,
+  l1 = lr p q l ->
+  l2 = ls p r l' ->
+  red g l1 g' -> red g l2 g'' -> False.
+Proof. intros.
+       specialize (_B_2_1a g g'' g' p r q l' l l2 l1); intros.
+       apply H3; easy.
+Qed.
+
+Lemma _B_2_2b: forall g p q r r' lb1 lb2 l1 l2,
+  lb1 = lr p q l1 -> 
+  lb2 = ls r r' l2 ->
+  (exists g', red g lb2 g') -> (forall g', red g lb1 g' -> exists g'', red g' lb2 g'').
+Proof. intros.
+       case_eq(String.eqb r p); intros Hneq.
+       rewrite String.eqb_eq in Hneq. subst. 
+       destruct H1.
+       assert((lr p q l1) = (lr p q l1)) by easy.
+       assert(ls p r' l2 = ls p r' l2) by easy.
+       specialize(_B_2_1a g x g' p r' q l2 l1 (ls p r' l2) (lr p q l1) H1 H0 H H2); intros. easy.
+       induction H2; intros.
+       - inversion H. subst.
+         destruct H1 as (g'',H1).
+         apply red_snd_inv with (p := r) (r := r') (l' := l2) in H1.
+         destruct H1 as (ys, (s1, (t1, H1))).
+         case_eq(M.find r gam); intros.
+         + destruct p0 as (c2, t2).
+           rewrite H0 in H1.
+           case_eq(String.eqb r q); intros Heq.
+           rewrite String.eqb_eq in Heq. subst.
+           rewrite H0 in H5.
+           exists(M.add q ((sigp ++ ([(r',l2,s1)])), t1) ((M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+           apply e_send with (xs := ys). easy. easy. 
+           rewrite M.add_spec1. split. easy. 
+           destruct H5. rewrite <- H7. easy.
+           exists(M.add r ((c2 ++ ([(r',l2,s1)])), t1) ((M.add q (sigp, Tp) (M.add p (sigq, Tk) gam)))).
+           apply e_send with (xs := ys). easy. easy. 
+           rewrite M.add_spec2. rewrite M.add_spec2. rewrite H0.
+           easy.
+           rewrite String.eqb_sym. rewrite Hneq. easy.
+           rewrite String.eqb_sym. rewrite Heq. easy.
+         + rewrite H0 in H1. easy.
+         easy.
+         easy.
+       - destruct H1 as (g'', H1).
+         subst.
+         assert(lr p q l1 = lr p q l1) by easy.
+         assert(exists g' : ctx, red g1 (ls r r' l2) g').
+         { exists g''. 
+           apply e_struct with (g1 := g) (g1' := g'').
+           easy. easy. easy.
+         }
+         specialize(IHred H H0).
+         destruct IHred as (g''', H3').
+         exists g'''.
+         apply e_struct with (g1 := g1') (g1' := g'''); easy.
+Qed.
+
