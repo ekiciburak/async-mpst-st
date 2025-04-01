@@ -324,7 +324,7 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
 
 Definition livePath (pt: Path): Prop :=
   (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventuallyC (hPR q p l) pt) /\
-  (forall p q l s sig ys, dequeued p q l s sig ys pt -> eventuallyC (hPR p q l) pt).
+  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', eventuallyC (hPR p q l') pt).
 
 
 Definition livePathC (pt: Path) := (* pathRedC pt /\ *) alwaysC livePath pt.
@@ -568,6 +568,7 @@ Proof. intros.
          easy.
        }
        apply H4b in H3.
+       destruct H3 as (l', H3). exists l'.
        pinversion H3. subst. pfold. constructor. easy.
        subst. pfold. apply evc. left. easy.
        apply mon_ev.
@@ -1184,9 +1185,6 @@ Proof. unfold live.
        apply mon_alw.
        apply mon_alw.
 Qed.
-
-
-
 
 
 
