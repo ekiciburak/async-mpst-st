@@ -176,7 +176,7 @@ Definition update (g: ctx) (p: participant) (a: queue*local): ctx :=
     | None   => g
   end.
 
-  Inductive red: ctx -> lab -> ctx -> Prop :=
+Inductive red: ctx -> lab -> ctx -> Prop :=
   | e_recv  : forall p q sigp sigq gam l Tp s s' Tk xs,
               p <> q ->
               retc xs l = Some (s, Tk) ->
@@ -317,9 +317,8 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
 
 Definition livePath (pt: Path): Prop :=
   (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventuallyC (hPR q p l) pt) /\
-  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', eventuallyC (hPR p q l') pt).
-
-
+  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', List.In l' (map fst (map fst ys)) /\ eventuallyC (hPR p q l') pt).
+  
 Definition livePathC (pt: Path) := alwaysC livePath pt.
 
 Definition live (g: ctx) := forall (pt: Path) (l: lab), fairPathC (cocons (g, l) pt) -> livePathC (cocons (g, l) pt).
@@ -502,23 +501,14 @@ Proof. intros.
          easy.
        }
        apply H4b in H3.
-       destruct H3 as (l', H3). exists l'.
+       destruct H3 as (l', (Hin, H3)). exists l'.
+       split. easy.
        pinversion H3. subst. pfold. constructor. easy.
        subst. pfold. apply evc. left. easy.
        apply mon_ev.
 
        left. easy.
        apply mon_alw.
-Qed.
-
-Lemma ev_or: forall {A: Type} (F: coseq A -> Prop) x xs, 
-  eventuallyC F (cocons x xs) ->
-  F (cocons x xs) \/ eventuallyC F xs.
-Proof. intros.
-       pinversion H.
-       subst. left. easy.
-       subst. right. easy.
-       apply mon_ev.
 Qed.
 
 Lemma red_rcv_inv: forall g g' p r l l',
@@ -967,7 +957,7 @@ Proof. intros.
          apply e_struct with (g1 := g1') (g1' := g'''); easy.
 Qed.
 
-Lemma _B3: forall g lb1 g' lb2 pt, 
+Lemma _B_3: forall g lb1 g' lb2 pt, 
   red g lb1 g' -> 
   fairPathC (cocons (g', lb2) pt) -> 
   fairPathC (cocons (g, lb1) (cocons (g', lb2) pt)).
@@ -993,8 +983,7 @@ Proof. intros.
                    assert(ls p r' l' = ls p r' l') by easy.
                    specialize(_B_2_1ad g g'' g' p q r' l l' (ls p q l) (ls p r' l') H3 H5 H6 H1 H); intros HH.
                    easy.
-              * (* specialize(H3a r r' l). *)
-                simpl in H1. apply String.eqb_neq in H3.
+              * simpl in H1. apply String.eqb_neq in H3.
                 assert(ls r r' l' = ls r r' l') by easy.
                 assert(ls p q l = ls p q l) by easy.
                 destruct H1 as (g'',H1).
@@ -1078,7 +1067,7 @@ Lemma _4_9: forall g l g', live g -> red g l g' -> live g'.
 Proof. unfold live.
        intros.
        specialize(H (cocons (g', l0) pt) l).
-       apply _B3 with (g := g) (lb1 := l) in H1; try easy.
+       apply _B_3 with (g := g) (lb1 := l) in H1; try easy.
        apply H in H1.
        pinversion H1.
        subst. pfold.
