@@ -324,8 +324,7 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
 
 Definition livePath (pt: Path): Prop :=
   (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventuallyC (hPR q p l) pt) /\
-  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', eventuallyC (hPR p q l') pt).
-
+  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', List.In l' (map fst (map fst ys)) /\ eventuallyC (hPR p q l') pt).
 
 Definition livePathC (pt: Path) := (* pathRedC pt /\ *) alwaysC livePath pt.
 
@@ -568,7 +567,8 @@ Proof. intros.
          easy.
        }
        apply H4b in H3.
-       destruct H3 as (l', H3). exists l'.
+       destruct H3 as (l', (Hin, H3)). exists l'.
+       split. easy.
        pinversion H3. subst. pfold. constructor. easy.
        subst. pfold. apply evc. left. easy.
        apply mon_ev.
@@ -1066,7 +1066,7 @@ Definition Fairness pt :=
 
 Definition FairPath pt := alwaysC Fairness pt. *)
 
-Lemma _B3: forall g lb1 g' lb2 pt, 
+Lemma _B_3: forall g lb1 g' lb2 pt, 
   red g lb1 g' -> 
   fairPathC (cocons (g', lb2) pt) -> 
   fairPathC (cocons (g, lb1) (cocons (g', lb2) pt)).
@@ -1177,7 +1177,7 @@ Lemma _4_9: forall g l g', live g -> red g l g' -> live g'.
 Proof. unfold live.
        intros.
        specialize(H (cocons (g', l0) pt) l).
-       apply _B3 with (g := g) (lb1 := l) in H1; try easy.
+       apply _B_3 with (g := g) (lb1 := l) in H1; try easy.
        apply H in H1.
        pinversion H1.
        subst. pfold.
