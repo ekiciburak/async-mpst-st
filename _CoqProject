@@ -15,6 +15,7 @@ src/so.v
 src/si.v
 src/reordering.v
 src/siso.v
+src/projections.v
 subtyping/refinement.v
 src/reorderingfacts.v
 src/acteqfacts.v

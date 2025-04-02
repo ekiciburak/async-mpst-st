@@ -3204,7 +3204,15 @@ Proof. pcofix CIH. intros.
          apply refinementR2_mon.
 Qed.
 
-Print local.
+Lemma inSendf: forall w p (Hs: singleton w) (Hin: coseqIn (p, snd) (act w)),
+  exists b l s w2, w = merge_bpf_cont b (p ! (cocons (l,s,w2) conil)).
+Proof. intros.
+       specialize(inSend w p Hs Hin); intro HH.
+       destruct HH as (b,(l,(s,(w2,Hw2)))).
+       exists (Bp2Bpf p b). exists l. exists s. exists w2.
+       rewrite Hw2. rewrite mgBp2Bpf. easy.
+Qed.
+
 Fixpoint actL (t: local): list (participant * dir) :=
   match t with
     | lt_send p xs    =>
