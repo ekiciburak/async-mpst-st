@@ -324,7 +324,7 @@ Definition dequeued (p q: participant) (l: label) (s: local.sort) sigp ys (pt: P
 
 Definition livePath (pt: Path): Prop :=
   (forall p q l s sig T,  enqueued p q l s sig T pt  -> eventuallyC (hPR q p l) pt) /\
-  (forall p q l s sig ys, dequeued p q l s sig ys pt ->  exists l', List.In l' (map fst (map fst ys)) /\ eventuallyC (hPR p q l') pt).
+  (forall p q l s sig ys, dequeued p q l s sig ys pt -> exists l', List.In l' (map fst (map fst ys)) /\  eventuallyC (hPR p q l') pt).
 
 Definition livePathC (pt: Path) := (* pathRedC pt /\ *) alwaysC livePath pt.
 
@@ -1186,5 +1186,112 @@ Proof. unfold live.
        apply mon_alw.
 Qed.
 
+
+(*for trees*)
+
+Require Import ST.src.st.
+
+Module T  := MMaps.WeakList.Make(SS).
+Module TF := MMaps.Facts.Properties SS M. 
+
+Definition Ctx: Type := T.t (queue*st).
+
+Notation TPath := (coseq (Ctx*lab)) (only parsing).
+
+Definition Dequeued (p q: participant) (l: label) (s: local.sort) (pt: TPath): Prop :=
+  match pt with
+    | cocons (g, tl) (cocons (g',tl') xs) =>
+      match (T.find p g, T.find q g, T.find p g', T.find q g') with
+        | (Some (((a,b,c)::sigp'), Tp'), Some (sigq, st_receive d ys), Some (q3, T3), Some (q4, T4)) => 
+           a = q /\ b = l /\ c = s /\ d = p /\ qCong q3 sigp' /\ T4 = Tp' /\ qCong q4 sigq /\ (exists k s, copathsel k s ys T4)
+        | _                                                                                          => False 
+      end
+    | _                => False 
+  end.
+
+Definition Enqueued (p q: participant) sigp ys (pt: TPath): Prop :=
+  match pt with
+    | cocons (g, tl) (cocons (g',tl') xs) =>
+      match (T.find p g, T.find q g, T.find p g', T.find q g') with
+        | (Some (q1, Tp), Some (((a,l,s)::sig'), Tq), Some (q3, T3), Some (q4, T4)) => 
+          a = p /\ qCong q1 sigp /\ qCong q3 sigp /\ qCong q4 sig' /\ Tp = st_receive q ys /\ Tq = T4 /\ copathsel l s ys T3
+        | _                                                                         => False 
+      end
+    | _                => False 
+  end. 
+
+Inductive Red: Ctx -> lab -> Ctx -> Prop :=
+  | E_recv  : forall p q sigp sigq gam l Tp s s' Tk xs,
+              p <> q ->
+              copathsel l s xs Tk ->
+              subsort s' s ->
+              (
+                match T.find p gam with
+                  | Some (sig', T') => qCong sig' ((q,l,s')::sigp) /\ T' = Tp
+                  | _               => False 
+                end
+              ) ->
+              (
+                match T.find q gam with
+                  | Some (sig', T') => qCong sig' sigq /\ T' = (st_receive p xs)
+                  | None            => False
+                end
+              ) ->
+              Red gam (lr q p l) (T.add p (sigp, Tp) (T.add q (sigq, Tk) gam))
+  | E_send  : forall p q sig gam l s Tk xs,
+              p <> q ->
+              copathsel l s xs Tk ->
+              (
+                match T.find p gam with
+                 | Some (sig', T') => qCong sig' sig /\ T' = (st_send q xs)
+                 | _               => False
+                end
+              ) ->
+              Red gam (ls p q l) (T.add p ((sig ++ [(q,l,s)]), Tk) gam).
+
+Definition HPR (p q: participant) (l: label) (pt: TPath): Prop :=
+  match pt with
+    | cocons (g, (lr a b l')) xs => if andb (String.eqb p a) (andb (String.eqb q b) (String.eqb l l')) then True else False
+    | _                          => False 
+  end.
+
+Definition HPS (p q: participant) (l: label) (pt: TPath): Prop :=
+  match pt with
+    | cocons (g, (ls a b l')) xs => if andb (String.eqb p a) (andb (String.eqb q b) (String.eqb l l')) then True else False
+    | _                          => False 
+  end.
+
+Definition Enabled (F: Ctx -> Prop) (pt: TPath): Prop :=
+  match pt with
+    | cocons (g, l) xs => F g
+    | _                => False 
+  end.
+
+Definition RedE l g := exists g', Red g l g'.
+
+Definition FairPath (pt: TPath): Prop :=
+  (forall p q l, Enabled (RedE (ls p q l)) pt -> exists l', eventuallyC (HPS p q l') pt) /\
+  (forall p q l, Enabled (RedE (lr p q l)) pt -> eventuallyC (HPR p q l) pt).
+
+Inductive pLiveness (R: Ctx -> participant -> Prop): Ctx -> participant -> Prop :=
+  | lpR: forall p gam,
+         (
+           match T.find p gam with
+             | Some (sigp, st_receive q ys) => forall l pt, FairPath (cocons (gam, l) pt) -> eventuallyC (Enqueued p q sigp ys) (cocons (gam, l) pt)
+             | _                            => False
+           end
+         ) -> pLiveness R gam p
+  | lpS: forall p gam,
+         (
+           match T.find p gam with
+             | Some ((q,l,s)::sigp, Tp)     => forall lb pt, FairPath (cocons (gam, lb) pt) -> eventuallyC (Dequeued p q l s) (cocons (gam, lb) pt)
+             | _                            => False
+           end
+         ) -> pLiveness R gam p
+  | lpC: forall gam l gam' p, Red gam l gam' -> R gam' p -> pLiveness R gam p.
+
+Definition pLivenessC g p := paco2 pLiveness bot2 g p.
+
+Definition Live g := forall p, T.mem p g -> pLivenessC g p.
 
 
