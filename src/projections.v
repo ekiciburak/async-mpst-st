@@ -122,13 +122,6 @@ Proof. intros.
        apply mon_projs.
 Admitted.
 
-Lemma dropBA4: forall b b2 p l s s' w w',
-  isInB b p = false ->
-  isInB b2 p = false ->
-  paco2 refinementR4 bot2 (merge_bpf_cont b (p ! [|(l, s, w)|])) (merge_bpf_cont b2 (p ! [|(l, s', w')|])) ->
-  paco2 refinementR4 bot2 (merge_bpf_cont b w) (merge_bpf_cont b2 w').
-Proof. Admitted.
-
 Lemma _B_7: forall w w' p w1 w2, refinement4 (@und w) (@und w') -> projSC (@und w) p (@und w1) -> projSC (@und w') p (@und w2) -> sRefinement (@und w1) (@und w2).
 Proof. destruct w as (w, Pw).
        destruct w' as (w', Pw').
@@ -167,7 +160,7 @@ Proof. destruct w as (w, Pw).
            assert((q ! [|(l, s, merge_bpf_cont b2 (q2 ! [|(l2, s2, w3)|]))|]) = (merge_bpf_cont (bpf_send q l s b2) (q2 ! [|(l2, s2, w3)|]))).
            { rewrite(st_eq(merge_bpf_cont (bpf_send q l s b2) (q2 ! [|(l2, s2, w3)|]))). simpl. easy. }
            rewrite H4 in H0.
-           specialize (dropBA4 bpf_end (bpf_send q l s b2) q2 l2 s1 s2 w'0 w3); intro HD.
+           specialize (drop_send bpf_end (bpf_send q l s b2) q2 l2 s1 s2 w'0 w3); intro HD.
            rewrite bpfend_bn in HD.
            apply HD in H0.
            apply CIH with (p := q2) (w' := (merge_bpf_cont (bpf_send q l s b2) w3)) (w := w'0).
