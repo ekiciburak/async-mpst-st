@@ -3213,6 +3213,74 @@ Proof. intros.
        rewrite Hw2. rewrite mgBp2Bpf. easy.
 Qed.
 
+Lemma inSendfE: forall w p (Hs: singleton w) (Hin: coseqIn (p, snd) (act w)),
+  exists b l s w2, w = merge_bpf_cont b (p ! (cocons (l,s,w2) conil)) /\ isInB b p = false.
+Proof. intros.
+       remember (p, snd) as v.
+       remember (act w) as u.
+       generalize dependent w.
+       induction Hin; intros.
+       rewrite Heqv in H0. rewrite <- H0 in H.
+       subst. simpl in *.
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in Hequ. simpl in Hequ. easy.
+       subst.
+       specialize(invsingl s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       specialize(invsingl2 s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       exists (bpf_end). (* exists 1. *) exists l1. exists s1. exists w1. simpl.
+       rewrite bpfend_bn. easy.
+       rewrite Heqv in H0. rewrite Hequ in H.
+       subst. simpl in *.
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in H. simpl in H. easy.
+       subst.
+       specialize(invsingl s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       subst.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in H. simpl in H.
+       inversion H. subst.
+       assert((p, snd) = (p, snd)) by easy.
+       assert(singleton w1).
+       { apply extrR in Hs. easy.  }
+       assert((act w1) = (act w1)) by easy.
+       specialize(IHHin H1 w1 H2 H3).
+       destruct IHHin as (b,(l2,(s2,(w3,(IHw3,HR))))).
+       exists (bpf_receive s l1 s1 b). exists l2. exists s2. exists w3.
+       rewrite IHw3. simpl.
+       split.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s l1 s1 b) (p ! [|(l2, s2, w3)|]))).
+       simpl. easy. easy.
+       subst.
+       specialize(invsingl2 s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in H.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in H. simpl in H.
+       inversion H. subst.
+       assert (p <> s). unfold not in *. intros. apply H0. subst. easy.
+       assert((p, snd) = (p, snd)) by easy.
+       assert(singleton w1).
+       { apply extsR in Hs. easy. }
+       assert((act w1) = (act w1)) by easy.
+       specialize(IHHin H2 w1 H3 H4).
+       destruct IHHin as (b,(l2,(s2,(w3,(IHw3,HR))))).
+       rewrite IHw3.
+       exists (bpf_send s l1 s1 b). exists l2. exists s2. exists w3.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s l1 s1 b) (p ! [|(l2, s2, w3)|]))). simpl. split. easy.
+       rewrite HR.
+       apply String.eqb_neq in H1. rewrite H1. easy.
+Qed.
+
 Fixpoint actL (t: local): list (participant * dir) :=
   match t with
     | lt_send p xs    =>
