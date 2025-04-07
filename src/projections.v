@@ -710,11 +710,40 @@ Proof. destruct w as (w, Pw).
            admit. admit. easy.
            
            subst.
-           
-           admit.
+
+           apply prj_send_inv2 in H6.
+           destruct H6 as (H6a,(b5,(w5,(H6b,(H6c,H6d))))).
+           subst.
+           apply prj_send_inv2 in H4.
+           destruct H4 as (H4a,(b6,(w6,(H4b,(H4c,H4d))))).
+           subst.
+           pose proof H0 as H00.
+           assert((q ! [|(l, s, merge_bpf_cont b6 (q1 ! [|(l1, s1, w6)|]))|]) =
+                  (merge_bpf_cont (bpf_send q l s b6) (q1 ! [|(l1, s1, w6)|]))) by admit.
+           rewrite H4 in H0.
+           assert((q0 & [|(l0, s0, merge_bpf_cont b5 (q1 ! [|(l2, s2, w5)|]))|]) =
+                  (merge_bpf_cont (bpf_receive q0 l0 s0 b5) (q1 ! [|(l2, s2, w5)|]))) by admit.
+           rewrite H6 in H0.
+           apply send_inv_leq in H0.
+           destruct H0 as (H0a,H0b).
+           subst.
+           pfold. constructor. easy.
+           right.
+           rewrite H4 in H00. rewrite H6 in H00.
+           apply drop_send in H00.
+           rewrite(st_eq(merge_bpf_cont (bpf_send q l s b6) w6)) in H00.
+           rewrite(st_eq (merge_bpf_cont (bpf_receive q0 l0 s0 b5) w5)) in H00. simpl in H00.
+           apply CIH with (p := q1) (w' := (q0 & [|(l0, s0, merge_bpf_cont b5 w5)|])) (w :=(q ! [|(l, s, merge_bpf_cont b6 w6)|])).
+           easy. easy. admit. admit. easy.
+           apply proj_send_bs. easy. easy. easy.
+           apply proj_send_br. easy. easy.  simpl.
+           rewrite orbtf. rewrite H4c. apply String.eqb_neq in H. rewrite H. easy.
+           simpl. easy. simpl. rewrite orbtf. rewrite H4c. apply String.eqb_neq in H. rewrite H. easy.
+           simpl. easy. admit. admit. 
            apply mon_projs.
            (*third inversion on H2 starts here*)
            subst.
+           
 Admitted.
 
 

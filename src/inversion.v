@@ -1933,3 +1933,93 @@ Proof. intro b1.
            }
          apply refinementR4_mon.
 Qed.
+
+Lemma ApApeqInvF: forall p a1 a2 l1 l2 s1 s2 w1 w2,
+  isInA a1 p = false ->
+  isInA a2 p = false ->
+  merge_apf_cont a1 (p & [|(l1, s1, w1)|]) =
+  merge_apf_cont a2 (p & [|(l2, s2, w2)|]) -> (p & [|(l1, s1, w1)|]) = (p & [|(l2, s2, w2)|]).
+Proof. intros.
+       specialize(mgApf2Ap p a1 (p & [|(l1, s1, w1)|]) H); intro HH.
+       specialize(mgApf2Ap p a2 (p & [|(l2, s2, w2)|]) H0); intro HH2.
+       rewrite <- HH in H1.
+       rewrite <- HH2 in H1.
+       apply ApApeqInv in H1.
+       easy.
+Qed.
+
+Lemma recv_inv_leq: forall a1 a2 p l1 s1 w1 l2 s2 w2,
+  isInA a1 p = false ->
+  isInA a2 p = false ->
+  paco2 refinementR4 bot2 (merge_apf_cont a1 (p & [|(l1, s1, w1)|])) (merge_apf_cont a2 (p & [|(l2, s2, w2)|])) ->
+  l1 = l2 /\ subsort s2 s1.
+Proof. intro a1.
+       induction a1; intros.
+       - rewrite apfend_an in H1.
+         pinversion H1. subst.
+         rewrite <- meqAp3 in H6, H9. symmetry in H6. subst.
+         apply ApApeqInvF in H6. inversion H6. subst. easy.
+         easy.
+         case_eq n; intros.
+         + easy.
+         + rewrite <- InN; easy.
+         apply refinementR4_mon.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a1) (p & [|(l1, s2, w1)|]))) in H1. simpl in H1.
+         pinversion H1.
+         rewrite <- meqAp3 in H6, H9. symmetry in H6. subst. simpl in H.
+         rewrite orbtf in H.
+         destruct H as (Ha,Hb).
+         case_eq(Apf_eqb (ApnA3 a n) a2); intros.
+         + apply apf_eqb_eq in H. subst.
+           apply merge_same_aeq in H6. inversion H6. subst.
+           rewrite String.eqb_refl in Ha. easy.
+         + apply apf_eqb_neq in H.
+           assert(isInA (ApnA3 a n) s = false).
+           { case_eq n; intros.
+             - easy.
+             - rewrite <- InN; easy.
+           }
+           assert(a2 <> ApnA3 a n) by easy.
+           assert(merge_apf_cont a2 (p & [|(l2, s3, w2)|]) = merge_apf_cont a2 (p & [|(l2, s3, w2)|])) by easy.
+           specialize(_39_2 a2 (ApnA3 a n) p s
+             (merge_apf_cont a2 (p & [|(l2, s3, w2)|]))
+             (p & [|(l2, s3, w2)|])
+             (s & [|(s0, s', w')|]) H0 H2 H3 H4 H6
+           ); intro HH.
+           destruct HH as [HH | HH].
+           destruct HH as (c,(HHa,(HHb,(HHc,HHd)))).
+           assert(s <> p).
+           { apply String.eqb_neq. rewrite String.eqb_sym. easy. }
+           specialize(pneqq4 c s p l2 s0 s3 s' w2 w' H5 HHa HHd); intro HH.
+           destruct HH as (d,(Hhe,(Hhf,HHg))).
+           rewrite HHc in H9. rewrite HHg in H9.
+           assert((merge_apf_cont (Apf_merge a2 (apf_receive p l2 s3 d)) w') =
+                  (merge_apf_cont a2 (p & [|(l2,s3, merge_apf_cont d w')|]))).
+           { rewrite meqApH.
+             rewrite(st_eq(merge_apf_cont (apf_receive p l2 s3 d) w')). simpl. easy.
+           }
+           rewrite H11 in H9.
+           specialize(IHa1 a2 p l1 s2 w1 l2 s3 (merge_apf_cont d w')).
+           apply IHa1. easy. easy. easy. 
+           destruct HH as (c,(HHa,(HHb,(HHc,HHd)))).
+           assert(p <> s).
+           { apply String.eqb_neq. easy. }
+           specialize(pneqq4 c p s s0 l2 s' s3 w' w2 H5 HHa HHd); intro HH.
+           destruct HH as (d,(HHe,(HHf,HHg))).
+           rewrite HHf in H9.
+           assert((merge_apf_cont (ApnA3 a n) (merge_apf_cont d (p & [|(l2, s3, w2)|]))) =
+                  (merge_apf_cont (Apf_merge (ApnA3 a n) d) (p & [|(l2, s3, w2)|]))).
+           { rewrite meqApH. easy. }
+           rewrite H11 in H9.
+           specialize(IHa1 (Apf_merge (ApnA3 a n) d)  p l1 s2 w1 l2 s3 w2).
+           apply IHa1; try easy.
+           rewrite InMerge. rewrite HHc in H0.
+           rewrite InMerge in H0. rewrite orbtf in H0.
+           destruct H0 as (H0a, H0b). rewrite H0a.
+           rewrite HHg in HHa.
+           simpl in HHa. rewrite Ha in HHa. simpl in HHa.
+           rewrite HHa. easy.
+         apply refinementR4_mon.
+Qed.
+
+

@@ -657,7 +657,7 @@ Proof. intro b.
 Qed.
 
 Lemma inH8: forall a b p w w',
-  isInB a p  = false ->
+  isInB a p = false ->
   isInB b p = true ->
   merge_bpf_cont a w = merge_bpf_cont b w' ->
   exists c, isInB c p = true /\ b = Bpf_merge a c /\ w = merge_bpf_cont c w'.
