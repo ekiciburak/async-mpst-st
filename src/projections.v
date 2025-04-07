@@ -288,27 +288,49 @@ Proof. intros.
        pinversion H1.
        - subst. pfold. apply pjs_sndN. easy.
          intros HH. rewrite <- inB_coseq in HH.
-         admit.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         rewrite(coseq_eq(act (end))) in HH. simpl in HH.
+         inversion HH. subst. easy. subst. easy.
        - subst. pfold. constructor. easy.
-         rewrite <- inB_coseq. right. admit.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (p ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit1 with (y := (p, snd)) (ys := (act w')). easy. easy.
          left. apply proj_send_b. easy.
          pfold. easy.
        - subst. pfold. constructor. easy.
-         rewrite <- inB_coseq. right. admit.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, snd)) (ys := (act w')). easy.
+         intro HH. apply H2. inversion HH. easy. easy.
          left. apply proj_send_b. easy.
          pfold. easy.
        - subst. pfold. apply pjs_sndN. easy.
-         intro HH. rewrite <- inB_coseq in HH. admit.
+         intro HH. rewrite <- inB_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         apply H3.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))) in HH. simpl in HH.
+         inversion HH. subst.
+         inversion H4. subst. easy.
+         subst. inversion H4. subst. easy.
        - subst. pfold. constructor. easy.
-         rewrite <- inB_coseq. right. admit.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, rcv)) (ys := (act w')). easy. easy. easy.
          left. apply proj_send_b. easy.
          pfold. easy.
        - subst. pfold. apply pjs_sndN. easy.
          intro HH. rewrite <- inB_coseq in HH.
          apply H2.
-         admit.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))) in HH.
+         simpl in HH. 
+         inversion HH. subst. inversion H3.
+         subst. inversion H3. subst. easy.
        apply mon_projs.
-Admitted.
+Qed.
 
 Lemma proj_send_br: forall b p q l s w wb,
   isInB b p = false ->
@@ -318,26 +340,47 @@ Proof. intros.
        pinversion H0.
        - subst. pfold. apply pjs_rcvN. 
          intro HH. rewrite <- inB_coseq in HH.
-         admit.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         rewrite(coseq_eq(act (end))) in HH. simpl in HH.
+         inversion HH. subst. easy. subst. easy.
        - subst. pfold. constructor.
-         rewrite <- inB_coseq. right. admit.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (p ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit1 with (y := (p, snd)) (ys := (act w')). easy. easy.
          left. apply proj_send_b. easy.
          pfold. easy.
        - subst. pfold. constructor.
-         rewrite <- inB_coseq. right. admit.
-         left. apply proj_send_b. easy.
-         pfold. easy.
-       - subst. pfold. apply pjs_rcvN.
-         intro HH. rewrite <- inB_coseq in HH. admit.
-       - subst. pfold. constructor.
-         rewrite <- inB_coseq. right. admit.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, snd)) (ys := (act w')). easy.
+         intro HH. apply H1. inversion HH. easy. easy.
          left. apply proj_send_b. easy.
          pfold. easy.
        - subst. pfold. apply pjs_rcvN.
          intro HH. rewrite <- inB_coseq in HH.
-         admit.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         apply H2.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))) in HH. simpl in HH.
+         inversion HH. subst. inversion H3. subst. easy.
+         subst. inversion H3. subst. easy.
+       - subst. pfold. constructor.
+         rewrite <- inB_coseq. right.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, rcv)) (ys := (act w')). easy. easy. easy.
+         left. apply proj_send_b. easy.
+         pfold. easy.
+       - subst. pfold. apply pjs_rcvN.
+         intro HH. rewrite <- inB_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))) in HH.
+         simpl in HH. 
+         inversion HH. subst. inversion H2.
+         subst. inversion H2. subst. easy.
        apply mon_projs.
-Admitted.
+Qed.
 
 Lemma prj_send_eq: forall p q l s w wa,
   singleton w ->
@@ -667,6 +710,7 @@ Proof. destruct w as (w, Pw).
            admit. admit. easy.
            
            subst.
+           
            admit.
            apply mon_projs.
            (*third inversion on H2 starts here*)

@@ -1827,7 +1827,13 @@ Lemma BpBpeqInv2F: forall p b1 b2 l1 l2 s1 s2 w1 w2,
   isInB b2 p = false ->
   merge_bpf_cont b1 (p ! [|(l1, s1, w1)|]) =
   merge_bpf_cont b2 (p ! [|(l2, s2, w2)|]) -> (p ! [|(l1, s1, w1)|]) = (p ! [|(l2, s2, w2)|]).
-Admitted.
+Proof. intros.
+       specialize(mgBpf2Bp p b1 (p ! [|(l1, s1, w1)|]) H); intro HH.
+       rewrite <- HH in H1.
+       specialize(mgBpf2Bp p b2 (p ! [|(l2, s2, w2)|]) H0); intro HH2.
+       rewrite <- HH2 in H1.
+       apply BpBpeqInv2 in H1. easy.
+Qed.
 
 Lemma send_inv_leq: forall b1 b2 p l1 s1 w1 l2 s2 w2,
   isInB b1 p = false ->
@@ -1845,11 +1851,16 @@ Proof. intro b1.
          destruct Hc3 as (b3,(Hc3a,(Hc3b,Hc3c))).
          subst.
          assert((merge_apf_cont (ApnA3 a n) (merge_bpf_cont b3 (p ! [|(l2, s3, w2)|]))) =
-                (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n)) b3) (p ! [|(l2, s3, w2)|]))) by admit.
+                (merge_bpf_cont (Bpf_merge (Ap2BpSeq (ApnA3 a n)) b3) (p ! [|(l2, s3, w2)|]))).
+         { rewrite !breOrg3.
+           rewrite mcAp2Bp2. easy.
+         }
          rewrite H2 in H9.
          
          specialize(IHb1 (Bpf_merge (Ap2BpSeq (ApnA3 a n)) b3) p l1 s2 w1 l2 s3 w2).
-         apply IHb1; try easy. admit.
+         apply IHb1; try easy.
+         rewrite InMergeFS. rewrite Hc3a.
+         rewrite BisInAF. easy.
          apply refinementR4_mon.
        - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b1) (p ! [|(l1, s2, w1)|]))) in H1. simpl in H1.
          pinversion H1.
@@ -1861,7 +1872,11 @@ Proof. intro b1.
            apply merge_same_beq in H6.
            inversion H6. subst.
            simpl in H. rewrite String.eqb_refl in H. easy.
-         + assert(isInB (BpnB3 b n) s = false ) by admit.
+         + assert(isInB (BpnB3 b n) s = false ).
+           { case_eq n; intros.
+             - simpl. easy.
+             - rewrite <- InNS; easy.
+           }
            apply bpf_eqb_neq in Hcs.
            assert(b2 <> BpnB3 b n) by easy.
            assert(merge_bpf_cont b2 (p ! [|(l2, s3, w2)|]) = merge_bpf_cont b2 (p ! [|(l2, s3, w2)|])) by easy.
@@ -1878,10 +1893,14 @@ Proof. intro b1.
                destruct HHd as (b3,(HHd,(HHe,HHf))).
                rewrite HHf in H9.
                assert((merge_bpf_cont (Bpf_merge b2 (bpf_send p l2 s3 b3)) w') =
-                      (merge_bpf_cont b2 (p ! [|(l2,s3, merge_bpf_cont b3 w')|]))) by admit.
+                      (merge_bpf_cont b2 (p ! [|(l2,s3, merge_bpf_cont b3 w')|]))).
+               { rewrite !breOrg3.
+                 rewrite(st_eq(merge_bpf_cont (bpf_send p l2 s3 b3) w')). simpl. easy.
+               }
                rewrite H11 in H9.
                specialize(IHb1 b2 p l1 s2 w1 l2 s3 ( merge_bpf_cont b3 w')).
-               apply IHb1; try easy. admit.
+               apply IHb1; try easy.
+               simpl in H. rewrite orbtf in H. easy.
             ++ destruct HH as (c,(HHa,(HHb,(HHc,HHd)))).
                case_eq(String.eqb p s); intros.
                rewrite String.eqb_eq in H5. subst. simpl in H. rewrite String.eqb_refl in H. easy.
@@ -1890,16 +1909,27 @@ Proof. intro b1.
                destruct HHd as (b3,(HHd,(HHe,HHf))).
                rewrite HHe in H9.
                assert((merge_bpf_cont (BpnB3 b n) (merge_bpf_cont b3 (p ! [|(l2, s3, w2)|]))) =
-                      (merge_bpf_cont (Bpf_merge (BpnB3 b n) b3) (p ! [|(l2, s3, w2)|]))) by admit.
+                      (merge_bpf_cont (Bpf_merge (BpnB3 b n) b3) (p ! [|(l2, s3, w2)|]))).
+               { rewrite !breOrg3. easy. }
                rewrite H11 in H9.
                specialize(IHb1 (Bpf_merge (BpnB3 b n) b3) p l1 s2 w1 l2 s3  w2).
-               apply IHb1; try easy. simpl in H. admit. rewrite HHc in H0. admit.
+               apply IHb1; try easy. simpl in H.
+               rewrite orbtf in H. easy. rewrite HHc in H0.
+               rewrite InMergeFS. simpl in H.
+               rewrite HHf in H0.
+               rewrite InMergeFS in H0. simpl in H0.
+               destruct H0 as (H0a,H0b).
+               rewrite orbtf in H0b. easy.
          apply refinementR4_mon.
        - rewrite bpfend_bn in H1.
          pinversion H1.
          subst.
          rewrite <- meqBp3 in H6, H9. symmetry in H6. subst.
          apply BpBpeqInv2F in H6. inversion H6. subst. easy.
-         easy. admit.
+         easy.
+           { case_eq n; intros.
+             - simpl. easy.
+             - rewrite <- InNS; easy.
+           }
          apply refinementR4_mon.
-Admitted.
+Qed.
