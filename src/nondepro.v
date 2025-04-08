@@ -3191,6 +3191,14 @@ Proof. intros.
        - subst. rewrite bpfend_bn in H. easy.
 Qed.
 
+Lemma end_recv_false: forall a p l s w,
+  end = merge_apf_cont a (p & [|(l, s, w)|]) -> False.
+Proof. intros.
+       case_eq a; intros.
+       - subst. rewrite apfend_an in H. easy.
+       - subst. rewrite(st_eq( merge_apf_cont (apf_receive s0 s1 s2 a0) (p & [|(l, s, w)|]))) in H. simpl in H. easy.
+Qed.
+
 Lemma refTrans: Transitive (refinement3).
 Proof. red. pcofix CIH.
        intros x y z Ha Hb.

@@ -2022,4 +2022,73 @@ Proof. intro a1.
          apply refinementR4_mon.
 Qed.
 
+Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
+isInA a p = false ->
+merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H0. simpl in H0.
+         easy.
+Qed.
 
+Lemma rcv_snd_notRef: forall p q l1 s1 w1 l2 s2 w2,
+  refinement4 (p & [|(l1, s1, w1)|]) (q ! [|(l2, s2, w2)|]) -> False.
+Proof. intros. pinversion H.
+       subst.
+       rewrite <- meqAp3 in H4.
+       apply rcv_snd_notMer in H4.
+       easy.
+       case_eq n; intros.
+       - easy.
+       - rewrite <- InN; easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma snd_end_notRef: forall p l s w,
+  refinement4 (p ! [|(l, s, w)|]) (end) -> False.
+Proof. intros. 
+       pinversion H.
+       subst.
+       rewrite <- meqBp3 in H4.
+       symmetry in H4.
+       apply end_send_false in H4.
+       easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma rcv_end_notRef: forall p l s w,
+  refinement4 (p & [|(l, s, w)|]) (end) -> False.
+Proof. intros. 
+       pinversion H.
+       subst.
+       rewrite <- meqAp3 in H4.
+       symmetry in H4.
+       apply end_recv_false in H4.
+       easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma actionExLF: forall a w w',
+  coseqIn a (act w) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w').
+Admitted.
+
+Lemma actionExLNF: forall a w w',
+  (coseqIn a (act w) -> False) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w') -> False.
+Admitted.
+
+Lemma actionExRF: forall a w w',
+  coseqIn a (act w') ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w).
+Admitted.
+
+Lemma actionExRNF: forall a w w',
+  (coseqIn a (act w') -> False) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w) -> False.
+Admitted.
