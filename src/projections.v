@@ -91,69 +91,6 @@ Proof. intro b.
          apply mon_projs.
 Qed.
 
-Lemma inB_coseqL: forall b p w, coseqIn (p, snd) (act (merge_bpf_cont b w)) ->
-  isInB b p \/ coseqIn (p, snd) (act w).
-Proof. intro b.
-       induction b; intros.
-       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))) in H. simpl in H.
-         simpl.
-         inversion H. subst.
-         inversion H0.
-         subst. inversion H0. subst.
-         apply IHb. easy.
-       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))) in H. simpl in H.
-         inversion H. 
-         subst. inversion H0. subst. simpl. rewrite String.eqb_refl. simpl. left. easy.
-         subst. simpl. inversion H0. subst.
-         assert(p <> s).
-         { intro HH. apply H1. subst. easy. }
-         apply String.eqb_neq in H3. rewrite H3. simpl.
-         apply IHb. easy.
-       - simpl. rewrite bpfend_bn in H. right. easy.
-Qed.
-
-Lemma inB_coseqR: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) ->
-  coseqIn (p, snd) (act (merge_bpf_cont b w)).
-Proof. intro b.
-       induction b; intros.
-       - simpl in H. 
-         rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))). simpl.
-         destruct H as [H | H].
-         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           apply IHb. left. easy.
-         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           apply IHb. right. easy.
-       - simpl in H.
-         rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))). simpl.
-         destruct H as [H | H].
-         + apply Bool.orb_true_iff in H.
-           destruct H as [H | H].
-           ++ rewrite String.eqb_eq in H. subst.
-              apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-              case_eq(String.eqb p s); intros.
-              * rewrite String.eqb_eq in H0. subst.
-                apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-              * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
-                intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
-           ++ apply IHb. left. easy.
-         + case_eq(String.eqb p s); intros.
-           * rewrite String.eqb_eq in H0. subst.
-             apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
-            intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
-           apply IHb. right. easy.
-       - rewrite bpfend_bn. 
-         destruct H as [H | H].
-         + simpl in H. easy.
-         + easy.
-Qed.
-
-Lemma inB_coseq: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) <->
-  coseqIn (p, snd) (act (merge_bpf_cont b w)).
-Proof. split. 
-       - intros. apply inB_coseqR; easy.
-       - intros. apply inB_coseqL; easy.
-Qed.
 
 Lemma proj_send_b: forall b p w wb,
   isInB b p = false ->
