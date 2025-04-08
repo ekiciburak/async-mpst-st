@@ -2215,7 +2215,74 @@ Lemma actionExRF: forall a w w',
   coseqIn a (act w') ->
   paco2 refinementR4 bot2 w w' ->
   coseqIn a (act w).
-Admitted.
+Proof. intros.
+       pinversion H0.
+       - subst. rewrite <- meqAp3 in H, H3, H4.
+         case_eq a; intros.
+         + subst. rename s0 into q.
+           destruct d.
+           case_eq(String.eqb p q); intros.
+           ++ rewrite String.eqb_eq in H5. subst.
+              rewrite(coseq_eq(act (q & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit1 with (y := (q, rcv)) (ys := (act w0)). easy. easy.
+           ++ rewrite String.eqb_neq in H5.
+              assert(coseqIn (q, rcv) (act (merge_apf_cont (ApnA3 a0 n) w'0))).
+              { apply csInRAG in H. apply csInRARevG.
+                destruct H as [H | H].
+                + left. easy.
+                + right.
+                  rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
+                  inversion H. subst. inversion H6. subst. easy. subst.
+                  inversion H6. subst. easy.
+              }
+              apply H4 in H6.
+              rewrite(coseq_eq(act (p & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
+              easy.
+         + assert((merge_apf_cont (ApnA3 a0 n) (p & [|(l, s', w'0)|])) =
+                  (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (p & [|(l, s', w'0)|]))).
+              { rewrite mcAp2Bp2. easy. }
+           rewrite H5 in H.
+           rewrite <- inB_coseq in H.
+           destruct H as [H | H].
+           ++ rewrite BisInAF in H. easy.
+           ++ rewrite(coseq_eq (act (p & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. easy.
+              apply H4.
+              assert((merge_apf_cont (ApnA3 a0 n) w'0) =
+                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
+              { rewrite mcAp2Bp2. easy. }
+              rewrite H6.
+              rewrite <- inB_coseq. right.
+              rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
+              inversion H. subst. inversion H7. subst. inversion H7. subst. easy.
+        - subst. rewrite <- meqBp3 in H, H3, H4.
+         case_eq a; intros.
+         + subst. rename s0 into q.
+           destruct d.
+           rewrite(coseq_eq(act (p ! [|(l, s, w0)|]))). simpl.
+           apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. easy.
+           apply coseq_ninS in H; try easy.
+           apply H4. easy.
+           case_eq(String.eqb p q); intros.
+           ++ rewrite String.eqb_eq in H5. subst.
+              rewrite(coseq_eq(act (q ! [|(l, s, w0)|]))). simpl.
+              apply CoInSplit1 with (y := (q, snd)) (ys := (act w0)). easy. easy.
+           ++ rewrite String.eqb_neq in H5.
+              rewrite(coseq_eq (act (p ! [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
+              apply H4.
+              rewrite <- inB_coseq in H.
+              rewrite <- inB_coseq.
+              destruct H as [H | H].
+              * left. easy.
+              * right.
+                rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))) in H. simpl in H.
+                inversion H. subst. inversion H6. subst. easy.
+                subst. inversion H6. subst. easy.
+        - subst. easy.
+       apply refinementR4_mon.
+Qed.
 
 Lemma actionExLNF: forall a w w',
   (coseqIn a (act w) -> False) ->

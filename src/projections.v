@@ -91,7 +91,6 @@ Proof. intro b.
          apply mon_projs.
 Qed.
 
-
 Lemma proj_send_b: forall b p w wb,
   isInB b p = false ->
   projSC w p wb ->
