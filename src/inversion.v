@@ -971,13 +971,6 @@ Proof. intro a.
                 apply refinementR4_mon.
 Qed.
 
-(** TODO: admits in act_eqs *)
-
-(* Lemma act_eq_dsend: forall b1 b2 p l1 s1 w1 l2 s2 w2,
-  act_eq (merge_bpf_cont b1 (p ! [|(l1,s1,w1)|])) (merge_bpf_cont b2 (p ! [|(l2,s2,w2)|])) ->
-  act_eq (merge_bpf_cont b1 w1) (merge_bpf_cont b2 w2).
-Proof.  *)
-
 Fixpoint inB (a: (participant*dir)) (b: Bpf): bool :=
   match b with
     | bpf_send p l s b'    => if (String.eqb p (fst a)) && (direqb snd (Datatypes.snd a)) then true else inB a b'
@@ -2242,7 +2235,23 @@ Proof. intro a.
                 apply InMergeF in H0. easy.
                 easy.
                 easy. easy.
-                admit.
+                rewrite Hg in H7. rewrite merge_merge in H7.
+                apply IHa in H7; try easy.
+                split. intros.
+                apply actionExLF with (a := a1) in H7. 
+                rewrite merge_merge. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a1) in H7. easy.
+                rewrite <- merge_merge. easy.
+                simpl in H. rewrite orbtf in H.
+                easy. 
+                rewrite InMerge. rewrite Hc in H0.
+                rewrite InMerge in H0.
+                simpl in H0.
+                simpl in H.
+                rewrite orbtf in H. destruct H as (Hu, Hv).
+                rewrite Hu in H0. simpl in H0. easy.
              * destruct HP as (c,(Ha,(Hb,(Hc,Hd)))).
                 assert(p <> s).
                 { simpl in H. rewrite orbtf in H.
@@ -2285,7 +2294,17 @@ Proof. intro a.
                 rewrite Hc Hf in H7.
                 rewrite reOrg2 in H7.
                 easy.
-                admit.
+                rewrite Hc Hf in H7.
+                rewrite <- merge_merge in H7.
+                rewrite(st_eq (merge_apf_cont (apf_receive p l s' d) w'0)) in H7. simpl in H7.
+                apply IHa in H7; try easy.
+                rewrite merge_merge in H7.
+                split. intros.
+                apply actionExLF with (a := a1) in H7. 
+                easy. easy.
+                intros.
+                apply actionExRF with (a := a1) in H7. easy. easy.
+                simpl in H. rewrite orbtf in H. easy.
          + rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H3.
            simpl in H3.
            easy.
@@ -2293,7 +2312,7 @@ Proof. intro a.
            simpl in H4.
            easy.
        apply refinementR4_mon.
-Admitted.
+Qed.
 
 Lemma BpBpeqInv2F: forall p b1 b2 l1 l2 s1 s2 w1 w2,
   isInB b1 p = false ->
