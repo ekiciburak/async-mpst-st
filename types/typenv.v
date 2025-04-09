@@ -73,13 +73,60 @@ Inductive qCong: queue -> queue -> Prop :=
                   (q ++ [(p2,l2,s2)] ++ [(p1,l1,s1)] ++ q').
 
 Declare Instance Equivalence_qcong : Equivalence qCong.
-#[global] Declare Instance RWQC: Proper (qCong ==> qCong ==> impl) qCong.
+#[global] Instance RWQC: Proper (qCong ==> qCong ==> impl) qCong.
+Proof. repeat intro.
+       destruct H.
+       - destruct H0.
+         + rewrite !app_nil_r in H1. easy.
+         + rewrite app_nil_r app_nil_l in H1. easy.
+         + rewrite app_nil_r in H1. rewrite <- app_assoc. easy.
+         + apply transitivity with (y := (q0 ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           rewrite !app_nil_r in H1. easy.
+           apply qcomm. easy.
+       - destruct H0.
+         + rewrite !app_nil_r in H1. easy.
+         + rewrite !app_nil_l in H1. easy.
+         + rewrite app_nil_l in H1. rewrite <- app_assoc. easy.
+         + apply transitivity with (y := (q0 ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           rewrite app_nil_l in H1. easy.
+           apply qcomm. easy.
+       - destruct H0.
+         + rewrite !app_nil_r in H1. rewrite <- app_assoc. easy.
+         + rewrite app_nil_l in H1. rewrite <- app_assoc. easy.
+         + rewrite <- app_assoc. rewrite <- app_assoc.
+           easy.
+         + rewrite <- app_assoc.
+           apply transitivity with (y :=  (q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           easy.
+           apply qcomm. easy.
+       - destruct H0.
+         + rewrite !app_nil_r in H1.
+           apply transitivity with (y := (q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           constructor. easy. easy.
+         + rewrite !app_nil_l in H1.
+           apply transitivity with (y := (q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           constructor. easy. easy.
+         + apply transitivity with (y :=  (q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           symmetry.
+           constructor. easy.
+           rewrite <- app_assoc. easy.
+         + apply transitivity with (y := (q ++ [(p1, l1, s1)] ++ [(p2, l2, s2)] ++ q')).
+           constructor. easy.
+           symmetry.
+           apply transitivity with (y := (q0 ++ [(p0, l0, s0)] ++ [(p3, l3, s3)] ++ q'0)).
+           constructor. easy.
+           easy.
+Qed.
 
 Inductive lCong: local -> local -> Prop :=
   | lunf: forall l, lCong l (unf l).
 
 Declare Instance Equivalence_lcong : Equivalence lCong.
-#[global] Declare Instance RWLC: Proper (lCong ==> lCong ==> impl) lCong.
+#[global] Instance RWLC: Proper (lCong ==> lCong ==> impl) lCong.
+Proof. repeat intro.
+       destruct H.
+       destruct H1. easy.
+Qed.
 
 Inductive lab: Type :=
   | ls: participant -> participant -> label -> lab
@@ -167,8 +214,6 @@ Proof. unshelve econstructor.
        - exact ccS.
        - exact ccT.
 Defined.
-
-#[global] Declare Instance RWCC: Proper (cCong ==> cCong ==> impl) cCong.
 
 Definition update (g: ctx) (p: participant) (a: queue*local): ctx :=
   match M.find p g with
@@ -375,6 +420,7 @@ Proof. intros.
          apply H, IHred, H0. easy.
 Qed.
  *)
+ 
 Lemma cong_red: forall g g' gr l, red g l gr -> cCong g g' -> red g' l gr.
 Proof. intros.
        revert g' H0.
@@ -507,14 +553,8 @@ Proof. intros.
        specialize(cong_fair g' g l pt H1 H0); intro Hf.
        unfold live in H.
        apply H in Hf.
-(*        destruct Hf as (Hr, Hf). *)
        pinversion Hf.
        subst. 
-(*        split. 
-       pinversion Hr. subst. pfold. constructor. subst. pfold. constructor. left. easy.
-       simpl in H7.
-       simpl. eapply cong_red with (g' := g') in H7; easy.
-       apply mon_pr. *)
        pfold. constructor.
        destruct H4 as (H4a,H4b).
        split.

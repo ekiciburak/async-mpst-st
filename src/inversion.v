@@ -978,7 +978,7 @@ Fixpoint inB (a: (participant*dir)) (b: Bpf): bool :=
     | bpf_end              => false
   end.
 
-Lemma coseqInGL: forall b a w,
+Lemma coseqInBGL: forall b a w,
   coseqIn a (act (merge_bpf_cont b w)) ->
   inB a b \/ coseqIn a (act w).
 Proof. intro b.
@@ -1014,7 +1014,7 @@ Proof. intro b.
        - simpl. rewrite bpfend_bn in H. right. easy.
 Qed.
 
-Lemma coseqInGR: forall b a w,
+Lemma coseqInBGR: forall b a w,
   inB a b \/ coseqIn a (act w) ->
   coseqIn a (act (merge_bpf_cont b w)).
 Proof. intro b.
@@ -1070,17 +1070,17 @@ Proof. intro b.
          + easy.
 Qed.
 
-Lemma coseqInG: forall b a w,
+Lemma coseqInBG: forall b a w,
   inB a b \/ coseqIn a (act w) <->
   coseqIn a (act (merge_bpf_cont b w)).
 Proof. split.
-       apply coseqInGR.
-       apply coseqInGL.
+       apply coseqInBGR.
+       apply coseqInBGL.
 Qed.
 
 Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
-isInA a p = false ->
-merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
+  isInA a p = false ->
+  merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
 Proof. intro a.
        induction a; intros.
        - rewrite apfend_an in H0. easy.
