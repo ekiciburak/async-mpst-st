@@ -32,8 +32,12 @@ Proof. intros a1 a2 Ha.
        - subst. easy.
 Qed.
 
-Lemma dir_neqb_neq: forall a1 a2, direqb a1 a2 = false -> a1 <> a2.
-Proof. intros a1 a2 Ha.
+Lemma dir_neqb_neq: forall a1 a2, direqb a1 a2 = false <-> a1 <> a2.
+Proof. split. intros Ha.
+       case_eq a1; case_eq a2; intros; try easy.
+       - subst. easy.
+       - subst. easy.
+       intros.
        case_eq a1; case_eq a2; intros; try easy.
        - subst. easy.
        - subst. easy.

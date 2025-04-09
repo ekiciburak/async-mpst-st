@@ -973,6 +973,406 @@ Qed.
 
 (** TODO: admits in act_eqs *)
 
+(* Lemma act_eq_dsend: forall b1 b2 p l1 s1 w1 l2 s2 w2,
+  act_eq (merge_bpf_cont b1 (p ! [|(l1,s1,w1)|])) (merge_bpf_cont b2 (p ! [|(l2,s2,w2)|])) ->
+  act_eq (merge_bpf_cont b1 w1) (merge_bpf_cont b2 w2).
+Proof.  *)
+
+Fixpoint inB (a: (participant*dir)) (b: Bpf): bool :=
+  match b with
+    | bpf_send p l s b'    => if (String.eqb p (fst a)) && (direqb snd (Datatypes.snd a)) then true else inB a b'
+    | bpf_receive p l s b' => if (String.eqb p (fst a)) && (direqb rcv (Datatypes.snd a)) then true else inB a b'
+    | bpf_end              => false
+  end.
+
+Lemma coseqInGL: forall b a w,
+  coseqIn a (act (merge_bpf_cont b w)) ->
+  inB a b \/ coseqIn a (act w).
+Proof. intro b.
+       induction b; intros.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_bpf_cont b w)|]))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         simpl. rewrite String.eqb_refl direqb_refl. simpl. left. easy.
+         subst. inversion H0. subst. simpl.
+         assert((s =? p)%string && direqb rcv d = false).
+         { case_eq (String.eqb s p); intros.
+           - rewrite String.eqb_eq in H3. subst.
+             apply dir_neqb_neq.
+             intro HH. apply H1. subst. easy.
+           - simpl. easy.
+          }
+         rewrite H3. apply IHb. easy.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_bpf_cont b w)|]))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         simpl. rewrite String.eqb_refl direqb_refl. simpl. left. easy.
+         subst. inversion H0. subst. simpl.
+         assert((s =? p)%string && direqb snd d = false).
+         { case_eq (String.eqb s p); intros.
+           - rewrite String.eqb_eq in H3. subst.
+             apply dir_neqb_neq.
+             intro HH. apply H1. subst. easy.
+           - simpl. easy.
+          }
+         rewrite H3. apply IHb. easy.
+       - simpl. rewrite bpfend_bn in H. right. easy.
+Qed.
+
+Lemma coseqInGR: forall b a w,
+  inB a b \/ coseqIn a (act w) ->
+  coseqIn a (act (merge_bpf_cont b w)).
+Proof. intro b.
+       induction b; intros.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)). simpl.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_bpf_cont b w)|]))). simpl.
+         simpl in H.
+         case_eq(String.eqb s p); intros.
+         + rewrite String.eqb_eq in H0. subst.
+           rewrite String.eqb_refl in H.
+           simpl in H.
+           case_eq(direqb rcv d); intros.
+           ++ apply dir_eqb_eq in H0.
+              subst.
+              apply CoInSplit1 with (y := (p, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+           ++ rewrite H0 in H.
+              apply dir_neqb_neq in H0.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act (merge_bpf_cont b w))). easy. intro HH. apply H0.
+              inversion HH. easy.
+              apply IHb. easy.
+         + rewrite H0 in H. simpl in H.
+           apply String.eqb_neq in H0.
+           apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. intro HH. apply H0.
+           inversion HH. easy.
+           apply IHb. easy.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_bpf_cont b w)|]))). simpl.
+         simpl in H.
+         case_eq(String.eqb s p); intros.
+         + rewrite String.eqb_eq in H0. subst.
+           rewrite String.eqb_refl in H.
+           simpl in H.
+           case_eq(direqb snd d); intros.
+           ++ apply dir_eqb_eq in H0.
+              subst.
+              apply CoInSplit1 with (y := (p, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+           ++ rewrite H0 in H.
+              apply dir_neqb_neq in H0.
+              apply CoInSplit2 with (y := (p, snd)) (ys := (act (merge_bpf_cont b w))). easy. intro HH. apply H0.
+              inversion HH. easy.
+              apply IHb. easy.
+         + rewrite H0 in H. simpl in H.
+           apply String.eqb_neq in H0.
+           apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. intro HH. apply H0.
+           inversion HH. easy.
+           apply IHb. easy.
+       - destruct a as (p, d).
+         rewrite bpfend_bn. 
+         destruct H as [H | H].
+         + simpl in H. easy.
+         + easy.
+Qed.
+
+Lemma coseqInG: forall b a w,
+  inB a b \/ coseqIn a (act w) <->
+  coseqIn a (act (merge_bpf_cont b w)).
+Proof. split.
+       apply coseqInGR.
+       apply coseqInGL.
+Qed.
+
+Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
+isInA a p = false ->
+merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H0. simpl in H0.
+         easy.
+Qed.
+
+Lemma rcv_snd_notRef: forall p q l1 s1 w1 l2 s2 w2,
+  refinement4 (p & [|(l1, s1, w1)|]) (q ! [|(l2, s2, w2)|]) -> False.
+Proof. intros. pinversion H.
+       subst.
+       rewrite <- meqAp3 in H4.
+       apply rcv_snd_notMer in H4.
+       easy.
+       case_eq n; intros.
+       - easy.
+       - rewrite <- InN; easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma snd_end_notRef: forall p l s w,
+  refinement4 (p ! [|(l, s, w)|]) (end) -> False.
+Proof. intros. 
+       pinversion H.
+       subst.
+       rewrite <- meqBp3 in H4.
+       symmetry in H4.
+       apply end_send_false in H4.
+       easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma rcv_end_notRef: forall p l s w,
+  refinement4 (p & [|(l, s, w)|]) (end) -> False.
+Proof. intros. 
+       pinversion H.
+       subst.
+       rewrite <- meqAp3 in H4.
+       symmetry in H4.
+       apply end_recv_false in H4.
+       easy.
+      apply refinementR4_mon.
+Qed.
+
+Lemma inB_coseqL: forall b p w, coseqIn (p, snd) (act (merge_bpf_cont b w)) ->
+  isInB b p \/ coseqIn (p, snd) (act w).
+Proof. intro b.
+       induction b; intros.
+       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))) in H. simpl in H.
+         simpl.
+         inversion H. subst.
+         inversion H0.
+         subst. inversion H0. subst.
+         apply IHb. easy.
+       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))) in H. simpl in H.
+         inversion H. 
+         subst. inversion H0. subst. simpl. rewrite String.eqb_refl. simpl. left. easy.
+         subst. simpl. inversion H0. subst.
+         assert(p <> s).
+         { intro HH. apply H1. subst. easy. }
+         apply String.eqb_neq in H3. rewrite H3. simpl.
+         apply IHb. easy.
+       - simpl. rewrite bpfend_bn in H. right. easy.
+Qed.
+
+Lemma inB_coseqR: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) ->
+  coseqIn (p, snd) (act (merge_bpf_cont b w)).
+Proof. intro b.
+       induction b; intros.
+       - simpl in H. 
+         rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))). simpl.
+         destruct H as [H | H].
+         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+           apply IHb. left. easy.
+         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+           apply IHb. right. easy.
+       - simpl in H.
+         rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))). simpl.
+         destruct H as [H | H].
+         + apply Bool.orb_true_iff in H.
+           destruct H as [H | H].
+           ++ rewrite String.eqb_eq in H. subst.
+              apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+              case_eq(String.eqb p s); intros.
+              * rewrite String.eqb_eq in H0. subst.
+                apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+              * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
+                intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
+           ++ apply IHb. left. easy.
+         + case_eq(String.eqb p s); intros.
+           * rewrite String.eqb_eq in H0. subst.
+             apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
+           * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
+            intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
+           apply IHb. right. easy.
+       - rewrite bpfend_bn. 
+         destruct H as [H | H].
+         + simpl in H. easy.
+         + easy.
+Qed.
+
+Lemma inB_coseq: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) <->
+  coseqIn (p, snd) (act (merge_bpf_cont b w)).
+Proof. split. 
+       - intros. apply inB_coseqR; easy.
+       - intros. apply inB_coseqL; easy.
+Qed.
+
+Lemma actionExLF: forall a w w',
+  coseqIn a (act w) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w').
+Proof. intros.
+       pinversion H0.
+       - subst.
+         apply csInA in H.
+         destruct H as [H | H].
+         + subst. 
+           rewrite <- meqAp3. rewrite <- meqAp3 in H3, H4.
+           apply csInRARevG.
+           right. rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
+           apply CoInSplit1 with (y := (p, rcv)) (ys := (act w'0)). easy. easy.
+         + apply H4 in H.
+           rewrite <- meqAp3. rewrite <- meqAp3 in H, H3, H4.
+           destruct a as (q, d).
+           case_eq d; intros.
+           ++ subst. apply csInRAG in H.
+              apply csInRARevG.
+              destruct H as [H | H].
+              * left. easy.
+              * right.
+                case_eq(String.eqb p q); intros.
+                ** rewrite String.eqb_eq in H5. subst.
+                   rewrite(coseq_eq(act (q & [|(l, s', w'0)|]))). simpl.
+                   apply CoInSplit1 with (y := (q, rcv)) (ys := (act w'0)). easy. easy.
+                ** rewrite String.eqb_neq in H5.
+                   rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
+                   apply CoInSplit2 with (y := (p, rcv)) (ys := (act w'0)). easy. intro HH. apply H5. inversion HH. easy.
+                   easy.
+           ++ subst. 
+              assert((merge_apf_cont (ApnA3 a0 n) (p & [|(l, s', w'0)|])) =
+                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (p & [|(l, s', w'0)|]))).
+              { rewrite mcAp2Bp2. easy. }
+              rewrite H5.
+              assert((merge_apf_cont (ApnA3 a0 n) w'0) =
+                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
+              { rewrite mcAp2Bp2. easy. }
+              rewrite H6 in H.
+              rewrite <- inB_coseq.
+              rewrite <- inB_coseq in H.
+              destruct H as [H | H].
+              * left. easy.
+              * right. rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
+                apply CoInSplit2 with (y := (p, rcv)) (ys := (act w'0)). easy. easy. easy.
+       - subst.
+         apply csInB in H.
+         destruct H as [H | H].
+         + subst.
+           rewrite <- meqBp3. rewrite <- meqBp3 in H3, H4.
+           rewrite <- inB_coseq. right.
+           rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))). simpl. 
+           apply CoInSplit1 with (y := (p, snd)) (ys := (act w'0)). easy. easy.
+           destruct a as (q, d).
+           case_eq d; intros.
+           ++ subst. apply H4 in H.
+              rewrite <- meqBp3. rewrite <- meqBp3 in H, H3, H4.
+              apply coseqInRAddS. easy.
+           ++ subst. apply H4 in H.
+              rewrite <- meqBp3. rewrite <- meqBp3 in H, H3, H4.
+              rewrite <- inB_coseq.
+              rewrite <- inB_coseq in H.
+              destruct H as [H | H].
+              * left. easy.
+              * right.
+                case_eq(String.eqb p q); intros.
+                ** rewrite String.eqb_eq in H5. subst.
+                   rewrite(coseq_eq(act (q ! [|(l, s', w'0)|]))). simpl. 
+                   apply CoInSplit1 with (y := (q, snd)) (ys := (act w'0)). easy. easy.
+                ** rewrite String.eqb_neq in H5.
+                   rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))). simpl.
+                   apply CoInSplit2 with (y := (p, snd)) (ys := (act w'0)). easy. intro HH. apply H5. inversion HH. easy.
+                   easy.
+       - subst. easy.
+       apply refinementR4_mon.
+Qed.
+
+Lemma actionExRF: forall a w w',
+  coseqIn a (act w') ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w).
+Proof. intros.
+       pinversion H0.
+       - subst. rewrite <- meqAp3 in H, H3, H4.
+         case_eq a; intros.
+         + subst. rename s0 into q.
+           destruct d.
+           case_eq(String.eqb p q); intros.
+           ++ rewrite String.eqb_eq in H5. subst.
+              rewrite(coseq_eq(act (q & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit1 with (y := (q, rcv)) (ys := (act w0)). easy. easy.
+           ++ rewrite String.eqb_neq in H5.
+              assert(coseqIn (q, rcv) (act (merge_apf_cont (ApnA3 a0 n) w'0))).
+              { apply csInRAG in H. apply csInRARevG.
+                destruct H as [H | H].
+                + left. easy.
+                + right.
+                  rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
+                  inversion H. subst. inversion H6. subst. easy. subst.
+                  inversion H6. subst. easy.
+              }
+              apply H4 in H6.
+              rewrite(coseq_eq(act (p & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
+              easy.
+         + assert((merge_apf_cont (ApnA3 a0 n) (p & [|(l, s', w'0)|])) =
+                  (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (p & [|(l, s', w'0)|]))).
+              { rewrite mcAp2Bp2. easy. }
+           rewrite H5 in H.
+           rewrite <- inB_coseq in H.
+           destruct H as [H | H].
+           ++ rewrite BisInAF in H. easy.
+           ++ rewrite(coseq_eq (act (p & [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. easy.
+              apply H4.
+              assert((merge_apf_cont (ApnA3 a0 n) w'0) =
+                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
+              { rewrite mcAp2Bp2. easy. }
+              rewrite H6.
+              rewrite <- inB_coseq. right.
+              rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
+              inversion H. subst. inversion H7. subst. inversion H7. subst. easy.
+        - subst. rewrite <- meqBp3 in H, H3, H4.
+         case_eq a; intros.
+         + subst. rename s0 into q.
+           destruct d.
+           rewrite(coseq_eq(act (p ! [|(l, s, w0)|]))). simpl.
+           apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. easy.
+           apply coseq_ninS in H; try easy.
+           apply H4. easy.
+           case_eq(String.eqb p q); intros.
+           ++ rewrite String.eqb_eq in H5. subst.
+              rewrite(coseq_eq(act (q ! [|(l, s, w0)|]))). simpl.
+              apply CoInSplit1 with (y := (q, snd)) (ys := (act w0)). easy. easy.
+           ++ rewrite String.eqb_neq in H5.
+              rewrite(coseq_eq (act (p ! [|(l, s, w0)|]))). simpl.
+              apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
+              apply H4.
+              rewrite <- inB_coseq in H.
+              rewrite <- inB_coseq.
+              destruct H as [H | H].
+              * left. easy.
+              * right.
+                rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))) in H. simpl in H.
+                inversion H. subst. inversion H6. subst. easy.
+                subst. inversion H6. subst. easy.
+        - subst. easy.
+       apply refinementR4_mon.
+Qed.
+
+Lemma actionExLNF: forall a w w',
+  (coseqIn a (act w) -> False) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w') -> False.
+Proof. intros.
+       apply H.
+       apply actionExRF with (a := a) in H0; easy.
+Qed.
+
+Lemma actionExRNF: forall a w w',
+  (coseqIn a (act w') -> False) ->
+  paco2 refinementR4 bot2 w w' ->
+  coseqIn a (act w) -> False.
+Proof. intros.
+       apply H.
+       apply actionExLF with (a := a) in H0; easy.
+Qed.
+
+Lemma end_nmerge: forall b1 b2 p l s, bpf_end = Bpf_merge b1 (bpf_send p l s b2) -> False.
+Proof. intro b1.
+       induction b1; intros.
+       - simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H. easy.
+Qed.
+
 Lemma drop_send: forall b b2 p l s s' w w',
   isInB b p = false ->
   isInB b2 p = false ->
@@ -1015,7 +1415,13 @@ Proof. intro b.
               easy. easy. easy.
               rewrite H2 in H10.
               rewrite apfend_an in H10.
-              admit.
+              apply IHb in H9; try easy.
+              unfold act_eq in *. split. intros.
+              apply actionExLF with (a := a0) in H9. easy.
+              easy.
+              intros.
+              apply actionExRF with (a := a0) in H9. easy.
+              easy.
           ++ rewrite eqb_neq in H2.
               assert(isInA (ApnA3 a n) s = false).
               { case_eq n; intros.
@@ -1087,7 +1493,12 @@ Proof. intro b.
                   rewrite mcAp2Bp2. easy.
                 }
                 rewrite H13.
-                admit.
+                apply IHb in H9; try easy.
+                unfold act_eq. split. intros.
+                apply actionExLF with (a := a0) in H9. easy. easy.
+                intros.
+                apply actionExRF with (a := a0) in H9. easy. easy.
+                simpl. rewrite InMergeS BisInAF HQ1. easy.
              * specialize(mcBp2Ap b0 (p ! [|(l, s', w')|]) H4); intro HP.
                 destruct HP as (a2,(HP1,HP2)).
                 rewrite HP1 in HPb.
@@ -1167,7 +1578,14 @@ Proof. intro b.
                   rewrite mcAp2Bp2. easy.
                 }
                 rewrite H18.
-                admit.
+                apply IHb in H9; try easy.
+                unfold act_eq. split. intro.
+                apply actionExLF with (a := a0) in H9. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a0) in H9. easy.
+                easy.
+                simpl. rewrite InMergeFS. rewrite BisInAF. rewrite Hb2. easy.
                 apply refinementR4_mon.
          + subst.
            rewrite(st_eq (merge_bpf_cont (bpf_send s3 s4 s5 b0) (p ! [|(l, s', w')|]))) in H1. simpl in H1.
@@ -1297,7 +1715,20 @@ Proof. intro b.
                   rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)). simpl. easy.
                 }
                 rewrite H13 in H10 H9.
-                admit.
+                apply IHb in H9.
+                split. intro.
+                rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0))) in H9. simpl in H9.
+                rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)). simpl.
+                rewrite <- merge_mergeS.
+                apply actionExLF with (a := a) in H9. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a) in H9. easy.
+                rewrite(st_eq(merge_bpf_cont (bpf_receive s3 s4 s5 (Bpf_merge b0 b3)) w'0)) in H14. simpl in H14.
+                rewrite <- merge_mergeS in H14.
+                rewrite(st_eq (merge_bpf_cont (bpf_receive s3 s4 s5 b0) (merge_bpf_cont b3 w'0))). simpl.
+                easy. easy.
+                simpl. easy.
              * destruct HQ as (c,(HQ1,(HQ2,(HQ3,HQ4)))).
                 assert(s <> p) by easy.
                 specialize(pneqq7 c p s s0 l s'0 s' w'0 w' Ha HQ1 HQ4); intro HP.
@@ -1370,7 +1801,15 @@ Proof. intro b.
                   rewrite merge_mergeS. easy.
                 }
                 rewrite H14.
-                admit.
+                apply IHb in H9; try easy.
+                split. intros.
+                apply actionExLF with (a := a) in H9. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a) in H9. easy.
+                easy.
+                simpl. apply InMergeFS. rewrite HPa. simpl.
+                rewrite HQ3 in H0. apply InMergeFS in H0. easy.
                 apply refinementR4_mon.
          + subst.
            simpl in H. simpl in H0.
@@ -1412,7 +1851,13 @@ Proof. intro b.
               left.
               apply IHb  with (p := p) (l := l) (s := s2) (s' := s'). 
               easy. easy. easy.
-              admit.
+              apply IHb in H7; try easy.
+              split. intro.
+              apply actionExLF with (a := a) in H7. easy.
+              easy.
+              intros.
+              apply actionExRF with (a := a) in H7. easy.
+              easy.
            ++ rewrite eqb_neq in H.
               symmetry in H4.
               assert(isInB (BpnB3 b1 n) s = false).
@@ -1503,7 +1948,14 @@ Proof. intro b.
                   rewrite merge_mergeS. easy.
                 }
                 rewrite <- H13.
-                admit.
+                apply IHb in H7; try easy.
+                split. intro.
+                apply actionExLF with (a := a) in H7. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a) in H7. easy.
+                easy.
+                simpl. rewrite Hb. apply String.eqb_neq in Ha. rewrite Ha. easy.
              ** destruct HP as (c,(HPa,(HPb,(HPc,HPd)))).
                    specialize(pneqq7 c p s s0 l s'0 s' w'0 w' Hc HPa HPd); intro HQ.
                    destruct HQ as (b3,(HQa,(HQb,HQc))).
@@ -1561,7 +2013,17 @@ Proof. intro b.
                   rewrite merge_mergeS. easy.
                 }
                 rewrite H12.
-                admit.
+                apply IHb in H7; try easy.
+                split. intro.
+                apply actionExLF with (a := a) in H7. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a) in H7. easy.
+                easy.
+                simpl. apply String.eqb_neq in Ha. rewrite Ha.
+                simpl. apply InMergeFS. rewrite HQa.
+                rewrite HPc in Hb.
+                apply InMergeFS in Hb. easy.
          apply refinementR4_mon.
          + subst.
            simpl in H.
@@ -1598,7 +2060,19 @@ Proof. intro b.
            rewrite HQc in H8.
            rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)) in H8. simpl in H8.
            easy.
-           admit.
+           rewrite HQc in H8.
+           rewrite(st_eq(merge_bpf_cont (bpf_send p l s' b3) w'0)) in H8. simpl in H8.
+           specialize(IHb bpf_end p l s2 s' w (merge_bpf_cont b3 w'0)).
+           rewrite bpfend_bn in IHb.
+           apply IHb in H8; try easy.
+           split. intro.
+           rewrite bpfend_bn in H8.
+           apply actionExLF with (a := a) in H8. easy.
+           easy.
+           intros.
+           rewrite bpfend_bn in H8.
+           apply actionExRF with (a := a) in H8. easy.
+           easy.
            apply refinementR4_mon.
       - rewrite bpfend_bn.
         rewrite bpfend_bn in H1.
@@ -1653,7 +2127,7 @@ Proof. intro b.
              rewrite H12.
              easy.
              apply refinementR4_mon.
-Admitted.
+Qed.
 
 Lemma drop_recv: forall a b p l s s' w w',
   isInA a p = false ->
@@ -2021,290 +2495,4 @@ Proof. intro a1.
          apply refinementR4_mon.
 Qed.
 
-Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
-isInA a p = false ->
-merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
-Proof. intro a.
-       induction a; intros.
-       - rewrite apfend_an in H0. easy.
-       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l, s2, w)|]))) in H0. simpl in H0.
-         easy.
-Qed.
 
-Lemma rcv_snd_notRef: forall p q l1 s1 w1 l2 s2 w2,
-  refinement4 (p & [|(l1, s1, w1)|]) (q ! [|(l2, s2, w2)|]) -> False.
-Proof. intros. pinversion H.
-       subst.
-       rewrite <- meqAp3 in H4.
-       apply rcv_snd_notMer in H4.
-       easy.
-       case_eq n; intros.
-       - easy.
-       - rewrite <- InN; easy.
-      apply refinementR4_mon.
-Qed.
-
-Lemma snd_end_notRef: forall p l s w,
-  refinement4 (p ! [|(l, s, w)|]) (end) -> False.
-Proof. intros. 
-       pinversion H.
-       subst.
-       rewrite <- meqBp3 in H4.
-       symmetry in H4.
-       apply end_send_false in H4.
-       easy.
-      apply refinementR4_mon.
-Qed.
-
-Lemma rcv_end_notRef: forall p l s w,
-  refinement4 (p & [|(l, s, w)|]) (end) -> False.
-Proof. intros. 
-       pinversion H.
-       subst.
-       rewrite <- meqAp3 in H4.
-       symmetry in H4.
-       apply end_recv_false in H4.
-       easy.
-      apply refinementR4_mon.
-Qed.
-
-Lemma inB_coseqL: forall b p w, coseqIn (p, snd) (act (merge_bpf_cont b w)) ->
-  isInB b p \/ coseqIn (p, snd) (act w).
-Proof. intro b.
-       induction b; intros.
-       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))) in H. simpl in H.
-         simpl.
-         inversion H. subst.
-         inversion H0.
-         subst. inversion H0. subst.
-         apply IHb. easy.
-       - rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))) in H. simpl in H.
-         inversion H. 
-         subst. inversion H0. subst. simpl. rewrite String.eqb_refl. simpl. left. easy.
-         subst. simpl. inversion H0. subst.
-         assert(p <> s).
-         { intro HH. apply H1. subst. easy. }
-         apply String.eqb_neq in H3. rewrite H3. simpl.
-         apply IHb. easy.
-       - simpl. rewrite bpfend_bn in H. right. easy.
-Qed.
-
-Lemma inB_coseqR: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) ->
-  coseqIn (p, snd) (act (merge_bpf_cont b w)).
-Proof. intro b.
-       induction b; intros.
-       - simpl in H. 
-         rewrite(coseq_eq(act (merge_bpf_cont (bpf_receive s s0 s1 b) w))). simpl.
-         destruct H as [H | H].
-         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           apply IHb. left. easy.
-         + apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           apply IHb. right. easy.
-       - simpl in H.
-         rewrite(coseq_eq(act (merge_bpf_cont (bpf_send s s0 s1 b) w))). simpl.
-         destruct H as [H | H].
-         + apply Bool.orb_true_iff in H.
-           destruct H as [H | H].
-           ++ rewrite String.eqb_eq in H. subst.
-              apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-              case_eq(String.eqb p s); intros.
-              * rewrite String.eqb_eq in H0. subst.
-                apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-              * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
-                intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
-           ++ apply IHb. left. easy.
-         + case_eq(String.eqb p s); intros.
-           * rewrite String.eqb_eq in H0. subst.
-             apply CoInSplit1 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy. easy.
-           * apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_bpf_cont b w))). easy.
-            intros HH. inversion HH. subst. rewrite String.eqb_refl in H0. easy.
-           apply IHb. right. easy.
-       - rewrite bpfend_bn. 
-         destruct H as [H | H].
-         + simpl in H. easy.
-         + easy.
-Qed.
-
-Lemma inB_coseq: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) <->
-  coseqIn (p, snd) (act (merge_bpf_cont b w)).
-Proof. split. 
-       - intros. apply inB_coseqR; easy.
-       - intros. apply inB_coseqL; easy.
-Qed.
-
-Lemma actionExLF: forall a w w',
-  coseqIn a (act w) ->
-  paco2 refinementR4 bot2 w w' ->
-  coseqIn a (act w').
-Proof. intros.
-       pinversion H0.
-       - subst.
-         apply csInA in H.
-         destruct H as [H | H].
-         + subst. 
-           rewrite <- meqAp3. rewrite <- meqAp3 in H3, H4.
-           apply csInRARevG.
-           right. rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
-           apply CoInSplit1 with (y := (p, rcv)) (ys := (act w'0)). easy. easy.
-         + apply H4 in H.
-           rewrite <- meqAp3. rewrite <- meqAp3 in H, H3, H4.
-           destruct a as (q, d).
-           case_eq d; intros.
-           ++ subst. apply csInRAG in H.
-              apply csInRARevG.
-              destruct H as [H | H].
-              * left. easy.
-              * right.
-                case_eq(String.eqb p q); intros.
-                ** rewrite String.eqb_eq in H5. subst.
-                   rewrite(coseq_eq(act (q & [|(l, s', w'0)|]))). simpl.
-                   apply CoInSplit1 with (y := (q, rcv)) (ys := (act w'0)). easy. easy.
-                ** rewrite String.eqb_neq in H5.
-                   rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
-                   apply CoInSplit2 with (y := (p, rcv)) (ys := (act w'0)). easy. intro HH. apply H5. inversion HH. easy.
-                   easy.
-           ++ subst. 
-              assert((merge_apf_cont (ApnA3 a0 n) (p & [|(l, s', w'0)|])) =
-                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (p & [|(l, s', w'0)|]))).
-              { rewrite mcAp2Bp2. easy. }
-              rewrite H5.
-              assert((merge_apf_cont (ApnA3 a0 n) w'0) =
-                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
-              { rewrite mcAp2Bp2. easy. }
-              rewrite H6 in H.
-              rewrite <- inB_coseq.
-              rewrite <- inB_coseq in H.
-              destruct H as [H | H].
-              * left. easy.
-              * right. rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))). simpl.
-                apply CoInSplit2 with (y := (p, rcv)) (ys := (act w'0)). easy. easy. easy.
-       - subst.
-         apply csInB in H.
-         destruct H as [H | H].
-         + subst.
-           rewrite <- meqBp3. rewrite <- meqBp3 in H3, H4.
-           rewrite <- inB_coseq. right.
-           rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))). simpl. 
-           apply CoInSplit1 with (y := (p, snd)) (ys := (act w'0)). easy. easy.
-           destruct a as (q, d).
-           case_eq d; intros.
-           ++ subst. apply H4 in H.
-              rewrite <- meqBp3. rewrite <- meqBp3 in H, H3, H4.
-              apply coseqInRAddS. easy.
-           ++ subst. apply H4 in H.
-              rewrite <- meqBp3. rewrite <- meqBp3 in H, H3, H4.
-              rewrite <- inB_coseq.
-              rewrite <- inB_coseq in H.
-              destruct H as [H | H].
-              * left. easy.
-              * right.
-                case_eq(String.eqb p q); intros.
-                ** rewrite String.eqb_eq in H5. subst.
-                   rewrite(coseq_eq(act (q ! [|(l, s', w'0)|]))). simpl. 
-                   apply CoInSplit1 with (y := (q, snd)) (ys := (act w'0)). easy. easy.
-                ** rewrite String.eqb_neq in H5.
-                   rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))). simpl.
-                   apply CoInSplit2 with (y := (p, snd)) (ys := (act w'0)). easy. intro HH. apply H5. inversion HH. easy.
-                   easy.
-       - subst. easy.
-       apply refinementR4_mon.
-Qed.
-
-Lemma actionExRF: forall a w w',
-  coseqIn a (act w') ->
-  paco2 refinementR4 bot2 w w' ->
-  coseqIn a (act w).
-Proof. intros.
-       pinversion H0.
-       - subst. rewrite <- meqAp3 in H, H3, H4.
-         case_eq a; intros.
-         + subst. rename s0 into q.
-           destruct d.
-           case_eq(String.eqb p q); intros.
-           ++ rewrite String.eqb_eq in H5. subst.
-              rewrite(coseq_eq(act (q & [|(l, s, w0)|]))). simpl.
-              apply CoInSplit1 with (y := (q, rcv)) (ys := (act w0)). easy. easy.
-           ++ rewrite String.eqb_neq in H5.
-              assert(coseqIn (q, rcv) (act (merge_apf_cont (ApnA3 a0 n) w'0))).
-              { apply csInRAG in H. apply csInRARevG.
-                destruct H as [H | H].
-                + left. easy.
-                + right.
-                  rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
-                  inversion H. subst. inversion H6. subst. easy. subst.
-                  inversion H6. subst. easy.
-              }
-              apply H4 in H6.
-              rewrite(coseq_eq(act (p & [|(l, s, w0)|]))). simpl.
-              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
-              easy.
-         + assert((merge_apf_cont (ApnA3 a0 n) (p & [|(l, s', w'0)|])) =
-                  (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) (p & [|(l, s', w'0)|]))).
-              { rewrite mcAp2Bp2. easy. }
-           rewrite H5 in H.
-           rewrite <- inB_coseq in H.
-           destruct H as [H | H].
-           ++ rewrite BisInAF in H. easy.
-           ++ rewrite(coseq_eq (act (p & [|(l, s, w0)|]))). simpl.
-              apply CoInSplit2 with (y := (p, rcv)) (ys := (act w0)). easy. easy.
-              apply H4.
-              assert((merge_apf_cont (ApnA3 a0 n) w'0) =
-                     (merge_bpf_cont (Ap2BpSeq (ApnA3 a0 n)) w'0)).
-              { rewrite mcAp2Bp2. easy. }
-              rewrite H6.
-              rewrite <- inB_coseq. right.
-              rewrite(coseq_eq(act (p & [|(l, s', w'0)|]))) in H. simpl in H.
-              inversion H. subst. inversion H7. subst. inversion H7. subst. easy.
-        - subst. rewrite <- meqBp3 in H, H3, H4.
-         case_eq a; intros.
-         + subst. rename s0 into q.
-           destruct d.
-           rewrite(coseq_eq(act (p ! [|(l, s, w0)|]))). simpl.
-           apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. easy.
-           apply coseq_ninS in H; try easy.
-           apply H4. easy.
-           case_eq(String.eqb p q); intros.
-           ++ rewrite String.eqb_eq in H5. subst.
-              rewrite(coseq_eq(act (q ! [|(l, s, w0)|]))). simpl.
-              apply CoInSplit1 with (y := (q, snd)) (ys := (act w0)). easy. easy.
-           ++ rewrite String.eqb_neq in H5.
-              rewrite(coseq_eq (act (p ! [|(l, s, w0)|]))). simpl.
-              apply CoInSplit2 with (y := (p, snd)) (ys := (act w0)). easy. intro HH. apply H5. inversion HH. easy.
-              apply H4.
-              rewrite <- inB_coseq in H.
-              rewrite <- inB_coseq.
-              destruct H as [H | H].
-              * left. easy.
-              * right.
-                rewrite(coseq_eq(act (p ! [|(l, s', w'0)|]))) in H. simpl in H.
-                inversion H. subst. inversion H6. subst. easy.
-                subst. inversion H6. subst. easy.
-        - subst. easy.
-       apply refinementR4_mon.
-Qed.
-
-Lemma actionExLNF: forall a w w',
-  (coseqIn a (act w) -> False) ->
-  paco2 refinementR4 bot2 w w' ->
-  coseqIn a (act w') -> False.
-Proof. intros.
-       apply H.
-       apply actionExRF with (a := a) in H0; easy.
-Qed.
-
-Lemma actionExRNF: forall a w w',
-  (coseqIn a (act w') -> False) ->
-  paco2 refinementR4 bot2 w w' ->
-  coseqIn a (act w) -> False.
-Proof. intros.
-       apply H.
-       apply actionExLF with (a := a) in H0; easy.
-Qed.
-
-Lemma end_nmerge: forall b1 b2 p l s, bpf_end = Bpf_merge b1 (bpf_send p l s b2) -> False.
-Proof. intro b1.
-       induction b1; intros.
-       - simpl in H. easy.
-       - simpl in H. easy.
-       - simpl in H. easy.
-Qed.
