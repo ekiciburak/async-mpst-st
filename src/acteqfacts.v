@@ -3281,6 +3281,24 @@ Proof. intros.
        apply String.eqb_neq in H1. rewrite H1. easy.
 Qed.
 
+Lemma extbpf: forall {b} w, singleton w -> singleton (merge_bpf_cont b w).
+Proof. induction b; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)).
+         simpl. apply extr. apply IHb. easy.
+       - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
+         apply exts. apply IHb. easy.
+       - rewrite bpfend_bn. easy.
+Qed.
+
+Lemma extbpfR: forall {b} w, singleton (merge_bpf_cont b w) -> singleton w.
+Proof. induction b; intros.
+       - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w)) in H.
+         simpl in H. apply extrR in H. apply IHb. easy.
+       - rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)) in H. simpl in H.
+         apply extsR in H. apply IHb. easy.
+       - rewrite bpfend_bn in H. easy.
+Qed.
+
 Fixpoint actL (t: local): list (participant * dir) :=
   match t with
     | lt_send p xs    =>

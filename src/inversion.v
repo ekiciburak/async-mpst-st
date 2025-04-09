@@ -679,7 +679,6 @@ Proof. intro a.
          apply refinementR4_mon.
 Qed.
 
-
 Lemma Invert_Apf_Apf: forall a b p l s w w', 
   isInA a p = false ->
   refinement4 (merge_apf_cont a (p & [|(l, s, w)|])) (merge_apf_cont b w') ->
@@ -2300,4 +2299,12 @@ Lemma actionExRNF: forall a w w',
 Proof. intros.
        apply H.
        apply actionExLF with (a := a) in H0; easy.
+Qed.
+
+Lemma end_nmerge: forall b1 b2 p l s, bpf_end = Bpf_merge b1 (bpf_send p l s b2) -> False.
+Proof. intro b1.
+       induction b1; intros.
+       - simpl in H. easy.
+       - simpl in H. easy.
+       - simpl in H. easy.
 Qed.
