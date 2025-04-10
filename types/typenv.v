@@ -73,6 +73,7 @@ Inductive qCong: queue -> queue -> Prop :=
                   (q ++ [(p2,l2,s2)] ++ [(p1,l1,s1)] ++ q').
 
 Declare Instance Equivalence_qcong : Equivalence qCong.
+
 #[global] Instance RWQC: Proper (qCong ==> qCong ==> impl) qCong.
 Proof. repeat intro.
        destruct H.
@@ -122,6 +123,7 @@ Inductive lCong: local -> local -> Prop :=
   | lunf: forall l, lCong l (unf l).
 
 Declare Instance Equivalence_lcong : Equivalence lCong.
+
 #[global] Instance RWLC: Proper (lCong ==> lCong ==> impl) lCong.
 Proof. repeat intro.
        destruct H.

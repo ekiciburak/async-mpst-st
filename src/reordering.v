@@ -295,7 +295,32 @@ Fixpoint Bpf_eqb (a: Bpf) (b: Bpf): bool :=
     | (bpf_end, bpf_end)                             => true
     | _                                              => false
   end.
-  
+
+Inductive Cpf: Type :=
+  | cpf_receive: participant -> label -> local.sort -> Cpf -> Cpf
+  | cpf_send   : participant -> label -> local.sort -> Cpf -> Cpf
+  | cpf_end    : Cpf.
+
+Fixpoint isInC (c: Cpf) p: bool :=
+  match c with
+    | cpf_receive q l s c' => eqb p q || isInC c' p
+    | cpf_send q l s c'    => isInC c' p
+    | _                    => false
+  end.
+
+CoFixpoint merge_cpf_cont (c: Cpf) (w: st): st :=
+  match c with 
+    | cpf_end              => w
+    | cpf_receive q l s c' => st_receive q (cocons (l,s,(merge_cpf_cont c' w)) conil)
+    | cpf_send q l s c'    => st_send q (cocons (l,s,(merge_cpf_cont c' w)) conil)
+  end.
+
+Fixpoint merge_cpf_contn (c: Cpf) (w: st) (n: nat): st :=
+  match n with
+    | O    => w
+    | S k  => merge_cpf_cont c (merge_cpf_contn c w k)
+  end.
+
 (* Definition Apre (p: participant) (a: Apf) := isInA a p = false.  *)
 
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=

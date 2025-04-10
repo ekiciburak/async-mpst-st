@@ -23,10 +23,10 @@ Definition projSC w1 p w2 := paco3 projS bot3 w1 p w2.
 Inductive projR (R: st -> participant -> st -> Prop): st -> participant -> st -> Prop :=
   | pjr_end : forall p, projR R st_end p st_end
   | pjr_rcve: forall p l s w' w, R w' p w -> projR R (st_receive p [|(l,s,w')|]) p (st_receive p [|(l,s,w)|])
-  | pjr_rcvI: forall q l s w' p w, p <> q -> coseqIn (p, snd) (act w') -> R w' p w -> projR R (st_receive q [|(l,s,w')|]) p w
-  | pjr_rcvN: forall q l s w' p, p <> q -> (coseqIn (p, snd) (act w') -> False) -> projR R (st_receive q [|(l,s,w')|]) p st_end
-  | pjr_sndI: forall q l s w' p w, coseqIn (p, snd) (act w') -> R w' p w -> projR R (st_send q [|(l,s,w')|]) p w
-  | pjr_sndN: forall q l s w' p, (coseqIn (p, snd) (act w') -> False) -> projR R (st_send q [|(l,s,w')|]) p st_end.
+  | pjr_rcvI: forall q l s w' p w, p <> q -> coseqIn (p, rcv) (act w') -> R w' p w -> projR R (st_receive q [|(l,s,w')|]) p w
+  | pjr_rcvN: forall q l s w' p, p <> q -> (coseqIn (p, rcv) (act w') -> False) -> projR R (st_receive q [|(l,s,w')|]) p st_end
+  | pjr_sndI: forall q l s w' p w, coseqIn (p, rcv) (act w') -> R w' p w -> projR R (st_send q [|(l,s,w')|]) p w
+  | pjr_sndN: forall q l s w' p, (coseqIn (p, rcv) (act w') -> False) -> projR R (st_send q [|(l,s,w')|]) p st_end.
 
 Definition projRC w1 p w2 := paco3 projR bot3 w1 p w2.
 
@@ -89,6 +89,53 @@ Proof. intro b.
          pinversion H0. subst. easy.
          subst. easy.
          apply mon_projs.
+Qed.
+
+Lemma prj_recv_inv1c: forall c p q l1 s1 w1 l2 s2 w2,
+  isInC c p = false ->
+  projRC (merge_cpf_cont c (p & [|(l1, s1, w1)|])) p (q & [|(l2, s2, w2)|]) ->
+  p = q /\ l1 = l2 /\ s1 = s2 /\ projRC w1 p w2.
+Proof. intro c.
+       induction c; intros.
+       - rewrite(st_eq (merge_cpf_cont (cpf_receive s s0 s1 c) (p & [|(l1, s2, w1)|]))) in H0. simpl in H0.
+         pinversion H0.
+         subst.
+         simpl in H. rewrite String.eqb_refl in H. easy.
+         subst.
+         apply IHc. 2:{ easy. }
+         simpl in H. rewrite orbtf in H. easy.
+         apply mon_projr.
+       - rewrite(st_eq (merge_cpf_cont (cpf_send s s0 s1 c) (p & [|(l1, s2, w1)|]))) in H0. simpl in H0.
+         pinversion H0.
+         subst.
+         simpl in H. 
+         apply IHc; easy.
+         apply mon_projr.
+       - rewrite cpfend_cn in H0.
+         pinversion H0. subst. easy.
+         subst. easy.
+         apply mon_projr.
+Qed.
+
+Lemma prj_recv_inv1: forall a p q l1 s1 w1 l2 s2 w2,
+  isInA a p = false ->
+  projRC (merge_apf_cont a (p & [|(l1, s1, w1)|])) p (q & [|(l2, s2, w2)|]) ->
+  p = q /\ l1 = l2 /\ s1 = s2 /\ projRC w1 p w2.
+Proof. intro a.
+       induction a; intros.
+       - rewrite apfend_an in H0.
+         pinversion H0.
+         subst. easy.
+         subst. easy.
+         apply mon_projr.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l1, s2, w1)|]))) in H0. 
+         simpl in H0.
+         pinversion H0.
+         subst. simpl in H. rewrite String.eqb_refl in H. simpl in H. easy.
+         subst.
+         apply IHa. 2:{ easy. }
+         simpl in H. rewrite orbtf in H. easy.
+         apply mon_projr.
 Qed.
 
 Lemma proj_send_b: forall b p w wb,
@@ -215,6 +262,98 @@ Proof. intros.
        apply mon_projs.
 Qed.
 
+Lemma proj_recv_a: forall a p w wb,
+  isInA a p = false ->
+  projRC w p wb ->
+  projRC (merge_apf_cont a w) p wb.
+Proof. intros.
+       pinversion H0.
+       - subst.
+         induction a; intros.
+         + rewrite apfend_an. pfold. constructor.
+         + simpl in H.
+           rewrite(st_eq (merge_apf_cont (apf_receive s s0 s1 a) (end)) ). simpl.
+           pfold. apply pjr_rcvN. rewrite orbtf in H. 
+           destruct H as (Ha, Hb).
+           apply String.eqb_neq in Ha. easy.
+           intro HH.
+           rewrite <- inA_coseq in HH.
+           rewrite orbtf in H.
+           destruct H as (Ha, Hb).
+           destruct HH as [HH | HH].
+           ++ rewrite HH in Hb. easy.
+           ++ rewrite(coseq_eq(act (end))) in HH. simpl in HH.
+              inversion HH. subst. easy.
+              subst. easy.
+       - subst.
+         induction a; intros.
+         + rewrite apfend_an. pfold. constructor. left. easy.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 a) (p & [|(l, s, w')|]))). simpl.
+           simpl in H. rewrite orbtf in H. 
+           destruct H as (Ha,Hb).
+           rewrite String.eqb_neq in Ha.
+           pfold. apply pjr_rcvI. easy. 
+           rewrite <- inA_coseq. right.
+           rewrite(coseq_eq(act (p & [|(l, s, w')|]))). simpl.
+           apply CoInSplit1 with (y := (p, rcv)) (ys := (act w')). easy. easy.
+           left. apply IHa; easy.
+       - subst.
+         induction a; intros.
+         + rewrite apfend_an. pfold. constructor. easy. easy. left. easy.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 a) (q & [|(l, s, w')|]))). simpl.
+           simpl in H. rewrite orbtf in H. 
+           destruct H as (Ha,Hb).
+           rewrite String.eqb_neq in Ha.
+           pfold. apply pjr_rcvI. easy. 
+           rewrite <- inA_coseq. right.
+           rewrite(coseq_eq(act (q & [|(l, s, w')|]))). simpl.
+           apply CoInSplit2 with (y := (q, rcv)) (ys := (act w')). easy. intro HH. apply H1. inversion HH. easy.
+           easy.
+           left. apply IHa; easy.
+       - subst. 
+         induction a; intros.
+         + rewrite apfend_an. pfold. apply pjr_rcvN. easy. easy.
+         + rewrite(st_eq (merge_apf_cont (apf_receive s0 s1 s2 a) (q & [|(l, s, w')|]))). simpl.
+           simpl in H. rewrite orbtf in H. 
+           destruct H as (Ha,Hb).
+           rewrite String.eqb_neq in Ha.
+           pfold. apply pjr_rcvN. easy. intro HH.
+           apply H2.
+           rewrite <- inA_coseq in HH.
+           destruct HH as [HH | HH].
+           ++ rewrite HH in Hb. easy.
+           ++ rewrite(coseq_eq(act (q & [|(l, s, w')|]))) in HH. simpl in HH.
+              inversion HH. subst. inversion H. subst. easy.
+              subst. inversion H. subst. easy.
+       - subst.
+         induction a; intros.
+         + rewrite apfend_an. pfold. apply pjr_sndI. easy. left. easy.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 a) (q ! [|(l, s, w')|])) ). simpl.
+           simpl in H. rewrite orbtf in H. 
+           destruct H as (Ha,Hb).
+           rewrite String.eqb_neq in Ha.
+           pfold. apply pjr_rcvI. easy.
+           rewrite <- inA_coseq. right. 
+           rewrite(coseq_eq(act (q ! [|(l, s, w')|]))). simpl.
+           apply CoInSplit2 with (y := (q, snd)) (ys := (act w')). easy. easy. easy.
+           left. apply IHa; easy.
+       - subst.
+         induction a; intros.
+         + rewrite apfend_an. pfold. apply pjr_sndN. easy.
+         + rewrite(st_eq(merge_apf_cont (apf_receive s0 s1 s2 a) (q ! [|(l, s, w')|]))). simpl.
+           simpl in H. rewrite orbtf in H. 
+           destruct H as (Ha,Hb).
+           rewrite String.eqb_neq in Ha.
+           pfold. apply pjr_rcvN. easy.
+           intro HH. apply H1.
+           rewrite <- inA_coseq in HH.
+           destruct HH as [HH | HH].
+           ++ rewrite HH in Hb. easy.
+           ++ rewrite(coseq_eq(act (q ! [|(l, s, w')|]))) in HH. simpl in HH.
+              inversion HH. subst. inversion H. subst. inversion H. subst. easy.
+       apply mon_projr.
+Qed.
+
 Lemma proj_send_bs: forall b p q l s w wb,
   p <> q ->
   isInB b p = false ->
@@ -268,6 +407,59 @@ Proof. intros.
        apply mon_projs.
 Qed.
 
+Lemma proj_recv_ar: forall a p q l s w wb,
+  p <> q ->
+  isInA a p = false ->
+  projRC w p wb ->
+  projRC (q & [|(l, s, merge_apf_cont a w)|]) p wb.
+Proof. intros.
+       pinversion H1.
+       - subst. pfold. apply pjr_rcvN. easy.
+         intros HH. rewrite <- inA_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         rewrite(coseq_eq(act (end))) in HH. simpl in HH.
+         inversion HH. subst. easy. subst. easy.
+       - subst. pfold. constructor. easy.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (p & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit1 with (y := (p, rcv)) (ys := (act w')). easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. constructor. easy.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, rcv)) (ys := (act w')). easy.
+         intro HH. apply H2. inversion HH. easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. apply pjr_rcvN. easy.
+         intro HH. rewrite <- inA_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         apply H3.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))) in HH. simpl in HH.
+         inversion HH. subst.
+         inversion H4. subst. easy.
+         subst. inversion H4. subst. easy.
+       - subst. pfold. constructor. easy.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, snd)) (ys := (act w')). easy. easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. apply pjr_rcvN. easy.
+         intro HH. rewrite <- inA_coseq in HH.
+         apply H2.
+         destruct HH as [HH | HH].
+         rewrite H0 in HH. easy.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))) in HH.
+         simpl in HH. 
+         inversion HH. subst. inversion H3.
+         subst. inversion H3. subst. easy.
+       apply mon_projr.
+Qed.
+
 Lemma proj_send_br: forall b p q l s w wb,
   isInB b p = false ->
   projSC w p wb ->
@@ -318,6 +510,56 @@ Proof. intros.
        apply mon_projs.
 Qed.
 
+Lemma proj_recv_as: forall a p q l s w wb,
+  isInA a p = false ->
+  projRC w p wb ->
+  projRC (q ! [|(l, s, merge_apf_cont a w)|]) p wb.
+Proof. intros.
+       pinversion H0.
+       - subst. pfold. apply pjr_sndN. 
+         intro HH. rewrite <- inA_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         rewrite(coseq_eq(act (end))) in HH. simpl in HH.
+         inversion HH. subst. easy. subst. easy.
+       - subst. pfold. constructor.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (p & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit1 with (y := (p, rcv)) (ys := (act w')). easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. constructor.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, rcv)) (ys := (act w')). easy.
+         intro HH. apply H1. inversion HH. easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. apply pjr_sndN.
+         intro HH. rewrite <- inA_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         apply H2.
+         rewrite(coseq_eq(act (q0 & [|(l0, s0, w')|]))) in HH. simpl in HH.
+         inversion HH. subst. inversion H3. subst. easy.
+         subst. inversion H3. subst. easy.
+       - subst. pfold. constructor.
+         rewrite <- inA_coseq. right.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))). simpl.
+         apply CoInSplit2 with (y := (q0, snd)) (ys := (act w')). easy. easy. easy.
+         left. apply proj_recv_a. easy.
+         pfold. easy.
+       - subst. pfold. apply pjr_sndN.
+         intro HH. rewrite <- inA_coseq in HH.
+         destruct HH as [HH | HH].
+         rewrite H in HH. easy.
+         rewrite(coseq_eq(act (q0 ! [|(l0, s0, w')|]))) in HH.
+         simpl in HH. 
+         inversion HH. subst. inversion H2.
+         subst. inversion H2. subst. easy.
+       apply mon_projr.
+Qed.
+
 Lemma prj_send_eq: forall p q l s w wa,
   singleton w ->
   projSC w p (q ! [|(l, s, wa)|]) ->
@@ -338,6 +580,28 @@ Proof. intros.
          apply prj_send_inv1 in H2. easy. easy.
          apply extrR in H. easy.
        apply mon_projs.
+Qed.
+
+Lemma prj_recv_eq: forall p q l s w wa,
+  singleton w ->
+  projRC w p (q & [|(l, s, wa)|]) ->
+  p = q.
+Proof. intros.
+       pinversion H0. 
+       - easy.
+       - subst.
+         apply inReceivefE in H2; try easy.
+         destruct H2 as (b1,(l1,(s1,(w1,(H2a,H2b))))).
+         subst.
+         apply prj_recv_inv1c in H3. easy. easy.
+         apply extrR in H. easy.
+       - subst. 
+         apply inReceivefE in H1; try easy.
+         destruct H1 as (b1,(l1,(s1,(w1,(H1a,H1b))))).
+         subst.
+         apply prj_recv_inv1c in H2. easy. easy.
+         apply extsR in H. easy.
+       apply mon_projr.
 Qed.
 
 Lemma prj_send_inv2: forall p q l s w wa,
@@ -462,7 +726,6 @@ Proof. intro b.
            subst. pfold. constructor.
         apply mon_projs.
 Qed.
-
 
 Lemma psend_not_recv: forall b p q l1 s1 w1 l2 s2 w2,
   projSC (merge_bpf_cont b (p ! [|(l1, s1, w1)|])) p (q & [|(l2, s2, w2)|]) -> False.

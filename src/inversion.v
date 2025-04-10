@@ -1078,6 +1078,71 @@ Proof. split.
        apply coseqInBGL.
 Qed.
 
+Fixpoint inA (a: (participant*dir)) (b: Apf): bool :=
+  match b with
+    | apf_receive p l s b' => if (String.eqb p (fst a)) && (direqb rcv (Datatypes.snd a)) then true else inA a b'
+    | apf_end              => false
+  end.
+
+Lemma coseqInAGL: forall b a w,
+  coseqIn a (act (merge_apf_cont b w)) ->
+  inA a b \/ coseqIn a (act w).
+Proof. intro b.
+       induction b; intros.
+       - rewrite apfend_an in H. right. easy.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_apf_cont b w)|]))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         simpl. rewrite String.eqb_refl. rewrite direqb_refl. simpl. left. easy.
+         subst. inversion H0. subst.
+         simpl. 
+         assert((s =? p)%string && direqb rcv d = false).
+         { case_eq (String.eqb s p); intros.
+           - rewrite String.eqb_eq in H3. subst.
+             apply dir_neqb_neq.
+             intro HH. apply H1. subst. easy.
+           - simpl. easy.
+          }
+         rewrite H3. apply IHb. easy.
+Qed.
+
+Lemma coseqInAGR: forall b a w,
+  inA a b \/ coseqIn a (act w) ->
+  coseqIn a (act (merge_apf_cont b w)).
+Proof. intro b.
+       induction b; intros.
+       - destruct a as (p,d).
+         destruct H as [H | H].
+         + simpl in H. easy.
+         + rewrite apfend_an. easy.
+       - destruct a as (p,d).
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 b) w)). simpl.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_apf_cont b w)|]))). simpl.
+         simpl in H.
+         case_eq(String.eqb s p); intros.
+         + rewrite String.eqb_eq in H0. subst.
+           case_eq(direqb rcv d); intros.
+           ++ apply dir_eqb_eq in H0. subst.
+              apply CoInSplit1 with (y := (p, rcv)) (ys := (act (merge_apf_cont b w))). easy. easy.
+           ++ rewrite H0 in H. rewrite String.eqb_refl in H. simpl in H.
+              apply dir_neqb_neq in H0.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act (merge_apf_cont b w))). easy. intro HH. apply H0. inversion HH. easy.
+              apply IHb; easy.
+         + rewrite H0 in H. simpl in H.
+           rewrite String.eqb_neq in H0.
+           apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_apf_cont b w))). easy. intro HH. apply H0. inversion HH. easy.
+           apply IHb; easy.
+Qed.
+
+Lemma coseqInAG: forall b a w,
+  inA a b \/ coseqIn a (act w) <->
+  coseqIn a (act (merge_apf_cont b w)).
+Proof. split.
+       apply coseqInAGR.
+       apply coseqInAGL.
+Qed.
+
 Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
   isInA a p = false ->
   merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
@@ -1187,6 +1252,41 @@ Lemma inB_coseq: forall b p w, isInB b p \/ coseqIn (p, snd) (act w) <->
 Proof. split. 
        - intros. apply inB_coseqR; easy.
        - intros. apply inB_coseqL; easy.
+Qed.
+
+Lemma ineqin: forall a p, isInA a p <-> inA (p, rcv) a.
+Proof. intro a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl. split.
+         + intro HH.
+           apply Bool.orb_true_iff in HH.
+           destruct HH as [HH | HH].
+           ++ rewrite String.eqb_sym in HH. rewrite HH. 
+              simpl. easy.
+           ++ apply IHa in HH.
+              case_eq(String.eqb s p); intros.
+              * simpl. easy.
+              * simpl. easy.
+          + intro HH.
+            case_eq(String.eqb s p); intros.
+            ++ rewrite String.eqb_sym. rewrite H. simpl. easy.
+            ++ rewrite String.eqb_sym. rewrite H. simpl. apply IHa.
+               rewrite H in HH. simpl in HH. easy.
+Qed.
+
+Lemma inA_coseq: forall b p w, isInA b p \/ coseqIn (p, rcv) (act w) <->
+  coseqIn (p, rcv) (act (merge_apf_cont b w)).
+Proof. intros. split. 
+       - intros. 
+         destruct H as [H | H].
+         rewrite <- coseqInAG.
+         apply ineqin in H. left. easy.
+         rewrite <- coseqInAG. right. easy.
+       - intros. rewrite <- coseqInAG in H.
+         destruct H as [H | H].
+         + apply ineqin in H. left. easy.
+         + right. easy.
 Qed.
 
 Lemma actionExLF: forall a w w',

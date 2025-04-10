@@ -107,6 +107,14 @@ Proof. intros.
        - rewrite(st_eq(merge_bpf_cont bpf_end (s ! c))). simpl. easy.
 Qed.
 
+Lemma cpfend_cn: forall w, merge_cpf_cont cpf_end w = w.
+Proof. intros.
+       case_eq w; intros.
+       - rewrite(st_eq(merge_cpf_cont cpf_end (end))). simpl. easy.
+       - rewrite(st_eq(merge_cpf_cont cpf_end (s & c) )). simpl. easy.
+       - rewrite(st_eq(merge_cpf_cont cpf_end (s ! c))). simpl. easy.
+Qed.
+
 Lemma meqApH: forall a b w,
   merge_apf_cont (Apf_merge a b) w = merge_apf_cont a (merge_apf_cont b w).
 Proof. intro a.
@@ -2933,6 +2941,12 @@ Fixpoint Ap2Apf (p: participant) (a: Ap p): Apf :=
     | ap_end             => apf_end
   end.
 
+Fixpoint Apf2Cpf (a: Apf): Cpf :=
+  match a with
+    | apf_receive p l s c' => cpf_receive p l s (Apf2Cpf c')
+    | apf_end              => cpf_end
+  end.
+
 Fixpoint Bp2Bpf (p: participant) (b: Bp p): Bpf :=
   match b with
     | bp_receivea q l s  => bpf_receive q l s bpf_end
@@ -2940,6 +2954,15 @@ Fixpoint Bp2Bpf (p: participant) (b: Bp p): Bpf :=
     | bp_mergea q l s c  => bpf_receive q l s (Bp2Bpf p c)
     | bp_merge q H l s c => bpf_send q l s (Bp2Bpf p c)
     | bp_end             => bpf_end
+  end.
+
+Fixpoint Cp2Cpf (p: participant) (c: Cp p): Cpf :=
+  match c with
+    | cp_receive q H l s   => cpf_receive q l s cpf_end
+    | cp_mergea q H l s c' => cpf_receive q l s (Cp2Cpf p c')
+    | cp_send q l s        => cpf_send q l s cpf_end
+    | cp_merge q l s c'    => cpf_send q l s (Cp2Cpf p c')
+    | cp_end               => cpf_end
   end.
 
 Lemma mgAp2Apf: forall p a w, merge_ap_cont p a w = merge_apf_cont (Ap2Apf p a) w.
@@ -2979,6 +3002,28 @@ Proof. intros p b.
        - simpl. rewrite bpfend_bn.  rewrite bpend_an. easy.
 Qed.
 
+Lemma mgCp2Cpf: forall p c w, merge_cp_cont p c w = merge_cpf_cont (Cp2Cpf p c) w.
+Proof. intros p c.
+       induction c; intros.
+       - simpl.
+         rewrite(st_eq(merge_cp_cont p (cp_receive q n s s0) w)). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive q s s0 cpf_end) w)). simpl.
+         rewrite cpfend_cn. easy.
+       - simpl.
+         rewrite(st_eq(merge_cp_cont p (cp_mergea q n s s0 c) w)). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive q s s0 (Cp2Cpf p c)) w)). simpl.
+         rewrite IHc. easy.
+       - simpl.
+         rewrite(st_eq(merge_cp_cont p (cp_send s s0 s1) w)). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 cpf_end) w)). simpl.
+         rewrite cpfend_cn. easy.
+       - simpl.
+         rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 c) w )). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 (Cp2Cpf p c)) w)). simpl.
+         rewrite IHc. easy.
+       - simpl. rewrite cpfend_cn. rewrite cpend_an. easy.
+Qed.
+
 Lemma Apf2Ap (a: Apf) (p: participant): isInA a p = false -> Ap p.
 Proof. revert p.
        induction a; intros.
@@ -3000,6 +3045,19 @@ Proof. revert p.
          apply eqb_neq in Ha.
          exact (bp_merge s Ha s0 s1 (IHb p Hb)). 
        - exact bp_end.
+Defined.
+
+Lemma Cpf2Cp (c: Cpf) (p: participant): isInC c p = false -> Cp p.
+Proof. revert p.
+       induction c; intros.
+       - simpl in H.
+         apply orbtf in H.
+         destruct H as (Ha, Hb).
+         apply eqb_neq in Ha.
+         exact (cp_mergea s Ha s0 s1 (IHc p Hb)).
+       - simpl in H.
+         exact (cp_merge s s0 s1 (IHc p H)). 
+       - exact cp_end.
 Defined.
 
 Lemma mgApf2Ap: forall p a w (H: isInA a p = false), merge_ap_cont p (Apf2Ap a p H) w = merge_apf_cont a w.
@@ -3032,6 +3090,34 @@ Proof. intros p b.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w)). simpl.
          rewrite IHb. easy.
        - simpl. rewrite bpfend_an. rewrite bpend_an. easy.
+Qed.
+
+Lemma mgCpf2Cp: forall p c w (H: isInC c p = false), merge_cp_cont p (Cpf2Cp c p H) w = merge_cpf_cont c w.
+Proof. intros p c.
+       induction c; intros.
+       - simpl. simpl in H.
+         destruct(orbtf (p =? s)%string (isInC c p)).
+         destruct(a H).
+         destruct(eqb_neq p s). simpl.
+         rewrite orbtf in H.
+         rewrite(st_eq(merge_cp_cont p (cp_mergea s (n e0) s0 s1 (Cpf2Cp c p e1)) w)). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w)). simpl.
+         rewrite IHc. easy.
+       - simpl.
+         rewrite(st_eq(merge_cp_cont p (cp_merge s s0 s1 (Cpf2Cp c p H)) w)).
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)). simpl.
+         rewrite IHc. easy.
+       - simpl. rewrite cpfend_cn. rewrite cpend_an. easy.
+Qed.
+
+Lemma mgApf2Cpf: forall a w, merge_apf_cont a w = merge_cpf_cont (Apf2Cpf a) w.
+Proof. intros a.
+       induction a; intros.
+       - simpl. rewrite apfend_an cpfend_cn. easy.
+       - simpl in *.
+         rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 (Apf2Cpf a)) w)). simpl.
+         rewrite IHa. easy.
 Qed.
 
 Lemma refEquivL: forall w w', refinement3 w w' -> refinement w w'.
@@ -3213,6 +3299,15 @@ Proof. intros.
        rewrite Hw2. rewrite mgBp2Bpf. easy.
 Qed.
 
+Lemma inRecvf: forall w p (Hs: singleton w) (Hin: coseqIn (p, rcv) (act w)),
+  exists a l s w2, w = merge_cpf_cont a (p & (cocons (l,s,w2) conil)).
+Proof. intros.
+       specialize(inReceive w p Hs Hin); intro HH.
+       destruct HH as (a,(l,(s,(w2,Hw2)))).
+       exists (Cp2Cpf p a). exists l. exists s. exists w2.
+       rewrite Hw2. rewrite mgCp2Cpf. easy.
+Qed.
+
 Lemma inSendfE: forall w p (Hs: singleton w) (Hin: coseqIn (p, snd) (act w)),
   exists b l s w2, w = merge_bpf_cont b (p ! (cocons (l,s,w2) conil)) /\ isInB b p = false.
 Proof. intros.
@@ -3279,6 +3374,83 @@ Proof. intros.
        rewrite(st_eq(merge_bpf_cont (bpf_send s l1 s1 b) (p ! [|(l2, s2, w3)|]))). simpl. split. easy.
        rewrite HR.
        apply String.eqb_neq in H1. rewrite H1. easy.
+Qed.
+
+Lemma inReceivefE: forall w p (Hs: singleton w) (Hin: coseqIn (p, rcv) (act w)),
+  exists c l s w2, w = merge_cpf_cont c (p & (cocons (l,s,w2) conil)) /\ isInC c p = false.
+Proof. intros.
+       remember (p, rcv) as v.
+       remember (act w) as u.
+       generalize dependent w.
+       induction Hin; intros.
+       rewrite Heqv in H0. rewrite <- H0 in H.
+       subst. simpl in *.
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in Hequ. simpl in Hequ. easy.
+       subst.
+       specialize(invsingl s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       exists cpf_end. exists l1. exists s1. exists w1. 
+       rewrite cpfend_cn. easy.
+
+       subst.
+       specialize(invsingl2 s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hequ.
+       inversion Hequ.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+
+       case_eq w; intros. subst.
+       rewrite(coseq_eq(act (end))) in Hequ. simpl in Hequ. easy.
+       subst.
+       specialize(invsingl s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hequ.
+       subst.
+       rewrite(coseq_eq(act (s & cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       assert((p, rcv) = (p, rcv)) by easy.
+       assert(singleton w1).
+       { apply extrR in Hs. easy.  }
+       assert((act w1) = (act w1)) by easy.
+       specialize(IHHin H w1 H1 H2).
+       destruct IHHin as (c,(l2,(s2,(w3,(IHw3,Gr))))).
+       rewrite IHw3.
+       assert(p <> s).
+       { unfold not in *.
+         intro Hp.
+         apply H0.
+         subst. easy. }
+       exists (cpf_receive s l1 s1 c). exists l2. exists s2. exists w3.
+       rewrite(st_eq(merge_cpf_cont (cpf_receive s l1 s1 c) (p & [|(l2, s2, w3)|]))).
+       simpl. split. easy. 
+       rewrite orbtf. split. apply String.eqb_neq in H3. easy. easy.
+
+       subst.
+       specialize(invsingl2 s c Hs); intros Hl.
+       destruct Hl as (l1,(s1,(w1, Heqw1))).
+       rewrite Heqw1 in Hs.
+       assert((p, rcv) = (p, rcv)) by easy.
+       assert(singleton w1).
+       { apply extsR in Hs. easy.  }
+       assert((act w1) = (act w1)) by easy.
+       rewrite Heqw1 in Hequ.
+       rewrite(coseq_eq(act (s ! cocons (l1, s1, w1) conil))) in Hequ. simpl in Hequ.
+       inversion Hequ.
+       subst.
+       specialize(IHHin H w1 H1 H2).
+       destruct IHHin as (c,(l2,(s2,(w3,(IHw3,Gr))))).
+       subst.
+       exists (cpf_send s l1 s1 c). exists l2. exists s2. exists w3.
+       rewrite(st_eq(merge_cpf_cont (cpf_send s l1 s1 c) (p & [|(l2, s2, w3)|]))).
+       simpl. split. easy. easy.
 Qed.
 
 Lemma extbpf: forall {b} w, singleton w -> singleton (merge_bpf_cont b w).
