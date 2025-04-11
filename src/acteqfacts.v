@@ -2965,6 +2965,20 @@ Fixpoint Cp2Cpf (p: participant) (c: Cp p): Cpf :=
     | cp_end               => cpf_end
   end.
 
+Fixpoint Cpf2Bpf (c: Cpf): Bpf :=
+  match c with
+    | cpf_receive q l s c' => bpf_receive q l s (Cpf2Bpf c')
+    | cpf_send q l s c'    => bpf_send q l s (Cpf2Bpf c')
+    | cpf_end              => bpf_end
+  end.
+
+Fixpoint Bpf2Cpf (b: Bpf): Cpf :=
+  match b with
+    | bpf_receive q l s b' => cpf_receive q l s (Bpf2Cpf b')
+    | bpf_send q l s b'    => cpf_send q l s (Bpf2Cpf b')
+    | bpf_end              => cpf_end
+  end.
+
 Lemma mgAp2Apf: forall p a w, merge_ap_cont p a w = merge_apf_cont (Ap2Apf p a) w.
 Proof. intros p a.
        induction a; intros.
@@ -3022,6 +3036,34 @@ Proof. intros p c.
          rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 (Cp2Cpf p c)) w)). simpl.
          rewrite IHc. easy.
        - simpl. rewrite cpfend_cn. rewrite cpend_an. easy.
+Qed.
+
+Lemma mgCpf2Bpf: forall c w, merge_cpf_cont c w = merge_bpf_cont (Cpf2Bpf c) w.
+Proof. intro c.
+       induction c; intros.
+       - simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w )). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 (Cpf2Bpf c)) w)). simpl.
+         rewrite IHc. easy.
+       - simpl. 
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)). simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 (Cpf2Bpf c)) w)). simpl.
+         rewrite IHc. easy.
+       - rewrite cpfend_cn bpfend_bn. easy.
+Qed.
+
+Lemma mgBpf2Cpf: forall b w, merge_bpf_cont b w = merge_cpf_cont (Bpf2Cpf b) w.
+Proof. intro b.
+       induction b; intros.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) w )). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 (Bpf2Cpf b)) w)). simpl.
+         rewrite IHb. easy.
+       - simpl.
+         rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) w )). simpl.
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 (Bpf2Cpf b)) w)). simpl.
+         rewrite IHb. easy.
+       - simpl. rewrite bpfend_bn cpfend_cn. easy.
 Qed.
 
 Lemma Apf2Ap (a: Apf) (p: participant): isInA a p = false -> Ap p.

@@ -321,6 +321,21 @@ Fixpoint merge_cpf_contn (c: Cpf) (w: st) (n: nat): st :=
     | S k  => merge_cpf_cont c (merge_cpf_contn c w k)
   end.
 
+Fixpoint Cpf_merge (a: Cpf) (b: Cpf): Cpf :=
+  match a with
+    | cpf_receive q l s a' => cpf_receive q l s (Cpf_merge a' b)
+    | cpf_send q l s a'    => cpf_send q l s (Cpf_merge a' b)
+    | cpf_end              => b
+  end.
+
+Fixpoint isInCpf (c: Cpf): bool :=
+  match c with
+    | cpf_send q l s c'     => true
+    | cpf_receive q l s c' => isInCpf c'
+    | _                    => false
+  end.
+
+
 (* Definition Apre (p: participant) (a: Apf) := isInA a p = false.  *)
 
 Fixpoint Apn (p: participant) (a: Ap p) (n: nat): Ap p :=

@@ -859,6 +859,27 @@ Proof. intro a.
          apply mon_projr.
 Qed.
 
+Lemma precv_not_sendc: forall c p q l1 s1 w1 l2 s2 w2,
+  projRC (merge_cpf_cont c (p & [|(l1, s1, w1)|])) p (q ! [|(l2, s2, w2)|]) -> False.
+Proof. intro c.
+       induction c; intros.
+       - rewrite(st_eq (merge_cpf_cont (cpf_receive s s0 s1 c) (p & [|(l1, s2, w1)|]))) in H. simpl in H.
+         pinversion H.
+         subst. 
+         specialize(IHc p q l1 s2 w1 l2 s3 w2).
+         apply IHc; easy.
+         apply mon_projr.
+       - rewrite(st_eq (merge_cpf_cont (cpf_send s s0 s1 c) (p & [|(l1, s2, w1)|]))) in H. simpl in H.
+         pinversion H.
+         subst.
+         specialize(IHc p q l1 s2 w1 l2 s3 w2).
+         apply IHc; easy.
+         apply mon_projr.
+       - rewrite cpfend_cn in H.
+         pinversion H. subst. easy.
+         apply mon_projr.
+Qed.
+
 Lemma psend_not_end: forall b p l s w,
   projSC (merge_bpf_cont b (p ! [|(l, s, w)|])) p (end) -> False.
 Proof. intro b.
@@ -1785,4 +1806,153 @@ Proof. destruct w as (w, Pw).
            apply mon_projs.
 Qed.
 
+Lemma _B_7_2: forall w w' p w1 w2, refinement4 (@und w) (@und w') -> projRC (@und w) p (@und w1) -> projRC (@und w') p (@und w2) -> sRefinement (@und w1) (@und w2).
+Proof. destruct w as (w, Pw).
+       destruct w' as (w', Pw').
+       destruct w1 as (w1, Pw1).
+       destruct w2 as (w2, Pw2).
+       generalize dependent w.
+       generalize dependent w'.
+       generalize dependent w1.
+       generalize dependent w2.
+       revert p. 
+       pcofix CIH. simpl in CIH. simpl.
+       intros.
+       specialize(sinv w1 Pw1); intros Hpw1.
+       destruct Hpw1 as [Hpw1 | [Hpw1 | Hpw1]].
+       - destruct Hpw1 as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         specialize(sinv w2 Pw2); intros Hpw2.
+         destruct Hpw2 as [Hpw2 | [Hpw2 | Hpw2]].
+         + destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
+           subst.
+           pinversion H1. subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H4. easy.
+           admit.
+           subst.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H3. easy.
+           admit.
+           apply mon_projr.
+         + destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
+           subst.
+           (*second inversion on H1 starts here*)
+           pinversion H1. subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H4. easy.
+           admit.
+           subst.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H3. easy.
+           admit.
+           apply mon_projr.
+           subst.
+           (*third inversion on H1 starts here*)
+           pinversion H1. subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H4. easy.
+           admit.
+           subst.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H3. easy.
+           admit.
+           apply mon_projr.
+       - destruct Hpw1 as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         specialize(sinv w2 Pw2); intros Hpw2.
+         destruct Hpw2 as [Hpw2 | [Hpw2 | Hpw2]].
+         + destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
+           subst.
+           pinversion H2. subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H4. easy.
+           admit.
+           subst.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           apply precv_not_sendc in H3. easy.
+           admit.
+           apply mon_projr.
+         + destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
+           subst.
+           pinversion H1. subst.
+           pinversion H2. subst.
+           pose proof H0 as H00.
+           specialize(recv_inv_leq apf_end apf_end q2 l1 s1 w'0 l2 s2 w'1); intro HH.
+           rewrite !apfend_an in HH.
+           apply HH in H0; try easy.
+           destruct H0. subst.
+           pfold. constructor. easy.
+           specialize(drop_recv apf_end apf_end q2 l2 s1 s2 w'0 w'1); intro HH2.
+           rewrite !apfend_an in HH2.
+           apply HH2 in H00; try easy.
+           right. apply CIH with (p := q2) (w' := w'1) (w:= w'0); try easy.
+           admit. admit.
+           
+           subst.
+           pose proof H0 as H00.
+           specialize(Invert_Apf_Apf apf_end apf_end q1 l1 s1 w'0 (q & [|(l, s, w'1)|])); intro HH.
+           rewrite !apfend_an in HH.
+           apply HH in H0.
+           destruct H0 as [H0 | H0].
+           admit.
+           destruct H0 as (a3,(w3,(s3,(H0a,(H0b,(H0c,H0d)))))).
+           apply pneqq4 in H0d; try easy.
+           destruct H0d as (a4,(H0d,(H0e,H0f))).
+           subst.
+           rewrite mgApf2Cpf in H4. subst.
+           apply prj_recv_inv1c in H4.
+           destruct H4 as (H4a,(H4n,(H4c,H4d))). subst.
+           pfold. constructor. easy.
+           assert((q & [|(l, s, merge_apf_cont a4 (q2 & [|(l2, s2, w3)|]))|]) =
+                  (merge_apf_cont (apf_receive q l s a4) (q2 & [|(l2, s2, w3)|]))) by admit.
+           rewrite H0 in H00.
+           specialize(drop_recv apf_end (apf_receive q l s a4) q2 l2 s1 s2 w'0 w3); intro HH2.
+           rewrite !apfend_an in HH2.
+           apply HH2 in H00; try easy.
+           rewrite(st_eq(merge_apf_cont (apf_receive q l s a4) w3)) in H00. simpl in H00.
+           right. apply CIH with (p := q2) (w' := (q & [|(l, s, merge_apf_cont a4 w3)|])) (w:= w'0); try easy.
+           admit. admit.
+           apply proj_recv_ar; try easy.
+           admit. easy.
+           
+           subst.
+           pose proof H0 as H00.
+           specialize(Invert_Apf_Apf apf_end apf_end q1 l1 s1 w'0 (q ! [|(l, s, w'1)|])); intro HH.
+           rewrite !apfend_an in HH.
+           apply HH in H0.
+           destruct H0 as [H0 | H0].
+           admit.
+           destruct H0 as (a3,(w3,(s3,(H0a,(H0b,(H0c,H0d)))))).
+           Search merge_apf_cont.
+           symmetry in H0d. apply rcv_snd_notMer in H0d; try easy. easy.
+           apply mon_projr.
+           
+           subst.
+           pinversion H2. subst.
+           pose proof H0 as H00.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           pose proof H4 as H4n.
+           apply prj_recv_inv1c in H4.
+           destruct H4 as (H4a,(H4b,(H4c,H4d))). subst.
+           assert((q & [|(l, s, merge_cpf_cont c3 (q1 & [|(l1, s1, w3)|]))|]) =
+                  (merge_cpf_cont (cpf_receive q l s c3) (q1 & [|(l1, s1, w3)|]))) by admit.
+           rewrite H3 in H0.
+Admitted.
 
