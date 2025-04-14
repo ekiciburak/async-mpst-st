@@ -2879,3 +2879,11 @@ Proof. intro c1.
          destruct H2 as (H2a,(H2b,H2c)). subst. easy.
          apply refinementR4_mon.
 Admitted.
+
+Lemma drop_recv_c: forall a b p l s s' w w',
+  isInC a p = false ->
+  isInC b p = false ->
+  subsort s' s ->
+  paco2 refinementR4 bot2 (merge_cpf_cont a (p & [|(l, s, w)|])) (merge_cpf_cont b (p & [|(l, s', w')|])) ->
+  paco2 refinementR4 bot2 (merge_cpf_cont a w) (merge_cpf_cont b w').
+Admitted.

@@ -460,6 +460,13 @@ Proof. intros.
        apply mon_projr.
 Qed.
 
+Lemma proj_recv_cr: forall a p q l s w wb,
+  p <> q ->
+  isInC a p = false ->
+  projRC w p wb ->
+  projRC (q & [|(l, s, merge_cpf_cont a w)|]) p wb.
+Admitted.
+
 Lemma proj_send_br: forall b p q l s w wb,
   isInB b p = false ->
   projSC w p wb ->
@@ -559,6 +566,12 @@ Proof. intros.
          subst. inversion H2. subst. easy.
        apply mon_projr.
 Qed.
+
+Lemma proj_send_cr: forall a p q l s w wb,
+  isInC a p = false ->
+  projRC w p wb ->
+  projRC (q ! [|(l, s, merge_cpf_cont a w)|]) p wb.
+Admitted.
 
 Lemma prj_send_eq: forall p q l s w wa,
   singleton w ->
@@ -937,6 +950,10 @@ Proof. intro a.
          apply CoInSplit1 with (y := (p, rcv)) (ys := (act w)). easy. easy.
          apply mon_projr.
 Qed.
+
+Lemma precv_not_end_c: forall a p l s w,
+  projRC (merge_cpf_cont a (p & [|(l, s, w)|])) p (end) -> False.
+Admitted.
 
 Lemma pjs_notin_end: forall w p w2,
   (coseqIn (p, snd) (act w) -> False) ->
@@ -1938,7 +1955,6 @@ Proof. destruct w as (w, Pw).
            destruct H0 as [H0 | H0].
            admit.
            destruct H0 as (a3,(w3,(s3,(H0a,(H0b,(H0c,H0d)))))).
-           Search merge_apf_cont.
            symmetry in H0d. apply rcv_snd_notMer in H0d; try easy. easy.
            apply mon_projr.
            
@@ -1954,5 +1970,351 @@ Proof. destruct w as (w, Pw).
            assert((q & [|(l, s, merge_cpf_cont c3 (q1 & [|(l1, s1, w3)|]))|]) =
                   (merge_cpf_cont (cpf_receive q l s c3) (q1 & [|(l1, s1, w3)|]))) by admit.
            rewrite H3 in H0.
+           specialize(recv_inv_leqc (cpf_receive q l s c3) cpf_end q1 l1 s1 w3 l2 s2 w'1); intros HH.
+           rewrite cpfend_cn in HH.
+           apply HH in H0.
+           destruct H0. subst.
+           pfold. constructor. easy.
+           rewrite H3 in H00.
+           specialize(drop_recv_c (cpf_receive q l s c3) cpf_end q1 l2 s1 s2 w3 w'1); intros.
+           rewrite !cpfend_cn in H0.
+           apply H0 in H00; try easy.
+           rewrite(st_eq(merge_cpf_cont (cpf_receive q l s c3) w3)) in H00. simpl in H00.
+           right.
+           apply CIH with (p := q1) (w' := w'1) (w := (q & [|(l, s, merge_cpf_cont c3 w3)|])).
+           easy. easy. admit. admit. easy. 
+           apply proj_recv_cr; try easy. easy. simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
+           simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
+           easy. easy. admit.
+           
+           subst.
+           pose proof H0 as H00.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           apply inReceivefE in H6.
+           destruct H6 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply prj_recv_inv1c in H4.
+           destruct H4 as (H4a,(H4b,(H4c,H4d))).
+           apply prj_recv_inv1c in H7.
+           destruct H7 as (H7a,(H7b,(H7c,H7d))).
+           subst.
+           assert((q & [|(l, s, merge_cpf_cont c3 (q2 & [|(l1, s1, w3)|]))|]) =
+                  (merge_cpf_cont (cpf_receive q l s c3) (q2 & [|(l1, s1, w3)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_receive q l s c3) (q2 & [|(l1, s1, w3)|]))). simpl. easy. }
+           assert((q0 & [|(l0, s0, merge_cpf_cont c6 (q2 & [|(l2, s2, w6)|]))|]) =
+                  (merge_cpf_cont (cpf_receive q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_receive q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))). simpl. easy. }
+           rewrite H3 H4 in H0, H00.
+           apply recv_inv_leqc in H0. destruct H0. subst.
+           apply drop_recv_c in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_receive q l s c3) w3)) in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_receive q0 l0 s0 c6) w6)) in H00. simpl in H00.
+           pfold. constructor. easy.
+           right.
+           apply CIH with (p := q2) (w' := (q0 & [|(l0, s0, merge_cpf_cont c6 w6)|])) (w := (q & [|(l, s, merge_cpf_cont c3 w3)|])).
+           easy. easy. admit. admit. easy.
+           apply proj_recv_cr; try easy.
+           apply proj_recv_cr; try easy.
+           simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
+           simpl. apply String.eqb_neq in H5. rewrite H5. rewrite H6b. easy.
+           easy. 
+           simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
+           simpl. apply String.eqb_neq in H5. rewrite H5. rewrite H6b. easy.
+           easy. easy. admit. admit.
+           
+           subst.
+           apply rcv_snd_notRef in H0. easy.
+           apply mon_projr.
+           
+           subst.
+           pinversion H2. subst.
+           pose proof H0 as H00.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           pose proof H3 as H3n.
+           apply prj_recv_inv1c in H3.
+           destruct H3 as (H4a,(H4b,(H4c,H4d))). subst.
+           assert((q ! [|(l, s, merge_cpf_cont c3 (q1 & [|(l1, s1, w3)|]))|]) =
+                  (merge_cpf_cont (cpf_send q l s c3) (q1 & [|(l1, s1, w3)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) (q1 & [|(l1, s1, w3)|]))). simpl. easy. }
+           rewrite H in H0 H00.
+           specialize(recv_inv_leqc (cpf_send q l s c3) cpf_end q1 l1 s1 w3 l2 s2 w'1); intro HH.
+           rewrite cpfend_cn in HH.
+           apply HH in H0. destruct H0. subst.
+           specialize(drop_recv_c (cpf_send q l s c3) cpf_end q1 l2 s1 s2 w3 w'1); intro HH2.
+           rewrite cpfend_cn in HH2.
+           apply HH2 in H00; try easy.
+           rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) w3)) in H00. simpl in H00.
+           rewrite cpfend_cn in H00.
+           pfold. constructor. easy.
+           right.
+           apply CIH with (p := q1) (w' := w'1) (w := (q ! [|(l, s, merge_cpf_cont c3 w3)|])).
+           easy. easy. admit. admit. easy.
+           apply proj_send_cr; try easy.
+           easy.
+           simpl. easy. easy. easy. admit. 
+           
+           subst.
+           pose proof H0 as H00.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           apply inReceivefE in H5.
+           destruct H5 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply prj_recv_inv1c in H3.
+           destruct H3 as (H4a,(H4b,(H4c,H4d))).
+           apply prj_recv_inv1c in H6.
+           destruct H6 as (H7a,(H7b,(H7c,H7d))).
+           subst.
+           assert((q ! [|(l, s, merge_cpf_cont c3 (q2 & [|(l1, s1, w3)|]))|]) =
+                  (merge_cpf_cont (cpf_send q l s c3) (q2 & [|(l1, s1, w3)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) (q2 & [|(l1, s1, w3)|]))). simpl. easy. }
+           assert((q0 & [|(l0, s0, merge_cpf_cont c6 (q2 & [|(l2, s2, w6)|]))|]) =
+                  (merge_cpf_cont (cpf_receive q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_receive q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))). simpl. easy. }
+           rewrite H3 H in H0, H00.
+           apply recv_inv_leqc in H0. destruct H0. subst.
+           apply drop_recv_c in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) w3)) in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_receive q0 l0 s0 c6) w6)) in H00. simpl in H00.
+           pfold. constructor. easy.
+           right.
+           apply CIH with (p := q2) (w' := (q0 & [|(l0, s0, merge_cpf_cont c6 w6)|])) (w := (q ! [|(l, s, merge_cpf_cont c3 w3)|])).
+           easy. easy. admit. admit. easy.
+           apply proj_send_cr; try easy.
+           apply proj_recv_cr; try easy.
+           simpl. easy.
+           simpl. apply String.eqb_neq in H4. rewrite H4 H6b. easy.
+           easy.
+           simpl. easy.
+           simpl. apply String.eqb_neq in H4. rewrite H4 H6b. easy.
+           easy. easy. admit. admit.
+           
+           subst.
+           pose proof H0 as H00.
+           apply inReceivefE in H.
+           destruct H as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           apply inReceivefE in H4.
+           destruct H4 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply prj_recv_inv1c in H3.
+           destruct H3 as (H4a,(H4b,(H4c,H4d))).
+           apply prj_recv_inv1c in H5.
+           destruct H5 as (H7a,(H7b,(H7c,H7d))).
+           subst.
+           assert((q ! [|(l, s, merge_cpf_cont c3 (q2 & [|(l1, s1, w3)|]))|]) =
+                  (merge_cpf_cont (cpf_send q l s c3) (q2 & [|(l1, s1, w3)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) (q2 & [|(l1, s1, w3)|]))). simpl. easy. }
+           assert((q0 ! [|(l0, s0, merge_cpf_cont c6 (q2 & [|(l2, s2, w6)|]))|]) =
+                  (merge_cpf_cont (cpf_send q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))).
+           { rewrite(st_eq(merge_cpf_cont (cpf_send q0 l0 s0 c6) (q2 & [|(l2, s2, w6)|]))). simpl. easy. }
+           rewrite H3 H in H0, H00.
+           apply recv_inv_leqc in H0. destruct H0. subst.
+           apply drop_recv_c in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_send q l s c3) w3)) in H00.
+           rewrite(st_eq(merge_cpf_cont (cpf_send q0 l0 s0 c6) w6)) in H00. simpl in H00.
+           pfold. constructor. easy.
+           right.
+           apply CIH with (p := q2) (w' := (q0 ! [|(l0, s0, merge_cpf_cont c6 w6)|])) (w := (q ! [|(l, s, merge_cpf_cont c3 w3)|])).
+           easy. easy. admit. admit. easy.
+           apply proj_send_cr; try easy.
+           apply proj_send_cr; try easy.
+           simpl. easy. simpl. easy. easy. simpl. easy. simpl. easy. easy. easy.
+           admit. admit.
+           apply mon_projr.
+           apply mon_projr.
+           
+           subst.
+           pinversion H1. subst.
+           pinversion H2. subst.
+           apply rcv_end_notRef in H0. easy.
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c3,(l3,(s3,(w3,(H3a,H3b))))).
+           subst.
+           pinversion H0.
+           subst.
+           apply precv_not_end_c in H4. easy.
+           apply refinementR4_mon.
+           admit.
+           
+           subst.
+           assert(coseqIn (q1, rcv) (act (q & [|(l, s, w'1)|])) -> False) by admit.
+           apply actionExRNF with (a :=  (q1, rcv)) in H0. easy. easy. admit.
+           
+           subst.
+           apply rcv_snd_notRef in H0. easy.
+           
+           subst.
+           apply rcv_snd_notRef in H0. easy.
+           apply mon_projr.
+           
+           subst.
+           pinversion H2. subst.
+           apply rcv_end_notRef in H0. easy.
+           
+           subst.
+           apply inReceivefE in H6.
+           destruct H6 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H7. easy.
+           admit.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q0 & [|(l0, s0, w'1)|])) -> False) by admit.
+           apply actionExRNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           subst.
+           apply rcv_snd_notRef in H0. easy.
+           
+           subst.
+           apply rcv_snd_notRef in H0. easy.
+           apply mon_projr.
+           
+           subst.
+           pinversion H2. subst.
+           apply snd_end_notRef in H0. easy.
+           
+           subst.
+           apply inReceivefE in H5.
+           destruct H5 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H6. easy.
+           admit.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q0 & [|(l0, s0, w'1)|])) -> False) by admit.
+           apply actionExRNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           subst.
+           apply inReceivefE in H4.
+           destruct H4 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H5. easy.
+           admit.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q0 ! [|(l0, s0, w'1)|])) -> False) by admit.
+           apply actionExRNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           apply mon_projr.
+           apply mon_projr.
+           
+           subst.
+           
+           pinversion H1. subst.
+           pinversion H2. subst.
+           
+           pfold. constructor.
+           
+           subst.
+           pinversion H0.
+           apply refinementR4_mon.
+           
+           subst.
+           pinversion H0.
+           apply refinementR4_mon.
+
+           pfold. constructor.
+
+           subst.
+           pinversion H0.
+           apply refinementR4_mon.
+
+           pfold. constructor.
+           apply mon_projr.
+
+           subst.
+           pinversion H2. subst.
+           pfold. constructor.
+           
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H4. easy.
+           admit.
+           
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H4. easy.
+           admit.
+           
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H4. easy.
+           admit.
+           
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H4. easy.
+           admit.
+           
+           subst.
+           apply inReceivefE in H3.
+           destruct H3 as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H4. easy.
+           admit.
+           apply mon_projr.
+           
+           subst.
+           pinversion H2.
+           subst.
+           apply rcv_end_notRef in H0. easy.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q & [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q & [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           pfold. constructor.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q & [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           pfold. constructor.
+           apply mon_projr.
+           
+           subst.
+           apply inReceivefE in H.
+           destruct H as (c6,(l6,(s6,(w6,(H6a,H6b))))).
+           subst.
+           apply precv_not_end_c in H3. easy.
+           admit.
+           
+           subst.
+           pinversion H2. subst.
+           pfold. constructor.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q ! [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q ! [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           pfold. constructor.
+           
+           subst.
+           assert(coseqIn (p, rcv) (act (q ! [|(l, s, w'0)|])) -> False) by admit.
+           apply actionExLNF with (a :=  (p, rcv)) in H0. easy. easy. admit.
+           
+           pfold. constructor.
+           apply mon_projr.
+           apply mon_projr.
 Admitted.
+
 
