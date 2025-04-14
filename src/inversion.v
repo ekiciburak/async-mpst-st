@@ -1289,6 +1289,68 @@ Proof. intros. split.
          + right. easy.
 Qed.
 
+Lemma inC_coseqL: forall c p w, isInC c p \/ coseqIn (p, rcv) (act w) ->
+  coseqIn (p, rcv) (act (merge_cpf_cont c w)).
+Proof. intro c.
+       induction c; intros.
+       - simpl in H.
+         destruct H as [H | H].
+         + apply Bool.orb_true_iff in H.
+           destruct H as [H | H].
+           ++ rewrite(coseq_eq(act (merge_cpf_cont (cpf_receive s s0 s1 c) w))). simpl.
+              rewrite String.eqb_eq in H. subst.
+              apply CoInSplit1 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+           ++ rewrite(coseq_eq(act (merge_cpf_cont (cpf_receive s s0 s1 c) w))). simpl.
+              case_eq(String.eqb p s); intros.
+              * rewrite String.eqb_eq in H0. subst.
+                apply CoInSplit1 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+              * apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy.
+                apply String.eqb_neq in H0. intro HH. apply H0. inversion HH. easy.
+                apply IHc. left. easy.
+         + rewrite(coseq_eq(act (merge_cpf_cont (cpf_receive s s0 s1 c) w))). simpl.
+           case_eq(String.eqb p s); intros.
+           * rewrite String.eqb_eq in H0. subst.
+             apply CoInSplit1 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+           * apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy.
+             apply String.eqb_neq in H0. intro HH. apply H0. inversion HH. easy.
+             apply IHc. right. easy.
+       - simpl in H.
+         rewrite(coseq_eq(act (merge_cpf_cont (cpf_send s s0 s1 c) w))). simpl.
+         apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+         apply IHc. easy.
+       - destruct H as [H | H].
+         + simpl in H. easy.
+         + rewrite cpfend_cn. easy.
+Qed.
+
+Lemma inC_coseqR: forall c p w, coseqIn (p, rcv) (act (merge_cpf_cont c w)) ->
+  isInC c p \/ coseqIn (p, rcv) (act w).
+Proof. intro c.
+       induction c; intros.
+       - simpl.
+         rewrite(coseq_eq(act (merge_cpf_cont (cpf_receive s s0 s1 c) w))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         rewrite String.eqb_refl. simpl. left. easy.
+         subst. inversion H0. subst. 
+         assert(p <> s).
+         { intro HH. apply H1. subst. easy. }
+         apply String.eqb_neq in H3. rewrite H3.
+         simpl. apply IHc. easy.
+       - simpl.
+         rewrite(coseq_eq(act (merge_cpf_cont (cpf_send s s0 s1 c) w))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst. inversion H0. subst.
+         apply IHc. easy.
+       - simpl. right.
+         rewrite cpfend_cn in H. easy.
+Qed.
+
+Lemma inC_coseq: forall c p w, isInC c p \/ coseqIn (p, rcv) (act w) <->
+  coseqIn (p, rcv) (act (merge_cpf_cont c w)).
+Proof. intros. split. 
+       apply inC_coseqL.
+       apply inC_coseqR.
+Qed.
+
 Lemma actionExLF: forall a w w',
   coseqIn a (act w) ->
   paco2 refinementR4 bot2 w w' ->
