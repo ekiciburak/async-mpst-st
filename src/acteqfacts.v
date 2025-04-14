@@ -199,7 +199,6 @@ Proof. intro a.
          easy.
 Qed.
 
-
 Lemma mcBp2Ap: forall b w, 
   isBpSend b = false ->
   exists a, merge_bpf_cont b w = merge_apf_cont a w /\ b = Ap2BpSeq a.
@@ -628,6 +627,57 @@ Proof. split.
        - simpl. easy.
 Qed.
 
+Lemma InMergeFC: forall a b p,
+  isInC (Cpf_merge a b) p = false <->
+  isInC a p = false /\ isInC b p = false.
+Proof. split.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         case_eq (String.eqb p s); intros.
+         + simpl. rewrite H in Ha. simpl in Ha. easy.
+         + simpl. rewrite H in Ha. simpl in Ha. apply IHa in Ha. easy.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl. simpl in Ha. easy.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         case_eq (String.eqb p s); intros.
+         + simpl. rewrite H in Ha. simpl in Ha. easy.
+         + simpl. rewrite H in Ha. simpl in Ha. apply IHa in Ha. easy.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl. easy.
+Qed.
+
+Lemma InMergeC: forall a b p,
+  isInC (Cpf_merge a b) p <->
+  isInC a p \/ isInC b p.
+Proof. split.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         case_eq (String.eqb p s); intros.
+         + simpl. left. easy.
+         + simpl. apply IHa. rewrite H in Ha. simpl in Ha. easy.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl. simpl in Ha. right. easy.
+       intro Ha.
+       induction a; intros.
+       - simpl. simpl in Ha.
+         case_eq (String.eqb p s); intros.
+         + simpl. rewrite H in Ha. simpl in Ha. easy.
+         + simpl. rewrite H in Ha. simpl in Ha. apply IHa in Ha. easy.
+       - simpl. simpl in Ha.
+         apply IHa in Ha. easy.
+       - simpl.
+         destruct Ha as [Ha | Ha].
+         + simpl in Ha. easy.
+         + easy.
+Qed.
+
 Lemma isInDec: forall a p, isInA a p = false \/ isInA a p.
 Proof. intro a.
        induction a; intros.
@@ -887,6 +937,20 @@ Proof. intro a1.
          rewrite(st_eq(merge_bpf_cont (Bpf_merge (bpf_send s s0 s1 a1) a2) w)). simpl.
          rewrite IHa1. easy.
        - simpl. rewrite bpfend_bn. easy.
+Qed.
+
+Lemma merge_mergeC: forall a1 a2 w,
+  merge_cpf_cont a1 (merge_cpf_cont a2 w) =
+  merge_cpf_cont (Cpf_merge a1 a2) w.
+Proof. intro a1.
+       induction a1; intros.
+       - rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 a1) (merge_cpf_cont a2 w))).
+         rewrite(st_eq(merge_cpf_cont (Cpf_merge (cpf_receive s s0 s1 a1) a2) w)). simpl.
+         rewrite IHa1. easy.
+       - rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 a1) (merge_cpf_cont a2 w))).
+         rewrite(st_eq(merge_cpf_cont (Cpf_merge (cpf_send s s0 s1 a1) a2) w)). simpl.
+         rewrite IHa1. easy.
+       - simpl. rewrite cpfend_cn. easy.
 Qed.
 
 Lemma isInFE1: forall a1 a2 p q l s,
@@ -2978,6 +3042,30 @@ Fixpoint Bpf2Cpf (b: Bpf): Cpf :=
     | bpf_send q l s b'    => cpf_send q l s (Bpf2Cpf b')
     | bpf_end              => cpf_end
   end.
+
+Lemma bcId: forall (c: Cpf), Bpf2Cpf (Cpf2Bpf c) = c.
+Proof. intro c.
+       induction c; intros.
+       - simpl. rewrite IHc. easy.
+       - simpl. rewrite IHc. easy.
+       - simpl. easy.
+Qed.
+
+Lemma cbId: forall (b: Bpf), Cpf2Bpf (Bpf2Cpf b) = b.
+Proof. intro b.
+       induction b; intros.
+       - simpl. rewrite IHb. easy.
+       - simpl. rewrite IHb. easy.
+       - simpl. easy.
+Qed.
+
+Lemma inAC: forall a p, isInA a p = isInC (Apf2Cpf a) p.
+Proof. intro a.
+       induction a; intros.
+       - simpl. easy.
+       - simpl. rewrite IHa.
+         easy.
+Qed.
 
 Lemma mgAp2Apf: forall p a w, merge_ap_cont p a w = merge_apf_cont (Ap2Apf p a) w.
 Proof. intros p a.
