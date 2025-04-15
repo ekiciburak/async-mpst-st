@@ -43,7 +43,7 @@ Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
                copathsel l s xs y ->
                st2so R (st_send p (cocons (l,s,x) conil)) (st_send p xs)
   | st2so_rcv: forall p xs ys,
-               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t t', u = (l,s,t) /\ v = (l,s,t') /\ R t t') ys xs ->
                st2so R (st_receive p ys) (st_receive p xs).
 
 Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2.
@@ -98,8 +98,7 @@ Proof. pcofix CIH.
          destruct p as ((l1,s1),t1). simpl.
          pfold. constructor. pfold.
          constructor.
-         exists l1. exists s1. exists (st2soH t1).
-         exists l1. exists s1. exists t1.
+         exists l1. exists s1. exists (st2soH t1). exists t1.
          split. easy. split. easy. right. apply CIH.
          subst.
          pinversion Hwf. subst.
@@ -120,8 +119,7 @@ Proof. pcofix CIH.
          rewrite(coseq_eq(comap (prod_map (prod_map id id) st2soH) (cocons p c0))). simpl.
          constructor.
          destruct p as ((l2,s2),t2). simpl.
-         exists l2. exists s2. exists (st2soH t2).
-         exists l2. exists s2. exists t2.
+         exists l2. exists s2. exists (st2soH t2). exists t2.
          split. easy. split. easy. right. apply CIH.
          subst. pinversion Hwf. subst.
          pinversion H2. subst.
@@ -194,7 +192,7 @@ Proof. pcofix CIH.
        constructor.
 
        exists "l1". exists (I). exists ("p" ! cocons ("l4", I, Et1so) conil).
-       exists "l1". exists (I). exists ("p" ! cocons ("l4", I, Et1) (cocons ("l5", I, Et2) (cocons ("l6", I, eT1) conil))).
+       exists ("p" ! cocons ("l4", I, Et1) (cocons ("l5", I, Et2) (cocons ("l6", I, eT1) conil))).
        split. easy. split. easy.
        left.
        pfold.
@@ -204,29 +202,25 @@ Proof. pcofix CIH.
        rewrite(st_eq Et1). simpl. rewrite(st_eq Et1so). simpl.
        pfold. apply st2so_rcv. pfold.
        constructor.
-       exists "l7". exists (I). exists (Et1so).
-       exists "l7". exists (I). exists (Et1).
+       exists "l7". exists (I). exists (Et1so). exists (Et1).
        split. easy. split. easy. right. easy.
        constructor. pfold.
        constructor. 
 
        constructor. left. pfold. constructor.
-       exists "l2". exists (I). exists ("q" ! cocons ("l9", I, eT2) conil).
-       exists "l2". exists (I). exists ("q" ! cocons ("l9", I, eT1) conil).
+       exists "l2". exists (I). exists ("q" ! cocons ("l9", I, eT2) conil). exists ("q" ! cocons ("l9", I, eT1) conil).
        split. easy. split. easy.
        left. pfold. apply st2so_snd with (y := eT1).
        right. easy.
        constructor.
 
        constructor. pfold. constructor.
-       exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT2) conil).
-       exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT1) conil).
+       exists "l3". exists (I). exists ("q" & cocons ("l10", I, eT2) conil). exists ("q" & cocons ("l10", I, eT1) conil).
        split. easy. split. easy.
        left. pfold. apply st2so_rcv. pfold.
        constructor. 
 
-       exists "l10". exists (I). exists (eT2).
-       exists "l10". exists (I). exists (eT1).
+       exists "l10". exists (I). exists (eT2). exists (eT1).
        split. easy. split. easy. right. easy.
 
        constructor. pfold.

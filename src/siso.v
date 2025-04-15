@@ -3,6 +3,7 @@ From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
 Require Import String List.
 Import ListNotations.
+Import CoListNotations.
 Require Import Setoid.
 Require Import Morphisms JMeq.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
@@ -36,6 +37,21 @@ Proof. intros.
 Qed.
 
 (* direct st -> siso -- omits the middle men so and si decompositions *)
+
+CoFixpoint st2sisoH (t: st): st :=
+  match t with
+    | st_send p xs    =>
+      match xs with
+        | cocons (l,s,t') ys => st_send p [|(l,s,st2sisoH t')|] 
+        | conil              => st_send p conil
+      end
+    | st_receive p xs => 
+      match xs with
+        | cocons (l,s,t') ys => st_receive p [|(l,s,st2sisoH t')|] 
+        | conil              => st_receive p conil
+      end 
+    | _               => st_end
+  end.
 
 Inductive st2siso (R: st -> st -> Prop): st -> st -> Prop :=
   | st2siso_end: st2siso R st_end st_end

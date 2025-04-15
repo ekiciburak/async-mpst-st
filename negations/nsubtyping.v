@@ -255,7 +255,7 @@ Proof. pcofix CIH.
        - subst. pinversion H0.
          subst. pinversion H1. subst.
          pinversion H3. subst.
-         destruct H7 as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
+         destruct H7 as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
          inversion Hb. subst.
          pinversion H8. subst.
          pfold. constructor.

@@ -147,6 +147,14 @@ Inductive Forall2Ho {A B : Type} (P : A -> B -> Prop) (R: coseq A -> coseq B -> 
   | Forall2o_cocons: forall x y l l',
                      P x y -> R l l' -> Forall2Ho P R (cocons x l) (cocons y l').
 
+Lemma mon_f2Ho: forall {A B: Type} (f: A -> B -> Prop), monotone2 (Forall2Ho f).
+Proof. intros. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. easy. apply LE; easy.
+Qed.
+
 Definition Forall2Co {A B: Type} P xs ys := paco2 (@Forall2Ho A B P) bot2 xs ys.
 
 Inductive Forall2C {A B : Type} (P : A -> B -> Prop): coseq A -> coseq B -> Prop :=

@@ -71,6 +71,7 @@ Inductive coseqIn: (participant * dir) -> coseq (participant * dir) -> Prop :=
   | CoInSplit1 x xs y ys: xs = cocons y ys -> x = y  -> coseqIn x xs
   | CoInSplit2 x xs y ys: xs = cocons y ys -> x <> y -> coseqIn x ys -> coseqIn x xs.
 
+
 Inductive coseqInLS: (participant * dir * label * local.sort) -> coseq (participant * dir * label *local.sort) -> Prop :=
   | CoInSplit1ls x xs y ys: xs = cocons y ys -> x = y  -> coseqInLS x xs
   | CoInSplit2ls x xs y ys: xs = cocons y ys -> x <> y -> coseqInLS x ys -> coseqInLS x xs.
@@ -78,7 +79,7 @@ Inductive coseqInLS: (participant * dir * label * local.sort) -> coseq (particip
 Inductive coseqInl: (participant * dir * label) -> coseq (participant * dir * label) -> Prop :=
   | CoInSplit1l x xs y ys: xs = cocons y ys -> x = y  -> coseqInl x xs
   | CoInSplit2l x xs y ys: xs = cocons y ys -> x <> y -> coseqInl x ys -> coseqInl x xs.
-  
+
 (* alternative coinductive membership check measures *)
 Inductive coseqInL (R: coseq (participant * dir) -> list (participant * dir) -> Prop): 
                     coseq (participant * dir) -> list (participant * dir) -> Prop :=

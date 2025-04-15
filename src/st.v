@@ -137,23 +137,23 @@ Proof.
 Qed.
 
 Lemma monH2: forall ys xs r r',
-  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (t' : st), u = (l, s, t) /\ v = (l, s, t') /\ r t t') ys xs ->
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
-  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
+  Forall2C (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (t' : st), u = (l, s, t) /\ v = (l, s, t') /\ r' t t') ys xs.
 Proof. intros.
        induction H; intros.
        - constructor.
        - constructor.
-         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-         exists l1. exists s1. exists t1. exists l2. exists s2. exists t2.
+         destruct H as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
+         exists l1. exists s1. exists t1. exists t2.
          split. easy. split. easy. apply H0. easy.
          apply IHForall2C.
 Qed.
 
 Lemma monHo2: forall ys xs r r',
-  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r t t') ys xs ->
+  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (t' : st), u = (l, s, t) /\ v = (l, s, t') /\ r t t') ys xs ->
   (forall x0 x1 : st, r x0 x1 -> r' x0 x1) ->
-  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (l' : string) (s' : sort) (t' : st), u = (l, s, t) /\ v = (l', s', t') /\ r' t t') ys xs.
+  Forall2Co (fun u v : string * sort * st => exists (l : string) (s : sort) (t : st) (t' : st), u = (l, s, t) /\ v = (l, s, t') /\ r' t t') ys xs.
 Proof. intros. revert xs ys H. pcofix CIH.
        intros.
        pfold.
@@ -162,9 +162,8 @@ Proof. intros. revert xs ys H. pcofix CIH.
        constructor.
        subst.
        constructor.
-       destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-       exists l1. exists s1. exists t1.
-       exists l2. exists s2. exists t2. 
+       destruct H as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
+       exists l1. exists s1. exists t1. exists t2. 
        split. easy. split. easy.
        apply H0; easy.
        right. apply CIH.
@@ -174,9 +173,8 @@ Proof. intros. revert xs ys H. pcofix CIH.
        induction IN; intros.
        - constructor.
        - constructor. 
-         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-       exists l1. exists s1. exists t1.
-       exists l2. exists s2. exists t2. 
+         destruct H as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
+       exists l1. exists s1. exists t1. exists t2. 
        split. easy. split. easy.
        easy.
        apply LE; easy.
@@ -211,6 +209,7 @@ Fixpoint pathsel (u: label) (v: local.sort) (l: list (label*local.sort*st)): st 
   end.
 
 (*co-path selection example*)
+
 Inductive copathsel: label -> sort -> coseq(label*sort*st) -> st -> Prop :=
   | psleeq  : forall l s t xs, copathsel l s (cocons (l,s,t) xs) t
   | pselneql: forall l l' s s' t t' xs, l <> l' -> copathsel l' s' xs t' -> copathsel l' s' (cocons (l,s,t) xs) t'
