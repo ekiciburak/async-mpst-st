@@ -1143,6 +1143,104 @@ Proof. split.
        apply coseqInAGL.
 Qed.
 
+Fixpoint inC (a: (participant*dir)) (c: Cpf): bool :=
+  match c with
+    | cpf_receive p l s c' => if (String.eqb p (fst a)) && (direqb rcv (Datatypes.snd a)) then true else inC a c'
+    | cpf_send p l s c'    => if (String.eqb p (fst a)) && (direqb snd (Datatypes.snd a)) then true else inC a c'
+    | cpf_end              => false
+  end.
+
+Lemma coseqInCGL: forall c a w,
+  coseqIn a (act (merge_cpf_cont c w)) ->
+  inC a c \/ coseqIn a (act w).
+Proof. intro c.
+       induction c; intros.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_cpf_cont c w)|]))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         simpl. rewrite String.eqb_refl. rewrite direqb_refl. simpl. left. easy.
+         subst. inversion H0. subst.
+         simpl. 
+         assert((s =? p)%string && direqb rcv d = false).
+         { case_eq (String.eqb s p); intros.
+           - rewrite String.eqb_eq in H3. subst.
+             apply dir_neqb_neq.
+             intro HH. apply H1. subst. easy.
+           - simpl. easy.
+          }
+         rewrite H3. apply IHc. easy.
+       - destruct a as (p, d).
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)) in H. simpl in H.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_cpf_cont c w)|]))) in H. simpl in H.
+         inversion H. subst. inversion H0. subst.
+         simpl. rewrite String.eqb_refl. rewrite direqb_refl. simpl. left. easy.
+         subst. inversion H0. subst.
+         simpl. 
+         assert((s =? p)%string && direqb snd d = false).
+         { case_eq (String.eqb s p); intros.
+           - rewrite String.eqb_eq in H3. subst.
+             apply dir_neqb_neq.
+             intro HH. apply H1. subst. easy.
+           - simpl. easy.
+          }
+         rewrite H3. apply IHc. easy.
+       - rewrite cpfend_cn in H. right. easy.
+Qed.
+
+Lemma coseqInCGR: forall c a w,
+  inC a c \/ coseqIn a (act w) ->
+  coseqIn a (act (merge_cpf_cont c w)).
+Proof. intro c.
+       induction c; intros.
+       - destruct a as (p,d).
+         rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w)). simpl.
+         rewrite(coseq_eq(act (s & [|(s0, s1, merge_cpf_cont c w)|]))). simpl.
+         simpl in H.
+         case_eq(String.eqb s p); intros.
+         + rewrite String.eqb_eq in H0. subst.
+           case_eq(direqb rcv d); intros.
+           ++ apply dir_eqb_eq in H0. subst.
+              apply CoInSplit1 with (y := (p, rcv)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+           ++ rewrite H0 in H. rewrite String.eqb_refl in H. simpl in H.
+              apply dir_neqb_neq in H0.
+              apply CoInSplit2 with (y := (p, rcv)) (ys := (act (merge_cpf_cont c w))). easy. intro HH. apply H0. inversion HH. easy.
+              apply IHc; easy.
+         + rewrite H0 in H. simpl in H.
+           rewrite String.eqb_neq in H0.
+           apply CoInSplit2 with (y := (s, rcv)) (ys := (act (merge_cpf_cont c w))). easy. intro HH. apply H0. inversion HH. easy.
+           apply IHc; easy.
+       - destruct a as (p,d).
+         rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)). simpl.
+         rewrite(coseq_eq(act (s ! [|(s0, s1, merge_cpf_cont c w)|]))). simpl.
+         simpl in H.
+         case_eq(String.eqb s p); intros.
+         + rewrite String.eqb_eq in H0. subst.
+           case_eq(direqb snd d); intros.
+           ++ apply dir_eqb_eq in H0. subst.
+              apply CoInSplit1 with (y := (p, snd)) (ys := (act (merge_cpf_cont c w))). easy. easy.
+           ++ rewrite H0 in H. rewrite String.eqb_refl in H. simpl in H.
+              apply dir_neqb_neq in H0.
+              apply CoInSplit2 with (y := (p, snd)) (ys := (act (merge_cpf_cont c w))). easy. intro HH. apply H0. inversion HH. easy.
+              apply IHc; easy.
+         + rewrite H0 in H. simpl in H.
+           rewrite String.eqb_neq in H0.
+           apply CoInSplit2 with (y := (s, snd)) (ys := (act (merge_cpf_cont c w))). easy. intro HH. apply H0. inversion HH. easy.
+           apply IHc; easy.
+       - destruct a as (p,d).
+         destruct H as [H | H].
+         + simpl in H. easy.
+         + rewrite cpfend_cn. easy.
+Qed.
+
+Lemma coseqInCG: forall c a w,
+  inC a c \/ coseqIn a (act w) <->
+  coseqIn a (act (merge_cpf_cont c w)).
+Proof. split.
+       apply coseqInCGR.
+       apply coseqInCGL.
+Qed.
+
 Lemma rcv_snd_notMer: forall a p q l l' s s' w w',
   isInA a p = false ->
   merge_apf_cont a (p & [|(l, s, w)|]) = q ! [|(l', s', w')|] -> False.
@@ -3071,8 +3169,16 @@ Proof. intro c1.
            { rewrite <- merge_mergeC. easy. }
            rewrite <- H4.
            easy.
-           rewrite H7b in H11.
-           admit.
+           split. intro.
+           apply actionExLF with (a := a0) in H10.
+           rewrite <- merge_mergeC in H10.
+           rewrite <- mgApf2Cpf in H10. easy.
+           easy.
+           intros.
+           apply actionExRF with (a := a0) in H10. easy.
+           rewrite <- merge_mergeC.
+           rewrite <- mgApf2Cpf. easy.
+
            rewrite H7a in H0.
            apply InMergeFC. split. 
            rewrite <- inAC.
@@ -3136,7 +3242,16 @@ Proof. intro c1.
                 }
                 rewrite <- H4. easy.
                 rewrite H7e in H11.
-                admit.
+                split. intro.
+                apply actionExLF with (a := a0) in H10.
+                rewrite <- merge_mergeC in H10.
+                rewrite <- !mgApf2Cpf in H10. easy.
+                easy.
+                intros.
+                apply actionExRF with (a := a0) in H10. easy.
+                rewrite <- merge_mergeC.
+                rewrite <- !mgApf2Cpf. easy.
+
                 rewrite H7c H7f in H0.
                 apply InMergeFC. split.
                 rewrite <- inAC in H0.
@@ -3179,7 +3294,14 @@ Proof. intro c1.
                 rewrite H7c H7f in H11.
                 rewrite <- merge_merge in H11.
                 rewrite(st_eq (merge_apf_cont (apf_receive p l s' a3) w'0)) in H11. simpl in H11.
-                admit.
+
+                split. intro.
+                apply actionExLF with (a := a0) in H10.
+                rewrite <- merge_merge. easy. easy.
+                intros.
+                apply actionExRF with (a := a0) in H10. easy.
+                rewrite <- merge_merge in H4. easy.
+
                 easy. easy.
                 case_eq n; intros.
                 ++ easy.
@@ -3237,8 +3359,24 @@ Proof. intro c1.
            apply InMergeFC.
            apply InMergeFC in H0. split. easy.
            simpl in H0. easy.
-           rewrite H7b in H11.
-           admit.
+           rewrite H7b in H10, H11.
+           
+           rewrite mgBpf2Cpf in H10.
+           rewrite merge_mergeC in H10.
+           apply IHc1 in H10; try easy.
+
+           split. intro.
+           apply actionExLF with (a := a) in H10.
+           rewrite <- merge_mergeC in H10.
+           rewrite <- mgBpf2Cpf in H10. easy.
+           easy.
+           intros.
+           apply actionExRF with (a := a) in H10. easy.
+           rewrite <- merge_mergeC.
+           rewrite <- mgBpf2Cpf. easy.
+           apply InMergeFC. rewrite H7a in H0.
+           apply InMergeFC in H0. simpl in H0. easy. 
+
          + destruct H7 as (c3,(H7a,H7b)).
            rewrite H7b.
            rewrite H7a in H10.
@@ -3269,7 +3407,21 @@ Proof. intro c1.
            rewrite H7a in H11.
            rewrite <- !merge_mergeS in H11.
            rewrite(st_eq(merge_bpf_cont (bpf_receive p l s' c3) w'0)) in H11. simpl in H11.
-           rewrite <- !merge_mergeS. admit.
+           rewrite <- !merge_mergeS. 
+           
+           rewrite <- merge_mergeS in H10.
+           setoid_rewrite mgBpf2Cpf in H10 at 1.
+           rewrite(st_eq(merge_bpf_cont (bpf_receive p l s' c3) w'0)) in H10. simpl in H10.
+           apply IHc1 in H10; try easy.
+
+           split. intro.
+           apply actionExLF with (a := a) in H10.
+           rewrite <- mgBpf2Cpf in H10. easy. easy.
+           intros.
+           apply actionExRF with (a := a) in H10. easy.
+           rewrite <- mgBpf2Cpf. easy.
+           rewrite bcId. easy.
+
            case_eq n; intros.
            ++ easy.
            ++ rewrite <- InNS; easy.
@@ -3289,4 +3441,4 @@ Proof. intro c1.
          ++ rewrite <- InN; easy.
          easy.
          apply refinementR4_mon.
-Admitted.
+Qed.
