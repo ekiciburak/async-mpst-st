@@ -3601,6 +3601,38 @@ Proof. induction b; intros.
        - rewrite bpfend_bn in H. easy.
 Qed.
 
+Lemma extapf: forall {a} w, singleton w -> singleton (merge_apf_cont a w).
+Proof. induction a; intros.
+       - rewrite apfend_an. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)).
+         simpl. apply extr. apply IHa. easy.
+Qed.
+
+Lemma extapfR: forall {a} w, singleton (merge_apf_cont a w) -> singleton w.
+Proof. induction a; intros.
+       - rewrite apfend_an in H. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) w)) in H.
+         simpl in H. apply extrR in H. apply IHa. easy.
+Qed.
+
+Lemma extcpf: forall {c} w, singleton w -> singleton (merge_cpf_cont c w).
+Proof. induction c; intros.
+       - rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w)).
+         simpl. apply extr. apply IHc. easy.
+       - rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)). simpl.
+         apply exts. apply IHc. easy.
+       - rewrite cpfend_cn. easy.
+Qed.
+
+Lemma extcpfR: forall {c} w, singleton (merge_cpf_cont c w) -> singleton w.
+Proof. induction c; intros.
+       - rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c) w)) in H.
+         simpl in H. apply extrR in H. apply IHc. easy.
+       - rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) w)) in H. simpl in H.
+         apply extsR in H. apply IHc. easy.
+       - rewrite cpfend_cn in H. easy.
+Qed.
+
 Fixpoint actL (t: local): list (participant * dir) :=
   match t with
     | lt_send p xs    =>

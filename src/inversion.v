@@ -1528,6 +1528,13 @@ Proof. intro b1.
        - simpl in H. easy.
 Qed.
 
+Lemma end_nmerge_a: forall a1 a2 p l s, apf_end = Apf_merge a1 (apf_receive p l s a2) -> False.
+Proof. intro a1.
+       induction a1; intros.
+       - simpl in H. easy.
+       - simpl in H. easy.
+Qed.
+
 Lemma drop_send: forall b b2 p l s s' w w',
   isInB b p = false ->
   isInB b2 p = false ->
