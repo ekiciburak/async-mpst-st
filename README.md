@@ -1,6 +1,6 @@
 # sessionTreeST
 
-subtyping of asynchronous session trees
+subtyping of asynchronous session types
 
 The library succesfully compiles with the Coq compiler `coqc 8.20.0`.
 -  `coq_makefile -f _CoqProject -o Makefile` to create the Makefile
