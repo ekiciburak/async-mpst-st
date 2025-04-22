@@ -2758,3 +2758,12 @@ Proof. split.
        - apply _B_7_2 with (w := w) (w' := w') (p := p); easy.
 Qed.
 
+Lemma correctness_dep: forall w w' p w1 w2 w3 w4, 
+  refinement2 (@und w) (@und w') -> 
+  projSC (@und w) p (@und w1) -> projSC (@und w') p (@und w2) -> 
+  projRC (@und w) p (@und w3) -> projRC (@und w') p (@und w4) ->
+  sRefinement (@und w1) (@und w2) /\ sRefinement (@und w3) (@und w4).
+Proof. split.
+       - apply refEquivR2 in H. apply _B_7_1 with (w := w) (w' := w') (p := p); easy.
+       - apply refEquivR2 in H. apply _B_7_2 with (w := w) (w' := w') (p := p); easy.
+Qed.
