@@ -1,8 +1,10 @@
 From Paco Require Import paco.
 Require Import Setoid List.
+
+(*
 Require Import Morphisms.
 Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-
+ *)
 (* Inductive colistF (a : Type) (x : Type) :=
   | conil : colistF a x
   | cocons: a -> x -> colistF a x.

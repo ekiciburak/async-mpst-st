@@ -65,6 +65,73 @@ Proof. unfold monotone3.
        - apply pjr_sndN. easy.
 Qed.
 
+Lemma projSC_nmem: forall w p, ~coseqIn (p, snd) (act (@und w)) -> projSC (@und w) p st_end.
+Proof. intros (w, Pw) p Ha.
+       generalize dependent w.
+       revert p.
+       pcofix CIH. simpl.
+       intros.
+       specialize(sinv w Pw); intros Hpw.
+       destruct Hpw as [Hpw | [Hpw | Hpw]].
+       + destruct Hpw as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         subst.
+         pfold. apply pjs_sndN.
+         intro HH. apply Ha.
+         subst. 
+         rewrite(coseq_eq(act (q1 ! [|(l1, s1, wa)|]))). simpl.
+         apply CoInSplit1 with (y := (q1, snd)) (ys := (act wa)). easy. easy. 
+         intro HH.
+         apply Ha. 
+         rewrite(coseq_eq(act (q1 ! [|(l1, s1, wa)|]))). simpl.
+         case_eq(String.eqb p q1); intros.
+         ++ rewrite String.eqb_eq in H. subst.
+            apply CoInSplit1 with (y := (q1, snd)) (ys := (act wa)). easy. easy.
+         ++ rewrite String.eqb_neq in H.
+            apply CoInSplit2 with (y := (q1, snd)) (ys := (act wa)). easy. intro HHa. apply H. inversion HHa. easy.
+            easy.
+       + destruct Hpw as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         subst.
+         pfold. apply pjs_rcvN.
+         intro HH.
+         apply Ha.
+         rewrite(coseq_eq(act (q1 & [|(l1, s1, wa)|]))). simpl.
+         apply CoInSplit2 with (y := (q1, rcv)) (ys := (act wa)). easy. easy. easy.
+       + subst. pfold. constructor.
+Qed.
+
+Lemma projRC_nmem: forall w p, ~coseqIn (p, rcv) (act (@und w)) -> projRC (@und w) p st_end.
+Proof. intros (w, Pw) p Ha.
+       generalize dependent w.
+       revert p.
+       pcofix CIH. simpl.
+       intros.
+       specialize(sinv w Pw); intros Hpw.
+       destruct Hpw as [Hpw | [Hpw | Hpw]].
+       + destruct Hpw as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         subst.
+         pfold. apply pjr_sndN.
+         intro HH. apply Ha.
+         subst. 
+         rewrite(coseq_eq(act (q1 ! [|(l1, s1, wa)|]))). simpl.
+         apply CoInSplit2 with (y := (q1, snd)) (ys := (act wa)). easy. easy. easy.
+       + destruct Hpw as (q1, (l1, (s1, (wa, (Heq1, Hs1))))).
+         subst.
+         pfold. apply pjr_rcvN.
+         intro HH.
+         apply Ha. subst. 
+         rewrite(coseq_eq(act (q1 & [|(l1, s1, wa)|]))). simpl.
+         apply CoInSplit1 with (y := (q1, rcv)) (ys := (act wa)). easy. easy.
+         intro HH. apply Ha.
+         rewrite(coseq_eq(act (q1 & [|(l1, s1, wa)|]))). simpl.
+         case_eq(String.eqb p q1); intros.
+         ++ rewrite String.eqb_eq in H. subst.
+            apply CoInSplit1 with (y := (q1, rcv)) (ys := (act wa)). easy. easy.
+         ++ rewrite String.eqb_neq in H.
+            apply CoInSplit2 with (y := (q1, rcv)) (ys := (act wa)). easy. intro HHa. apply H. inversion HHa. easy.
+            easy.
+       + subst. pfold. constructor.
+Qed.
+
 Lemma prj_send_inv1: forall b p q l1 s1 w1 l2 s2 w2,
   isInB b p = false ->
   projSC (merge_bpf_cont b (p ! [|(l1, s1, w1)|])) p (q ! [|(l2, s2, w2)|]) ->
@@ -2299,7 +2366,6 @@ Proof. destruct w as (w, Pw).
            apply proj_recv_cr; try easy.
            simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
            simpl. apply String.eqb_neq in H5. rewrite H5. rewrite H6b. easy.
-           easy. 
            simpl. apply String.eqb_neq in H. rewrite H. rewrite H3b. easy.
            simpl. apply String.eqb_neq in H5. rewrite H5. rewrite H6b. easy.
            easy. easy.
@@ -2380,7 +2446,7 @@ Proof. destruct w as (w, Pw).
            simpl. easy.
            simpl. apply String.eqb_neq in H4. rewrite H4 H6b. easy.
            easy.
-           simpl. easy.
+           simpl.
            simpl. apply String.eqb_neq in H4. rewrite H4 H6b. easy.
            easy. easy.
            apply extrR in Pw'. easy.
@@ -2419,7 +2485,7 @@ Proof. destruct w as (w, Pw).
            apply extsR, extcpfR, extrR in Pw. easy. easy.
            apply proj_send_cr; try easy.
            apply proj_send_cr; try easy.
-           simpl. easy. simpl. easy. easy. simpl. easy. simpl. easy. easy. easy.
+           simpl. easy. simpl. easy. easy. simpl. easy. simpl. easy. easy.
            apply extsR in Pw'. easy.
            apply extsR in Pw. easy.
            apply mon_projr.
@@ -2682,7 +2748,7 @@ Proof. destruct w as (w, Pw).
            apply mon_projr.
 Qed.
 
-Lemma _B_7: forall w w' p w1 w2 w3 w4, 
+Lemma correctness: forall w w' p w1 w2 w3 w4, 
   refinement4 (@und w) (@und w') -> 
   projSC (@und w) p (@und w1) -> projSC (@und w') p (@und w2) -> 
   projRC (@und w) p (@und w3) -> projRC (@und w') p (@und w4) ->

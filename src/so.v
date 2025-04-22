@@ -13,7 +13,7 @@ CoFixpoint st2soH (t: st): st :=
   match t with
     | st_send p xs    =>
       match xs with
-        | cocons (l,s,t') ys => st_send p [|(l,s,st2soH t')|] 
+        | cocons (l,s,t') ys => st_send p (cocons (l,s,st2soH t') conil) 
         | conil              => st_send p conil
       end
     | st_receive p xs => 
@@ -30,10 +30,10 @@ CoFixpoint st2soF (t: st): coseq st :=
   match t with
     | st_send p xs => 
       match xs with
-        | cocons(l,s,t') ys => cocons (st_send p [|(l,s,st2soH t')|]) (st2soF (st_send p ys))
+        | cocons(l,s,t') ys => cocons (st_send p (cocons (l,s,st2soH t') conil)) (st2soF (st_send p ys))
         | conil             => conil
       end
-    | _            => [|st2soH t|]
+    | _            => (cocons (st2soH t) conil)
   end.
 
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
@@ -227,4 +227,5 @@ Proof. pcofix CIH.
        constructor.
        left. pfold. constructor.
 Qed.
+
 
