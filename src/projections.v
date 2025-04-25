@@ -2236,7 +2236,9 @@ Proof. destruct w as (w, Pw).
            apply precv_not_sendc in H3. easy.
            apply extsR in Pw'. easy.
            apply mon_projr.
-         + destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
+         + 
+(*starts here*)
+           destruct Hpw2 as (q2, (l2, (s2, (wb, (Heq2, Hs2))))).
            subst.
            pinversion H1. subst.
            pinversion H2. subst.
@@ -2262,11 +2264,11 @@ Proof. destruct w as (w, Pw).
            destruct H0 as (a1,(a2,(H0a,(H0b,(H0c,H0d))))).
            apply end_nmerge_a in H0d. easy.
            destruct H0 as (a3,(w3,(s3,(H0a,(H0b,(H0c,H0d)))))).
+           Locate pneqq4.
            apply pneqq4 in H0d; try easy.
            destruct H0d as (a4,(H0d,(H0e,H0f))).
            subst.
-           rewrite mgApf2Cpf in H4. subst.
-           apply prj_recv_inv1c in H4.
+           apply prj_recv_inv1 in H4.
            destruct H4 as (H4a,(H4n,(H4c,H4d))). subst.
            pfold. constructor. easy.
            assert((q & [|(l, s, merge_apf_cont a4 (q2 & [|(l2, s2, w3)|]))|]) =
@@ -2282,22 +2284,18 @@ Proof. destruct w as (w, Pw).
            apply extrR, extapfR, extrR in Pw'. easy.
            apply extrR in Pw. easy.
            
+           
            apply proj_recv_ar; try easy. 
-           rewrite <- inAC. easy. easy.
+           easy. easy.
            
            subst.
-           pose proof H0 as H00.
-           specialize(Invert_Apf_Apf apf_end apf_end q1 l1 s1 w'0 (q ! [|(l, s, w'1)|])); intro HH.
-           rewrite !apfend_an in HH.
-           apply HH in H0.
-           destruct H0 as [H0 | H0].
-           destruct H0 as (a1,(a2,(H0a,(H0b,(H0c,H0d))))).
-           apply end_nmerge_a in H0d. easy.
-           destruct H0 as (a3,(w3,(s3,(H0a,(H0b,(H0c,H0d)))))).
-           symmetry in H0d. apply rcv_snd_notMer in H0d; try easy. easy.
+           Check rcv_snd_notRef.
+           apply rcv_snd_notRef in H0.
+           easy.
            apply mon_projr.
            
            subst.
+           (*second item*)
            pinversion H2. subst.
            pose proof H0 as H00.
            apply inReceivefE in H3.
@@ -2377,6 +2375,7 @@ Proof. destruct w as (w, Pw).
            apply mon_projr.
            
            subst.
+           (*third item*)
            pinversion H2. subst.
            pose proof H0 as H00.
            apply inReceivefE in H.
@@ -2404,11 +2403,12 @@ Proof. destruct w as (w, Pw).
            apply extrR in Pw'. easy.
            apply exts, extcpf.
            apply extsR, extcpfR, extrR in Pw. easy. easy.
+           Check proj_send_cr.
            apply proj_send_cr; try easy.
            easy.
            simpl. easy. easy. easy.
            apply extsR in Pw. easy.
-
+(**)
            subst.
            pose proof H0 as H00.
            apply inReceivefE in H.
@@ -2451,7 +2451,7 @@ Proof. destruct w as (w, Pw).
            easy. easy.
            apply extrR in Pw'. easy.
            apply extsR in Pw. easy.
-           
+(**)
            subst.
            pose proof H0 as H00.
            apply inReceivefE in H.
@@ -2490,7 +2490,7 @@ Proof. destruct w as (w, Pw).
            apply extsR in Pw. easy.
            apply mon_projr.
            apply mon_projr.
-           
+(*ends here*)
            subst.
            pinversion H1. subst.
            pinversion H2. subst.

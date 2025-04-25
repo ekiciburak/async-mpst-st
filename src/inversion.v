@@ -2784,12 +2784,13 @@ Lemma ppcneq0: forall c p q l1 s1 w1 l2 s2 w2,
   isInC c q = false ->
   p <> q ->
   p & [|(l1, s1, w1)|] = merge_cpf_cont c (q & [|(l2, s2, w2)|]) ->
-  exists c2 : Cpf, c = cpf_receive p l1 s1 c2 /\ w1 = merge_cpf_cont c2 (q & [|(l2, s2, w2)|]).
+  exists c2 : Cpf, c = cpf_receive p l1 s1 c2 /\ w1 = merge_cpf_cont c2 (q & [|(l2, s2, w2)|]) /\ isInC c2 q = false.
 Proof. intro c.
        induction c; intros.
        - rewrite(st_eq ( merge_cpf_cont (cpf_receive s s0 s1 c) (q & [|(l2, s3, w2)|]))) in H1. simpl in H1.
          inversion H1.
-         exists c. split; easy.
+         exists c. subst. simpl in H.
+         rewrite orbtf in H. destruct H as (Ha, Hb). split; easy.
        - rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c) (q & [|(l2, s3, w2)|]))) in H1. simpl in H1.
          easy.
        - rewrite cpfend_cn in H1. inversion H1. subst.
@@ -2799,7 +2800,7 @@ Qed.
 Lemma ppcneq1: forall c p q l1 s1 w1 l2 s2 w2, 
   isInC c q = false ->
   p ! [|(l1, s1, w1)|] = merge_cpf_cont c (q & [|(l2, s2, w2)|]) ->
-  exists c2 : Cpf, c = cpf_send p l1 s1 c2 /\ w1 = merge_cpf_cont c2 (q & [|(l2, s2, w2)|]).
+  exists c2 : Cpf, c = cpf_send p l1 s1 c2 /\ w1 = merge_cpf_cont c2 (q & [|(l2, s2, w2)|]) /\ isInC c2 q = false.
 Proof. intro c.
        induction c; intros.
        - rewrite(st_eq ( merge_cpf_cont (cpf_receive s s0 s1 c) (q & [|(l2, s3, w2)|]))) in H0. simpl in H0.
@@ -2836,7 +2837,9 @@ Proof. intro a.
        induction a; intros.
        - rewrite apfend_an in H3.
          apply ppcneq0 in H3; try easy.
-       - simpl in H.
+         destruct H3 as (c2,(H3a,(H3b,H3c))). subst.
+         simpl. exists c2; easy.
+       - simpl. simpl in H3.
          rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l1, s2, w1)|]))) in H3. simpl in H3.
          simpl.
          case_eq(String.eqb s q); intros.
@@ -2848,14 +2851,14 @@ Proof. intro a.
            inversion H3. subst. simpl in H1. easy.
          + rewrite String.eqb_neq in H4.
            apply ppcneq0 in H3; try easy.
-           destruct H3 as (c2,(H3a,H3b)).
+           destruct H3 as (c2,(H3a,(H3b,H3c))).
            specialize(IHa c2 p q l1 s2 w1 l2 s3 w2).
            apply IHa in H3b; try easy.
-           destruct H3b as (c3,(H3b,H3c)).
+           destruct H3b as (c3,(H3b,H3d)).
            exists c3. subst. split; easy.
            rewrite orbtf in H. easy.
            rewrite H3a in H0. simpl in H0.
-           rewrite orbtf in H0. easy.
+           rewrite orbtf in H0.
            rewrite H3a in H1. simpl in H1.
            easy.
 Qed.
@@ -2903,31 +2906,29 @@ Proof. intro b.
            right. simpl. exists b. easy.
          + apply String.eqb_neq in H2.
            apply ppcneq0 in H1; try easy.
-           destruct H1 as (c2,(H1a,H1b)).
+           destruct H1 as (c2,(H1a,(H1b,H1c))).
            apply IHb in H1b; try easy.
            destruct H1b as [H1b | H1b].
-           ++ destruct H1b as (c3,(H1b,H1c)).
+           ++ destruct H1b as (c3,(H1b,H1d)).
               subst.
               simpl. left. exists c3. easy.
-           ++ destruct H1b as (c3,(H1b,H1c)).
+           ++ destruct H1b as (c3,(H1b,H1d)).
               subst. simpl.
               right. exists c3. easy.
-              rewrite H1a in H0. simpl in H0. rewrite orbtf in H0. easy.
        - simpl in H.
          rewrite orbtf in H. destruct H as (Ha,Hb).
          apply String.eqb_neq in Ha.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]) )) in H1. simpl in H1.
          apply ppcneq1 in H1; try easy.
-           destruct H1 as (c2,(H1a,H1b)).
+           destruct H1 as (c2,(H1a,(H1b,H1c))).
            apply IHb in H1b; try easy.
            destruct H1b as [H1b | H1b].
-           ++ destruct H1b as (c3,(H1b,H1c)).
+           ++ destruct H1b as (c3,(H1b,H1d)).
               subst.
               simpl. left. exists c3. easy.
-           ++ destruct H1b as (c3,(H1b,H1c)).
+           ++ destruct H1b as (c3,(H1b,H1d)).
               subst. simpl.
               right. exists c3. easy.
-              rewrite H1a in H0. simpl in H0. easy.
        - rewrite bpfend_bn in H1.
          apply ppcneq1 in H1; try easy.
          destruct H1 as (c2,(H1a,H1b)).
@@ -2948,19 +2949,15 @@ Proof. intro c1.
          apply String.eqb_neq in Ha.
          rewrite(st_eq(merge_cpf_cont (cpf_receive s s0 s1 c1) (p & [|(l1, s2, w1)|]))) in H1. simpl in H1.
          apply ppcneq0 in H1; try easy.
-         destruct H1 as (c3,(H1a,H1b)).
+         destruct H1 as (c3,(H1a,(H1b,H1c))).
          apply IHc1 in H1b; try easy.
          subst. destruct H1b as (Hb1,(Hb2,Hb3)). subst. easy.
-         rewrite H1a in H0.
-         simpl in H0. rewrite orbtf in H0. easy.
        - simpl in H.
          rewrite(st_eq(merge_cpf_cont (cpf_send s s0 s1 c1) (p & [|(l1, s2, w1)|]))) in H1. simpl in H1.
          apply ppcneq1 in H1; try easy.
-         destruct H1 as (c3,(H1a,H1b)).
+         destruct H1 as (c3,(H1a,(H1b,H1c))).
          apply IHc1 in H1b; try easy.
          subst. destruct H1b as (Hb1,(Hb2,Hb3)). subst. easy.
-         rewrite H1a in H0.
-         simpl in H0. easy.
        - rewrite cpfend_cn in H1.
          pose proof H1 as H1n.
          apply ppcend in H1; try easy.
