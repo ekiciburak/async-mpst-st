@@ -1,4 +1,4 @@
-# sessionTreeST
+# async session subtyping
 
 subtyping of asynchronous session types
 
