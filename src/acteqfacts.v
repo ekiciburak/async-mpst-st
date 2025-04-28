@@ -844,7 +844,7 @@ Qed.
 Lemma noPreS: forall c p l s w w',
   isInB c p = false ->
   p ! [|(l, s, w)|] = merge_bpf_cont c w' ->
-  c = bpf_end.
+  c = bpf_end /\ w' = p ! [|(l, s, w)|].
 Proof. intro c.
        induction c; intros.
        - rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 c) w')) in H0. simpl in H0.
@@ -852,7 +852,7 @@ Proof. intro c.
        - simpl in H.
          rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 c) w')) in H0. simpl in H0.
          inversion H0. subst. rewrite eqb_refl in H. easy.
-       - easy.
+       - rewrite bpfend_bn in H0. easy.
 Qed.
 
 Lemma apf_eqb_refl: forall a, Apf_eqb a a.
@@ -3344,6 +3344,12 @@ Proof. pcofix CIH. intros.
          apply refinementR_mon.
 Qed.
 
+Lemma refEquiv13: forall w w', refinement w w' <-> refinement3 w w'.
+Proof. split.
+       - apply refEquivR.
+       - apply refEquivL.
+Qed.
+
 Lemma refEquivL2: forall w w', refinement4 w w' -> refinement2 w w'.
 Proof. pcofix CIH. intros.
        pinversion H0.
@@ -3418,6 +3424,12 @@ Proof. pcofix CIH. intros.
          rewrite mgBp2Bpf in H2. easy.
        - pfold. constructor.
          apply refinementR2_mon.
+Qed.
+
+Theorem refEquiv24: forall w w', refinement2 w w' <-> refinement4 w w'.
+Proof. split.
+       - apply refEquivR2.
+       - apply refEquivL2.
 Qed.
 
 Lemma inSendf: forall w p (Hs: singleton w) (Hin: coseqIn (p, snd) (act w)),

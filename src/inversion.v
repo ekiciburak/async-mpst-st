@@ -357,6 +357,7 @@ Proof. intro a.
                        split. easy. split. easy. split. easy. easy.
                    *** destruct HP as (c,(HP1,(HP2,(HP3,HP4)))).
                        apply noPreS in HP4; try easy.
+                       destruct HP4 as (HP4, HP5).
                        rewrite HP4 in HP3. simpl in HP3.
                        rewrite mergeRS in HP3.
                        rewrite <- HP3 in H5.

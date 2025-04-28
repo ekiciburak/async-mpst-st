@@ -1081,6 +1081,7 @@ Proof. intro a.
                        split. easy. split. easy. split. easy. easy.
                    *** destruct HP as (c,(HP1,(HP2,(HP3,HP4)))).
                        apply noPreS in HP4; try easy.
+                       destruct HP4 as (HP4, HP5).
                        rewrite HP4 in HP3. simpl in HP3.
                        rewrite mergeRS in HP3.
                        rewrite <- HP3 in H5.
@@ -3204,7 +3205,7 @@ Proof. red. pcofix CIH.
        intros x y z Ha Hb.
        pinversion Ha.
        - subst. pinversion Hb.
-         + subst. 
+         + subst.
            case_eq(eqb p0 p); intros.
            + rewrite eqb_eq in H8. subst.
              rewrite <- meqAp3 in H1, H3, H6, H7.
@@ -5113,7 +5114,7 @@ Proof. red. pcofix CIH.
                              apply csInSBRevG. right. easy.
                              
                              rewrite InMergeFS BisInAF. easy.
-
+(*send-receive*)
              + rewrite eqb_neq in H8.
                assert(isInB (BpnB3 b n) p = false).
                { case_eq n; intros.
@@ -5189,7 +5190,7 @@ Proof. red. pcofix CIH.
                 rewrite H15 in H6. easy.
                 easy.
                 apply InMergeFS. rewrite BisInAF. easy.
-                
+(*end of send-receive*)
                 
                 rewrite mcAp2Bp2 in H6.
                 rewrite merge_mergeS in H6.
@@ -5667,8 +5668,8 @@ Proof. red. pcofix CIH.
                          apply csInSBRevG. right. easy.
                          
                          rewrite InMergeFS BisInAF. easy. subst.
-                         
-             rewrite <- meqBp3 in H1, H3, H6, H7.
+(*send-send*)
+             rewrite <- meqBp3 in H1, H2, H3, H6, H7.
              rewrite <- meqBp3.
              case_eq(eqb p0 p); intros.
              + rewrite eqb_eq in H8. subst.
@@ -5691,13 +5692,13 @@ Proof. red. pcofix CIH.
                case_eq n0; intros.
                - simpl. easy.
                - rewrite <- InNS; easy.
+               unfold upaco2.
                right.
-               apply CIH with (y := (merge_bpf_cont (BpnB3 b n) w')).
+               apply CIH with (y := w').
+               rewrite H8 bpfend_bn in H1. easy.
                easy.
-               rewrite H8. rewrite bpfend_bn. easy.
                
-               
-               rewrite <- meqBp3 in H2.
+            
                rewrite H8 in H2.
                rewrite bpfend_bn in H2.
                destruct H7 as (l1,(l2,(Hu,(Hv,(Hw,(Hy,Hz)))))).
@@ -5781,7 +5782,6 @@ Proof. red. pcofix CIH.
                   easy. easy.
                   
                   
-                  rewrite <- meqBp3 in H2.
                   rewrite HPb HBc in H7 H6.
                   rewrite <- merge_mergeS in H7.
                   rewrite <- merge_mergeS in H6.
@@ -5912,7 +5912,6 @@ Proof. red. pcofix CIH.
                       easy. easy.
                   
                   
-                  rewrite <- meqBp3 in H2.
                   rewrite HPb HBc in H7 H6.
                   rewrite <- merge_mergeS in H7.
                   rewrite <- merge_mergeS in H6.
@@ -6366,7 +6365,7 @@ Proof. red. pcofix CIH.
                         easy. easy. easy.
                         intros.
                         apply invdropE. easy.
-                  + rewrite <- meqBp3 in H2.
+                  + 
                     rewrite HPb HBd in H7 H6.
                     rewrite merge_mergeS in H7.
                     rewrite merge_mergeS in H6.
