@@ -12,7 +12,7 @@ Require Import ProofIrrelevance.
 Fixpoint listSisoPRef (l: list (siso*siso)): Prop :=
   match l with
     | nil            => True
-    | cons (W,W') xs => (exists d1, exists d2, (forall n, refinement (merge_dpf_contn d1 (@und W) n) (merge_dpf_contn d2 (@und W') n))) /\ listSisoPRef xs
+    | cons (W,W') xs => (exists d1, exists d2, (forall n, (refinement (merge_dpf_contn d1 (@und W) n) (merge_dpf_contn d2 (@und W') n)))) /\ listSisoPRef xs
   end.
 
 Fixpoint decomposeL (l: list (siso*siso)) (s: st) (s': st): Prop :=
@@ -22,16 +22,6 @@ Fixpoint decomposeL (l: list (siso*siso)) (s: st) (s': st): Prop :=
   end.
 
 Definition subtype (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef l.
-
-Fixpoint listSisoPRef2 (l: list (siso*siso)): Prop :=
-  match l with
-    | nil            => True
-    | cons (W,W') xs => (exists d1, exists d2, (forall n, (merge_dpf_contn d1 (@und W) n) ~<  (merge_dpf_contn d2 (@und W') n))) /\ listSisoPRef2 xs
-  end.
-
-Definition subtype2 (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef2 l.
-
-
 Definition subltype (T T': local) := subtype (lt2st T) (lt2st T').
 
 (*npc*)
@@ -39,4 +29,4 @@ Inductive subtypeI: st -> st -> Prop :=
   | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
                       subtypeI T T'.
 
-Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T').
+Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T'). 

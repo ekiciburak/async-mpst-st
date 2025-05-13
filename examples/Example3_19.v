@@ -2935,7 +2935,7 @@ Proof. intros. unfold subltype.
        ).
        simpl.
        split.
-       
+
        split.
        pcofix CIH. 
        rewrite (st_eq WB). simpl.
