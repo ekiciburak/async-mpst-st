@@ -353,20 +353,13 @@ Fixpoint guarded (l: local) (i: nat) :=
     | lt_mu l0        => guarded l0 (S i)
   end.
 
-Definition unf l := if l is lt_mu l' then l' [l .: lt_var]  else l.
-
-(* Definition unf (l: local): local :=
-  match l with
-    | lt_mu l => l[lt_mu l .: lt_var]
-    | _       => l
-  end.
- *)
 Fixpoint depth G :=
   match G with
     | lt_mu G => S (depth G)
     | _       => 0
   end.
 
+Definition unf l := if l is lt_mu l' then l' [l .: lt_var]  else l.
 Definition full_unf g := (iter (depth g) unf g).
 
 Lemma mu_height_ren : forall g (sigma: nat -> nat), depth (g ⟨sigma⟩) = depth g.
