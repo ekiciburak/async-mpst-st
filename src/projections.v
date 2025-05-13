@@ -2767,3 +2767,7 @@ Proof. split.
        - apply refEquivR2 in H. apply _B_7_1 with (w := w) (w' := w') (p := p); easy.
        - apply refEquivR2 in H. apply _B_7_2 with (w := w) (w' := w') (p := p); easy.
 Qed.
+
+Search projRC.
+Locate prj_send_inv1.
+Locate ApApeqInv.

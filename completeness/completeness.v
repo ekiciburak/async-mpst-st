@@ -43,6 +43,16 @@ Proof. split.
 Qed.
 
 (*npc*)
+Lemma sublNeqL: forall T T', (subltypeI T T' -> False) -> nsubltypeI T T'.
+Proof. intros.
+       apply subNeqIL. easy.
+Qed.
+
+Lemma sublNeqR: forall T T', nsubltypeI T T' -> (subltypeI T T' -> False).
+Proof. intros.
+       apply subNeqIR with (T := lt2st T) (T' := lt2st T'); easy.
+Qed.
+
 Theorem completenessI: forall T T', (subtypeI T T' -> False) <-> nsubtypeI T T'.
 Proof. split.
        apply (subNeqIL T T').
@@ -50,9 +60,6 @@ Proof. split.
 Qed.
 
 Theorem lcompletenessI: forall T T', (subltypeI T T' -> False) <-> nsubltypeI T T'.
-Proof. split.
-       apply (sublNeqL T T').
-       intros. apply (sublNeqR T T'); easy.
-Qed.
+Proof. split; [ apply (sublNeqL T T') | intros; apply (sublNeqR T T'); easy]. Qed.
 
  

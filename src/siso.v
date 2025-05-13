@@ -122,7 +122,6 @@ Proof. pcofix CIH. pfold.
 Qed.
 
 (**)
-
 Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p (cocons (l,s,w) conil)).
 Proof. intros p l s w H.
        pfold. constructor. left.

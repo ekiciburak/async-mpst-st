@@ -4082,3 +4082,198 @@ Proof. intros.
          apply IHd. easy. easy. easy.
        - rewrite !dpend_an. easy.
 Qed.
+
+Lemma pahselExt_so: forall ys xs l s y,
+  copathsel l s ys y ->
+  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2so bot2 t t') ys xs) ->
+  exists u, copathsel l s xs u /\ st2soC y u.
+Proof. intros.
+       revert xs H0.
+       induction H; intros.
+       - pinversion H0. subst.
+         destruct H2 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         exists t2. split. constructor. destruct H8c; easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         constructor. easy. easy. easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         apply pselneqs. easy. easy. easy.
+         apply mon_f2Ho.
+Qed.
+
+Lemma pahselExt_soR: forall ys xs l s y,
+  copathsel l s ys y ->
+  (Forall2Co (fun u v : string * local.sort * st =>exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2so bot2 t t') xs ys) ->
+  exists u, copathsel l s xs u /\ st2soC u y.
+Proof. intros.
+       revert xs H0.
+       induction H; intros.
+       - pinversion H0. subst.
+         destruct H3 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         exists t1. split. constructor. destruct H8c; easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         constructor. easy. easy. easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         apply pselneqs. easy. easy. easy.
+         apply mon_f2Ho.
+Qed.
+
+Lemma pahselExt_si: forall ys xs l s y,
+  copathsel l s xs y ->
+  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2si bot2 t t') ys xs) ->
+  exists u, copathsel l s ys u /\ st2siC u y.
+Proof. intros.
+       revert ys H0.
+       induction H; intros.
+       - pinversion H0. subst.
+         destruct H3 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         exists t1. split. constructor. destruct H8c; easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         constructor. easy. easy. easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         apply pselneqs. easy. easy. easy.
+         apply mon_f2Ho.
+Qed.
+
+Lemma pahselExt_siR: forall ys xs l s y,
+  copathsel l s xs y ->
+  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2si bot2 t t') xs ys) ->
+  exists u, copathsel l s ys u /\ st2siC y u.
+Proof. intros.
+       revert ys H0.
+       induction H; intros.
+       - pinversion H0. subst.
+         destruct H2 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         exists t2. split. constructor. destruct H8c; easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         constructor. easy. easy. easy.
+         apply mon_f2Ho.
+       - pinversion H1.
+         subst.
+         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8a. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (u,(H6a,H6b)).
+         exists u. split.
+         apply pselneqs. easy. easy. easy.
+         apply mon_f2Ho.
+Qed.
+
+Lemma so_siDec: forall x y z, st2soC x y -> st2siC z x -> st2sisoC z y.
+Proof. pcofix CIH.
+       intros.
+       pinversion H0.
+       - subst. pinversion H1.
+         subst. pfold. constructor.
+         apply st2si_mon.
+       - subst. pinversion H1.
+         subst.
+         pinversion H5. subst.
+         destruct H7 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         pinversion H8. subst.
+         pfold. apply st2siso_snd with (y := y0).
+         right. apply CIH with (x := t2). easy. easy. easy.
+         apply mon_f2Ho.
+         apply mon_f2Ho.
+         apply st2si_mon.
+       - subst.
+         pinversion H1.
+         subst.
+         assert (exists u, copathsel l s xs u /\ st2soC y u).
+         { apply pahselExt_so with (xs := xs) in H6. easy. easy. }
+         destruct H2 as (u,(H3a,H3b)).
+         pfold.
+         apply st2siso_rcv with (y := u).
+         right. apply CIH with (x := y).
+         easy. easy.
+         easy.
+         apply st2si_mon.
+         apply st2so_mon.
+Qed.
+
+Lemma si_soDec: forall x y z, st2siC x y -> st2soC z x -> st2sisoC z y.
+Proof. pcofix CIH.
+       intros.
+       pinversion H0.
+       - subst. pinversion H1.
+         subst. pfold. constructor.
+         apply st2so_mon.
+       - subst. pinversion H1.
+         subst.
+         pinversion H5. subst.
+         destruct H7 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
+         inversion H8b. subst.
+         pinversion H8. subst.
+         pfold. apply st2siso_rcv with (y := y0).
+         right. apply CIH with (x := t2). easy. easy. easy.
+         apply mon_f2Ho.
+         apply mon_f2Ho.
+         apply st2so_mon.
+       - subst.
+         pinversion H1.
+         subst.
+         assert (exists u, copathsel l s xs u /\ st2siC y u).
+         { apply pahselExt_siR with (ys := xs) in H6. easy. easy. }
+         destruct H2 as (u,(H3a,H3b)).
+         pfold.
+         apply st2siso_snd with (y := u).
+         right. apply CIH with (x := y).
+         easy. easy.
+         easy.
+         apply st2so_mon.
+         apply st2si_mon.
+Qed.
+

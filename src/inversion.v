@@ -1619,6 +1619,24 @@ Proof. intros.
        apply actionExLF with (a := a) in H0; easy.
 Qed.
 
+Lemma actionExIf: forall w w',
+  paco2 refinementR4 bot2 w w' ->
+  forall a, (coseqIn a (act w) <-> coseqIn a (act w')).
+Proof. intros.
+       split.
+       - intro Ha. apply actionExLF with (w := w); easy.
+       - intro Ha. apply actionExRF with (w' := w'); easy.
+Qed.
+
+Lemma actionExNIf: forall w w',
+  paco2 refinementR4 bot2 w w' ->
+  forall a, ((coseqIn a (act w) -> False) <-> (coseqIn a (act w') -> False)).
+Proof. intros.
+       split.
+       - intro Ha. apply actionExLNF with (w := w); easy.
+       - intro Ha. apply actionExRNF with (w' := w'); easy.
+Qed.
+
 Lemma end_nmerge: forall b1 b2 p l s, bpf_end = Bpf_merge b1 (bpf_send p l s b2) -> False.
 Proof. intro b1.
        induction b1; intros.
@@ -3438,4 +3456,5 @@ Proof. intro c1.
          easy.
          apply refinementR4_mon.
 Qed.
+
 

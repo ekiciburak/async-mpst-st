@@ -180,16 +180,6 @@ Proof. intros. revert xs ys H. pcofix CIH.
        apply LE; easy.
 Qed.
 
-(*
-Check lt_send.
-Check lt_var 0.
-
-Let lr := lt_mu (lt_send "p" [("l",sint,(lt_var 0))] ).
-Let lr2 := Eval simpl in unfold_muL lr.
-Eval simpl in unfold_muL lr2.
-Print lr.
-Print lr2.  *)
-
 Definition sfun (l: label) (s: sort) (x: st): (label -> option(sort*st)) :=
   fun l' => if String.eqb l l' then Datatypes.Some(s,x) else Datatypes.None. 
 
