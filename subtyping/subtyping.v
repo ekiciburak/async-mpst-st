@@ -9,6 +9,16 @@ Require Import Morphisms.
 Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
 Require Import ProofIrrelevance.
 
+(* the actual relation *)
+
+Inductive subtypeI: st -> st -> Prop :=
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
+                      subtypeI T T'.
+
+Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T'). 
+
+(* the relation to prove examples *)
+
 Fixpoint listSisoPRef (l: list (siso*siso)): Prop :=
   match l with
     | nil            => True
@@ -23,10 +33,3 @@ Fixpoint decomposeL (l: list (siso*siso)) (s: st) (s': st): Prop :=
 
 Definition subtype (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef l.
 Definition subltype (T T': local) := subtype (lt2st T) (lt2st T').
-
-(*npc*)
-Inductive subtypeI: st -> st -> Prop :=
-  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
-                      subtypeI T T'.
-
-Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T'). 
