@@ -2911,8 +2911,7 @@ Proof. intro k.
          apply HT.
 Qed.
 
-Lemma all_refs:
-forall m : nat, refinement (merge_dpf_contn pi3 WA m) (merge_dpf_contn pi1 WA m).
+Lemma all_refs: forall m : nat, refinement (merge_dpf_contn pi3 WA m) (merge_dpf_contn pi1 WA m).
 Proof. intros.
        specialize(ntrans m m 0); intro HN.
        assert((m - 0) = m) by lia.
@@ -2924,7 +2923,7 @@ Proof. intros.
        simpl in HN. apply HN. lia.
 Qed.
 
-Lemma st2: subltype T T'.
+Lemma st: subltype T T'.
 Proof. intros. unfold subltype.
        unfold subtype.
        exists(

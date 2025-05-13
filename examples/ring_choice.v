@@ -2435,7 +2435,7 @@ Proof. apply stExt.
        constructor.
 Qed.
 
-Lemma ltB_ltBop: forall (l: list bool), subltype ltBOp ltB.
+Lemma st: forall (l: list bool), subltype ltBOp ltB.
 Proof. unfold subltype.
        intro l.
        unfold subtype.
