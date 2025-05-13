@@ -2289,7 +2289,7 @@ Proof. destruct w as (w, Pw).
            easy. easy.
            
            subst.
-           Check rcv_snd_notRef.
+
            apply rcv_snd_notRef in H0.
            easy.
            apply mon_projr.
@@ -2403,7 +2403,7 @@ Proof. destruct w as (w, Pw).
            apply extrR in Pw'. easy.
            apply exts, extcpf.
            apply extsR, extcpfR, extrR in Pw. easy. easy.
-           Check proj_send_cr.
+
            apply proj_send_cr; try easy.
            easy.
            simpl. easy. easy. easy.
