@@ -284,17 +284,17 @@ Proof. intro a.
 Qed.
 
 Lemma pneqq3: forall a p q l l' s s' w w' (H: p <> q),
-  q & [|(l, s, w)|] = merge_apf_cont a (p & [|(l', s', w')|]) ->
+  isInA a p = false -> q & [|(l, s, w)|] = merge_apf_cont a (p & [|(l', s', w')|]) ->
   exists a', 
-  w = merge_apf_cont a' (p & [|(l', s', w')|]) /\ a = apf_receive q l s a'.
+  w = merge_apf_cont a' (p & [|(l', s', w')|]) /\ a = apf_receive q l s a' /\ isInA a' p = false.
 Proof. intro a.
        induction a; intros.
-       - rewrite apfend_an in H0.
-         inversion H0. subst. easy.
-       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l', s', w')|]))) in H0.
-         simpl in H0.
-         inversion H0. subst.
-         exists a. split; easy.
+       - rewrite apfend_an in H1.
+         inversion H1. subst. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l', s', w')|]))) in H1.
+         simpl in H1.
+         inversion H1. subst.
+         exists a. split. easy. split. easy. simpl in H0. rewrite orbtf in H0. easy.
 Qed.
 
 Lemma pneqq4: forall a p q l l' s s' w w' (H: p <> q),
