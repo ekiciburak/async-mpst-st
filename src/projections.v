@@ -2768,3 +2768,5 @@ Proof. split.
        - apply refEquivR2 in H. apply _B_7_2 with (w := w) (w' := w') (p := p); easy.
 Qed.
 
+
+
