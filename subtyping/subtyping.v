@@ -237,6 +237,9 @@ Proof. pcofix CIH.
          apply st2si_mon.
 Qed.
 
+(* Lemma ex1: forall T U V, st2soC U T -> st2siC V T -> exists W, st2siC W U /\ st2soC W V.
+Proof. *)
+
 Lemma so_sisoDec: forall x y, wfC y -> st2soC x y -> st2sisoC (st2siH x) y.
 Proof. pcofix CIH.
        intros.
@@ -294,23 +297,18 @@ Proof. pcofix CIH.
 Lemma si_sisoDec: forall x y, wfC y -> st2siC x y -> st2sisoC (st2soH x) y.
 Admitted.
 
-Lemma _3_15_a: forall T U, wfC T -> st2soC U T -> exists W, st2siC W U.
-Proof. intros.
-       pinversion H0.
-       - subst. admit.
-       - subst. exists((p ! cocons (l, s, (st2siH x)) conil)).
-         pfold. constructor. pfold. constructor. admit. admit.
-       - subst. pinversion H1. admit.
-         subst.
-         destruct H2 as (l1,(s1,(t1,(t2,(H1a,(H1b,H1c)))))).
-         subst.
-         exists((p & cocons (l1, s1, (st2siH t1)) conil)).
-         pfold. apply st2si_rcv with (y := t1).
-         admit.
-         constructor.
-         admit.
-         admit.
-Admitted.
+Inductive wrapper (R: Prop -> Prop): Prop -> Prop :=
+  | wrc: forall U, R (exists W, st2siC W U) -> wrapper R (exists W, st2siC W U).
+
+Definition wrapperC U := paco1 (wrapper) bot1 U.
+
+Lemma _3_15_a: forall T U, wfC T -> st2soC U T -> wrapperC (exists W, st2siC W U).
+Proof. pcofix CIH.
+       intros.
+       pfold. constructor.
+       right. 
+       apply CIH with (T := T); easy.
+Qed.
 
 Lemma _3_15_b: forall T V, wfC T -> st2siC V T -> exists W, st2soC W V.
 Admitted.

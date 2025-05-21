@@ -742,6 +742,7 @@ Proof. apply stExt.
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) []))). simpl.
        constructor.
+       pfold.
        constructor.
        exists "cont". exists (I). exists (lt2st (lt_receive "p" [("success", I, lt_end); ("error", B, lt_end)])).
        exists "cont". exists (I). exists("p" & [|("success", I, end); ("error", B, end)|]).
@@ -765,6 +766,7 @@ Proof. apply stExt.
             | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
             end) [])). simpl.
        constructor.
+       pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "success". exists (I). exists(end).
@@ -772,6 +774,7 @@ Proof. apply stExt.
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        
+       left. pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "error". exists (B). exists(end).
@@ -780,7 +783,10 @@ Proof. apply stExt.
        left. pfold. constructor.
        constructor.
        
-       constructor.
+       pfold.
+       constructor. 
+       
+       left. pfold. constructor.
        exists "stop". exists (()). exists( lt2st (lt_receive "p" [("success", I, lt_end); ("error", B, lt_end)])).
        exists "stop". exists (()). exists("p" & [|("success", I, end); ("error", B, end)|]).
        split. easy. split. easy. split. easy. split. easy.
@@ -802,20 +808,23 @@ Proof. apply stExt.
             | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
             end) [])). simpl.
        constructor.
+       pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "success". exists (I). exists(end).
        exists "success". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
-       constructor.
+       left. pfold. constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "error". exists (B). exists(end).
        exists "error". exists (B). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
 Qed.
 
 Lemma lT2T: lt2st lT = T.
@@ -841,6 +850,7 @@ Proof. apply stExt.
             | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
             end) [])). simpl.
        pfold. constructor.
+       pfold.
        constructor.
        exists "success". exists (I). exists(lt2st (lt_send "q" [("cont", I, lt_end); ("stop", (), lt_end)])).
        exists "success". exists (I). exists("q" ! [|("cont", I, end); ("stop", (), end)|]).
@@ -863,12 +873,14 @@ Proof. apply stExt.
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
        constructor.
+       pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "cont". exists (I). exists(end).
        exists "cont". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
+       left. pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "stop". exists (()). exists(end).
@@ -877,7 +889,10 @@ Proof. apply stExt.
        left. pfold. constructor.
        constructor.
        
+       
+       pfold.
        constructor.
+       left. pfold. constructor.
        exists "error". exists (B). exists(lt2st (lt_send "q" [("cont", I, lt_end); ("stop", (), lt_end)])).
        exists "error". exists (B). exists("q" ! [|("cont", I, end); ("stop", (), end)|]).
        split. easy. split. easy. split. easy. split. easy.
@@ -899,12 +914,14 @@ Proof. apply stExt.
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
        constructor.
+       pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "cont". exists (I). exists(end).
        exists "cont". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
+       left. pfold.
        constructor.
        rewrite(st_eq(lt2st lt_end)). simpl.
        exists "stop". exists (()). exists(end).
@@ -912,7 +929,9 @@ Proof. apply stExt.
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
 Qed.
 
 Lemma lT'_lT: subltype lT' lT.

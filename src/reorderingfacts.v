@@ -2109,7 +2109,7 @@ Proof. intros p b.
        subst.
        rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b0) (p ! [|(l2, s3, w2)|]))) in H4.
        simpl in H4. inversion H4. subst. easy.
-       subst. rewrite bpend_an in H4. easy.
+       subst. rewrite !bpend_an in H4. simpl. easy.
 
        subst.
        rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [|(l1, s2, w1)|]))) in H.
@@ -2219,6 +2219,70 @@ Proof. intros p b.
        simpl in H. inversion H. subst. easy.
        subst. rewrite bpend_an in H. easy.
 Qed.
+
+Lemma BpfBpfeqInv2: forall p b1 b2 l1 l2 s1 s2 w1 w2,
+  isInB b1 p = false ->
+  isInB b2 p = false ->
+  merge_bpf_cont b1 (p ! [|(l1, s1, w1)|]) =
+  merge_bpf_cont b2 (p ! [|(l2, s2, w2)|]) -> b1 = b2 /\ (p ! [|(l1, s1, w1)|]) = (p ! [|(l2, s2, w2)|]).
+Proof. intros p b.
+       induction b; intros.
+       simpl.
+       case_eq b2; intros.
+       simpl.
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       simpl in H1.
+       rewrite(st_eq(  merge_bpf_cont (bpf_receive s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1.
+       simpl in H1. inversion H1. subst.
+       apply IHb in H6.
+       destruct H6 as (H6a, H6b). subst. inversion H6b. subst. easy.
+       simpl in H. easy. simpl in H0. easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(  merge_bpf_cont (bpf_send s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       
+       case_eq b2; intros.
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1. simpl in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       inversion H1.
+       apply IHb in H6.
+       destruct H6 as (H6a, H6b). inversion H6b. subst.
+       easy.
+       
+       admit. admit.
+        
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       inversion H1. subst.
+       simpl in H. rewrite String.eqb_refl in H. easy.
+     
+       case_eq b2; intros.
+       subst. 
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s3 b) (p ! [|(l2, s2, w2)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l1, s1, w1)|]))) in H1. simpl in H1. easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l1, s1, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s3 b) (p ! [|(l2, s2, w2)|]))) in H1. simpl in H1.
+       inversion H1. subst. 
+       simpl in H0. rewrite String.eqb_refl in H0. easy.
+Admitted.
 
 Lemma case11: forall n p q a l l' s s' w w',
 merge_ap_contn p a (p & [|(l, s, w)|]) n = q ! [|(l', s', w')|] -> False.

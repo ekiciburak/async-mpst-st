@@ -288,6 +288,10 @@ Inductive eventually {A: Type} (F: coseq A -> Prop) (R: coseq A -> Prop): coseq 
   | evh: forall x xs, F (cocons x xs) -> eventually F R (cocons x xs)
   | evc: forall x xs, R xs -> eventually F R (cocons x xs).
 
+Inductive eventuallyI {A: Type} (F: coseq A -> Prop): coseq A -> Prop :=
+  | evhI: forall x xs, F (cocons x xs)  -> eventuallyI F (cocons x xs)
+  | evcI: forall x xs, eventuallyI F xs -> eventuallyI F (cocons x xs).
+  
 (* Definition eventualyP := @eventually (ctx*lab). *)
 (* Definition eventualyP pt := @eventually (@upth pt).  *)
 
@@ -1317,24 +1321,39 @@ Definition FairPath (pt: TPath): Prop :=
 
 Definition FairPathC (pt: TPath) := (* pathRedC pt /\ *) alwaysC FairPath pt.
 
+Definition wLiveness (gam: Ctx) (p: participant): Prop :=
+  match T.find p gam with
+    | Some (sigp, st_receive q ys) => forall l pt,  FairPathC (cocons (gam, l) pt)  -> eventuallyI (Dequeued p q sigp ys) (cocons (gam, l) pt)
+    | Some ((q,l,s)::sigp, _)      => forall lb pt, FairPathC (cocons (gam, lb) pt) -> eventuallyI (Enqueued p q l s) (cocons (gam, lb) pt)
+    | _                            => False
+  end.
+
 Inductive pLiveness (R: Ctx -> participant -> Prop): Ctx -> participant -> Prop :=
+  | lpC: forall gam p, wLiveness gam p -> (forall gam' l,  R gam' p /\ wLiveness gam' p /\ Red gam l gam') -> pLiveness R gam p.
+
+Definition pLivenessC g p := paco2 pLiveness bot2 g p.
+
+(* Inductive pLiveness (R: Ctx -> participant -> Prop): Ctx -> participant -> Prop :=
   | lpR: forall p gam,
          (
            match T.find p gam with
-             | Some (sigp, st_receive q ys) => forall l pt, FairPathC (cocons (gam, l) pt) -> eventuallyC (Dequeued p q sigp ys) (cocons (gam, l) pt)
+             | Some (sigp, st_receive q ys) => forall l pt, FairPathC (cocons (gam, l) pt) -> eventuallyI (Dequeued p q sigp ys) (cocons (gam, l) pt)
              | _                            => False
            end
          ) -> pLiveness R gam p
   | lpS: forall p gam,
          (
            match T.find p gam with
-             | Some ((q,l,s)::sigp, Tp)     => forall lb pt, FairPathC (cocons (gam, lb) pt) -> eventuallyC (Enqueued p q l s) (cocons (gam, lb) pt)
+             | Some ((q,l,s)::sigp, Tp)     => forall lb pt, FairPathC (cocons (gam, lb) pt) -> eventuallyI (Enqueued p q l s) (cocons (gam, lb) pt)
              | _                            => False
            end
          ) -> pLiveness R gam p
-  | lpC: forall gam l gam' p, Red gam l gam' -> R gam' p -> pLiveness R gam p.
+  | lpC: forall gam l gam' p, R gam' p -> Red gam l gam' -> pLiveness R gam p.
 
 Definition pLivenessC g p := paco2 pLiveness bot2 g p.
+ *)
+
+
 
 Definition Live g := forall p, T.mem p g -> pLivenessC g p.
 
@@ -1776,5 +1795,32 @@ Proof. intros.
        apply mon_alw.
 Qed.
 
+Lemma _4_9T: forall g l g', Live g -> Red g l g' -> Live g'.
+Proof. pcofix CIH.
+       intros.
+       unfold Live in H0.
+       assert(T.mem p g) by admit.
+       apply H0 in H.
+       pinversion H.
+       - subst. pfold. apply lpC.
+         specialize(H4 g' l). easy.
+         intros.
+         specialize H4 as H40.
+         specialize(H4 gam' l0).
+         split.
+         destruct H4 as (H4a, (H4b,H4c)).
+         right. apply CIH with (g := g) (l := l0).
+         unfold Live. easy. easy. admit.
+         split. easy. 
 
-
+Admitted.
+(*        specialize(H (cocons (g', l0) pt) l).
+       apply _B_3 with (g := g) (lb1 := l) in H1; try easy.
+       apply H in H1.
+       pinversion H1.
+       subst. pfold.
+       pinversion H5.
+       apply mon_alw.
+       apply mon_alw. 
+Qed.
+*)

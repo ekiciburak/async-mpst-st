@@ -64,10 +64,10 @@ Qed.
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p xs ys,
-               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
                st_equiv R (st_receive p ys) (st_receive p xs)
   | eq_st_snd: forall p xs ys,
-               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
                st_equiv R (st_send p ys) (st_send p xs). 
 
 Definition st_equivC: st -> st -> Prop := fun s1 s2 => paco2 st_equiv bot2 s1 s2.

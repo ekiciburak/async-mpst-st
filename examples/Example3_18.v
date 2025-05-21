@@ -154,23 +154,28 @@ Proof. apply stExt.
                  end) [])). simpl.
        rewrite(st_eq(lt2st lt_end)). simpl.
        constructor.
+       pfold.
        constructor.
        exists "l1". exists (I). exists("q" & [|("l3", I, end); ("l4", I, end)|]).
        exists "l1". exists (I). exists("q" & [|("l3", I, end); ("l4", I, end)|]).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
+       pfold.
        constructor.
        exists "l3". exists (I). exists(end).
        exists "l3". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
+       left. pfold.
        constructor.
        exists "l4". exists (I). exists(end).
        exists "l4". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
 Qed.
 
 Lemma lt2t2: lt2st ltype2 = type2.
@@ -207,23 +212,28 @@ Proof. apply stExt.
               end) [])). simpl.
        rewrite(st_eq(lt2st lt_end)). simpl.
        constructor.
+       pfold.
        constructor.
        exists "l1". exists (I). exists("q" & [|("l3", I, end)|]).
        exists "l1". exists (I). exists("q" & [|("l3", I, end)|]).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
+       pfold.
        constructor.
        exists "l3". exists (I). exists(end).
        exists "l3". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
        exists "l2". exists (I). exists(end).
        exists "l2". exists (I). exists(end).
        split. easy. split. easy. split. easy. split. easy.
        left. pfold. constructor.
        constructor.
+       pfold. constructor.
 Qed.
 
 Lemma lT1_lT2: subltype ltype1 ltype2.

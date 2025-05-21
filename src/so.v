@@ -9,6 +9,166 @@ Require Import Setoid.
 Require Import Morphisms.
 Require Import ST.processes.axioms.
 
+
+CoFixpoint st2soH (t: st): st :=
+  match t with
+    | st_send p xs    =>
+      match xs with
+        | cocons (l,s,t') ys => st_send p (cocons (l,s,st2soH t') (cocons (l,s,st2soH (st_send p ys)) conil)) 
+        | conil              => st_send p conil
+      end
+    | st_receive p xs => 
+       let cofix next xs :=
+        match xs with
+          | cocons (l,s,t') ys => cocons (l,s,st2soH t') (next ys)
+          | conil              => conil
+        end 
+      in st_receive p (next xs) 
+    | _               => st_end
+  end.
+
+Definition eqbs s1 s2: bool :=
+  match (s1, s2) with
+    | (sunit, sunit) => true
+    | (sbool, sbool) => true
+    | (snat, snat)   => true
+    | (sint, sint)   => true
+    | _              => false
+  end.
+
+CoFixpoint st2soA (t: st): coseq st :=
+  match st2soH t with
+    | st_send p xs => 
+      match xs with
+        | cocons(l,s,t') (cocons (l1,s1,t1) conil) => cocons (st_send p [|(l,s,t')|]) (st2soA t1)
+        | cocons(l,s,t') conil => cocons (st_send p [|(l,s,t')|]) conil
+        | _             => conil
+      end
+    | st_receive p xs => 
+      match xs with
+        | cocons(l,s,t') ys => cocons (st_receive p [|(l,s,t')|]) (st2soA (st_receive p ys))
+        | _             => conil
+      end
+    | _            => conil
+  end.
+
+(* CoFixpoint Et1 := st_receive "q" (cocons ("l7", sint, Et1) conil).
+CoFixpoint Et2 := st_send "q" (cocons ("l8", sint, Et2) conil).
+
+CoFixpoint Et1so := st_receive "q" (cocons ("l7", sint, Et1so) conil).
+CoFixpoint Et2so := st_send "q" (cocons ("l8", sint, Et2so) conil).
+
+CoFixpoint eT1 := st_receive "p" (cocons ("l1",sint,st_send "p" (cocons("l4",sint,Et1) 
+                                                                (cocons ("l5",sint,Et2) 
+                                                                (cocons("l6",sint,eT1) 
+                                                                conil)))) 
+                                 (cocons ("l2",sint,st_send "q" (cocons ("l9",sint,eT1) conil))
+                                 (cocons ("l3",sint,st_receive "q" (cocons ("l10",sint,eT1) conil)) conil))).
+
+CoFixpoint eT2 := st_receive "p" (cocons ("l1",sint,st_send "p" (cocons("l4",sint,Et1so) conil))
+                                 (cocons ("l2",sint,st_send "q" (cocons ("l9",sint,eT2) conil))
+                                 (cocons ("l3",sint,st_receive "q" (cocons ("l10",sint,eT2) conil)) conil))).
+
+(* inductive membership check *)
+Inductive coseqInA {A: Type}: A -> coseq A -> Prop :=
+  | CoInSplit1A x xs y ys: xs = cocons y ys -> x = y  -> coseqInA x xs
+  | CoInSplit2A x xs y ys: xs = cocons y ys -> x <> y -> coseqInA x ys -> coseqInA x xs.
+  
+Lemma T1soT2: coseqInA eT2 (st2so eT1).
+Proof. rewrite(st_eq eT1); rewrite(st_eq eT2); simpl.
+       rewrite(coseq_eq(st2so
+     ("p" &
+      [|("l1", I, "p" ! [|("l4", I, Et1); ("l5", I, Et2); ("l6", I, eT1)|]);
+      ("l2", I, "q" ! [|("l9", I, eT1)|]);
+      ("l3", I, "q" & [|("l10", I, eT1)|])|]))).
+      simpl.
+
+rewrite(coseq_eq((st2so
+        ("p" &
+         (cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+            match xs with
+            | [||] => [||]
+            | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+            end) [|("l2", I, "q" ! [|("l9", I, eT1)|]); ("l3", I, "q" & [|("l10", I, eT1)|])|])))).
+simpl.
+rewrite(coseq_eq(st2so
+           ("p" &
+            (cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+               match xs with
+               | [||] => [||]
+               | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+               end)
+              ((cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+                  match xs with
+                  | [||] => [||]
+                  | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+                  end) [|("l3", I, "q" & [|("l10", I, eT1)|])|])))).
+simpl.
+rewrite(coseq_eq(st2so
+              ("p" &
+               (cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+                  match xs with
+                  | [||] => [||]
+                  | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+                  end)
+                 ((cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+                     match xs with
+                     | [||] => [||]
+                     | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+                     end)
+                    ((cofix next (xs : coseq (string * sort * st)) :
+                          coseq (string * sort * st) :=
+                        match xs with
+                        | [||] => [||]
+                        | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+                        end) [||]))))).
+simpl.
+
+
+(*       rewrite(st_eq(st2soH
+      ("p" &
+       [|("l1", I, "p" ! [|("l4", I, Et1); ("l5", I, Et2); ("l6", I, eT1)|]);
+       ("l2", I, "q" ! [|("l9", I, eT1)|]);
+       ("l3", I, "q" & [|("l10", I, eT1)|])|]))).
+       simpl.
+       rewrite(coseq_eq(
+       (cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+       match xs with
+       | [||] => [||]
+       | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+       end)
+      [|("l1", I, "p" ! [|("l4", I, Et1); ("l5", I, Et2); ("l6", I, eT1)|]); ("l2", I, "q" ! [|("l9", I, eT1)|]);
+      ("l3", I, "q" & [|("l10", I, eT1)|])|])).
+      simpl.
+      rewrite(coseq_eq(
+      (cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+          match xs with
+          | [||] => [||]
+          | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+          end) [|("l2", I, "q" ! [|("l9", I, eT1)|]); ("l3", I, "q" & [|("l10", I, eT1)|])|])).
+      simpl.
+      rewrite(coseq_eq((cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+             match xs with
+             | [||] => [||]
+             | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+             end) [|("l3", I, "q" & [|("l10", I, eT1)|])|])).
+      simpl.
+      rewrite(coseq_eq((cofix next (xs : coseq (string * sort * st)) : coseq (string * sort * st) :=
+                match xs with
+                | [||] => [||]
+                | cocons (l, s, t') ys => cocons (l, s, st2soH t') (next ys)
+                end) [||])).
+      simpl. *)
+      rewrite(st_eq(st2soH ("p" ! [|("l4", I, Et1); ("l5", I, Et2); ("l6", I, eT1)|]))).
+      simpl.
+      rewrite(st_eq(st2soH ("p" ! [|("l5", I, Et2); ("l6", I, eT1)|]))). simpl.
+      rewrite(st_eq(st2soH ("p" ! [|("l6", I, eT1)|]))). simpl.
+      rewrite(st_eq(st2soH ("p" ! [||]))). simpl.
+      
+       pfold.
+       apply st2so_rcv. pfold.
+       constructor.
+
 CoFixpoint st2soH (t: st): st :=
   match t with
     | st_send p xs    =>
@@ -35,7 +195,8 @@ CoFixpoint st2soF (t: st): coseq st :=
       end
     | _            => (cocons (st2soH t) conil)
   end.
-
+ *)
+ 
 Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
   | st2so_end: st2so R st_end st_end
   | st2so_snd: forall l s x xs y p,
@@ -46,7 +207,7 @@ Inductive st2so (R: st -> st -> Prop): st -> st -> Prop :=
                Forall2Co (fun u v => exists l s t t', u = (l,s,t) /\ v = (l,s,t') /\ R t t') ys xs ->
                st2so R (st_receive p ys) (st_receive p xs).
 
-Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2.
+Definition st2soC s1 s2 := paco2 (st2so) bot2 s1 s2. 
 
 Lemma st2so_mon: monotone2 st2so.
 Proof. unfold monotone2.
@@ -85,7 +246,7 @@ Proof. intros.
          simpl. easy.
 Qed.
 
-Lemma st2soE: forall T, wfC T -> st2soC (st2soH T) T.
+(* Lemma st2soE: forall T, wfC T -> st2soC (st2soH T) T.
 Proof. pcofix CIH.
        intros T Hwf.
        case_eq T; intros.
@@ -165,7 +326,7 @@ Proof. pcofix CIH.
          apply mon_wfH.
          constructor.
 Qed.
-
+ *)
 (*example so decomposition*)
 CoFixpoint Et1 := st_receive "q" (cocons ("l7", sint, Et1) conil).
 CoFixpoint Et2 := st_send "q" (cocons ("l8", sint, Et2) conil).

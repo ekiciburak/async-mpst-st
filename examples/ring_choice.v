@@ -12,14 +12,14 @@ Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
 
 Local Open Scope string_scope.
 
-Definition ltB := lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, (lt_var 0));
-                                                                 ("sub", I, (lt_var 0))])]).
+Definition TB := lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, (lt_var 0));
+                                                                ("sub", I, (lt_var 0))])]).
 
-Definition ltBOp := lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, (lt_var 0))]); 
-                                        ("sub", I, lt_receive "A" [("add", I, (lt_var 0))])]).
+Definition TBOp := lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, (lt_var 0))]); 
+                                       ("sub", I, lt_receive "A" [("add", I, (lt_var 0))])]).
 
 CoFixpoint rcp := st_receive "A" [|("add", I, st_send "C" [|("add", I, rcp);
-                                                          ("sub", I, rcp)|])|].
+                                                            ("sub", I, rcp)|])|].
 
 CoFixpoint rcop := st_send "C" [|("add", I, st_receive "A" [|("add", I, rcop)|]); 
                                 ("sub", I, st_receive "A" [|("add", I, rcop)|])|].
@@ -31,15 +31,15 @@ CoFixpoint w2 := st_send "C" [|("add", I, st_receive "A" [|("add", I, w2)|])|].
 CoFixpoint w3 := st_receive "A" [|("add", I, st_send "C" [|("sub", I, w3)|])|].
 CoFixpoint w4 := st_send "C" [|("sub", I, st_receive "A" [|("add", I, w4)|])|].
 
-Definition d1: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end).
-Definition d2: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end).
-Definition d3: Dpf := dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end).
-Definition d4: Dpf := dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end).
+Definition Par: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end).
+Definition Psr: Dpf := dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end).
+Definition Pal: Dpf := dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end).
+Definition Psl: Dpf := dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end).
 
-Definition w5 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) w1 k.
-Definition w6 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) w3 k.
-Definition w7 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w2 k.
-Definition w8 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) w4 k.
+Definition w5 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) w1 k.
+Definition w6 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) w3 k.
+Definition w7 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) w2 k.
+Definition w8 (n m k: nat): st := merge_dpf_contn (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) w4 k.
 
 Fixpoint rShape (l: list bool): Dpf :=
   match l with
@@ -1109,37 +1109,37 @@ Qed.
 
 Lemma refm1: forall m W1 W2, 
   refinement W1 W2 ->
-  refinement (merge_dpf_cont (DpnD3 d4 m) W1) (merge_dpf_cont (DpnD3 d2 m) W2).
+  refinement (merge_dpf_cont (DpnD3 Psl m) W1) (merge_dpf_cont (DpnD3 Psr m) W2).
 Proof. intro m.
        induction m; intros.
        - simpl. rewrite !dpfend_dn. easy.
        - rewrite !DpnD3C !merge_mergeD.
-         unfold d4 at 1.
-         unfold d2 at 1.
-         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d4 m) W1)))).
+         unfold Psl at 1.
+         unfold Psr at 1.
+         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "sub" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 Psl m) W1)))).
          simpl.
-         rewrite(st_eq  (merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end)) (merge_dpf_cont (DpnD3 d2 m) W2))).
+         rewrite(st_eq  (merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "sub" (I) dpf_end)) (merge_dpf_cont (DpnD3 Psr m) W2))).
          simpl.
-         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d4 m) W1))). simpl.
-         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) dpf_end) (merge_dpf_cont (DpnD3 d2 m) W2))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 Psl m) W1))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "sub" (I) dpf_end) (merge_dpf_cont (DpnD3 Psr m) W2))). simpl.
          rewrite !dpfend_dn.
          pfold.
          specialize(ref_b (upaco2 refinementR bot2)
-                          ("A" & [|("add", I, merge_dpf_cont (DpnD3 d4 m) W1)|])
-                          (merge_dpf_cont (DpnD3 d2 m) W2)
+                          ("A" & [|("add", I, merge_dpf_cont (DpnD3 Psl m) W1)|])
+                          (merge_dpf_cont (DpnD3 Psr m) W2)
                           "C" "sub" (I) (I)
                           (bp_receivea "A" "add" (I)) 1
                            ); intro HS.
         simpl in HS.
-        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [|("sub", I, merge_dpf_cont (DpnD3 d2 m) W2)|])))) in HS. simpl in HS.
+        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [|("sub", I, merge_dpf_cont (DpnD3 Psr m) W2)|])))) in HS. simpl in HS.
         apply HS.
         constructor.
         left.
-        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 d2 m) W2)))). simpl.
+        rewrite(st_eq((merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 Psr m) W2)))). simpl.
         pfold.
         specialize(ref_a (upaco2 refinementR bot2)
-                         (merge_dpf_cont (DpnD3 d4 m) W1)
-                         (merge_dpf_cont (DpnD3 d2 m) W2)
+                         (merge_dpf_cont (DpnD3 Psl m) W1)
+                         (merge_dpf_cont (DpnD3 Psr m) W2)
                          "A" "add" (I) (I)
                          (ap_end) 1
                           ); intro HR.
@@ -1540,36 +1540,36 @@ Qed.
 (*here*)
 Lemma refm2: forall m W1 W2, 
   refinement W1 W2 ->
-  refinement (merge_dpf_cont (DpnD3 d3 m) W1) (merge_dpf_cont (DpnD3 d1 m) W2).
+  refinement (merge_dpf_cont (DpnD3 Pal m) W1) (merge_dpf_cont (DpnD3 Par m) W2).
 Proof. intro m.
        induction m; intros.
        - simpl. rewrite !dpfend_dn. easy.
        - rewrite !DpnD3C !merge_mergeD.
-         unfold d3 at 1.
-         unfold d1 at 1.
-         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d3 m) W1)))). simpl.
-         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
-         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d3 m) W1))). simpl.
-         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
+         unfold Pal at 1.
+         unfold Par at 1.
+         rewrite(st_eq((merge_dpf_cont (dpf_send "C" "add" (I) (dpf_receive "A" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 Pal m) W1)))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) (dpf_send "C" "add" (I) dpf_end)) (merge_dpf_cont (DpnD3 Par m) W2))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_receive "A" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 Pal m) W1))). simpl.
+         rewrite(st_eq(merge_dpf_cont (dpf_send "C" "add" (I) dpf_end) (merge_dpf_cont (DpnD3 Par m) W2))). simpl.
          rewrite !dpfend_dn.
          pfold.
          specialize(ref_b (upaco2 refinementR bot2)
-                          ("A" & [|("add", I, merge_dpf_cont (DpnD3 d3 m) W1)|])
-                          (merge_dpf_cont (DpnD3 d1 m) W2)
+                          ("A" & [|("add", I, merge_dpf_cont (DpnD3 Pal m) W1)|])
+                          (merge_dpf_cont (DpnD3 Par m) W2)
                           "C" "add" (I) (I)
                           (bp_receivea "A" "add" (I)) 1
                            ); intro HS.
         simpl in HS.
-        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [|("add", I, merge_dpf_cont (DpnD3 d1 m) W2)|]))) in HS.
+        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) ("C" ! [|("add", I, merge_dpf_cont (DpnD3 Par m) W2)|]))) in HS.
         simpl in HS.
         apply HS.
         constructor.
         left.
         pfold.
-        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 d1 m) W2))). simpl.
+        rewrite(st_eq(merge_bp_cont "C" (bp_receivea "A" "add" (I)) (merge_dpf_cont (DpnD3 Par m) W2))). simpl.
         specialize(ref_a (upaco2 refinementR bot2)
-                         (merge_dpf_cont (DpnD3 d3 m) W1)
-                         (merge_dpf_cont (DpnD3 d1 m) W2)
+                         (merge_dpf_cont (DpnD3 Pal m) W1)
+                         (merge_dpf_cont (DpnD3 Par m) W2)
                          "A" "add" (I) (I)
                          (ap_end) 1
                           ); intro HR.
@@ -2021,12 +2021,12 @@ Proof. unfold w5, w7.
        - simpl. apply refw2w1.
        - rewrite <- !meqDpf. rewrite DpnD3C.
          rewrite DpnD3C.
-         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k)) w1) =
-                (merge_dpf_cont (DpnD3 d1 n) (merge_dpf_cont (DpnD3 d2 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k) w1)))).
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) (DpnD3 (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) k)) w1) =
+                (merge_dpf_cont (DpnD3 Par n) (merge_dpf_cont (DpnD3 Psr m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) k) w1)))).
          { rewrite !merge_mergeD. easy. }
          rewrite H.
-         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k)) w2) =
-                (merge_dpf_cont (DpnD3 d3 n) (merge_dpf_cont (DpnD3 d4 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k) w2)))).
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) (DpnD3 (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) k)) w2) =
+                (merge_dpf_cont (DpnD3 Pal n) (merge_dpf_cont (DpnD3 Psl m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) k) w2)))).
          { rewrite !merge_mergeD. easy. }
          rewrite H0.
          apply refm2.
@@ -2090,12 +2090,12 @@ Proof. unfold w8, w6.
        - simpl. apply refw4w3.
        - rewrite <- !meqDpf. rewrite DpnD3C.
          rewrite DpnD3C.
-         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k)) w4) =
-                (merge_dpf_cont (DpnD3 d3 n) (merge_dpf_cont (DpnD3 d4 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d3 n) (DpnD3 d4 m)) k) w4)))).
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) (DpnD3 (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) k)) w4) =
+                (merge_dpf_cont (DpnD3 Pal n) (merge_dpf_cont (DpnD3 Psl m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 Pal n) (DpnD3 Psl m)) k) w4)))).
          { rewrite !merge_mergeD. easy. }
          rewrite H.
-         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k)) w3) =
-                (merge_dpf_cont (DpnD3 d1 n) (merge_dpf_cont (DpnD3 d2 m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 d1 n) (DpnD3 d2 m)) k) w3)))).
+         assert((merge_dpf_cont (Dpf_merge (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) (DpnD3 (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) k)) w3) =
+                (merge_dpf_cont (DpnD3 Par n) (merge_dpf_cont (DpnD3 Psr m) (merge_dpf_cont (DpnD3 (Dpf_merge (DpnD3 Par n) (DpnD3 Psr m)) k) w3)))).
          { rewrite !merge_mergeD. easy. }
          rewrite H0.
          apply refm2.
@@ -2276,10 +2276,10 @@ Proof. intro l.
        easy.
 Qed.
 
-Lemma ltB_rcp: lt2st ltB = rcp.
+Lemma TB_rcp: lt2st TB = rcp.
 Proof. apply stExt.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(st_eq(lt2st TB)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                           match xs with
                           | [] => [||]
@@ -2324,6 +2324,7 @@ Proof. apply stExt.
                            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
                            end) []))). simpl.
        constructor.
+       pfold.
        constructor.
        exists "add". exists (I). exists("C" ! [|("add", I, lt2st (lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])])));
        ("sub", I, lt2st (lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])])))|]).
@@ -2333,26 +2334,30 @@ Proof. apply stExt.
        left.
        pfold.
        constructor.
+       pfold.
        constructor.
        exists "add". exists (I). exists( lt2st (lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]))).
        exists "add". exists (I). exists rcp.
        split. easy. split. easy. split. easy. split. easy.
        right.
-       unfold ltB in CIH. easy.
+       unfold TB in CIH. easy.
+       left. pfold.
        constructor.
        exists "sub". exists (I). exists( lt2st (lt_mu (lt_receive "A" [("add", I, lt_send "C" [("add", I, lt_var 0); ("sub", I, lt_var 0)])]))).
        exists "sub". exists (I). exists rcp.
        split. easy. split. easy. split. easy. split. easy.
        right.
-       unfold ltB in CIH. easy.
+       unfold TB in CIH. easy.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
 Qed.
 
-Lemma ltBop_rcop: lt2st ltBOp = rcop.
+Lemma TBop_rcop: lt2st TBOp = rcop.
 Proof. apply stExt.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(st_eq(lt2st TBOp)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                           match xs with
                           | [] => [||]
@@ -2384,6 +2389,7 @@ Proof. apply stExt.
        rewrite(st_eq rcop). simpl.
        pfold.
        constructor.
+       pfold.
        constructor.
        exists "add". exists (I). exists(lt2st (lt_receive "A" [("add", I, lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, lt_var 0)]); ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))])).
        exists "add". exists (I). exists("A" & [|("add", I, rcop)|]).
@@ -2403,13 +2409,16 @@ Proof. apply stExt.
                            end) []))). simpl.
        left. pfold.
        constructor.
+       pfold.
        constructor.
        exists "add". exists (I). exists(lt2st (lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, lt_var 0)]); ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))).
        exists "add". exists (I). exists rcop.
        split. easy. split. easy. split. easy. split. easy.
        right. easy.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
        exists "sub". exists (I). exists(lt2st (lt_receive "A" [("add", I, lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, lt_var 0)]); ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))])).
        exists "sub". exists (I). exists("A" & [|("add", I, rcop)|]).
        split. easy. split. easy. split. easy. split. easy.
@@ -2426,16 +2435,19 @@ Proof. apply stExt.
                            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
                            end) []))). simpl.
        constructor.
+       pfold.
        constructor.
        exists "add". exists (I). exists(lt2st (lt_mu (lt_send "C" [("add", I, lt_receive "A" [("add", I, lt_var 0)]); ("sub", I, lt_receive "A" [("add", I, lt_var 0)])]))).
        exists "add". exists (I). exists rcop.
        split. easy. split. easy. split. easy. split. easy.
        right. easy.
        constructor.
+       pfold.
        constructor.
+       left. pfold. constructor.
 Qed.
 
-Lemma ltB_ltBop: forall (l: list bool), subltype ltBOp ltB.
+Lemma TB_TBop: forall (l: list bool), subltype TBOp TB.
 Proof. unfold subltype.
        intro l.
        unfold subtype.
@@ -2465,30 +2477,30 @@ Proof. unfold subltype.
  
        split. split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(st_eq(lt2st TBOp)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
         match xs with
         | [] => [||]
         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
         end)
-       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       [("add", I, lt_receive "A" [("add", I, TBOp)]); ("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+           end) [("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, TBOp)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltBOp)])). simpl.
+           end) [("add", I, TBOp)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
@@ -2497,38 +2509,38 @@ Proof. unfold subltype.
        
        pfold.
        rewrite(st_eq w2). simpl.
-       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st TBOp))|]).
        left. pfold.
-       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       apply st2siso_rcv with (y := (lt2st TBOp)).
        simpl. right. apply CIH.
        constructor. 
        constructor.
        
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(st_eq(lt2st TB)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                 match xs with
                 | [] => [||]
                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+                end) [("add", I, lt_send "C" [("add", I, TB); ("sub", I, TB)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
          match xs with
          | [] => [||]
          | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
          end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, TB); ("sub", I, TB)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+           end) [("add", I, TB); ("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-              end) [("sub", I, ltB)])). simpl.
+              end) [("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                    coseq (string * local.sort * st) :=
                  match xs with
@@ -2537,39 +2549,39 @@ Proof. unfold subltype.
                  end) [])). simpl.
        rewrite(st_eq w1). simpl.
        pfold.
-       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st TB); ("sub", I, lt2st TB)|]).
        left. pfold.
-       apply st2siso_snd with (y := (lt2st ltB)).
+       apply st2siso_snd with (y := (lt2st TB)).
        simpl. right. apply CIH.
        constructor. 
        constructor.
        
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(st_eq(lt2st TBOp)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
         match xs with
         | [] => [||]
         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
         end)
-       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       [("add", I, lt_receive "A" [("add", I, TBOp)]); ("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+           end) [("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, TBOp)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltBOp)])). simpl.
+           end) [("add", I, TBOp)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
@@ -2577,9 +2589,9 @@ Proof. unfold subltype.
               end) [])). simpl.
        pfold.
        rewrite(st_eq w2). simpl.
-       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st TBOp))|]).
        left. pfold.
-       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       apply st2siso_rcv with (y := (lt2st TBOp)).
        simpl. right. apply CIH.
        constructor. 
        constructor.
@@ -2587,29 +2599,29 @@ Proof. unfold subltype.
 
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(st_eq(lt2st TB)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                 match xs with
                 | [] => [||]
                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+                end) [("add", I, lt_send "C" [("add", I, TB); ("sub", I, TB)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
          match xs with
          | [] => [||]
          | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
          end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, TB); ("sub", I, TB)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+           end) [("add", I, TB); ("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-              end) [("sub", I, ltB)])). simpl.
+              end) [("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                    coseq (string * local.sort * st) :=
                  match xs with
@@ -2618,39 +2630,39 @@ Proof. unfold subltype.
                  end) [])). simpl.
        rewrite(st_eq w1). simpl.
        pfold.
-       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st TB); ("sub", I, lt2st TB)|]).
        left. pfold.
-       apply st2siso_snd with (y := (lt2st ltB)).
+       apply st2siso_snd with (y := (lt2st TB)).
        simpl. right. apply CIH.
        constructor. 
        constructor.
        
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(st_eq(lt2st TBOp)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
         match xs with
         | [] => [||]
         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
         end)
-       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       [("add", I, lt_receive "A" [("add", I, TBOp)]); ("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+           end) [("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, TBOp)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltBOp)])). simpl.
+           end) [("add", I, TBOp)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
@@ -2658,9 +2670,9 @@ Proof. unfold subltype.
               end) [])). simpl.
        pfold.
        rewrite(st_eq w4). simpl.
-       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st TBOp))|]).
        left. pfold.
-       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       apply st2siso_rcv with (y := (lt2st TBOp)).
        simpl. right. apply CIH.
        constructor. 
        constructor. easy.
@@ -2668,29 +2680,29 @@ Proof. unfold subltype.
 
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(st_eq(lt2st TB)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                 match xs with
                 | [] => [||]
                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+                end) [("add", I, lt_send "C" [("add", I, TB); ("sub", I, TB)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
          match xs with
          | [] => [||]
          | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
          end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, TB); ("sub", I, TB)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+           end) [("add", I, TB); ("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-              end) [("sub", I, ltB)])). simpl.
+              end) [("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                    coseq (string * local.sort * st) :=
                  match xs with
@@ -2699,9 +2711,9 @@ Proof. unfold subltype.
                  end) [])). simpl.
        rewrite(st_eq w3). simpl.
        pfold.
-       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st TB); ("sub", I, lt2st TB)|]).
        left. pfold.
-       apply st2siso_snd with (y := (lt2st ltB)).
+       apply st2siso_snd with (y := (lt2st TB)).
        simpl. right. apply CIH.
        constructor. easy. 
        constructor.
@@ -2709,30 +2721,30 @@ Proof. unfold subltype.
 
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltBOp)). simpl.
+       rewrite(st_eq(lt2st TBOp)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
         match xs with
         | [] => [||]
         | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
         end)
-       [("add", I, lt_receive "A" [("add", I, ltBOp)]); ("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+       [("add", I, lt_receive "A" [("add", I, TBOp)]); ("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("sub", I, lt_receive "A" [("add", I, ltBOp)])])). simpl.
+           end) [("sub", I, lt_receive "A" [("add", I, TBOp)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
               end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, ltBOp)]))). simpl.
+       rewrite(st_eq(lt2st (lt_receive "A" [("add", I, TBOp)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltBOp)])). simpl.
+           end) [("add", I, TBOp)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
@@ -2740,9 +2752,9 @@ Proof. unfold subltype.
               end) [])). simpl.
        pfold.
        rewrite(st_eq w4). simpl.
-       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st ltBOp))|]).
+       apply st2siso_snd with (y := "A" & [|("add", I, (lt2st TBOp))|]).
        left. pfold.
-       apply st2siso_rcv with (y := (lt2st ltBOp)).
+       apply st2siso_rcv with (y := (lt2st TBOp)).
        simpl. right. apply CIH.
        constructor. 
        constructor. easy.
@@ -2750,29 +2762,29 @@ Proof. unfold subltype.
 
        split.
        pcofix CIH.
-       rewrite(st_eq(lt2st ltB)). simpl.
+       rewrite(st_eq(lt2st TB)). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
                 match xs with
                 | [] => [||]
                 | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-                end) [("add", I, lt_send "C" [("add", I, ltB); ("sub", I, ltB)])])). simpl.
+                end) [("add", I, lt_send "C" [("add", I, TB); ("sub", I, TB)])])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
          match xs with
          | [] => [||]
          | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
          end) [])). simpl.
-       rewrite(st_eq(lt2st (lt_send "C" [("add", I, ltB); ("sub", I, ltB)]))). simpl.
+       rewrite(st_eq(lt2st (lt_send "C" [("add", I, TB); ("sub", I, TB)]))). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) : coseq (string * local.sort * st) :=
            match xs with
            | [] => [||]
            | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-           end) [("add", I, ltB); ("sub", I, ltB)])). simpl.
+           end) [("add", I, TB); ("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                 coseq (string * local.sort * st) :=
               match xs with
               | [] => [||]
               | ((l1, s1, t1) :: ys)%SEQ => cocons (l1, s1, lt2st t1) (next ys)
-              end) [("sub", I, ltB)])). simpl.
+              end) [("sub", I, TB)])). simpl.
        rewrite(coseq_eq((cofix next (xs : seq.seq (string * local.sort * local)) :
                    coseq (string * local.sort * st) :=
                  match xs with
@@ -2781,9 +2793,9 @@ Proof. unfold subltype.
                  end) [])). simpl.
        rewrite(st_eq w3). simpl.
        pfold.
-       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st ltB); ("sub", I, lt2st ltB)|]).
+       apply st2siso_rcv with (y := "C" ! [|("add", I, lt2st TB); ("sub", I, lt2st TB)|]).
        left. pfold.
-       apply st2siso_snd with (y := (lt2st ltB)).
+       apply st2siso_snd with (y := (lt2st TB)).
        simpl. right. apply CIH.
        constructor. easy. 
        constructor.

@@ -31,4 +31,5 @@ examples/Example4_14.v
 negations/nsubtyping.v
 negations/nrefinement.v
 completeness/completeness.v
+src/decs.v
 

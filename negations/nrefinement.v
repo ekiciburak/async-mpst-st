@@ -1046,6 +1046,7 @@ Proof. destruct w as (w, Pw).
            apply extap. easy.
          }
          specialize(CIH (merge_ap_cont p a w3) Pw'' w1 Hs1).
+         unfold upaco2.
          right.
          apply CIH.
          intro h.
