@@ -256,6 +256,35 @@ CoFixpoint wrapSiC t1 t2 (h: st2siCC t1 t2): st :=
     | _ => st_end
   end.
 
+Lemma help1CA: forall ys2 xs2 l1 s1 y1,
+  copathsel l1 s1 xs2 y1 ->
+  (Forall2CCo (fun u v : String.string * local.sort * st =>
+     exists (l : String.string) (s : local.sort) (t t' : st),
+     u = (l, s, t) /\ v = (l, s, t') /\ st2siCC t t') ys2 xs2) ->
+  exists x2, (st2siCC x2 y1 * copathsel l1 s1 ys2 x2)%type.
+Proof. intros.
+       revert H0.
+       revert ys2.
+       induction H; intros.
+       - inversion H0. subst.
+         destruct H3 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst. exists t2. split. easy.
+         constructor.
+       - inversion H1. subst.
+         destruct H5 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (t3,H3). exists t3. split. 
+         destruct H3. easy.
+         constructor. easy. destruct H3. easy.
+       - inversion H1. subst.
+         destruct H5 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (t3,H3). exists t3. split. destruct H3. easy.
+         apply pselneqs. easy. destruct H3. easy.
+Defined.
+
 Lemma help1C: forall ys2 xs2 l1 s1 y1,
   copathsel l1 s1 xs2 y1 ->
   (Forall2CCo (fun u v : String.string * local.sort * st =>
@@ -279,6 +308,36 @@ Proof. intros.
          inversion H2b. subst.
          apply IHcopathsel in H6.
          destruct H6 as (t3,H3). exists t3. easy.
+Defined.
+
+Lemma help2CA: forall ys2 xs2 l1 s1 y1,
+  copathsel l1 s1 xs2 y1 ->
+  (Forall2CCo (fun u v : String.string * local.sort * st =>
+     exists (l : String.string) (s : local.sort) (t t' : st),
+     u = (l, s, t) /\ v = (l, s, t') /\ st2soCC t t') ys2 xs2) ->
+  exists x2, (st2soCC x2 y1 * copathsel l1 s1 ys2 x2)%type.
+Proof. intros.
+       revert H0.
+       revert ys2.
+       induction H; intros.
+       - inversion H0. subst.
+         destruct H3 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst. exists t2. split. easy. constructor.
+       - inversion H1. subst.
+         destruct H5 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (t3,H3). exists t3.
+         destruct H3. split. easy. 
+         constructor. easy. easy.
+       - inversion H1. subst.
+         destruct H5 as (l2,(s2,(t2,(t2',(H2a,(H2b,H2c)))))).
+         inversion H2b. subst.
+         apply IHcopathsel in H6.
+         destruct H6 as (t3,H3). exists t3. split.
+         destruct H3. easy.
+         apply pselneqs. easy.
+         destruct H3. easy.
 Defined.
 
 Lemma help2C: forall ys2 xs2 l1 s1 y1,
@@ -321,18 +380,18 @@ Proof. destruct(sodecC t1 t h1); destruct(sidecC t2 t h2).
          + destruct H1 as (l1,(s1,(x1,(xs1,(p1,(y1,(Ha1,(Hb1,(Hc1,Hd1))))))))).
            destruct s0 as (xs2,(p2,(ys2,(Ha2,(Hb2,Hc2))))).
            subst. inversion Hb2. subst.
-           specialize(help1C _ _ _ _ _ Ha1 Hc2); intro HN.
+           specialize(help1CA _ _ _ _ _ Ha1 Hc2); intro HN.
            apply constructive_indefinite_description in HN.
-           destruct HN as (x2,Hd2).
+           destruct HN as (x2,(Hd2,He2)).
            exact((p2 ! cocons (l1, s1, (wrapSiSoC x1 x2 y1 Hd1 Hd2)) conil)).
          + exact st_end.
        - destruct s as (xs1,(p1,(ys1,(Ha1,(Hb1,Hc1))))). subst.
          destruct s0 as [H2 | H2].
          ++ destruct H2 as (l2,(s2,(x2,(xs2,(p2,(y2,(Ha2,(Hb2,(Hc2,Hd2))))))))).
             subst. inversion Hc2. subst.
-            specialize(help2C _ _ _ _ _ Ha2 Hc1); intro HN.
+            specialize(help2CA _ _ _ _ _ Ha2 Hc1); intro HN.
             apply constructive_indefinite_description in HN.
-            destruct HN as (x1,Hd1).
+            destruct HN as (x1,(Hd1,He2)).
             exact((p2 & cocons (l2, s2, (wrapSiSoC x1 x2 y2 Hd1 Hd2)) conil)).
          ++ exact st_end.
          ++ exact st_end.
@@ -397,10 +456,12 @@ Proof. intros.
        apply IHcopathsel; easy.
 Qed.
 
+
 Lemma equivWrapSiSoS: forall p l s x xs ys y H c f,
   st_equivC
   (wrapSiSoC (p ! cocons (l, s, x) conil) (p ! ys) (p ! xs) (st2so_sndc l s x xs y p H c) (st2si_sndc p xs ys f))
-  (p ! cocons (l, s, (wrapSiSoC x (proj1_sig (@constructive_indefinite_description _ _ (help1C _ _ _ _ _ c f))) y H  (proj2_sig (@constructive_indefinite_description _ _ (help1C _ _ _ _ _ c f))))) conil).
+  (p ! cocons (l, s, (wrapSiSoC x (proj1_sig (@constructive_indefinite_description _ _ (help1CA _ _ _ _ _ c f))) y H  
+                                  (fst (proj2_sig (@constructive_indefinite_description _ _ (help1CA _ _ _ _ _ c f)))))) conil).
 Proof. pcofix CIH.
        intros.
        inversion f. subst.
@@ -416,7 +477,8 @@ Proof. pcofix CIH.
      constructive_indefinite_description
          (fun x0 : st =>
           copathsel l s (cocons (l3, s3, t4) l') x0 /\
-          p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\ p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
+          p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\
+          p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
          (eq_ind_r
             (fun s0 : String.string =>
              l = l ->
@@ -428,7 +490,8 @@ Proof. pcofix CIH.
              copathsel l s (cocons (l3, s3, t4) l') y ->
              exists x0 : st,
                copathsel l s (cocons (l3, s3, t4) l') x0 /\
-               p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\ p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
+               p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\
+               p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
             (fun H2 : l = l =>
              eq_ind_r
                (fun s0 : String.string =>
@@ -440,7 +503,8 @@ Proof. pcofix CIH.
                 copathsel s0 s (cocons (l3, s3, t4) l') y ->
                 exists x0 : st,
                   copathsel l s (cocons (l3, s3, t4) l') x0 /\
-                  p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\ p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
+                  p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\
+                  p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
                (fun H3 : s = s =>
                 eq_ind_r
                   (fun s0 : local.sort =>
@@ -451,7 +515,8 @@ Proof. pcofix CIH.
                    copathsel l s0 (cocons (l3, s3, t4) l') y ->
                    exists x0 : st,
                      copathsel l s (cocons (l3, s3, t4) l') x0 /\
-                     p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\ p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
+                     p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\
+                     p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
                   (fun H4 : x = x =>
                    eq_ind_r
                      (fun s0 : st =>
@@ -513,20 +578,22 @@ Proof. pcofix CIH.
                                        (fun x0 : st =>
                                         copathsel l s (cocons (l3, s3, t4) l') x0 /\
                                         p ! cocons (l, s, x) conil = p ! cocons (l, s, x) conil /\
-                                        p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0) y
-                                       (conj H9 (conj eq_refl (conj eq_refl H8)))) (f_equal (fun e : st => match e with
-                                                                                                           | s0 ! _ => s0
-                                                                                                           | _ => p
-                                                                                                           end) H6) h) conil H5
+                                        p ! cocons (l3, s3, t4) l' = p ! cocons (l3, s3, t4) l' /\ st2soCC x x0)
+                                       y (conj H9 (conj eq_refl (conj eq_refl H8))))
+                                    (f_equal (fun e : st => match e with
+                                                            | s0 ! _ => s0
+                                                            | _ => p
+                                                            end) H6) h) conil H5
                                  (st2so_sndc l s x (cocons (l3, s3, t4) l') y p H0 c)) H7)
                            (f_equal (fun e : st => match e with
                                                    | s0 ! _ => s0
                                                    | _ => p
-                                                   end) H6) (f_equal (fun e : st => match e with
-                                                                                    | _ ! c0 => c0
-                                                                                    | _ => cocons (l3, s3, t4) l'
-                                                                                    end) H6)) conil H5) H4) H3) H2) eq_refl eq_refl eq_refl eq_refl
-            eq_refl eq_refl H0 c)
+                                                   end) H6)
+                           (f_equal (fun e : st => match e with
+                                                   | _ ! c0 => c0
+                                                   | _ => cocons (l3, s3, t4) l'
+                                                   end) H6)) conil H5) H4) H3) H2) eq_refl eq_refl eq_refl
+            eq_refl eq_refl eq_refl H0 c)
      ). destruct a.
         destruct a.
         destruct a.
@@ -543,8 +610,13 @@ Proof. pcofix CIH.
         assert(c = c0).
         { now destruct (proof_irrelevance _ c c0). } subst.
 
-        destruct(constructive_indefinite_description (fun x2 : st => st2siCC x2 x0) (help1C (cocons (l3, s3, t3) l0) (cocons (l3, s3, t4) l') l s x0 c0 f)).
+        destruct(
+          constructive_indefinite_description
+         (fun x2 : st => (st2siCC x2 x0 * copathsel l s (cocons (l3, s3, t3) l0) x2)%type)
+         (help1CA (cocons (l3, s3, t3) l0) (cocons (l3, s3, t4) l') l s x0 c0 f)
+        ).
         simpl.
+        destruct p0. simpl.
         pfold. constructor.
         pfold. constructor.
         assert(s0 = H0).
@@ -561,8 +633,8 @@ Qed.
 Lemma equivWrapSiSoR: forall p l s x xs ys y H0 c f,
   st_equivC
   (wrapSiSoC (p & ys) (p & cocons (l, s, x) conil) (p & xs) (st2so_rcvc p xs ys f) (st2si_rcvc l s x xs y p H0 c))
-  (p & cocons (l, s, (wrapSiSoC (proj1_sig (@constructive_indefinite_description _ _ (help2C _ _ _ _ _ c f))) x y
-                                (proj2_sig (@constructive_indefinite_description _ _ (help2C _ _ _ _ _ c f))) H0)) conil). 
+  (p & cocons (l, s, (wrapSiSoC (proj1_sig (@constructive_indefinite_description _ _ (help2CA _ _ _ _ _ c f))) x y
+                                (fst (proj2_sig (@constructive_indefinite_description _ _ (help2CA _ _ _ _ _ c f)))) H0)) conil). 
 Proof. pcofix CIH.
        intros.
        inversion f. subst.
@@ -676,13 +748,14 @@ Proof. pcofix CIH.
                                        copathsel l s (cocons (l3, s3, t4) l') x0 /\
                                        p & cocons (l, s, x) conil = p & cocons (l, s, x) conil /\
                                        p & cocons (l3, s3, t4) l' = p & cocons (l3, s3, t4) l' /\ st2siCC x x0)
-                                    (fun _ : st2siCC (p & cocons (l, s, x) conil) (p & cocons (l3, s3, t4) l') =>
+                                    (fun _ : st2siCC (p & cocons (l, s, x) conil) (p & cocons (l3, s3, t4) l')
+                                     =>
                                      ex_intro
                                        (fun x0 : st =>
                                         copathsel l s (cocons (l3, s3, t4) l') x0 /\
                                         p & cocons (l, s, x) conil = p & cocons (l, s, x) conil /\
-                                        p & cocons (l3, s3, t4) l' = p & cocons (l3, s3, t4) l' /\ st2siCC x x0) y
-                                       (conj H9 (conj eq_refl (conj eq_refl H8))))
+                                        p & cocons (l3, s3, t4) l' = p & cocons (l3, s3, t4) l' /\ st2siCC x x0)
+                                       y (conj H9 (conj eq_refl (conj eq_refl H8))))
                                     (f_equal (fun e : st => match e with
                                                             | s0 & _ => s0
                                                             | _ => p
@@ -692,10 +765,11 @@ Proof. pcofix CIH.
                                                    | s0 & _ => s0
                                                    | _ => p
                                                    end) H6)
-                           (f_equal (fun e : st => match e with
-                                                   | _ & c0 => c0
-                                                   | _ => cocons (l3, s3, t4) l'
-                                                   end) H6)) conil H5) H4) H3) H2) eq_refl eq_refl eq_refl eq_refl
+                           (f_equal
+                              (fun e : st => match e with
+                                             | _ & c0 => c0
+                                             | _ => cocons (l3, s3, t4) l'
+                                             end) H6)) conil H5) H4) H3) H2) eq_refl eq_refl eq_refl eq_refl
             eq_refl eq_refl H0 c)
      ). destruct a.
         destruct a.
@@ -712,8 +786,12 @@ Proof. pcofix CIH.
         assert(c = c0).
         { now destruct (proof_irrelevance _ c c0). } subst.
 
-        destruct(constructive_indefinite_description (fun x2 : st => st2soCC x2 x0) (help2C (cocons (l3, s3, t3) l0) (cocons (l3, s3, t4) l') l s x0 c0 f)).
-        simpl.
+        destruct(
+        constructive_indefinite_description
+         (fun x2 : st => (st2soCC x2 x0 * copathsel l s (cocons (l3, s3, t3) l0) x2)%type)
+         (help2CA (cocons (l3, s3, t3) l0) (cocons (l3, s3, t4) l') l s x0 c0 f)
+        ).
+        simpl. destruct p0.
         pfold. constructor.
         pfold. constructor.
         assert(s0 = H0).
@@ -729,32 +807,76 @@ Qed.
 
 Lemma eqWrapSiSoS: forall p l s x xs ys y H c f,
   (wrapSiSoC (p ! cocons (l, s, x) conil) (p ! ys) (p ! xs) (st2so_sndc l s x xs y p H c) (st2si_sndc p xs ys f))  =
-  (p ! cocons (l, s, (wrapSiSoC x (proj1_sig (@constructive_indefinite_description _ _ (help1C _ _ _ _ _ c f))) y H  (proj2_sig (@constructive_indefinite_description _ _ (help1C _ _ _ _ _ c f))))) conil).
-Proof. intros. apply stExt, equivWrapSiSoS.
+  (p ! cocons (l, s, (wrapSiSoC x (proj1_sig (@constructive_indefinite_description _ _ (help1CA _ _ _ _ _ c f))) y H  
+                                  (fst (proj2_sig (@constructive_indefinite_description _ _ (help1CA _ _ _ _ _ c f)))))) conil).
+Proof. intros. 
+       apply stExt, equivWrapSiSoS.
 Qed.
 
 Lemma eqWrapSiSoR: forall p l s x xs ys y H0 c f,
   (wrapSiSoC (p & ys) (p & cocons (l, s, x) conil) (p & xs) (st2so_rcvc p xs ys f) (st2si_rcvc l s x xs y p H0 c)) =
-  (p & cocons (l, s, (wrapSiSoC (proj1_sig (@constructive_indefinite_description _ _ (help2C _ _ _ _ _ c f))) x y
-                                (proj2_sig (@constructive_indefinite_description _ _ (help2C _ _ _ _ _ c f))) H0)) conil). 
-Proof. intros. apply stExt, equivWrapSiSoR.
+  (p & cocons (l, s, (wrapSiSoC (proj1_sig (@constructive_indefinite_description _ _ (help2CA _ _ _ _ _ c f))) x y
+                                (fst (proj2_sig (@constructive_indefinite_description _ _ (help2CA _ _ _ _ _ c f)))) H0)) conil). 
+Proof. intros. 
+       apply stExt, equivWrapSiSoR.
 Qed.
 
 Require Import Coq.Program.Equality.
 
-(*
-Lemma helperR: forall l s xs ys y x0,
-    copathsel l s xs y ->
-    Forall2CCo (fun u v : String.string * local.sort * st =>
-       exists (l : String.string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ st2soCC t t') ys xs ->
-    st2soCC x0 y ->
-    copathsel l s ys x0.
-Proof. intros. revert H0. revert ys. revert x0 H1.
-       induction H; intros.
-       - inversion H0. subst.
-         destruct H4 as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
-         subst. inversion Hb. subst.
-         constructor. *)
+Lemma invSi: forall x x0 y (H: st2soCC x y) (s0: st2siCC x0 y), st2siCC (wrapSiSoC x x0 y H s0) x.
+Proof. cofix CIH. intros.
+       dependent destruction H; dependent destruction s0. subst.
+       rewrite(st_eq (wrapSiSoC (end) (end) (end) st2so_endc st2si_endc)). simpl. constructor.
+       
+       rewrite eqWrapSiSoS.
+       constructor.
+       constructor.
+       destruct((constructive_indefinite_description (fun x2 : st => (st2siCC x2 y * copathsel l s ys x2)%type)
+           (help1CA ys xs l s y c f))).
+       simpl.
+       
+       exists l. exists s. destruct p0. exists (wrapSiSoC x x0 y H s0). exists x.
+       split. simpl. easy. split. easy. apply CIH.
+       constructor.
+
+       rewrite eqWrapSiSoR.
+       destruct(
+       (constructive_indefinite_description (fun x2 : st => (st2soCC x2 y * copathsel l s ys x2)%type)
+              (help2CA ys xs l s y c f))
+       ). simpl.
+       apply st2si_rcvc with (y := x0).
+       apply CIH.
+       destruct p0. easy.
+Admitted.
+
+Lemma invSo: forall x x0 y (H: st2soCC x y) (s0: st2siCC x0 y), st2soCC (wrapSiSoC x x0 y H s0) x0.
+Proof. cofix CIH. intros.
+       dependent destruction H; dependent destruction s0. subst.
+       rewrite(st_eq (wrapSiSoC (end) (end) (end) st2so_endc st2si_endc)). simpl. constructor.
+       
+       rewrite eqWrapSiSoS.
+       destruct(constructive_indefinite_description
+                (fun x2 : st => (st2siCC x2 y * copathsel l s ys x2)%type)
+                (help1CA ys xs l s y c f)).
+       simpl.
+       destruct p0.
+       apply st2so_sndc with (y := x0). simpl.
+       apply CIH.
+       easy.
+
+       rewrite eqWrapSiSoR.
+       constructor.
+       constructor.
+       destruct(constructive_indefinite_description
+           (fun x2 : st => (st2soCC x2 y * copathsel l s ys x2)%type)
+           (help2CA ys xs l s y c f)).
+       simpl.
+       destruct p0.
+       simpl.
+       exists l. exists s. exists (wrapSiSoC x0 x y s1 s0). exists x.
+       split. simpl. easy. split. easy. apply CIH.
+       constructor.
+Admitted.
 
 Lemma intersect: forall t1 t2 t, st2soCC t1 t -> st2siCC t2 t -> exists w, st2siCC w t1 /\ st2soCC w t2.
 Proof. intros.
@@ -766,21 +888,54 @@ Proof. intros.
        rewrite eqWrapSiSoS.
        constructor.
        constructor.
-       destruct( (constructive_indefinite_description (fun x2 : st => st2siCC x2 y) (help1C ys xs l s y c f))).
+       destruct((constructive_indefinite_description
+           (fun x2 : st => (st2siCC x2 y * copathsel l s ys x2)%type)
+           (help1CA ys xs l s y c f))).
        simpl.
-       exists l. exists s. exists (wrapSiSoC x x0 y H s0). exists x.
-       split. easy. split. easy.
-       admit.
+       exists l. exists s. destruct p0. exists (wrapSiSoC x x0 y H s0). exists x.
+       split.  easy. split. easy.
+       apply invSi.
+
        constructor.
 
        rewrite eqWrapSiSoR.
-       destruct((constructive_indefinite_description (fun x2 : st => st2soCC x2 y) (help2C ys xs l s y c f))).
+       destruct((constructive_indefinite_description
+              (fun x2 : st => (st2soCC x2 y * copathsel l s ys x2)%type)
+              (help2CA ys xs l s y c f))).
        simpl.
        apply st2si_rcvc with (y := x0).
-       admit.
-       admit.
-admit.
-Admitted.
+       destruct p0. simpl.
+       apply invSi.
+       destruct p0. easy.
+       
+       
+       dependent destruction H; dependent destruction H0. subst. 
+       rewrite(st_eq (wrapSiSoC (end) (end) (end) st2so_endc st2si_endc)). simpl. constructor.
+
+       rewrite eqWrapSiSoS.
+       destruct(constructive_indefinite_description
+                (fun x2 : st => (st2siCC x2 y * copathsel l s ys x2)%type)
+                (help1CA ys xs l s y c f)).
+       simpl.
+       apply st2so_sndc with (y := x0).
+       destruct p0. simpl.
+       apply invSo.
+       destruct p0. easy.
+
+       rewrite eqWrapSiSoR.
+       constructor.
+       constructor.
+       destruct((constructive_indefinite_description
+           (fun x2 : st => (st2soCC x2 y * copathsel l s ys x2)%type)
+           (help2CA ys xs l s y c f))).
+       simpl.
+       destruct p0. simpl.
+       exists l. exists s. exists (wrapSiSoC x0 x y s0 H0). exists x.
+       split.  easy. split. easy.
+       apply invSo.
+
+       constructor.
+Qed.
 
 
 
