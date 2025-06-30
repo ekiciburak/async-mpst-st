@@ -145,6 +145,17 @@ Definition cCong (g1 g2: ctx):=
   (forall p c t, M.find p g1 = Some (c,t) -> M.find p g2 = None -> qCong c nil /\ lCong t lt_end) /\
   (forall p c t, M.find p g1 = None -> M.find p g2 = Some (c,t) -> qCong c nil /\ lCong t lt_end).
 
+Definition cSub (g1 g2: ctx):= 
+  (forall p c1 c2 t1 t2, M.find p g1 = Some (c1,t1) -> M.find p g2 = Some (c2,t2) -> qCong c1 c2 /\ subltypeI t1 t2) /\
+  (forall p c t, M.find p g1 = Some (c,t) -> M.find p g2 = None -> qCong c nil /\ lCong t lt_end) /\
+  (forall p c t, M.find p g1 = None -> M.find p g2 = Some (c,t) -> qCong c nil /\ lCong t lt_end).
+
+Fixpoint rewind (gam: queue) (t: local): local :=
+  match gam with
+    | []          => t
+    | (q,l,s)::xs => lt_send q (cons (l,s,rewind xs t) nil)
+  end.
+
 Lemma ccT: Transitive cCong.
 Proof. repeat intro.
        destruct H as (Ha,(Hb,Hc)).
@@ -1232,6 +1243,167 @@ Proof. unfold live.
        apply mon_alw.
 Qed.
 
+Definition uCtx (p: participant) (g: ctx) (sig: queue) (T: local): ctx :=
+  match M.find p g with
+    | Some _ => M.add p (sig, T) g
+    | None   => g
+  end.
+
+Definition PB8_1 (p: participant) (g: ctx) (sig': queue) (T': local) (g': ctx): Prop :=
+  match M.find p g with
+    | Some ([], rT) => exists sig T, rT = rewind sig T /\ let g' := uCtx p g sig' T' in subltypeIC2 (rewind sig' T') (rewind sig T)
+    | _             => False
+  end.
+
+Class PB8_2 (pt: Path) (g: ctx): Prop := 
+  {
+    fPg1: fairPathC pt;
+    fPg2: 
+    match pt with
+      | cocons (g', l) xs => g' = g
+      | conil             => False
+    end
+  }.
+
+Require Import ST.src.reordering ST.src.siso ST.src.st ST.src.so ST.src.si ST.src.decs.
+
+Fixpoint pActions (i: nat) (p: participant) (pt: Path): Dpf :=
+  match i with
+    | S k => 
+      match pt with
+        | cocons (g,lb) xs =>
+          match lb with
+            | lr r q l =>
+              if String.eqb p r then
+              ( match M.find p g with
+                 | Some(qs, lt_receive q1 ys) => 
+                   if String.eqb q q1 then
+                   ( match retc ys l with
+                      | Some (s, Tq) => dpf_receive q l s (pActions k p xs)
+                      | _            => dpf_end
+                    end
+                   )
+                   else dpf_end
+                 | _                          => dpf_end
+               end
+              )
+              else (pActions k p xs)
+            | ls r q l => 
+              if String.eqb p r then
+              (
+               match M.find p g with
+                 | Some(qs, lt_send q1 ys) => 
+                   if String.eqb q q1 then
+                   ( match retc ys l with
+                      | Some (s, Tq) => dpf_send q l s (pActions k p xs)
+                      | _            => dpf_end
+                    end
+                   )
+                   else dpf_end
+                 | _                        => dpf_end
+               end
+              )
+          else (pActions k p xs)
+          end
+        | conil           => dpf_end
+      end
+    | O   => dpf_end
+  end.
+
+Fixpoint rewindT (gam: queue) (t: st): st :=
+  match gam with
+    | []          => t
+    | (q,l,s)::xs => st_send q (cocons (l,s,rewindT xs t) conil)
+  end.
+
+Lemma rewindSo: forall sig T U,
+  st2soC U (lt2st T) ->
+  st2soC (rewindT sig U) (lt2st (rewind sig T)).
+Proof. intro sig.
+       induction sig; intros.
+       - simpl. easy.
+       - simpl. destruct a, p.
+         rewrite(st_eq(lt2st (lt_send s0 (cons (s1, s, rewind sig T) nil)))). simpl.
+         rewrite(coseq_eq(
+         (cofix next (xs : seq.seq (String.string * local.sort * local)) :
+          coseq (String.string * local.sort * st) :=
+        match xs with
+        | [] => [||]
+        | (l1, s2, t1) :: ys => cocons (l1, s2, lt2st t1) (next ys)
+        end) (cons (s1, s, rewind sig T) nil)
+         )). simpl.
+         rewrite(coseq_eq(
+         (cofix next (xs : seq.seq (String.string * local.sort * local)) :
+             coseq (String.string * local.sort * st) :=
+           match xs with
+           | [] => [||]
+           | (l1, s2, t1) :: ys => cocons (l1, s2, lt2st t1) (next ys)
+           end) nil
+         )). simpl.
+         pfold.
+         specialize(st2so_snd (upaco2 st2so bot2) s1 s (rewindT sig U) ([|(s1, s, lt2st (rewind sig T))|])
+         (lt2st (rewind sig T)) s0
+         ); intro HS.
+         apply HS. left. apply IHsig. easy.
+         constructor.
+Qed.
+
+Lemma rewindSi: forall sig T U,
+  st2siC U (lt2st T) ->
+  st2siC (rewindT sig U) (lt2st (rewind sig T)).
+Admitted.
+
+Lemma decomposeW: forall sig W U,
+  st2sisoC W (rewindT sig U) ->
+  exists W', W = (rewindT sig W') /\ st2sisoC W' U.
+Proof. intro sig.
+       induction sig; intros.
+       - simpl. exists W. easy.
+       - simpl. destruct a, p.
+         simpl in H.
+         pinversion H. subst.
+         inversion H4. subst.
+         apply IHsig in H3.
+         destruct H3 as (W', (H3a, H3b)).
+         exists W'. subst. easy.
+         subst. inversion H10.
+         subst. inversion H10.
+         apply st2siso_mon.
+Qed.
+
+Lemma rewindRev: forall T T' sig sig',
+  (forall U : st,
+   st2soC U (lt2st (rewind sig' T')) ->
+   forall V' : st,
+   st2siC V' (lt2st (rewind sig T)) ->
+   exists W W' : siso, st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ refinement.refinement2 (@und W) (@und W')) ->
+  (forall U : st,
+   st2soC U (lt2st T') ->
+   forall V' : st,
+   st2siC V' (lt2st T) ->
+   exists W W' : siso, st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ refinement.refinement2 (rewindT sig' (@und W)) (rewindT sig (@und W'))).
+Proof. intros.
+       pose proof H0 as H00. pose proof H1 as H11.
+       apply rewindSo with (sig := sig') in H0.
+       apply rewindSi with (sig := sig) in H1.
+       specialize(H (rewindT sig' U) H0 (rewindT sig V') H1).
+       destruct H as ((W,HW), ((W',HW'),(Ha,(Hb,Hc)))).
+       simpl in *.
+       apply decomposeW in Ha.
+       destruct Ha as (W'',(Ha1,Ha2)).
+       subst.
+Admitted.
+
+Lemma _B_8_1: forall p g sig T l pt,
+  fairPathC (cocons ((M.add p (sig, T) g),l) pt) ->
+  forall n, let d := pActions n p pt in exists w w', st2sisoC w (lt2st T) /\ w = merge_dpf_cont d w'.
+Proof. intros.
+       revert p g sig H d. revert T pt l.
+       induction n; intros.
+       - simpl in *. unfold d in *.
+         pinversion H. subst.
+Admitted.
+
 
 (*for trees*)
 
@@ -1255,6 +1427,22 @@ Definition Enqueued (p q: participant) (l: label) (s: local.sort) (pt: TPath): P
     | _                => False 
   end.
 
+(* Definition Dequeued (pt: TPath) (p: participant): Prop :=
+  match pt with
+    | cocons (g, tl) (cocons (g',tl') xs) =>
+      match (T.find p g, T.find p g') with
+        | (Some (q1, st_receive q ys), Some (sigp, T3)) => 
+          qCong q1 sigp /\
+          match (T.find q g, T.find q g') with
+            | (Some (((a,l,s)::sig'), Tq), Some (q4, T4)) =>
+              a = p /\ copathsel l s ys T3 /\ qCong q4 sig'/\ Tq = T4
+            | _                                           => False
+          end
+        | _                                             => False 
+      end
+    | _                => False 
+  end.
+ *)
 Definition Dequeued (p q: participant) sigp ys (pt: TPath): Prop :=
   match pt with
     | cocons (g, tl) (cocons (g',tl') xs) =>
@@ -1264,7 +1452,7 @@ Definition Dequeued (p q: participant) sigp ys (pt: TPath): Prop :=
         | _                                                                         => False 
       end
     | _                => False 
-  end. 
+  end.
 
 Inductive Red: Ctx -> lab -> Ctx -> Prop :=
   | E_recv  : forall p q sigp sigq gam l Tp s s' Tk xs,
@@ -1795,6 +1983,7 @@ Proof. intros.
        apply mon_alw.
 Qed.
 
+
 Lemma _4_9T: forall g l g', Live g -> Red g l g' -> Live g'.
 Proof. pcofix CIH.
        intros.
@@ -1811,7 +2000,10 @@ Proof. pcofix CIH.
          destruct H4 as (H4a, (H4b,H4c)).
          right. apply CIH with (g := g) (l := l0).
          unfold Live. easy. easy. admit.
-         split. easy. 
+         split. easy.
+         
+         
+ 
 
 Admitted.
 (*        specialize(H (cocons (g', l0) pt) l).

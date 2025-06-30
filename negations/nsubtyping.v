@@ -228,132 +228,35 @@ Proof. intros.
          easy.
 Qed.
 
-Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T').
+Inductive subtypeI2: st -> st -> Prop :=
+  | stc2: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
+                      subtypeI2 T T'.
 
-Definition nsubltypeI (T T': local): Prop := nsubtypeI (lt2st T) (lt2st T').
-
-Lemma sublNeqL: forall T T', (subltypeI T T' -> False) -> nsubltypeI T T'.
-Proof. intros.
-       apply subNeqIL. easy.
-Qed.
-
-Lemma sublNeqR: forall T T', nsubltypeI T T' -> (subltypeI T T' -> False).
-Proof. intros.
-       apply subNeqIR with (T := lt2st T) (T' := lt2st T'); easy.
-Qed.
-
-Lemma _314_sing: forall T V W,
-  st2siC V T ->
-  st2soC W V -> singleton W.
-Proof. pcofix CIH.
-       intros.
-       case_eq T; intros.
-       - subst.
-         pinversion H0. subst.
-         pinversion H1. subst. pfold. constructor.
-         admit. admit.
-       - subst. pinversion H0.
-         subst. pinversion H1. subst.
-         pinversion H3. subst.
-         destruct H7 as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
-         inversion Hb. subst.
-         pinversion H8. subst.
-         pfold. constructor.
-         right. apply CIH with (T := y) (V := t2).
-         easy.
-         easy.
-         admit. admit.
-         admit. admit.
-       - subst. pinversion H0.
-         subst. pinversion H1. subst.
-         pinversion H3. subst.
-         
-(*          inversion H6.
-         subst.
-         pfold. constructor.
-         destruct H as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-         subst.
-         right. 
-
-         subst. 
-         inversion H6. subst.
-         apply CIH with (T := t2) (V := y).
-         destruct Hc. easy. easy.
-         easy.
-         subst.
-         easy.
-         admit. admit.
-         admit. admit. *)
-Admitted.
-
-(* Lemma _314: forall T V W,
-  st2siC V T ->
-  st2soC W V ->
-  exists U, st2soC U T /\ st2siC W U.
-Proof. intros.
-       case_eq T; intros.
-       - subst.
-         pinversion H. subst.
-         pinversion H0. subst. exists (end). split. pfold. constructor. pfold. constructor.
-         admit. admit.
-       - subst. pinversion H.
-         subst. pinversion H0. subst.
-         pinversion H3. subst.
-         destruct H7 as (l1,(s1,(t1,(l2,(s2,(t2,(Ha,(Hb,Hc)))))))).
-         inversion Hb. subst. *)
-         
-
-(* Inductive subtypeI: st -> st -> Prop :=
-  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
-                      subtypeI T T'.
-
-Definition nsubtypeI (T T': st): Prop :=
+Definition nsubtypeI2 (T T': st): Prop :=
   exists U,  (st2soC U T) /\
   exists V', (st2siC V' T') /\
-  (forall W W', ((st2sisoC (@und W) U) -> False) \/ ((st2sisoC (@und W') V')  -> False) \/ nRefinement W W').
+  (forall W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> nRefinement W W').
 
-Lemma subNeq3IR: forall T T', subtypeI T T' -> (nsubtypeI T T' -> False).
+Lemma subNeqIR2: forall T T', subtypeI2 T T' -> (nsubtypeI2 T T' -> False).
 Proof. intros.
-       unfold nsubtypeI in *.
+       unfold nsubtypeI2 in *.
        destruct H0 as (U,(Ha,(V',(Hb,Hc)))).
        inversion H.
        subst.
        specialize(H0 U Ha V' Hb).
        destruct H0 as (W,(W',(Hd,(He,Hf)))).
        specialize(Hc W W').
-       destruct Hc as [Hc | [Hc | Hc]].
-       easy. easy.
+       specialize(Hc Hd He).
        apply (nRefR W W'); easy.
 Qed.
 
-Lemma nexfl: forall (X: Type) (P: X -> Prop),
-  ~ (exists (x: X), P x) -> (forall (x: X), ~P x).
-Proof. intros X P H x.
-       unfold not in *.
-       intro px.
-       apply H.
-       exists x.
-       exact px.
-Qed.
-
-Lemma dne: forall (P: Prop), ((P -> False) -> False) -> P.
+Lemma subNeqIL2: forall T T', (subtypeI2 T T' -> False) -> nsubtypeI2 T T'.
 Proof. intros.
-       specialize (classic P).
-       intro HP.
-       destruct HP as [ HP | HP ].
-       - exact HP.
-       - unfold not in *.
-         specialize (H HP).
-         contradiction.
-Qed.
-
-Lemma subNeq3IL: forall T T', (subtypeI T T' -> False) -> nsubtypeI T T'.
-Proof. intros.
-       specialize(classic (nsubtypeI T T')); intro Heq.
+       specialize(classic (nsubtypeI2 T T')); intro Heq.
        destruct Heq as [Heq | Heq].
        - easy.
        - destruct H.
-         unfold nsubtypeI in *.
+         unfold nsubtypeI2 in *.
          unshelve econstructor.
          intros.
          eapply nexfl with (x := U) in Heq.
@@ -369,23 +272,31 @@ Proof. intros.
          apply not_all_ex_not  in Heq.
          destruct Heq as (W', Heq).
          exists W. exists W'.
-         simpl.
-         apply not_or_and in Heq.
-         destruct Heq as (Ha, Heq).
-         unfold not in Ha.
-         apply dne in Ha.
-         split.
-         easy.
-         apply not_or_and in Heq.
-         destruct Heq as (Hb, Heq).
-         unfold not in Hb.
-         apply dne in Hb.
-         split.
-         easy.
+         intros.
+         
+         apply imply_to_and in Heq.
+         split. easy.
+         destruct Heq as (Hn1, Heq).
+         apply imply_to_and in Heq.
+         split. easy.
+         destruct Heq as (Hn2, Heq).
          apply nRefLH.
          easy.
-Qed. *)
+Qed.
+  
+Definition subltypeI2 (T T': local): Prop := subtypeI2 (lt2st T) (lt2st T').
 
+Definition nsubltypeI2 (T T': local): Prop := nsubtypeI2 (lt2st T) (lt2st T').
+
+Lemma sublNeqL: forall T T', (subltypeI2 T T' -> False) -> nsubltypeI2 T T'.
+Proof. intros.
+       apply subNeqIL2. easy.
+Qed.
+
+Lemma sublNeqR2: forall T T', nsubltypeI2 T T' -> (subltypeI2 T T' -> False).
+Proof. intros.
+       apply subNeqIR2 with (T := lt2st T) (T' := lt2st T'); easy.
+Qed.
 
 
 

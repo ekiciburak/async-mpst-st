@@ -49,10 +49,11 @@ Proof. split.
        intros. apply (subNeqIR T T'); easy.
 Qed.
 
-Theorem lcompletenessI: forall T T', (subltypeI T T' -> False) <-> nsubltypeI T T'.
+Theorem lcompletenessI: forall T T', (subltypeI2 T T' -> False) <-> nsubltypeI2 T T'.
 Proof. split.
        apply (sublNeqL T T').
-       intros. apply (sublNeqR T T'); easy.
+       intros. apply (sublNeqR2 T T'); easy.
 Qed.
+
 
  

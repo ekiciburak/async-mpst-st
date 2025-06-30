@@ -8,7 +8,6 @@ processes/process.v
 processes/beta.v
 types/local.v
 types/typecheck.v
-types/typenv.v
 src/stream.v
 src/st.v
 src/so.v
@@ -16,12 +15,14 @@ src/si.v
 src/reordering.v
 src/siso.v
 src/projections.v
+src/decs.v
 subtyping/refinement.v
 src/reorderingfacts.v
 src/acteqfacts.v
 src/nondepro.v
 src/inversion.v
 subtyping/subtyping.v
+types/typenv.v
 examples/Example2_3.v
 examples/ring_choice.v
 examples/Example3_17.v
@@ -31,5 +32,4 @@ examples/Example4_14.v
 negations/nsubtyping.v
 negations/nrefinement.v
 completeness/completeness.v
-src/decs.v
 

@@ -1,5 +1,5 @@
 Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering 
-               ST.src.siso ST.types.local ST.subtyping.refinement ST.src.reorderingfacts.
+               ST.src.siso ST.types.local ST.subtyping.refinement ST.src.reorderingfacts ST.src.decs.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
 Require Import String List.
@@ -40,6 +40,26 @@ Definition subtype2 (T T': st): Prop := exists (l: list (siso*siso)), decomposeL
 Definition subtype3A (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef3A l. *)
 
 Definition subltype (T T': local) := subtype (lt2st T) (lt2st T').
+
+Inductive subtypeI: st -> st -> Prop :=
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
+                      subtypeI T T'.
+
+Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T').
+
+Inductive subtypeIC: st -> st -> Prop :=
+  | stcC: forall T T', 
+          (forall U, st2soCC U T -> forall V', st2siCC V' T' -> (exists W W', st2sisoCC (@und W) U /\ st2sisoCC (@und W') V' /\ (@und W) ~< (@und W'))) ->
+          subtypeIC T T'.
+
+Definition subltypeIC (T T': local): Prop := subtypeIC (lt2st T) (lt2st T'). 
+
+Inductive subtypeIC2: st -> st -> Prop :=
+  | stcC2: forall T T', 
+          (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
+          subtypeIC2 T T'.
+
+Definition subltypeIC2 (T T': local): Prop := subtypeIC2 (lt2st T) (lt2st T'). 
 
 (* Definition subltype2 (T T': local) (T1 T2: st) (P: lt2stC T T1) (Q: lt2stC T' T2) := subtype2 T1 T2. *)
 
