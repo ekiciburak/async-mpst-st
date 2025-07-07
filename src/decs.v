@@ -1519,9 +1519,11 @@ Inductive substr: str -> str -> Prop :=
              wfTC T' ->
              (forall l1 F1, sodecc T l1 F1 /\
               forall l2 F2, sidecc T' l2 F2 /\
-              exists l3 F3, sidecc (st2siFF T l1 F1) l3 F3 /\
-              exists l4 F4, sodecc (st2soFF T' l2 F2) l4 F4 /\
-              P (st2sisoFF T l1 F1 l3 F3) (st2sisoFF T' l4 F4 l2 F2)
+              let soT := (st2soFF T l1 F1) in
+              let siT := (st2siFF T' l2 F2) in
+              exists l3 F3, sidecc soT l3 F3 /\
+              exists l4 F4, sodecc siT l4 F4 /\
+              P (st2siFF soT l3 F3) (st2soFF siT l4 F4)
              ) ->
              substr T T'.
 
@@ -1717,13 +1719,265 @@ Proof. pcofix CIH.
          admit.
 Admitted.
 
+Inductive singl (R: str -> Prop): str -> Prop :=
+  | endsi : singl R str_end
+  | sendsi: forall p f, (exists l s t, f l = Some(s,t) /\ (forall l1 s1 t1, f l1 = Some(s1, t1) -> l = l1) /\ R t) -> singl R (str_send p f)
+  | recvsi: forall p f, (exists l s t, f l = Some(s,t) /\ (forall l1 s1 t1, f l1 = Some(s1, t1) -> l = l1) /\ R t) -> singl R (str_receive p f).
 
-Inductive singletonH (R: str -> Prop): str -> Prop :=
-  | endsr : singletonH R str_end
-  | sendsr: forall p f, (exists !l s t, (f l) = Some(s,t) /\ R t) -> singletonH R (str_send p f)
-  | recvsr: forall p f, (exists !l s t, (f l) = Some(s,t) /\ R t) -> singletonH R (str_receive p f).
+Definition singleton s := paco1 (singl) bot1 s.
 
-Definition singleton s := paco1 (singletonH) bot1 s.
+Lemma singlSiSo: forall t l1 l2 F1 F2, sisodecc t l1 F1 l2 F2 -> singleton(st2sisoFF t l1 F1 l2 F2).
+Proof. pcofix CIH.
+       intros.
+       pinversion H0.
+       - subst.
+         rewrite(str_eq(st2sisoFF str_end [||] F1 [||] F2)). simpl.
+         pfold. constructor.
+       - subst.
+         destruct H1 as (H1a,(s1,(t1,(H1b,(H1c,H1d))))).
+         rewrite(str_eq(st2sisoFF (str_send p f) (cocons x xs) F1 [||] F2)). simpl.
+         pfold. rewrite H1b H1c. constructor.
+         exists x. rewrite String.eqb_refl.
+         exists s1. exists (st2sisoFF t1 xs F1 [||] F2).
+         split. easy.
+         split.
+         intros.
+         case_eq((l1 =? x)%string); intros.
+         + rewrite String.eqb_eq in H2. easy.
+         + rewrite H2 in H1. easy.
+         right. apply CIH. destruct H1d; easy.
+       - subst.
+         destruct H as (Ha,(s1,(t1,(Hb,(xs1,(Hc,Hd)))))).
+         rewrite(str_eq(st2sisoFF (str_send p f) [|x|] F1 [||] F2)). simpl.
+         rewrite Hb Hc.
+         pfold. constructor.
+         exists x. rewrite String.eqb_refl.
+         exists s1. exists (st2sisoFF t1 [||] F1 xs1 F2).
+         split. easy.
+         split.
+         intros.
+         case_eq((l1 =? x)%string); intros.
+         + rewrite String.eqb_eq in H1. easy.
+         + rewrite H1 in H. easy.
+         right. apply CIH. destruct Hd; easy.
+       - subst.
+         destruct H1 as (H1a,(s1,(t1,(H1b,(H1c,H1d))))).
+         rewrite(str_eq(st2sisoFF (str_receive p f) [||] F1 (cocons x xs) F2)). simpl.
+         pfold. rewrite H1b H1c. constructor.
+         exists x. rewrite String.eqb_refl.
+         exists s1. exists (st2sisoFF t1 [||] F1 xs F2).
+         split. easy.
+         split.
+         intros.
+         case_eq((l1 =? x)%string); intros.
+         + rewrite String.eqb_eq in H2. easy.
+         + rewrite H2 in H1. easy.
+         right. apply CIH. destruct H1d; easy.
+       - subst.
+         destruct H as (Ha,(s1,(t1,(Hb,(xs1,(Hc,Hd)))))).
+         rewrite(str_eq(st2sisoFF (str_receive p f) [||] F1 [|x|] F2)). simpl.
+         rewrite Hb Hc.
+         pfold. constructor.
+         exists x. rewrite String.eqb_refl.
+         exists s1. exists (st2sisoFF t1 xs1 F1 [||] F2).
+         split. easy.
+         split.
+         intros.
+         case_eq((l1 =? x)%string); intros.
+         + rewrite String.eqb_eq in H1. easy.
+         + rewrite H1 in H. easy.
+         right. apply CIH. destruct Hd; easy.
+       admit.
+Admitted.
+
+Lemma singlSiSo2: forall t l1 l2 F1 F2, sisodecc t l1 F1 l2 F2 -> singleton(st2siFF (st2soFF t l1 F1) l2 F2).
+Proof. intros.
+       rewrite Eqs.
+       apply singlSiSo.
+       easy.
+Qed.
+
+Lemma wftsndrcv: forall t l1 F1 l2 F2, wfTC t -> sisodecc t l1 F1 l2 F2 -> wfTC (st2sisoFF t l1 F1 l2 F2).
+Proof. pcofix CIH.
+       intros.
+       specialize(singlSiSo t l1 l2 F1 F2 H1); intro HH.
+       pinversion H0.
+       - subst.
+         rewrite(str_eq(st2sisoFF str_end l1 F1 l2 F2)). simpl.
+         pfold. constructor.
+       - subst.
+         rewrite(str_eq(st2sisoFF (str_receive p f) l1 F1 l2 F2)). simpl.
+         pinversion H1.
+         subst.
+         destruct H9 as (H1a,(s1,(t1,(H1b,(H1c,H1d))))).
+         rewrite H1b H1c.
+         pfold. constructor.
+         intros.
+         case_eq((l =? x)%string); intros.
+         rewrite H3 in H2. inversion H2. subst.
+         rewrite String.eqb_eq in H3. subst.
+         right. apply CIH.
+         specialize(H x s t1 H1b).
+         destruct H; easy.
+         destruct H1d; easy.
+         rewrite H3 in H2. easy.
+         subst.
+         destruct H8 as (H1a,(s1,(t1,(H1b,(ys1,(H1c,H1d)))))).
+         rewrite H1b H1c.
+         pfold. constructor.
+         intros.
+         case_eq((l =? x)%string); intros.
+         rewrite H3 in H2. inversion H2. subst.
+         rewrite String.eqb_eq in H3. subst.
+         right. apply CIH.
+         specialize(H x s t1 H1b).
+         destruct H; easy.
+         destruct H1d; easy.
+         rewrite H3 in H2. easy.
+         admit.
+       - subst.
+         rewrite(str_eq(st2sisoFF (str_send p f) l1 F1 l2 F2)). simpl.
+         pinversion H1.
+         subst.
+         destruct H9 as (H1a,(s1,(t1,(H1b,(H1c,H1d))))).
+         rewrite H1b H1c.
+         pfold. constructor.
+         intros.
+         case_eq((l =? x)%string); intros.
+         rewrite H3 in H2. inversion H2. subst.
+         rewrite String.eqb_eq in H3. subst.
+         right. apply CIH.
+         specialize(H x s t1 H1b).
+         destruct H; easy.
+         destruct H1d; easy.
+         rewrite H3 in H2. easy.
+         subst.
+         destruct H8 as (H1a,(s1,(t1,(H1b,(ys1,(H1c,H1d)))))).
+         rewrite H1b H1c.
+         pfold. constructor.
+         intros.
+         case_eq((l =? x)%string); intros.
+         rewrite H3 in H2. inversion H2. subst.
+         rewrite String.eqb_eq in H3. subst.
+         right. apply CIH.
+         specialize(H x s t1 H1b).
+         destruct H; easy.
+         destruct H1d; easy.
+         rewrite H3 in H2. easy.
+         admit.
+         admit.
+Admitted.
+
+Lemma wftsndrcv2: forall t l1 F1 l2 F2, wfTC t -> sisodecc t l1 F1 l2 F2 -> wfTC (st2siFF (st2soFF t l1 F1) l2 F2).
+Proof. intros.
+       rewrite Eqs.
+       apply wftsndrcv.
+       easy. easy.
+Qed.
+
+Lemma funextR: forall {a b: Type} (f1 f2: a -> b), f1 = f2 ->
+  (forall x, f1 x = f2 x).
+Proof. intros. subst. easy. Qed.
+
+(** here with feqsi)
+Lemma invso1: forall t l1 l2 F1 F2, wfTC t -> sodecc t l1 F1 -> sodecc t l2 F2 -> (st2soFF t l1 F1 = st2soFF t l2 F2) -> feqsoc t F1 F2.
+Proof. pcofix CIH.
+       intros.
+       specialize(singlSo t l1 F1 H1); intros HHA.
+       specialize(singlSo t l2 F2 H2); intros HHB.
+       specialize(wftsnd t l1 F1 H0 H1); intros HHA1.
+       specialize(wftsnd t l2 F2 H0 H2); intros HHB1.
+       pinversion H0.
+       - subst. pfold. constructor.
+       - subst.
+         pinversion H1. subst.
+         pinversion H2. subst.
+         rewrite(str_eq(st2soFF (str_receive p f) [||] F1)) in H3.
+         rewrite(str_eq(st2soFF (str_receive p f) [||] F2)) in H3.
+         simpl in H3.
+         inversion H3. subst.
+         clear H3.
+         pfold. constructor.
+         intro l.
+         specialize(H8 l).
+         specialize(H9 l).
+         destruct H8 as [(s1,(t1,(xs1,(H1a,(H1b,H1c)))))|H8].
+         destruct H9 as [(s2,(t2,(xs2,(H2a,(H2b,H2c)))))|H9].
+         rewrite H1a in H2a. inversion H2a. subst.
+         left. exists s2. exists t2. split. easy.
+         apply funextR with (x := l) in H5.
+         rewrite H1a H1b H2b in H5.
+         right. apply CIH with (l1 := xs1) (l2 := xs2).
+         specialize(H l s2 t2 H1a).
+         destruct H; easy.
+         destruct H1c; easy.
+         destruct H2c; easy.
+         inversion H5. easy.
+         rewrite H9 in H1a. easy.
+         destruct H9 as [(s2,(t2,(xs2,(H2a,(H2b,H2c)))))|H9].
+         rewrite H8 in H2a. easy.
+         right. easy.
+         admit.
+         admit.
+       - subst.
+         pinversion H1. subst.
+         pinversion H2. subst.
+         rewrite(str_eq(st2soFF (str_send p f) (cocons x xs) F1)) in H3.
+         rewrite(str_eq(st2soFF (str_send p f) (cocons x0 xs0) F2)) in H3.
+         simpl in H3.
+         destruct H8 as (H1a,(s1,(t1,(H1b,H1c)))).
+         destruct H9 as (H2a,(s2,(t2,(H2b,H2c)))).
+         rewrite H1b H2b in H3.
+         inversion H3.
+         pfold. constructor.
+         intros l.
+         apply funextR with (x := l) in H5.
+         case_eq((l =? x)%string); intros.
+         + rewrite String.eqb_eq in H4.
+           subst.
+           rewrite String.eqb_refl in H5.
+           case_eq((x =? x0)%string); intros.
+           ++ rewrite String.eqb_eq in H4.
+              subst.
+              rewrite String.eqb_refl in H5.
+              inversion H5. subst.
+              rewrite H1b in H2b. inversion H2b.
+              subst.
+              left.
+              exists s2. exists t2. split. easy. rewrite H1a H2a.
+              split. easy.
+              right. apply CIH with (l1 := xs) (l2 := xs0).
+              specialize(H x0 s2 t2 H1b).
+              destruct H; easy.
+              destruct H1c; easy.
+              destruct H2c; easy.
+              inversion H5. easy.
+           ++ rewrite H4 in H5. easy.
+         + rewrite H4 in H5.
+           case_eq((l =? x0)%string); intros.
+           ++ rewrite H6 in H5. easy.
+           ++ rewrite(str_eq(st2soFF (str_send p f) (cocons x xs) F1)) in HHA.
+              simpl in HHA.
+              rewrite H1b in HHA.
+              pinversion HHA. subst.
+              destruct H8 as (l3,(s3,(t3,(H8a,(H8b,H8c))))).
+              case_eq( (l3 =? x)%string); intros.
+              rewrite H7 in H8a.
+              inversion H8a. subst.
+              rewrite String.eqb_eq in H7. subst.
+              specialize(H8b x0 s3 (st2soFF t1 xs F1)).
+              case_eq((x0 =? x)%string ); intros.
+              rewrite H7 in H8b.
+              specialize(H8b eq_refl).
+              subst.
+              rewrite H1b in H2b. inversion H2b. subst.
+              
+              case_eq (f l); intros.
+              specoia
+              * destruct p0 as (s4,t4).
+           pfold. constructor.
+           intros l.
+*)
 
 CoFixpoint mergeLL (l: list label) (w: coseq label): coseq label :=
   match l with
