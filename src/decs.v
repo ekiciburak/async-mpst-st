@@ -74,67 +74,6 @@ Proof. intros. revert xs ys H. pcofix CIH2.
        apply CIH2. easy.
 Qed.
 
-(* Lemma fo2pNR: forall ys xs
-  (CIH : forall t1 t2 : st, st2soC t1 t2 -> st2soCC t1 t2),
-  Forall2Co
-  (fun u v : String.string * local.sort * st =>
-   exists (l : String.string) (s : local.sort) (t t' : st),
-     u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2so bot2 t t') ys xs ->
-  Forall2CCo
-    (fun u v : String.string * local.sort * st =>
-     exists (l : String.string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ st2soCC t t')
-    ys xs.
-Proof. intros. revert xs ys H. cofix CIH2.
-       intros. pinversion H.
-       subst. constructor.
-       subst.
-       constructor.
-       destruct H0 as (l1,(s1,(t1,(t2,(Ha,(Hb,Hc)))))).
-       subst.
-       exists l1. exists s1. exists t1. exists t2.
-       split. easy. split. easy. apply CIH.
-       destruct Hc. easy. easy.
-       specialize(CIH2 l' l H1).
-       assumption.
-       apply (@mon_f2Ho ).
-Admitted.
-
-Lemma st2soL: forall t1 t2, st2soCC t1 t2 -> st2soC t1 t2.
-Proof. pcofix CIH.
-       intros.
-       inversion H0. subst.
-       pfold. constructor.
-       subst. pfold.
-       apply st2so_snd with (y := y). right.
-       apply CIH. easy.
-       easy.
-       pfold. constructor. subst.
-       apply fo2pN; easy.
-Qed.
-
-Lemma st2soR: forall t1 t2, st2soC t1 t2 -> st2soCC t1 t2.
-Proof. cofix CIH.
-       intros.
-       pinversion H.
-       constructor.
-       subst.
-       apply st2so_sndc with (y := y).
-       apply CIH; easy.
-       easy.
-
-       subst.
-       constructor.
-       apply fo2pNR; easy.
-       apply st2so_mon.
-Admitted.
-
-Lemma st2soEq: forall t1 t2, st2soC t1 t2 <-> st2soCC t1 t2.
-Proof. split.
-       apply st2soR.
-       apply st2soL.
-Qed.
- *)
- 
 CoInductive st2siCC: st -> st -> Prop :=
   | st2si_endc: st2siCC st_end st_end
   | st2si_rcvc: forall l s x xs y p,
@@ -1149,6 +1088,29 @@ Definition str_equivC: str -> str -> Prop := fun s1 s2 => paco2 str_equiv bot2 s
 
 Axiom strExt: forall s1 s2, str_equivC s1 s2 -> s1 = s2.
 
+Lemma mon_streq: monotone2 str_equiv.
+Proof. unfold monotone2.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intros.
+         specialize(H l).
+         destruct (f1 l). destruct p0.
+         destruct (f2 l). destruct p0.
+         split. easy.
+         apply LE. easy.
+         easy.
+         easy.
+       - constructor. intros.
+         specialize(H l).
+         destruct (f1 l). destruct p0.
+         destruct (f2 l). destruct p0.
+         split. easy.
+         apply LE. easy.
+         easy.
+         easy.
+Qed.
+
 CoFixpoint st2soFF (t: str) (l: coseq label) (F: label -> option (coseq label)): str :=
   match t with
     | str_send p f    =>
@@ -1269,6 +1231,20 @@ Inductive feqsi (R: str -> (label -> option (coseq label)) -> (label -> option (
 
 Definition feqsic t F1 F2 := paco3 feqsi bot3 t F1 F2.
 
+Lemma mon_feqsi: monotone3 feqsi.
+Proof. unfold monotone3.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intros.
+         specialize(H l s t H0).
+         split. easy.
+         apply LE; easy.
+       - constructor. intros.
+         specialize(H l s t H0).
+         apply LE; easy.
+Qed.
+
 Inductive feqso (R: str -> (label -> option (coseq label)) -> (label -> option (coseq label)) -> Prop): 
   str -> (label -> option (coseq label)) -> (label -> option (coseq label)) -> Prop :=
   | seqe: forall F1 F2, feqso R str_end F1 F2
@@ -1276,6 +1252,20 @@ Inductive feqso (R: str -> (label -> option (coseq label)) -> (label -> option (
   | seqr: forall p f F1 F2, (forall l s t, f l = Some(s,t) -> R t F1 F2) -> feqso R (str_receive p f) F1 F2.
 
 Definition feqsoc t F1 F2 := paco3 feqso bot3 t F1 F2.
+
+Lemma mon_feqso: monotone3 feqso.
+Proof. unfold monotone3.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intros.
+         specialize(H l s t H0).
+         split. easy.
+         apply LE; easy.
+       - constructor. intros.
+         specialize(H l s t H0).
+         apply LE; easy.
+Qed.
 
 Lemma eqsoffl: forall t l F1 F2, feqsoc t F1 F2 -> str_equivC (st2siFF t l F1) (st2siFF t l F2).
 Proof. pcofix CIH.
@@ -1285,7 +1275,7 @@ Proof. pcofix CIH.
          rewrite(str_eq(st2siFF str_end l F2)).
          rewrite(str_eq(st2siFF str_end l F1)). simpl.
          pfold. constructor.
-         admit.
+         apply mon_feqso.
        - pinversion H0. subst.
          pfold.
          rewrite(str_eq(st2siFF (str_receive s o) l F1)).
@@ -1302,7 +1292,7 @@ Proof. pcofix CIH.
               destruct H4; easy.
            ++ easy. 
            constructor. easy.
-           admit.
+           apply mon_feqso.
        - pinversion H0. subst.
          rewrite(str_eq(st2siFF (str_send s o) l F1)).
          rewrite(str_eq(st2siFF (str_send s o) l F2)). simpl.
@@ -1322,8 +1312,8 @@ Proof. pcofix CIH.
               rewrite H1 in H4a.
               rewrite <- H4a. easy.
           easy.
-              admit.
-Admitted.
+          apply mon_feqso.
+Qed.
 
 Lemma eqsofflEq: forall t l F1 F2, feqsoc t F1 F2 -> st2siFF t l F1 = st2siFF t l F2.
 Proof. intros.
@@ -1339,7 +1329,7 @@ Proof. pcofix CIH.
          rewrite(str_eq(st2soFF str_end l F2)).
          rewrite(str_eq(st2soFF str_end l F1)). simpl.
          pfold. constructor.
-         admit.
+         apply mon_feqsi.
        - pinversion H0. subst.
          rewrite(str_eq(st2soFF (str_receive s o) l F1)).
          rewrite(str_eq(st2soFF (str_receive s o) l F2)). simpl.
@@ -1359,7 +1349,7 @@ Proof. pcofix CIH.
               rewrite H1 in H4a.
               rewrite <- H4a. easy.
           easy.
-              admit.
+          apply mon_feqsi.
        - pinversion H0. subst.
          pfold.
          rewrite(str_eq(st2soFF (str_send s o) l F1)).
@@ -1376,8 +1366,8 @@ Proof. pcofix CIH.
               destruct H4; easy.
            ++ easy. 
            constructor. easy.
-           admit.
-Admitted.
+           apply mon_feqsi.
+Qed.
 
 Lemma eqsifflEq: forall t l F1 F2, feqsic t F1 F2 -> st2soFF t l F1 = st2soFF t l F2.
 Proof. intros.
@@ -1435,12 +1425,54 @@ Inductive sodec (R: str -> coseq label -> (label -> option (coseq label)) -> Pro
 
 Definition sodecc t l1 F1 := paco3 sodec bot3 t l1 F1.
 
+Lemma mon_sodec: monotone3 sodec.
+Proof. unfold monotone3.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor.
+         destruct H as (Ha,(s,(t,(Hb,Hc)))).
+         split. easy. 
+         exists s. exists t. split. easy.
+         apply LE; easy.
+       - constructor.
+         intro l.
+         specialize(H l).
+         destruct H as [(s,(t,(xs,(Ha,(Hb,Hc))))) | H].
+         left.
+         exists s. exists t. exists xs.
+         split. easy. split. easy.
+         apply LE; easy.
+         right. easy.
+Qed.
+
 Inductive sidec (R: str -> coseq label -> (label -> option (coseq label)) -> Prop): str -> coseq label -> (label -> option (coseq label)) -> Prop :=
   | sidec_end: forall F, sidec R str_end conil F
   | sidec_rcv: forall p f x xs F, (F x = Some conil /\ exists s t, f x = Some(s,t) /\ R t xs F) -> sidec R (str_receive p f) (cocons x xs) F
   | sidec_snd: forall p f F, (forall l, (exists s t xs, f l = Some(s,t) /\ F l = Some xs /\ R t xs F) \/ f l = None) -> sidec R (str_send p f) conil F.
 
 Definition sidecc t l1 F1 := paco3 sidec bot3 t l1 F1.
+
+Lemma mon_sidec: monotone3 sidec.
+Proof. unfold monotone3.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor.
+         destruct H as (Ha,(s,(t,(Hb,Hc)))).
+         split. easy. 
+         exists s. exists t. split. easy.
+         apply LE; easy.
+       - constructor.
+         intro l.
+         specialize(H l).
+         destruct H as [(s,(t,(xs,(Ha,(Hb,Hc))))) | H].
+         left.
+         exists s. exists t. exists xs.
+         split. easy. split. easy.
+         apply LE; easy.
+         right. easy.
+Qed.
 
 Inductive sisodec (R: str -> coseq label -> (label -> option (coseq label)) -> coseq label -> (label -> option (coseq label)) -> Prop): str -> coseq label -> (label -> option (coseq label)) -> coseq label -> (label -> option (coseq label)) -> Prop :=
   | dec_end: forall F1 F2, sisodec R str_end conil F1 conil F2
@@ -1451,7 +1483,7 @@ Inductive sisodec (R: str -> coseq label -> (label -> option (coseq label)) -> c
 
 Definition sisodecc t l1 F1 l2 F2 := paco5 sisodec bot5 t l1 F1 l2 F2.
 
-Lemma mon_decs: monotone5 sisodec.
+Lemma mon_sisodec: monotone5 sisodec.
 Proof. unfold monotone5.
        intros.
        induction IN; intros.
@@ -1483,6 +1515,19 @@ Inductive wfT (R: str -> Prop): str -> Prop :=
 
 Definition wfTC t := paco1 wfT bot1 t.
 
+Lemma mon_wft: monotone1 wfT.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intros.
+         apply LE. apply H with (l := l) (s := s).
+         easy.
+       - constructor. intros.
+         apply LE. apply H with (l := l) (s := s).
+         easy.
+Qed.
+
 Require Import Setoid.
 Require Import Morphisms JMeq.
 Parameter P: relation str.
@@ -1508,6 +1553,24 @@ Inductive recvsingl (R: str -> Prop): str -> Prop :=
   | sendr: forall p f, (exists l s t, f l = Some(s,t) /\ (forall l1 s1 t1, f l1 = Some(s1, t1) -> l = l1) /\ R t) -> recvsingl R (str_send p f).
 
 Definition recvsinglc t  := paco1 recvsingl bot1 t.
+
+Lemma mon_recvsingl: monotone1 recvsingl.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intro l.
+         specialize(H l).
+         destruct H as [(s,(t,(Ha,Hb))) | H].
+         left.
+         exists s. exists t. split. easy.
+         apply LE; easy.
+         right. easy.
+       - constructor.
+         destruct H as (l,(s,(t,(Hb,(Hc,Hd))))).
+         exists l. exists s. exists t. split. easy. split. easy.
+         apply LE; easy.
+Qed.
 
 Lemma singlSo: forall t l F, sodecc t l F -> recvsinglc(st2soFF t l F).
 Proof. pcofix CIH.
@@ -1541,8 +1604,8 @@ Proof. pcofix CIH.
            right. apply CIH.
            destruct Hc; easy.
          + right. rewrite H. easy.
-         admit.
-Admitted.
+         apply mon_sodec.
+Qed.
 
 Lemma wftsnd: forall t l F, wfTC t -> sodecc t l F -> wfTC (st2soFF t l F).
 Proof. pcofix CIH.
@@ -1566,7 +1629,7 @@ Proof. pcofix CIH.
          destruct H; easy.
          destruct H5c; easy.
          rewrite H5 in H2. easy.
-         admit.
+         apply mon_sodec.
        - subst.
          pinversion H1. subst.
          rewrite(str_eq(st2soFF (str_send p f) (cocons x xs) F)). simpl.
@@ -1593,10 +1656,10 @@ Proof. pcofix CIH.
            destruct H; easy.
            destruct H6c; easy.
          + rewrite H3 in H2. easy.
-         admit.
-         admit.
-         admit.
-Admitted.
+         apply mon_recvsingl.
+         apply mon_sodec.
+         apply mon_wft.
+Qed.
 
 Inductive sendsingl (R: str -> Prop): str -> Prop :=
   | ends : sendsingl R str_end
@@ -1604,6 +1667,24 @@ Inductive sendsingl (R: str -> Prop): str -> Prop :=
   | recvs: forall p f, (exists l s t, f l = Some(s,t) /\ (forall l1 s1 t1, f l1 = Some(s1, t1) -> l = l1) /\ R t) -> sendsingl R (str_receive p f).
 
 Definition sendsinglc t  := paco1 sendsingl bot1 t.
+
+Lemma mon_sendsingl: monotone1 sendsingl.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor. intro l.
+         specialize(H l).
+         destruct H as [(s,(t,(Ha,Hb))) | H].
+         left.
+         exists s. exists t. split. easy.
+         apply LE; easy.
+         right. easy.
+       - constructor.
+         destruct H as (l,(s,(t,(Hb,(Hc,Hd))))).
+         exists l. exists s. exists t. split. easy. split. easy.
+         apply LE; easy.
+Qed.
 
 Lemma singlSi: forall t l F, sidecc t l F -> sendsinglc(st2siFF t l F).
 Proof. pcofix CIH.
@@ -1637,8 +1718,8 @@ Proof. pcofix CIH.
            right. apply CIH.
            destruct Hc; easy.
          + right. rewrite H. easy.
-         admit.
-Admitted.
+         apply mon_sidec.
+Qed.
 
 Lemma wftrcv: forall t l F, wfTC t -> sidecc t l F -> wfTC (st2siFF t l F).
 Proof. pcofix CIH.
@@ -1674,8 +1755,8 @@ Proof. pcofix CIH.
            destruct H; easy.
            destruct H6c; easy.
          + rewrite H3 in H2. easy.
-         admit.
-         admit.
+         apply mon_sendsingl.
+         apply mon_sidec.
        - subst.
          rewrite(str_eq(st2siFF (str_send p f) l F)). simpl.
          pinversion H1. subst.
@@ -1690,9 +1771,9 @@ Proof. pcofix CIH.
          destruct H; easy.
          destruct H5c; easy.
          rewrite H5 in H2. easy.
-         admit.
-         admit.
-Admitted.
+         apply mon_sidec.
+         apply mon_wft.
+Qed.
 
 Inductive singl (R: str -> Prop): str -> Prop :=
   | endsi : singl R str_end
@@ -1700,6 +1781,25 @@ Inductive singl (R: str -> Prop): str -> Prop :=
   | recvsi: forall p f, (exists l s t, f l = Some(s,t) /\ (forall l1 s1 t1, f l1 = Some(s1, t1) -> l = l1) /\ R t) -> singl R (str_receive p f).
 
 Definition singleton s := paco1 (singl) bot1 s.
+
+Lemma mon_singl: monotone1 singl.
+Proof. unfold monotone1.
+       intros.
+       induction IN; intros.
+       - constructor.
+       - constructor.
+         destruct H as (l,(s,(t,(Ha,(Hb,Hc))))).
+         exists l. exists s. exists t.
+         split. easy.
+         split. easy.
+         apply LE; easy.
+       - constructor.
+         destruct H as (l,(s,(t,(Ha,(Hb,Hc))))).
+         exists l. exists s. exists t.
+         split. easy.
+         split. easy.
+         apply LE; easy.
+Qed.
 
 Lemma singlSiSo: forall t l1 l2 F1 F2, sisodecc t l1 F1 l2 F2 -> singleton(st2sisoFF t l1 F1 l2 F2).
 Proof. pcofix CIH.
@@ -1762,8 +1862,8 @@ Proof. pcofix CIH.
          + rewrite String.eqb_eq in H1. easy.
          + rewrite H1 in H. easy.
          right. apply CIH. destruct Hd; easy.
-       admit.
-Admitted.
+         apply mon_sisodec.
+Qed.
 
 Lemma singlSiSo2: forall t l1 l2 F1 F2, sisodecc t l1 F1 l2 F2 -> singleton(st2siFF (st2soFF t l1 F1) l2 F2).
 Proof. intros.
@@ -1809,7 +1909,7 @@ Proof. pcofix CIH.
          destruct H; easy.
          destruct H1d; easy.
          rewrite H3 in H2. easy.
-         admit.
+         apply mon_sisodec.
        - subst.
          rewrite(str_eq(st2sisoFF (str_send p f) l1 F1 l2 F2)). simpl.
          pinversion H1.
@@ -1839,9 +1939,9 @@ Proof. pcofix CIH.
          destruct H; easy.
          destruct H1d; easy.
          rewrite H3 in H2. easy.
-         admit.
-         admit.
-Admitted.
+         apply mon_sisodec.
+         apply mon_wft.
+Qed.
 
 Lemma wftsndrcv2: forall t l1 F1 l2 F2, wfTC t -> sisodecc t l1 F1 l2 F2 -> wfTC (st2siFF (st2soFF t l1 F1) l2 F2).
 Proof. intros.
@@ -1865,13 +1965,11 @@ Proof. pcofix CIH. intros.
        - subst. pinversion H1. subst.
          pinversion H2. subst.
          pfold. constructor.
-         admit.
-         admit.
+         apply mon_sidec.
+         apply mon_sidec.
        - subst.
-
          pinversion H1. subst.
          pinversion H2. subst.
-
          rewrite(str_eq(st2siFF (str_receive p f) (cocons x xs) F1)) in H3.
          rewrite(str_eq(st2siFF (str_receive p f) (cocons x0 xs0) F2)) in H3.
          simpl in H3.
@@ -1898,16 +1996,16 @@ Proof. pcofix CIH. intros.
          easy.
          easy.
          rewrite H4 in H5. easy.
-         admit.
-         admit.
+         apply mon_sidec.
+         apply mon_sidec.
        - subst.
          pinversion H1. subst.
          pinversion H2. subst.
          pfold. constructor.
-         admit.
-         admit.
-         admit.
-Admitted.
+         apply mon_sidec.
+         apply mon_sidec.
+         apply mon_wft.
+Qed.
 
 Lemma invsiEq: forall t l1 l2 F1 F2, wfTC t -> sidecc t l1 F1 -> sidecc t l2 F2 ->
                                     ((st2siFF t l1 F1) = (st2siFF t l2 F2)) -> l1 = l2.
@@ -1952,8 +2050,8 @@ Proof. pcofix CIH.
          apply funextR with (x := x) in H6.
          rewrite String.eqb_refl in H6. inversion H6. easy.
          rewrite H5 in H4. easy.
-         admit.
-         admit.
+         apply mon_sidec.
+         apply mon_sidec.
        - subst.
          pinversion H1. subst.
          pinversion H2. subst.
@@ -1994,10 +2092,10 @@ Proof. pcofix CIH.
            easy.
          rewrite H9. intros. easy.
          rewrite H8. intros. easy.
-         admit.
-         admit.
-        admit.
-Admitted.
+         apply mon_sidec.
+         apply mon_sidec.
+         apply mon_wft.
+Qed.
 
 Lemma invsoL: forall t l1 l2 F1 F2, wfTC t -> sodecc t l1 F1 -> sodecc t l2 F2 ->
                                     ((st2soFF t l1 F1) = (st2soFF t l2 F2)) -> coseq_bisimC l1 l2.
@@ -2010,14 +2108,14 @@ Proof. pcofix CIH. intros.
        - subst. pinversion H1. subst.
          pinversion H2. subst.
          pfold. constructor.
-         admit.
-         admit.
+         apply mon_sodec.
+         apply mon_sodec.
        - subst.
          pinversion H1. subst.
          pinversion H2. subst.
          pfold. constructor.
-         admit.
-         admit.
+         apply mon_sodec.
+         apply mon_sodec.
        - subst.
 
          pinversion H1. subst.
@@ -2049,10 +2147,10 @@ Proof. pcofix CIH. intros.
          easy.
          easy.
          rewrite H4 in H5. easy.
-         admit.
-         admit.
-         admit.
-Admitted.
+         apply mon_sodec.
+         apply mon_sodec.
+         apply mon_wft.
+Qed.
 
 Lemma invsoEq: forall t l1 l2 F1 F2, wfTC t -> sodecc t l1 F1 -> sodecc t l2 F2 ->
                                     ((st2soFF t l1 F1) = (st2soFF t l2 F2)) -> l1 = l2.
@@ -2110,8 +2208,8 @@ Proof. pcofix CIH.
            easy.
          rewrite H9. intros. easy.
          rewrite H8. intros. easy.
-         admit.
-         admit.
+         apply mon_sodec.
+         apply mon_sodec.
        - subst.
          pinversion H1. subst.
          pinversion H2. subst.
@@ -2139,10 +2237,10 @@ Proof. pcofix CIH.
          apply funextR with (x := x) in H6.
          rewrite String.eqb_refl in H6. inversion H6. easy.
          rewrite H5 in H4. easy.
-         admit.
-         admit.
-         admit.
-Admitted.
+         apply mon_sodec.
+         apply mon_sodec.
+         apply mon_wft.
+Qed.
 
 CoFixpoint mergeLL (l: list label) (w: coseq label): coseq label :=
   match l with
@@ -2175,13 +2273,13 @@ Proof. intros.
        split. easy.
        exists s5. exists t5. split. easy.
        exists ys. split. easy. destruct H5c; easy.
-       apply mon_decs.
+       apply mon_sisodec.
 Qed.
 
 Lemma invert1: forall t x xs y ys F1 F2, sisodecc t (cocons x xs) F1 (cocons y ys) F2 -> False.
 Proof. intros.
        pinversion H.
-       apply mon_decs.
+       apply mon_sisodec.
 Qed.
 
 Lemma invert2: forall t x xs F1 F2, sisodecc t conil F1 (cocons x xs) F2 -> 
@@ -2205,7 +2303,7 @@ Proof. intros.
        split. easy.
        exists s5. exists t5. split. easy.
        exists ys. split. easy. destruct H5c; easy.
-       apply mon_decs.
+       apply mon_sisodec.
 Qed.
 
 Lemma eq00: forall t l1 F1 l2 F2,
