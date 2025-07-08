@@ -1294,8 +1294,6 @@ Proof. pcofix CIH.
          + constructor. easy.
          + case_eq(o s0); intros.
            destruct p as (s1, t1).
-(*            specialize(H4 s0).
-           destruct H4 as [(s4,(t4,(H4a,H4b))) | H4]. *)
            constructor.
            intros l2.
            case_eq((l2 =? s0)%string); intros.
@@ -1326,6 +1324,66 @@ Proof. pcofix CIH.
           easy.
               admit.
 Admitted.
+
+Lemma eqsofflEq: forall t l F1 F2, feqsoc t F1 F2 -> st2siFF t l F1 = st2siFF t l F2.
+Proof. intros.
+       apply strExt.
+       apply eqsoffl; easy.
+Qed.
+
+Lemma eqsiffl: forall t l F1 F2, feqsic t F1 F2 -> str_equivC (st2soFF t l F1) (st2soFF t l F2).
+Proof. pcofix CIH.
+       intros.
+       destruct t.
+       - pinversion H0. subst.
+         rewrite(str_eq(st2soFF str_end l F2)).
+         rewrite(str_eq(st2soFF str_end l F1)). simpl.
+         pfold. constructor.
+         admit.
+       - pinversion H0. subst.
+         rewrite(str_eq(st2soFF (str_receive s o) l F1)).
+         rewrite(str_eq(st2soFF (str_receive s o) l F2)). simpl.
+         pfold. constructor.
+         intro l1.
+         specialize(H4 l1).
+         case_eq(o l1); intros.
+         destruct p as (s1,t1).
+         specialize(H4 s1 t1 H).
+         destruct H4 as (H4a, H4b).
+           case_eq(F1 l1); intros.
+           ++ rewrite H1 in H4a.
+              rewrite <- H4a.
+              split. easy.
+              right. apply CIH.
+              destruct H4b; easy.
+              rewrite H1 in H4a.
+              rewrite <- H4a. easy.
+          easy.
+              admit.
+       - pinversion H0. subst.
+         pfold.
+         rewrite(str_eq(st2soFF (str_send s o) l F1)).
+         rewrite(str_eq(st2soFF (str_send s o) l F2)). simpl.
+         case_eq l; intros.
+         + constructor. easy.
+         + case_eq(o s0); intros.
+           destruct p as (s1, t1).
+           constructor.
+           intros l2.
+           case_eq((l2 =? s0)%string); intros.
+           ++ split. easy. right. apply CIH.
+              specialize(H4 s0 s1 t1 H1).
+              destruct H4; easy.
+           ++ easy. 
+           constructor. easy.
+           admit.
+Admitted.
+
+Lemma eqsifflEq: forall t l F1 F2, feqsic t F1 F2 -> st2soFF t l F1 = st2soFF t l F2.
+Proof. intros.
+       apply strExt.
+       apply eqsiffl; easy.
+Qed.
 
 Lemma fsame: forall {a b: Type} (f1 f2: a -> b), f1 = f2 -> (forall x, f1 x = f2 x).
 Proof. intros. subst. easy. Qed.
