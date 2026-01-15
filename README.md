@@ -1,11 +1,37 @@
-# async session subtyping
+# Async Session Subtyping
 
-subtyping of asynchronous session types
+This repository contains a Coq mechanisation of **subtyping for asynchronous session types**, based on the theory of *asynchronous multiparty session types (MPSTs)*.  
+The development formalises session trees, action reordering, refinement, subtyping, and their meta-theoretic properties, and includes mechanised proofs of representative examples from the literature.
 
-The library succesfully compiles with the Coq compiler `coqc 8.20.0`.
+---
+## Dependencies
+The mechanisation is known to compile with the following versions:
+- **Coq** 8.20.0
+- **coq-equations** 1.3.1+8.20
+- **coq-mathcomp-ssreflect** 2.5.0
+- **coq-mmaps** 1.1
+- **coq-paco** 4.2.3
+
+All dependencies can be installed via `opam`:
+```sh
+opam install \
+  coq.8.20.0 \
+  coq-equations.1.3.1+8.20 \
+  coq-mathcomp-ssreflect.2.5.0 \
+  coq-mmaps.1.1 \
+  coq-paco.4.2.3
+```
+## Building the Development
+
+From the root of the repository, run:
 -  `coq_makefile -f _CoqProject -o Makefile` to create the Makefile
 -  `make` to compile
- 
+
+This generates a Makefile and compiles the entire development.
+
+## Repository Structure
+The repository is organised as follows:
+
 | |File |Description |
 |---------------- |-------------------------------|-----------------------------|
 1 | `src/stream.v` | definitions and a few lemmata on streams (infinite lists)
@@ -26,4 +52,7 @@ The library succesfully compiles with the Coq compiler `coqc 8.20.0`.
 16 | `negations/nsubtyping.v` | defines the negation of subtyping relation $\not\leqslant$
 17 | `completeness/completeness.v` | proves completeness of subtyping with respect to negations: $\neg (T \leqslant T') \iff T \not\leqslant T'$
 
-`[1] Ghilezan et al., Precise Subtyping for Asynchronous Multiparty Sessions [JLAMP 2023]`
+## Reference
+`[1] Ghilezan et al.,
+Precise Subtyping for Asynchronous Multiparty Sessions. 
+Journal of Logical and Algebraic Methods in Programming (JLAMP), 2023.`
