@@ -12,7 +12,7 @@ Require Import ProofIrrelevance.
 (* the actual relation *)
 
 Inductive subtypeI: st -> st -> Prop :=
-  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> (@und W) ~< (@und W'))) ->
+  | stc: forall T T', (forall U, st2soC U T -> forall V', st2siC V' T' -> (exists W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ (@und W) ~< (@und W'))) ->
                       subtypeI T T'.
 
 Definition subltypeI (T T': local): Prop := subtypeI (lt2st T) (lt2st T'). 

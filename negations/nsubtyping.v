@@ -12,7 +12,7 @@ Require Import Coq.Logic.Classical_Pred_Type  Coq.Logic.ClassicalFacts Coq.Logic
 Definition nsubtypeI (T T': st): Prop :=
   exists U,  (st2soC U T) /\
   exists V', (st2siC V' T') /\
-  (forall W W', st2sisoC (@und W) U /\ st2sisoC (@und W') V' /\ nRefinement W W').
+  (forall W W', st2sisoC (@und W) U -> st2sisoC (@und W') V' -> nRefinement W W').
 
 Definition nsubltypeI (T T': local): Prop := nsubtypeI (lt2st T) (lt2st T').
 
@@ -25,8 +25,8 @@ Proof. intros.
        specialize(H0 U Ha V' Hb).
        destruct H0 as (W,(W',Hd)).
        specialize(Hc W W').
-       destruct Hc as (Hc,(He,Hf)).
-       specialize(Hd Hc He).
+       destruct Hd as (Hd,(He,Hf)).
+       specialize(Hc Hd He).
        apply (nRefR W W'); easy.
 Qed.
 
@@ -74,12 +74,12 @@ Proof. intros.
          destruct Heq as (W', Heq).
          exists W. exists W'.
          intros.
-         apply not_and_or in Heq.
-         destruct Heq as [Ha | Heq].
-         easy.
-         apply not_and_or in Heq.
-         destruct Heq as [Ha | Heq].
-         easy.
+         apply imply_to_and in Heq.
+         split. easy.
+         destruct Heq as (Hn1, Heq).
+         apply imply_to_and in Heq.
+         split. easy.
+         destruct Heq as (Hn2, Heq).
          apply nRefLH.
          easy.
 Qed.
