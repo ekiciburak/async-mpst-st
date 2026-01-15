@@ -58,5 +58,6 @@ The repository is organised as follows:
 21 | `completeness/completeness.v` | proves completeness of subtyping with respect to negations: $\neg (T \leqslant T') \iff T \not\leqslant T'$
 
 ## Reference
-`[1] Ghilezan et al., Precise Subtyping for Asynchronous Multiparty Sessions [JLAMP 2023]`
+[1] Ghilezan et al., Precise Subtyping for Asynchronous Multiparty Sessions [JLAMP 2023]
+[2] Ekici B. and Yoshida N., Completeness of Asynchronous Session Tree Subtyping in Coq, [ITP 2024]
 
