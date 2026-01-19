@@ -2,10 +2,10 @@ Require Import ST.processes.unscoped.
 Require Import ST.processes.axioms ST.processes.process.
 (* From mathcomp Require Import all_ssreflect seq. *)
 From Paco Require Import paco.
-Require Import String List ZArith Relations.
+From Stdlib Require Import String List ZArith Relations.
 Local Open Scope string_scope.
 Import ListNotations.
-Require Import Setoid Morphisms.
+From Stdlib Require Import Setoid Morphisms.
 
 Fixpoint incr_freeE (fv m : nat) (e : expr) :=
   match e with

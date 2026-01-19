@@ -1,12 +1,12 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
-Require Import Setoid.
-Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms JMeq.
+Require Import Stdlib.Logic.Classical_Prop Stdlib.Logic.ClassicalFacts.
+From Stdlib Require Import ProofIrrelevance.
 Import CoListNotations.
 
 Lemma bpend_ann: forall n p w, merge_bp_contn p (bp_end) w n = w.
@@ -1064,10 +1064,10 @@ Qed.
 (* useful lemmata *)
 
 Definition eqbp (a b: (participant*string)) :=
-  andb (eqb a.1 b.1) (eqb a.2 b.2).
+  andb (eqb (fst a) (fst b)) (eqb a.2 b.2).
 
 Definition eqbp2 (a b: (participant*dir)) :=
-  andb (eqb a.1 b.1) (direqb a.2 b.2).
+  andb (eqb (fst a) (fst b)) (direqb a.2 b.2).
 
 Lemma eq0: forall l (a: (participant*dir)) xs, List.In a l \/ coseqIn a xs ->
            coseqIn a (appendL l xs).
@@ -2109,7 +2109,7 @@ Proof. intros p b.
        subst.
        rewrite(st_eq(merge_bp_cont p (bp_merge q n s s0 b0) (p ! [|(l2, s3, w2)|]))) in H4.
        simpl in H4. inversion H4. subst. easy.
-       subst. rewrite bpend_an in H4. easy.
+       subst. rewrite !bpend_an in H4. simpl. easy.
 
        subst.
        rewrite(st_eq(merge_bp_cont p (bp_receivea s s0 s1) (p ! [|(l1, s2, w1)|]))) in H.
@@ -2219,6 +2219,70 @@ Proof. intros p b.
        simpl in H. inversion H. subst. easy.
        subst. rewrite bpend_an in H. easy.
 Qed.
+
+Lemma BpfBpfeqInv2: forall p b1 b2 l1 l2 s1 s2 w1 w2,
+  isInB b1 p = false ->
+  isInB b2 p = false ->
+  merge_bpf_cont b1 (p ! [|(l1, s1, w1)|]) =
+  merge_bpf_cont b2 (p ! [|(l2, s2, w2)|]) -> b1 = b2 /\ (p ! [|(l1, s1, w1)|]) = (p ! [|(l2, s2, w2)|]).
+Proof. intros p b.
+       induction b; intros.
+       simpl.
+       case_eq b2; intros.
+       simpl.
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       simpl in H1.
+       rewrite(st_eq(  merge_bpf_cont (bpf_receive s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1.
+       simpl in H1. inversion H1. subst.
+       apply IHb in H6.
+       destruct H6 as (H6a, H6b). subst. inversion H6b. subst. easy.
+       simpl in H. easy. simpl in H0. easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(  merge_bpf_cont (bpf_send s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       
+       case_eq b2; intros.
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1. simpl in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s4 s5 s6 b0) (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       inversion H1.
+       apply IHb in H6.
+       destruct H6 as (H6a, H6b). inversion H6b. subst.
+       easy.
+       
+       admit. admit.
+        
+       subst.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s1 b) (p ! [|(l1, s2, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l2, s3, w2)|]))) in H1. simpl in H1.
+       inversion H1. subst.
+       simpl in H. rewrite String.eqb_refl in H. easy.
+     
+       case_eq b2; intros.
+       subst. 
+       rewrite(st_eq(merge_bpf_cont (bpf_receive s s0 s3 b) (p ! [|(l2, s2, w2)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l1, s1, w1)|]))) in H1. simpl in H1. easy.
+       
+       subst.
+       rewrite(st_eq(merge_bpf_cont bpf_end (p ! [|(l1, s1, w1)|]))) in H1.
+       rewrite(st_eq(merge_bpf_cont (bpf_send s s0 s3 b) (p ! [|(l2, s2, w2)|]))) in H1. simpl in H1.
+       inversion H1. subst. 
+       simpl in H0. rewrite String.eqb_refl in H0. easy.
+Admitted.
 
 Lemma case11: forall n p q a l l' s s' w w',
 merge_ap_contn p a (p & [|(l, s, w)|]) n = q ! [|(l', s', w')|] -> False.
@@ -4082,198 +4146,3 @@ Proof. intros.
          apply IHd. easy. easy. easy.
        - rewrite !dpend_an. easy.
 Qed.
-
-Lemma pahselExt_so: forall ys xs l s y,
-  copathsel l s ys y ->
-  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2so bot2 t t') ys xs) ->
-  exists u, copathsel l s xs u /\ st2soC y u.
-Proof. intros.
-       revert xs H0.
-       induction H; intros.
-       - pinversion H0. subst.
-         destruct H2 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         exists t2. split. constructor. destruct H8c; easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         constructor. easy. easy. easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         apply pselneqs. easy. easy. easy.
-         apply mon_f2Ho.
-Qed.
-
-Lemma pahselExt_soR: forall ys xs l s y,
-  copathsel l s ys y ->
-  (Forall2Co (fun u v : string * local.sort * st =>exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2so bot2 t t') xs ys) ->
-  exists u, copathsel l s xs u /\ st2soC u y.
-Proof. intros.
-       revert xs H0.
-       induction H; intros.
-       - pinversion H0. subst.
-         destruct H3 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         exists t1. split. constructor. destruct H8c; easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         constructor. easy. easy. easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         apply pselneqs. easy. easy. easy.
-         apply mon_f2Ho.
-Qed.
-
-Lemma pahselExt_si: forall ys xs l s y,
-  copathsel l s xs y ->
-  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2si bot2 t t') ys xs) ->
-  exists u, copathsel l s ys u /\ st2siC u y.
-Proof. intros.
-       revert ys H0.
-       induction H; intros.
-       - pinversion H0. subst.
-         destruct H3 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         exists t1. split. constructor. destruct H8c; easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         constructor. easy. easy. easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H5 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         apply pselneqs. easy. easy. easy.
-         apply mon_f2Ho.
-Qed.
-
-Lemma pahselExt_siR: forall ys xs l s y,
-  copathsel l s xs y ->
-  (Forall2Co (fun u v : string * local.sort * st => exists (l : string) (s : local.sort) (t t' : st), u = (l, s, t) /\ v = (l, s, t') /\ upaco2 st2si bot2 t t') xs ys) ->
-  exists u, copathsel l s ys u /\ st2siC y u.
-Proof. intros.
-       revert ys H0.
-       induction H; intros.
-       - pinversion H0. subst.
-         destruct H2 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         exists t2. split. constructor. destruct H8c; easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         constructor. easy. easy. easy.
-         apply mon_f2Ho.
-       - pinversion H1.
-         subst.
-         destruct H4 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8a. subst.
-         apply IHcopathsel in H6.
-         destruct H6 as (u,(H6a,H6b)).
-         exists u. split.
-         apply pselneqs. easy. easy. easy.
-         apply mon_f2Ho.
-Qed.
-
-Lemma so_siDec: forall x y z, st2soC x y -> st2siC z x -> st2sisoC z y.
-Proof. pcofix CIH.
-       intros.
-       pinversion H0.
-       - subst. pinversion H1.
-         subst. pfold. constructor.
-         apply st2si_mon.
-       - subst. pinversion H1.
-         subst.
-         pinversion H5. subst.
-         destruct H7 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         pinversion H8. subst.
-         pfold. apply st2siso_snd with (y := y0).
-         right. apply CIH with (x := t2). easy. easy. easy.
-         apply mon_f2Ho.
-         apply mon_f2Ho.
-         apply st2si_mon.
-       - subst.
-         pinversion H1.
-         subst.
-         assert (exists u, copathsel l s xs u /\ st2soC y u).
-         { apply pahselExt_so with (xs := xs) in H6. easy. easy. }
-         destruct H2 as (u,(H3a,H3b)).
-         pfold.
-         apply st2siso_rcv with (y := u).
-         right. apply CIH with (x := y).
-         easy. easy.
-         easy.
-         apply st2si_mon.
-         apply st2so_mon.
-Qed.
-
-Lemma si_soDec: forall x y z, st2siC x y -> st2soC z x -> st2sisoC z y.
-Proof. pcofix CIH.
-       intros.
-       pinversion H0.
-       - subst. pinversion H1.
-         subst. pfold. constructor.
-         apply st2so_mon.
-       - subst. pinversion H1.
-         subst.
-         pinversion H5. subst.
-         destruct H7 as (l1,(s1,(t1,(t2,(H8a,(H8b,H8c)))))).
-         inversion H8b. subst.
-         pinversion H8. subst.
-         pfold. apply st2siso_rcv with (y := y0).
-         right. apply CIH with (x := t2). easy. easy. easy.
-         apply mon_f2Ho.
-         apply mon_f2Ho.
-         apply st2so_mon.
-       - subst.
-         pinversion H1.
-         subst.
-         assert (exists u, copathsel l s xs u /\ st2siC y u).
-         { apply pahselExt_siR with (ys := xs) in H6. easy. easy. }
-         destruct H2 as (u,(H3a,H3b)).
-         pfold.
-         apply st2siso_snd with (y := u).
-         right. apply CIH with (x := y).
-         easy. easy.
-         easy.
-         apply st2so_mon.
-         apply st2si_mon.
-Qed.
-

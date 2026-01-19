@@ -1,6 +1,6 @@
 (** * Chapter 7 : Modular Syntax *)
 
-Require Import String List Lia.
+From Stdlib Require Import String List Lia.
 
 From Equations Require Import Equations.
 Set Implicit Arguments.

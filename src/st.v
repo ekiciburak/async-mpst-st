@@ -64,10 +64,10 @@ Qed.
 Inductive st_equiv (R: st -> st -> Prop): st -> st -> Prop :=
   | eq_st_end: st_equiv R st_end st_end
   | eq_st_rcv: forall p xs ys,
-               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
                st_equiv R (st_receive p ys) (st_receive p xs)
   | eq_st_snd: forall p xs ys,
-               Forall2C (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
+               Forall2Co (fun u v => exists l s t l' s' t', u = (l,s,t) /\ v = (l',s',t') /\ l = l' /\ s = s'/\ R t t') ys xs ->
                st_equiv R (st_send p ys) (st_send p xs). 
 
 Definition st_equivC: st -> st -> Prop := fun s1 s2 => paco2 st_equiv bot2 s1 s2.
@@ -179,6 +179,16 @@ Proof. intros. revert xs ys H. pcofix CIH.
        easy.
        apply LE; easy.
 Qed.
+
+(*
+Check lt_send.
+Check lt_var 0.
+
+Let lr := lt_mu (lt_send "p" [("l",sint,(lt_var 0))] ).
+Let lr2 := Eval simpl in unfold_muL lr.
+Eval simpl in unfold_muL lr2.
+Print lr.
+Print lr2.  *)
 
 Definition sfun (l: label) (s: sort) (x: st): (label -> option(sort*st)) :=
   fun l' => if String.eqb l l' then Datatypes.Some(s,x) else Datatypes.None. 

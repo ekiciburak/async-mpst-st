@@ -7,8 +7,6 @@ processes/header_extensible.v
 processes/process.v
 processes/beta.v
 types/local.v
-types/typecheck.v
-types/typenv.v
 src/stream.v
 src/st.v
 src/so.v
@@ -16,6 +14,7 @@ src/si.v
 src/reordering.v
 src/siso.v
 src/projections.v
+src/decs.v
 subtyping/refinement.v
 src/reorderingfacts.v
 src/acteqfacts.v

@@ -1,14 +1,14 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering 
-ST.src.reorderingfacts ST.src.acteqfacts ST.src.nondepro ST.src.siso ST.src.inversion ST.types.local ST.subtyping.refinement ST.types.typenv.
+ST.src.reorderingfacts ST.src.acteqfacts ST.src.nondepro ST.src.siso ST.src.inversion ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms JMeq.
+Require Import Stdlib.Logic.Classical_Prop Stdlib.Logic.ClassicalFacts.
+From Stdlib Require ProofIrrelevance.
 
 Inductive projS (R: st -> participant -> st -> Prop): st -> participant -> st -> Prop :=
   | pjs_end : forall p, projS R st_end p st_end
@@ -2289,7 +2289,6 @@ Proof. destruct w as (w, Pw).
            easy. easy.
            
            subst.
-
            apply rcv_snd_notRef in H0.
            easy.
            apply mon_projr.
@@ -2403,7 +2402,6 @@ Proof. destruct w as (w, Pw).
            apply extrR in Pw'. easy.
            apply exts, extcpf.
            apply extsR, extcpfR, extrR in Pw. easy. easy.
-
            apply proj_send_cr; try easy.
            easy.
            simpl. easy. easy. easy.
@@ -2767,6 +2765,3 @@ Proof. split.
        - apply refEquivR2 in H. apply _B_7_1 with (w := w) (w' := w') (p := p); easy.
        - apply refEquivR2 in H. apply _B_7_2 with (w := w) (w' := w') (p := p); easy.
 Qed.
-
-
-

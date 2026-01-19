@@ -1,7 +1,7 @@
 Require Import ST.processes.unscoped.
 (* From mathcomp Require Import all_ssreflect. *)
 From Paco Require Import paco.
-Require Import String List ZArith.
+From Stdlib Require Import String List ZArith.
 Local Open Scope string_scope.
 Import ListNotations.
 

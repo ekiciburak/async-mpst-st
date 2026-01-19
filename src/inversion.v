@@ -1,13 +1,13 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.reorderingfacts ST.src.acteqfacts ST.src.nondepro ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms JMeq.
+Require Import Stdlib.Logic.Classical_Prop Stdlib.Logic.ClassicalFacts.
+From Stdlib Require ProofIrrelevance.
 
 Lemma Invert_Bpf_Apf: forall b a p l s w w', 
   isInB b p = false ->
@@ -1617,24 +1617,6 @@ Lemma actionExRNF: forall a w w',
 Proof. intros.
        apply H.
        apply actionExLF with (a := a) in H0; easy.
-Qed.
-
-Lemma actionExIf: forall w w',
-  paco2 refinementR4 bot2 w w' ->
-  forall a, (coseqIn a (act w) <-> coseqIn a (act w')).
-Proof. intros.
-       split.
-       - intro Ha. apply actionExLF with (w := w); easy.
-       - intro Ha. apply actionExRF with (w' := w'); easy.
-Qed.
-
-Lemma actionExNIf: forall w w',
-  paco2 refinementR4 bot2 w w' ->
-  forall a, ((coseqIn a (act w) -> False) <-> (coseqIn a (act w') -> False)).
-Proof. intros.
-       split.
-       - intro Ha. apply actionExLNF with (w := w); easy.
-       - intro Ha. apply actionExRNF with (w' := w'); easy.
 Qed.
 
 Lemma end_nmerge: forall b1 b2 p l s, bpf_end = Bpf_merge b1 (bpf_send p l s b2) -> False.
@@ -3456,5 +3438,4 @@ Proof. intro c1.
          easy.
          apply refinementR4_mon.
 Qed.
-
 

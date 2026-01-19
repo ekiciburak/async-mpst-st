@@ -1,12 +1,12 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.src.nondepro ST.types.local
                ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
-Require Import Lia.
+From Stdlib Require Import Lia.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms.
 
 Local Open Scope string_scope.
 
@@ -2911,7 +2911,8 @@ Proof. intro k.
          apply HT.
 Qed.
 
-Lemma all_refs: forall m : nat, refinement (merge_dpf_contn pi3 WA m) (merge_dpf_contn pi1 WA m).
+Lemma all_refs:
+forall m : nat, refinement (merge_dpf_contn pi3 WA m) (merge_dpf_contn pi1 WA m).
 Proof. intros.
        specialize(ntrans m m 0); intro HN.
        assert((m - 0) = m) by lia.
@@ -2923,7 +2924,7 @@ Proof. intros.
        simpl in HN. apply HN. lia.
 Qed.
 
-Lemma st: subltype T T'.
+Lemma st2: subltype T T'.
 Proof. intros. unfold subltype.
        unfold subtype.
        exists(
@@ -2935,7 +2936,7 @@ Proof. intros. unfold subltype.
        ).
        simpl.
        split.
-
+       
        split.
        pcofix CIH. 
        rewrite (st_eq WB). simpl.

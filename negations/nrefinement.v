@@ -3,11 +3,11 @@ Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si
                ST.subtyping.refinement ST.src.reorderingfacts.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
-Require Import Setoid.
-Require Import Morphisms.
-Require Import Coq.Logic.Classical_Pred_Type Coq.Logic.ClassicalFacts Coq.Logic.Classical_Prop.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms.
+Require Import Stdlib.Logic.Classical_Pred_Type Stdlib.Logic.ClassicalFacts Stdlib.Logic.Classical_Prop.
 Import CoListNotations.
 (* Require dpdgraph.dpdgraph. *)
 
@@ -1046,6 +1046,7 @@ Proof. destruct w as (w, Pw).
            apply extap. easy.
          }
          specialize(CIH (merge_ap_cont p a w3) Pw'' w1 Hs1).
+         unfold upaco2.
          right.
          apply CIH.
          intro h.

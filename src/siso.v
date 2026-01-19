@@ -15,11 +15,6 @@ Inductive singletonI (R: st -> Prop): st -> Prop :=
 
 Definition singleton s := paco1 (singletonI) bot1 s.
 
-Class siso: Type := mk_siso 
-{ und  : st; 
-  sprop: singleton und
-}.
-
 Lemma sI_mon: monotone1 singletonI.
 Proof. unfold monotone1.
        intros.
@@ -28,6 +23,11 @@ Proof. unfold monotone1.
        - apply sends, LE, H.
        - apply recvs, LE, H.
 Qed.
+
+Class siso: Type := mk_siso 
+{ und  : st; 
+  sprop: singleton und
+}.
 
 Lemma siso_same: forall s1 s2, @und s1 = @und s2 -> JMeq (@sprop s1) (@sprop s2) -> s1 = s2.
 Proof. intros.
@@ -122,6 +122,7 @@ Proof. pcofix CIH. pfold.
 Qed.
 
 (**)
+
 Lemma exts: forall {p l s} w, singleton w -> singleton (st_send p (cocons (l,s,w) conil)).
 Proof. intros p l s w H.
        pfold. constructor. left.

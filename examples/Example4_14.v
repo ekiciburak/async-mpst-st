@@ -2,11 +2,11 @@ Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si 
                ST.subtyping.refinement ST.src.reorderingfacts ST.subtyping.subtyping.
 From mathcomp Require Import all_ssreflect seq ssrnat.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms.
 
 Local Open Scope string_scope.
 

@@ -1,13 +1,13 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.reorderingfacts ST.src.acteqfacts ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms JMeq.
+Require Import Stdlib.Logic.Classical_Prop Stdlib.Logic.ClassicalFacts.
+From Stdlib Require ProofIrrelevance.
 
 Lemma _39_1: forall a b p q w w1 w2,
   isInB a p = false ->
@@ -284,17 +284,17 @@ Proof. intro a.
 Qed.
 
 Lemma pneqq3: forall a p q l l' s s' w w' (H: p <> q),
-  isInA a p = false -> q & [|(l, s, w)|] = merge_apf_cont a (p & [|(l', s', w')|]) ->
+  q & [|(l, s, w)|] = merge_apf_cont a (p & [|(l', s', w')|]) ->
   exists a', 
-  w = merge_apf_cont a' (p & [|(l', s', w')|]) /\ a = apf_receive q l s a' /\ isInA a' p = false.
+  w = merge_apf_cont a' (p & [|(l', s', w')|]) /\ a = apf_receive q l s a'.
 Proof. intro a.
        induction a; intros.
-       - rewrite apfend_an in H1.
-         inversion H1. subst. easy.
-       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l', s', w')|]))) in H1.
-         simpl in H1.
-         inversion H1. subst.
-         exists a. split. easy. split. easy. simpl in H0. rewrite orbtf in H0. easy.
+       - rewrite apfend_an in H0.
+         inversion H0. subst. easy.
+       - rewrite(st_eq(merge_apf_cont (apf_receive s s0 s1 a) (p & [|(l', s', w')|]))) in H0.
+         simpl in H0.
+         inversion H0. subst.
+         exists a. split; easy.
 Qed.
 
 Lemma pneqq4: forall a p q l l' s s' w w' (H: p <> q),

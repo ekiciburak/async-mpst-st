@@ -1,7 +1,6 @@
 # Async Session Subtyping
 
 This repository contains a Coq mechanisation of **subtyping for asynchronous session types**, based on the theory of *asynchronous multiparty session types (MPSTs)*.  
-
 The development formalises session trees, action reordering, refinement, subtyping, and their meta-theoretic properties, and includes mechanised proofs of representative examples from the literature.
 
 ---
@@ -59,4 +58,3 @@ The repository is organised as follows:
 [1] Ghilezan et al., Precise Subtyping for Asynchronous Multiparty Sessions [JLAMP 2023]
 
 [2] Ekici B. and Yoshida N., Completeness of Asynchronous Session Tree Subtyping in Coq [ITP 2024]
-

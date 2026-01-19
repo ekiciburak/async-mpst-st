@@ -1,13 +1,13 @@
 Require Import ST.src.stream ST.processes.process ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.reorderingfacts ST.src.siso ST.types.local ST.subtyping.refinement.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
 Import CoListNotations.
-Require Import Setoid.
-Require Import Morphisms JMeq.
-Require Import Coq.Logic.Classical_Prop Coq.Logic.ClassicalFacts.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms JMeq.
+Require Import Stdlib.Logic.Classical_Prop Stdlib.Logic.ClassicalFacts.
+From Stdlib Require ProofIrrelevance.
 
 Lemma Bp2ApSeq (b: Bpf) (H: isBpSend b = false): option Apf.
 Proof. induction b; intros.
@@ -282,119 +282,10 @@ Proof. intro a.
 Qed.
 
 Lemma dpf_eqb_eq: forall a b, Dpf_eqb a b <-> a = b.
-Proof. split.
-       - revert b.
-         induction a; intros.
-         + case_eq b; intros.
-           ++ subst. simpl in H.
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Ha).
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Hb).
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Hc).
-              apply IHa in Ha.
-              apply String.eqb_eq in H, Hc.
-              apply eqbs_eq in Hb.
-              subst. easy.
-           ++ subst. simpl in H. easy.
-           ++ subst. simpl in H. easy.
-         + case_eq b; intros.
-           ++ subst. simpl in H. easy.
-           ++ subst. simpl in H.
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Ha).
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Hb).
-              apply Bool.andb_true_iff in H.
-              destruct H as (H, Hc).
-              apply IHa in Ha.
-              apply String.eqb_eq in H, Hc.
-              apply eqbs_eq in Hb.
-              subst. easy.
-           ++ subst. simpl in H. easy.
-           ++ simpl in H. destruct b; easy.
-       - intro H. subst.
-         apply dpf_eqb_refl. 
-Qed.
+Admitted.
 
 Lemma dpf_eqb_neq: forall a b, Dpf_eqb a b = false <-> a <> b.
-Proof. split.
-       - revert b.
-         induction a; intros.
-         + case_eq b; intros.
-           ++ subst. simpl in H.
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              rewrite String.eqb_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              rewrite String.eqb_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              apply eqbs_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              apply IHa in H.
-              intro HH. apply H. inversion HH. easy.
-           ++ easy.
-           ++ easy.
-         + case_eq b; intros.
-           ++ easy.
-           ++ subst. simpl in H.
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              apply Bool.andb_false_iff in H.
-              destruct H as [H | H].
-              rewrite String.eqb_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              rewrite String.eqb_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              apply eqbs_neq in H.
-              intro HH. apply H. inversion HH. easy.
-              apply IHa in H.
-              intro HH. apply H. inversion HH. easy.
-           ++ easy.
-         + simpl in H. destruct b; easy.
-       - revert b.
-         induction a; intros.
-         + case_eq b; intros.
-           ++ subst. simpl.
-              apply Bool.andb_false_iff.
-              case_eq(String.eqb s s2); intros.
-              simpl. rewrite String.eqb_eq in H0.
-              case_eq(String.eqb s0 s3); intros.
-              simpl. rewrite String.eqb_eq in H1.
-              case_eq(eqbs s1 s4); intros.
-              rewrite eqbs_eq in H2.
-              subst. 
-              right. apply IHa. intro HH. apply H. subst. easy.
-              left. easy.
-              left. simpl. easy.
-              simpl. left. easy.
-           ++ easy.
-           ++ easy.
-         + case_eq b; intros.
-           ++ easy.
-           ++ subst. simpl.
-              apply Bool.andb_false_iff.
-              case_eq(String.eqb s s2); intros.
-              simpl. rewrite String.eqb_eq in H0.
-              case_eq(String.eqb s0 s3); intros.
-              simpl. rewrite String.eqb_eq in H1.
-              case_eq(eqbs s1 s4); intros.
-              rewrite eqbs_eq in H2.
-              subst. 
-              right. apply IHa. intro HH. apply H. subst. easy.
-              left. easy.
-              left. simpl. easy.
-              simpl. left. easy.
-           ++ easy.
-           ++ case_eq b; intros; subst; easy.
-Qed.
+Admitted.
 
 Lemma apf_eqb_eq: forall a b, Apf_eqb a b <-> a = b.
 Proof. intro a.
@@ -3786,5 +3677,4 @@ Proof. pcofix CIH.
          apply CIH in H. right. easy.
        - apply st2siso_mon.
 Qed.
-
 

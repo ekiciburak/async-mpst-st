@@ -1,10 +1,10 @@
 Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering ST.src.siso ST.types.local.
 From mathcomp Require Import all_ssreflect seq.
 From Paco Require Import paco.
-Require Import String List.
+From Stdlib Require Import String List.
 Import ListNotations.
-Require Import Setoid.
-Require Import Morphisms.
+From Stdlib Require Import Setoid.
+From Stdlib Require Import Morphisms.
 
 Inductive refinementR (seq: st -> st -> Prop): st -> st -> Prop :=
   | ref_a  : forall w w' p l s s' a n, subsort s' s ->
