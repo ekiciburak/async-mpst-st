@@ -7,25 +7,23 @@ The development formalises session trees, action reordering, refinement, subtypi
 ---
 ## Dependencies
 The mechanisation is known to compile with the following versions:
-- **Coq** 8.20.0
+- **Rocq** 9.0.0
 - **coq-equations** 1.3.1+8.20
 - **coq-mathcomp-ssreflect** 2.5.0
-- **coq-mmaps** 1.1
 - **coq-paco** 4.2.3
 
 All dependencies can be installed via `opam`:
 ```sh
 opam install \
-  coq.8.20.0 \
+  opam install rocq-prover.9.0.0 \
   coq-equations.1.3.1+8.20 \
   coq-mathcomp-ssreflect.2.5.0 \
-  coq-mmaps.1.1 \
   coq-paco.4.2.3
 ```
 ## Building the Development
 
 From the root of the repository, run:
--  `coq_makefile -f _CoqProject -o Makefile` to create the Makefile
+-  `rocq makefile -f _CoqProject -o Makefile` to create the Makefile
 -  `make` to compile
 
 This generates a Makefile and compiles the entire development.
