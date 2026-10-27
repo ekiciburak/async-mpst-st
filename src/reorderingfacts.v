@@ -1064,10 +1064,10 @@ Qed.
 (* useful lemmata *)
 
 Definition eqbp (a b: (participant*string)) :=
-  andb (eqb a.1 b.1) (eqb a.2 b.2).
+  andb (eqb (fst a) (fst b)) (eqb (Datatypes.snd a) (Datatypes.snd b)).
 
 Definition eqbp2 (a b: (participant*dir)) :=
-  andb (eqb a.1 b.1) (direqb a.2 b.2).
+  andb (eqb (fst a) (fst b)) (direqb (Datatypes.snd a) (Datatypes.snd b)).
 
 Lemma eq0: forall l (a: (participant*dir)) xs, List.In a l \/ coseqIn a xs ->
            coseqIn a (appendL l xs).

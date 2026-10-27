@@ -33,3 +33,23 @@ Fixpoint decomposeL (l: list (siso*siso)) (s: st) (s': st): Prop :=
 
 Definition subtype (T T': st): Prop := exists (l: list (siso*siso)), decomposeL l T T' /\ listSisoPRef l.
 Definition subltype (T T': local) := subtype (lt2st T) (lt2st T').
+
+(* ============================================================ *)
+(* Lemma 3.14 — Uniformisation of SI/SO decompositions          *)
+(* ============================================================ *)
+
+(* Lemma decomposition_uniformisation :
+  forall (T : st) (Y : st -> Prop),
+    (forall V : st,
+      st2siC V T ->
+      exists W : st,
+        st2sisoC W V /\
+        Y W) ->
+    exists U : st,
+      st2soC U T /\
+      (forall W : st,
+        st2sisoC W U ->
+        Y W).
+Proof.
+  intros T Y Hchoices.
+   *)

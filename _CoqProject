@@ -9,6 +9,7 @@ processes/beta.v
 types/local.v
 types/typecheck.v
 types/typenv.v
+types/typenv_liveness.v
 src/stream.v
 src/st.v
 src/so.v
@@ -22,6 +23,7 @@ src/acteqfacts.v
 src/nondepro.v
 src/inversion.v
 subtyping/subtyping.v
+subtyping/subtyping_direct.v
 examples/Example2_3.v
 examples/ring_choice.v
 examples/Example3_17.v
