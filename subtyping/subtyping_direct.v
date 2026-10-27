@@ -6,15 +6,6 @@ Require Import ST.src.stream ST.src.st ST.src.so ST.src.si ST.src.reordering
                ST.src.siso ST.types.local ST.subtyping.refinement ST.src.reorderingfacts.
 Import ListNotations.
 
-Check st.
-Check st_send.
-Check st_receive.
-Check copathsel.
-Check Forall2Co.
-
-Print Forall2Co.
-Print coseq.
-
 Inductive Forall2Ind {a b : Type}
   (P : a -> b -> Prop)
   : coseq a -> coseq b -> Prop :=
@@ -115,9 +106,6 @@ Inductive permitted_receive :
         (st_send q xs)
         (st_send q ys).
 
-(* ============================================================ *)
-(* Sends — Figure 2                                             *)
-(* ============================================================ *)
 
 Inductive Sends : string -> st -> Prop :=
 
@@ -133,11 +121,6 @@ Inductive Sends : string -> st -> Prop :=
         copathsel l s xs T ->
         Sends p T) ->
       Sends p (st_send q xs).
-
-
-(* ============================================================ *)
-(* Recvs — Figure 2                                             *)
-(* ============================================================ *)
 
 Inductive Recvs : string -> st -> Prop :=
 
@@ -833,3 +816,4 @@ Proof.
   contradiction.
   apply subtype_directR_mon.
 Qed.
+
