@@ -5042,9 +5042,6 @@ Qed.
 Scheme permitted_send_ind2 :=
   Induction for permitted_send Sort Prop.
 
-Check permitted_send_ind2.
-Print permitted_send_ind2.
-
 Definition BranchSubsetLabel_map
   (R S : st -> st -> Prop)
   (Hmap : forall T U, R T U -> S T U)
@@ -8547,4 +8544,1647 @@ Proof.
   reflexivity.
 Qed.
 
+Definition stc_pure_to_soR
+  (R : stc_pure -> stc_pure -> Prop)
+  (T U : stc_pure) : Prop :=
+  match T, U with
 
+  | stc_pure_end, stc_pure_end =>
+      True
+
+  | stc_pure_send p sh next,
+    stc_pure_send q sh' next' =>
+      p = q /\
+      exists i : branch_pos sh,
+        exists j : branch_pos sh',
+          fin_nth (branch_labels sh) i =
+          fin_nth (branch_labels sh') j /\
+          List.length (branch_labels sh') = 1 /\
+          R (next i) (next' j)
+
+  | stc_pure_receive p sh next,
+    stc_pure_receive q sh' next' =>
+      p = q /\
+      stc_pure_branches_bisim
+        R sh sh' next next'
+
+  | _, _ =>
+      False
+  end.
+
+Definition stc_pure_to_so
+  (T U : stc_pure) : Prop :=
+  paco2 stc_pure_to_soR bot2 T U.
+
+CoInductive productive_so : stc_pure -> Prop :=
+| productive_so_end :
+    productive_so stc_pure_end
+
+| productive_so_send :
+    forall p sh next,
+      (exists i : branch_pos sh, True) ->
+      (forall i, productive_so (next i)) ->
+      productive_so (stc_pure_send p sh next)
+
+| productive_so_receive :
+    forall p sh next,
+      (forall i, productive_so (next i)) ->
+      productive_so (stc_pure_receive p sh next).
+
+Definition choose_branch
+  (sh : branch_shape)
+  : option (branch_pos sh).
+Proof.
+  destruct sh as [labels].
+  destruct labels as [| b bs].
+
+  - exact None.
+
+  - exact (Some (@Fin.F1 (List.length bs))).
+Defined.
+
+CoFixpoint make_so
+  (T : stc_pure) : stc_pure :=
+  match T with
+
+  | stc_pure_end =>
+      stc_pure_end
+
+  | stc_pure_send p sh next =>
+      match choose_branch sh with
+      | Some i =>
+          let '(lbl, sr) :=
+            fin_nth (branch_labels sh) i
+          in
+          stc_pure_send p
+            {| branch_labels := [(lbl, sr)] |}
+            (fun _ => make_so (next i))
+
+      | None =>
+          stc_pure_end
+      end
+
+  | stc_pure_receive p sh next =>
+      stc_pure_receive p sh
+        (fun i => make_so (next i))
+  end.
+
+Definition stc_pure_to_siR
+  (R : stc_pure -> stc_pure -> Prop)
+  (T U : stc_pure) : Prop :=
+  match T, U with
+
+  | stc_pure_end, stc_pure_end =>
+      True
+
+  | stc_pure_send p sh next,
+    stc_pure_send q sh' next' =>
+      p = q /\
+      stc_pure_branches_bisim
+        R sh sh' next next'
+
+  | stc_pure_receive p sh next,
+    stc_pure_receive q sh' next' =>
+      p = q /\
+      exists i : branch_pos sh,
+        exists j : branch_pos sh',
+          fin_nth (branch_labels sh) i =
+          fin_nth (branch_labels sh') j /\
+          List.length (branch_labels sh') = 1 /\
+          R (next i) (next' j)
+
+  | _, _ =>
+      False
+  end.
+
+Definition stc_pure_to_si
+  (T U : stc_pure) : Prop :=
+  paco2 stc_pure_to_siR bot2 T U.
+
+Lemma stc_pure_to_siR_mon :
+  monotone2 stc_pure_to_siR.
+Proof.
+  unfold monotone2.
+  intros T U R R' Hrel H.
+
+  destruct T as [| p sh1 next1 | p sh1 next1];
+  destruct U as [| q sh2 next2 | q sh2 next2];
+  simpl in *;
+  try contradiction;
+  auto.
+
+  - (* Send: preserve all branches *)
+    destruct Hrel as [Hp Hbranches].
+    split.
+    + exact Hp.
+    + unfold stc_pure_branches_bisim in *.
+      destruct Hbranches as [Hlen Hnext].
+      exists Hlen.
+      intro i.
+      specialize (Hnext i).
+
+      destruct (fin_nth (branch_labels sh1) i)
+        as [lbl1 sr1].
+
+      destruct
+        (fin_nth (branch_labels sh2)
+          (eq_rect
+            (List.length (branch_labels sh1))
+            Fin.t i
+            (List.length (branch_labels sh2))
+            Hlen))
+        as [lbl2 sr2].
+
+      cbn in *.
+      destruct Hnext as [Hl [Hs Hr]].
+      repeat split; try assumption.
+      apply H.
+      exact Hr.
+
+  - (* Receive: select one branch *)
+    destruct Hrel as [Hp [i [j [Hkey [Hlen Hr]]]]].
+    split.
+    + exact Hp.
+    + exists i, j.
+      repeat split; try assumption.
+      apply H.
+      exact Hr.
+Qed.
+
+Definition stc_pure_to_siso
+  (T W : stc_pure) : Prop :=
+  exists U : stc_pure,
+    stc_pure_to_so T U /\
+    stc_pure_to_si U W.
+
+CoInductive nonempty_pure : stc_pure -> Prop :=
+| nonempty_pure_end :
+    nonempty_pure stc_pure_end
+
+| nonempty_pure_send :
+    forall p sh next,
+      (exists i : branch_pos sh, True) ->
+      (forall i, nonempty_pure (next i)) ->
+      nonempty_pure (stc_pure_send p sh next)
+
+| nonempty_pure_receive :
+    forall p sh next,
+      (exists i : branch_pos sh, True) ->
+      (forall i, nonempty_pure (next i)) ->
+      nonempty_pure (stc_pure_receive p sh next).
+
+Definition nonempty_pure_send_next
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (H : nonempty_pure (stc_pure_send p sh next))
+  : forall i : branch_pos sh,
+      nonempty_pure (next i) :=
+  match H in nonempty_pure T
+        return
+          match T with
+          | stc_pure_send _ sh' next' =>
+              forall i : branch_pos sh',
+                nonempty_pure (next' i)
+          | _ => True
+          end
+  with
+  | nonempty_pure_end =>
+      Coq.Init.Logic.I
+  | nonempty_pure_send _ _ _ _ Hnext =>
+      Hnext
+  | nonempty_pure_receive _ _ _ _ _ =>
+      Coq.Init.Logic.I
+  end.
+
+(* Lemma nonempty_pure_send_next :
+  forall (p : string)
+         (sh : branch_shape)
+         (next : branch_pos sh -> stc_pure),
+    nonempty_pure (stc_pure_send p sh next) ->
+    forall i : branch_pos sh,
+      nonempty_pure (next i).
+Proof.
+  intros p sh next H.
+
+  remember (stc_pure_send p sh next) as T eqn:HT.
+
+  destruct H as
+    [| p' sh' next' Hexists Hnext
+     | p' sh' next' Hexists Hnext];
+    try discriminate HT.
+
+  inversion HT; subst.
+  intro i.
+  exact (Hnext i).
+Qed. *)
+
+Definition nonempty_pure_send_has_branch
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (H : nonempty_pure (stc_pure_send p sh next))
+  : exists i : branch_pos sh, True :=
+  match H in nonempty_pure T
+        return
+          match T with
+          | stc_pure_send _ sh' _ =>
+              exists i : branch_pos sh', True
+          | _ => True
+          end
+  with
+  | nonempty_pure_end =>
+      Coq.Init.Logic.I
+  | nonempty_pure_send _ _ _ Hexists _ =>
+      Hexists
+  | nonempty_pure_receive _ _ _ _ _ =>
+      Coq.Init.Logic.I
+  end.
+
+Definition nonempty_pure_receive_next
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (H : nonempty_pure (stc_pure_receive p sh next))
+  : forall i : branch_pos sh,
+      nonempty_pure (next i) :=
+  match H in nonempty_pure T
+        return
+          match T with
+          | stc_pure_receive _ sh' next' =>
+              forall i : branch_pos sh',
+                nonempty_pure (next' i)
+          | _ => True
+          end
+  with
+  | nonempty_pure_end =>
+      Coq.Init.Logic.I
+
+  | nonempty_pure_send _ _ _ _ _ =>
+      Coq.Init.Logic.I
+
+  | nonempty_pure_receive _ _ _ _ Hnext =>
+      Hnext
+  end.
+
+Lemma choose_branch_none :
+  forall sh : branch_shape,
+    choose_branch sh = None ->
+    branch_pos sh -> False.
+Proof.
+  intros [labels] Hnone i.
+  destruct labels as [| b bs].
+  - inversion i.
+  - simpl in Hnone.
+    discriminate.
+Qed.
+
+Lemma make_so_correct :
+  forall (T : stc_pure),
+    nonempty_pure T ->
+    stc_pure_to_so T (make_so T).
+Proof.
+  pcofix CIH.
+  intros T H.
+  pfold.
+destruct T as
+  [| p sh next
+   | p sh next].
+- cbn [make_so stc_pure_to_soR].
+  easy.
+-
+destruct (choose_branch sh) as [i |] eqn:Hchoose.
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hbranch.
+
+cbn [stc_pure_to_soR].
+
+unfold make_so at 1.
+cbn beta iota zeta.
+change (
+  stc_pure_to_soR
+    (upaco2 stc_pure_to_soR r)
+    (stc_pure_send p sh next)
+    (make_so (stc_pure_send p sh next))
+).
+cbn.
+cbn beta iota zeta.
+rewrite Hchoose.
+rewrite Hbranch.
+cbn beta iota zeta.
+
+split.
+- reflexivity.
+- exists i.
+  exists (@Fin.F1 0).
+  repeat split.
+  + exact Hbranch.
+  + right.
+    apply CIH.
+exact (nonempty_pure_send_next p sh next H i).
+
+
+exfalso.
+
+assert (Hpos : exists i : branch_pos sh, True).
+{
+  exact (nonempty_pure_send_has_branch p sh next H).
+}
+
+destruct Hpos as [i _].
+
+eapply choose_branch_none.
+- exact Hchoose.
+- exact i.
+
+split.
+- reflexivity.
+- unfold stc_pure_branches_bisim.
+  exists eq_refl.
+  intro i.
+
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hbranch.
+
+
+  cbn.
+rewrite Hbranch.
+cbn.
+
+repeat split; try reflexivity.
+
+right.
+apply CIH.
+
+exact (nonempty_pure_receive_next p sh next H i).
+Qed.
+
+Theorem stc_pure_so_exists :
+  forall T : stc_pure,
+    nonempty_pure T ->
+    exists U : stc_pure,
+      stc_pure_to_so T U.
+Proof.
+  intros T H.
+  exists (make_so T).
+  apply make_so_correct.
+  exact H.
+Qed.
+
+CoFixpoint make_si (T : stc_pure) : stc_pure :=
+  match T with
+
+  | stc_pure_end =>
+      stc_pure_end
+
+  | stc_pure_send p sh next =>
+      stc_pure_send p sh
+        (fun i => make_si (next i))
+
+  | stc_pure_receive p sh next =>
+      match choose_branch sh with
+
+      | Some i =>
+          let '(lbl, sr) :=
+            fin_nth (branch_labels sh) i
+          in
+          stc_pure_receive p
+            {| branch_labels := [(lbl, sr)] |}
+            (fun _ => make_si (next i))
+
+      | None =>
+          stc_pure_end
+      end
+  end.
+
+Definition nonempty_pure_receive_has_branch
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (H : nonempty_pure (stc_pure_receive p sh next))
+  : exists i : branch_pos sh, True :=
+  match H in nonempty_pure T
+        return
+          match T with
+          | stc_pure_receive _ sh' _ =>
+              exists i : branch_pos sh', True
+          | _ => True
+          end
+  with
+  | nonempty_pure_end =>
+      Coq.Init.Logic.I
+
+  | nonempty_pure_send _ _ _ _ _ =>
+      Coq.Init.Logic.I
+
+  | nonempty_pure_receive _ _ _ Hexists _ =>
+      Hexists
+  end.
+
+Lemma make_si_correct :
+  forall T : stc_pure,
+    nonempty_pure T ->
+    stc_pure_to_si T (make_si T).
+Proof.
+  pcofix CIH.
+  intros T H.
+  pfold.
+
+  destruct T as [| p sh next | p sh next].
+
+  - (* End *)
+    cbn [make_si stc_pure_to_siR].
+    exact Coq.Init.Logic.I.
+
+  - (* Send: preserve all branches *)
+    cbn [make_si stc_pure_to_siR].
+
+    split.
+    + reflexivity.
+
+    + unfold stc_pure_branches_bisim.
+      exists eq_refl.
+      intro i.
+
+      destruct (fin_nth (branch_labels sh) i)
+        as [lbl sr] eqn:Hbranch.
+cbn.
+      rewrite Hbranch.
+      cbn.
+
+      repeat split; try reflexivity.
+
+      right.
+      apply CIH.
+
+      exact (nonempty_pure_send_next p sh next H i).
+
+  - (* Receive: select one branch *)
+    destruct (choose_branch sh)
+      as [i |] eqn:Hchoose.
+
+    + (* Some i *)
+      destruct (fin_nth (branch_labels sh) i)
+        as [lbl sr] eqn:Hbranch.
+
+      cbn [make_si stc_pure_to_siR].
+
+      rewrite Hchoose.
+      rewrite Hbranch.
+      cbn beta iota zeta.
+
+      split.
+      * reflexivity.
+
+      * exists i.
+        exists (@Fin.F1 0).
+
+        repeat split.
+
+        -- exact Hbranch.
+
+        -- right.
+           apply CIH.
+           exact
+             (nonempty_pure_receive_next
+                p sh next H i).
+
+    + (* None: impossible *)
+      exfalso.
+
+      destruct
+        (nonempty_pure_receive_has_branch
+           p sh next H)
+        as [i _].
+
+      eapply choose_branch_none.
+      * exact Hchoose.
+      * exact i.
+Qed.
+
+Theorem stc_pure_si_exists :
+  forall T : stc_pure,
+    nonempty_pure T ->
+    exists V : stc_pure,
+      stc_pure_to_si T V.
+Proof.
+  intros T H.
+  exists (make_si T).
+  apply make_si_correct.
+  exact H.
+Qed.
+
+Lemma stc_pure_to_soR_mon :
+  monotone2 stc_pure_to_soR.
+Proof.
+  unfold monotone2.
+  intros T U R R' Hrel H.
+
+  destruct T as [| p sh1 next1 | p sh1 next1];
+  destruct U as [| q sh2 next2 | q sh2 next2];
+  simpl in *;
+  try contradiction;
+  auto.
+
+  - (* Send: select one output branch *)
+    destruct Hrel as
+      [Hp [i [j [Hkey [Hlen Hrec]]]]].
+
+    split.
+    + exact Hp.
+    + exists i, j.
+      repeat split; try assumption.
+      apply H.
+      exact Hrec.
+
+  - (* Receive: preserve all input branches *)
+    destruct Hrel as [Hp Hbranches].
+
+    split.
+    + exact Hp.
+    + unfold stc_pure_branches_bisim in *.
+
+      destruct Hbranches as [Hlen Hnext].
+
+      exists Hlen.
+      intro i.
+
+      specialize (Hnext i).
+
+      destruct (fin_nth (branch_labels sh1) i)
+        as [lbl1 sr1].
+
+      destruct
+        (fin_nth
+          (branch_labels sh2)
+          (eq_rect
+            (List.length (branch_labels sh1))
+            Fin.t i
+            (List.length (branch_labels sh2))
+            Hlen))
+        as [lbl2 sr2].
+
+      cbn in *.
+
+      destruct Hnext as [Hl [Hs Hrec]].
+
+      repeat split; try assumption.
+
+      apply H.
+      exact Hrec.
+Qed.
+
+Lemma so_si_send_match :
+  forall p sh next shu nextu shv nextv,
+
+    stc_pure_to_so
+      (stc_pure_send p sh next)
+      (stc_pure_send p shu nextu) ->
+
+    stc_pure_to_si
+      (stc_pure_send p sh next)
+      (stc_pure_send p shv nextv) ->
+
+    exists (i : branch_pos sh)
+           (j : branch_pos shu)
+           (k : branch_pos shv),
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shu) j /\
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shv) k.
+Proof.
+  intros p sh next shu nextu shv nextv Hso Hsi.
+
+  punfold Hso.
+  punfold Hsi.
+
+  cbn [stc_pure_to_soR] in Hso.
+  cbn [stc_pure_to_siR] in Hsi.
+
+  destruct Hso as
+    [_ [i [j [Hkey [_ Hrec]]]]].
+
+  destruct Hsi as [_ Hbranches].
+
+  unfold stc_pure_branches_bisim in Hbranches.
+
+  destruct Hbranches as [Hlen Hnext].
+
+  exists i, j.
+
+  exists
+    (eq_rect
+       (List.length (branch_labels sh))
+       Fin.t i
+       (List.length (branch_labels shv))
+       Hlen).
+
+  split.
+  - exact Hkey.
+
+  - specialize (Hnext i).
+
+    destruct (fin_nth (branch_labels sh) i)
+      as [lbl sr] eqn:Hi.
+
+    destruct
+      (fin_nth
+        (branch_labels shv)
+        (eq_rect
+           (List.length (branch_labels sh))
+           Fin.t i
+           (List.length (branch_labels shv))
+           Hlen))
+      as [lbl' sr'] eqn:Hk.
+
+    cbn in Hnext.
+
+    destruct Hnext as [Hl [Hs Hr]].
+    subst. easy.
+    apply stc_pure_to_siR_mon.
+    apply stc_pure_to_soR_mon.
+Qed.
+
+Lemma so_si_send_match_strong :
+  forall p sh next shu nextu shv nextv,
+
+    stc_pure_to_so
+      (stc_pure_send p sh next)
+      (stc_pure_send p shu nextu) ->
+
+    stc_pure_to_si
+      (stc_pure_send p sh next)
+      (stc_pure_send p shv nextv) ->
+
+    exists (i : branch_pos sh)
+           (j : branch_pos shu)
+           (k : branch_pos shv),
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shu) j /\
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shv) k /\
+
+      stc_pure_to_so (next i) (nextu j) /\
+
+      stc_pure_to_si (next i) (nextv k).
+Proof.
+  intros p sh next shu nextu shv nextv Hso Hsi.
+
+  punfold Hso.
+  punfold Hsi.
+
+  cbn [stc_pure_to_soR] in Hso.
+  cbn [stc_pure_to_siR] in Hsi.
+
+  destruct Hso as
+    [_ [i [j [Hkey [Hsingleton HrecSO]]]]].
+
+  destruct Hsi as [_ Hbranches].
+
+  unfold stc_pure_branches_bisim in Hbranches.
+
+  destruct Hbranches as [Hlen Hnext].
+
+  set (k :=
+    eq_rect
+      (List.length (branch_labels sh))
+      Fin.t i
+      (List.length (branch_labels shv))
+      Hlen).
+
+  specialize (Hnext i).
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hi.
+
+  destruct (fin_nth (branch_labels shv) k)
+    as [lbl' sr'] eqn:Hk.
+
+  cbn in Hnext.
+
+change (
+  let '(a, b) := fin_nth (branch_labels shv) k in
+  lbl = a /\
+  sr = b /\
+  upaco2 stc_pure_to_siR bot2
+    (next i) (nextv k)
+) in Hnext.
+
+rewrite Hk in Hnext.
+cbn in Hnext.
+
+destruct Hnext as [Hl [Hs HrecSI]].
+
+  exists i, j, k.
+
+  split.
+
+  - rewrite Hi. subst.
+    exact Hkey.
+
+split.
+- rewrite Hi.
+  rewrite Hk.
+  now rewrite Hl, Hs.
+
+- split.
+  + (* Recursive SO *)
+    unfold stc_pure_to_so.
+    destruct HrecSO as [Hso | Hbot].
+    * exact Hso.
+    * contradiction.
+
+  + (* Recursive SI *)
+    unfold stc_pure_to_si.
+    destruct HrecSI as [Hsi | Hbot].
+    * exact Hsi.
+    * contradiction.
+    apply stc_pure_to_siR_mon.
+    apply stc_pure_to_soR_mon.
+Qed.
+
+Lemma so_si_receive_match :
+  forall p sh next shu nextu shv nextv,
+
+    stc_pure_to_so
+      (stc_pure_receive p sh next)
+      (stc_pure_receive p shu nextu) ->
+
+    stc_pure_to_si
+      (stc_pure_receive p sh next)
+      (stc_pure_receive p shv nextv) ->
+
+    exists (i : branch_pos sh)
+           (j : branch_pos shu)
+           (k : branch_pos shv),
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shu) j /\
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shv) k.
+Proof.
+  intros p sh next shu nextu shv nextv Hso Hsi.
+
+  punfold Hso.
+  punfold Hsi.
+
+  cbn [stc_pure_to_soR] in Hso.
+  cbn [stc_pure_to_siR] in Hsi.
+
+  (* SO preserves all receive branches. *)
+  destruct Hso as [_ Hbranches].
+
+  (* SI selects one receive branch. *)
+  destruct Hsi as
+    [_ [i [k [Hkey [_ Hrec]]]]].
+
+  unfold stc_pure_branches_bisim in Hbranches.
+
+  destruct Hbranches as [Hlen Hnext].
+
+  set (j :=
+    eq_rect
+      (List.length (branch_labels sh))
+      Fin.t i
+      (List.length (branch_labels shu))
+      Hlen).
+
+  specialize (Hnext i).
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hi.
+
+  destruct (fin_nth (branch_labels shu) j)
+    as [lbl' sr'] eqn:Hj.
+
+  change (
+    let '(a, b) := fin_nth (branch_labels shu) j in
+    lbl = a /\
+    sr = b /\
+    upaco2 stc_pure_to_soR bot2
+      (next i) (nextu j)
+  ) in Hnext.
+
+  rewrite Hj in Hnext.
+  cbn in Hnext.
+
+  destruct Hnext as [Hl [Hs HrecSO]].
+
+  exists i, j, k.
+
+  split.
+  - rewrite Hi.
+    rewrite Hj.
+    now rewrite Hl, Hs.
+
+rewrite Hi.
+exact Hkey.
+
+  apply stc_pure_to_siR_mon.
+  apply stc_pure_to_soR_mon.
+Qed.
+
+Lemma so_si_receive_match_strong :
+  forall p sh next shu nextu shv nextv,
+
+    stc_pure_to_so
+      (stc_pure_receive p sh next)
+      (stc_pure_receive p shu nextu) ->
+
+    stc_pure_to_si
+      (stc_pure_receive p sh next)
+      (stc_pure_receive p shv nextv) ->
+
+    exists (i : branch_pos sh)
+           (j : branch_pos shu)
+           (k : branch_pos shv),
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shu) j /\
+
+      fin_nth (branch_labels sh) i =
+      fin_nth (branch_labels shv) k /\
+
+      stc_pure_to_so (next i) (nextu j) /\
+
+      stc_pure_to_si (next i) (nextv k).
+Proof.
+  intros p sh next shu nextu shv nextv Hso Hsi.
+
+  punfold Hso.
+  punfold Hsi.
+
+  cbn [stc_pure_to_soR] in Hso.
+  cbn [stc_pure_to_siR] in Hsi.
+
+  (* SO preserves all receive branches. *)
+  destruct Hso as [_ Hbranches].
+
+  (* SI selects exactly one receive branch. *)
+  destruct Hsi as
+    [_ [i [k [Hkey [Hsingleton HrecSI]]]]].
+
+  unfold stc_pure_branches_bisim in Hbranches.
+
+  destruct Hbranches as [Hlen Hnext].
+
+  set (j :=
+    eq_rect
+      (List.length (branch_labels sh))
+      Fin.t i
+      (List.length (branch_labels shu))
+      Hlen).
+
+  specialize (Hnext i).
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hi.
+
+  destruct (fin_nth (branch_labels shu) j)
+    as [lbl' sr'] eqn:Hj.
+
+  change (
+    let '(a, b) := fin_nth (branch_labels shu) j in
+    lbl = a /\
+    sr = b /\
+    upaco2 stc_pure_to_soR bot2
+      (next i) (nextu j)
+  ) in Hnext.
+
+  rewrite Hj in Hnext.
+  cbn in Hnext.
+
+  destruct Hnext as [Hl [Hs HrecSO]].
+
+  exists i, j, k.
+
+  split.
+  - (* Source branch matches SO branch *)
+    rewrite Hi.
+    rewrite Hj.
+    now rewrite Hl, Hs.
+
+  - split.
+    + (* Source branch matches SI branch *)
+rewrite Hi.
+exact Hkey.
+
+    + split.
+      * (* Recursive SO decomposition *)
+        unfold stc_pure_to_so.
+        destruct HrecSO as [Hso' | Hbot].
+        -- exact Hso'.
+        -- contradiction.
+
+      * (* Recursive SI decomposition *)
+        unfold stc_pure_to_si.
+        destruct HrecSI as [Hsi' | Hbot].
+        -- exact Hsi'.
+        -- contradiction.
+
+  apply stc_pure_to_siR_mon.
+  apply stc_pure_to_soR_mon.
+Qed.
+
+Record intersection_state : Type := {
+  int_T : stc_pure;
+  int_U : stc_pure;
+  int_V : stc_pure;
+
+  int_so :
+    stc_pure_to_so int_T int_U;
+
+  int_si :
+    stc_pure_to_si int_T int_V
+}.
+
+Definition make_intersection_state
+  (T U V : stc_pure)
+  (Hso : stc_pure_to_so T U)
+  (Hsi : stc_pure_to_si T V)
+  : intersection_state :=
+  {|
+    int_T := T;
+    int_U := U;
+    int_V := V;
+    int_so := Hso;
+    int_si := Hsi
+  |}.
+
+Inductive intersection_layer : Type :=
+| int_end :
+    intersection_layer
+
+| int_send :
+    forall (p : string)
+           (lbl : string)
+           (sr : sort),
+      intersection_state ->
+      intersection_layer
+
+| int_receive :
+    forall (p : string)
+           (lbl : string)
+           (sr : sort),
+      intersection_state ->
+      intersection_layer.
+
+Definition valid_intersection_layer
+  (S : intersection_state)
+  (L : intersection_layer) : Prop :=
+
+  match L with
+
+  | int_end =>
+      int_T S = stc_pure_end /\
+      int_U S = stc_pure_end /\
+      int_V S = stc_pure_end
+
+  | int_send p lbl sr S' =>
+      exists sh next shu nextu shv nextv,
+
+        int_T S = stc_pure_send p sh next /\
+
+        int_U S = stc_pure_send p shu nextu /\
+
+        int_V S = stc_pure_send p shv nextv /\
+
+        exists (i : branch_pos sh)
+               (j : branch_pos shu)
+               (k : branch_pos shv),
+
+          fin_nth (branch_labels sh) i = (lbl, sr) /\
+
+          fin_nth (branch_labels shu) j = (lbl, sr) /\
+
+          fin_nth (branch_labels shv) k = (lbl, sr) /\
+
+          List.length (branch_labels shu) = 1 /\
+
+          int_T S' = next i /\
+          int_U S' = nextu j /\
+          int_V S' = nextv k
+
+  | int_receive p lbl sr S' =>
+      exists sh next shu nextu shv nextv,
+
+        int_T S = stc_pure_receive p sh next /\
+
+        int_U S = stc_pure_receive p shu nextu /\
+
+        int_V S = stc_pure_receive p shv nextv /\
+
+        exists (i : branch_pos sh)
+               (j : branch_pos shu)
+               (k : branch_pos shv),
+
+          fin_nth (branch_labels sh) i = (lbl, sr) /\
+
+          fin_nth (branch_labels shu) j = (lbl, sr) /\
+
+          fin_nth (branch_labels shv) k = (lbl, sr) /\
+
+          List.length (branch_labels shv) = 1 /\
+
+          int_T S' = next i /\
+          int_U S' = nextu j /\
+          int_V S' = nextv k
+
+  end.
+
+Lemma intersection_layer_exists :
+  forall S : intersection_state,
+    exists L : intersection_layer,
+      valid_intersection_layer S L.
+Proof.
+  intros [T U V Hso Hsi].
+  simpl.
+
+  destruct T as
+    [| p sh next
+     | p sh next].
+
+- (* End case *)
+  assert (HU : U = stc_pure_end).
+  {
+    pose proof Hso as Hso'.
+    punfold Hso'.
+
+    destruct U as
+      [| p sh next
+       | p sh next].
+
+    - reflexivity.
+    - cbn [stc_pure_to_soR] in Hso'.
+      contradiction.
+    - cbn [stc_pure_to_soR] in Hso'.
+      contradiction.
+
+    apply stc_pure_to_soR_mon.
+  }
+
+  assert (HV : V = stc_pure_end).
+  {
+    pose proof Hsi as Hsi'.
+    punfold Hsi'.
+
+    destruct V as
+      [| p sh next
+       | p sh next].
+
+    - reflexivity.
+    - cbn [stc_pure_to_siR] in Hsi'.
+      contradiction.
+    - cbn [stc_pure_to_siR] in Hsi'.
+      contradiction.
+
+    apply stc_pure_to_siR_mon.
+  }
+
+  subst U V.
+
+  exists int_end.
+  unfold valid_intersection_layer.
+  simpl.
+  repeat split; reflexivity.
+
+
+assert (HU :
+  exists q shu nextu,
+    U = stc_pure_send q shu nextu).
+{
+  pose proof Hso as Hso'.
+  punfold Hso'.
+  destruct U as [| q shu nextu | q shu nextu];
+    cbn [stc_pure_to_soR] in Hso';
+    try contradiction.
+  eexists _, _, _.
+  reflexivity.
+  apply stc_pure_to_soR_mon.
+}
+
+assert (HV :
+  exists q shv nextv,
+    V = stc_pure_send q shv nextv).
+{
+  pose proof Hsi as Hsi'.
+  punfold Hsi'.
+  destruct V as [| q shv nextv | q shv nextv];
+    cbn [stc_pure_to_siR] in Hsi';
+    try contradiction.
+  eexists _, _, _.
+  reflexivity.
+  apply stc_pure_to_siR_mon.
+}
+
+destruct HU as [q [shu [nextu HU]]].
+destruct HV as [q' [shv [nextv HV]]].
+
+subst U V.
+pose proof Hso as Hso'.
+pose proof Hsi as Hsi'.
+
+punfold Hso'.
+punfold Hsi'.
+
+cbn [stc_pure_to_soR] in Hso'.
+cbn [stc_pure_to_siR] in Hsi'.
+
+destruct Hso' as [Hp _].
+destruct Hsi' as [Hp' _].
+
+subst q q'.
+destruct
+  (so_si_send_match_strong
+     p sh next shu nextu shv nextv Hso Hsi)
+  as [i [j [k
+       [HkeyU [HkeyV [Hso_next Hsi_next]]]]]].
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hi.
+
+assert (Hsingleton : List.length (branch_labels shu) = 1).
+{
+  pose proof Hso as Hso'.
+  punfold Hso'.
+  cbn [stc_pure_to_soR] in Hso'.
+
+  destruct Hso' as [_ [i0 [j0 [_ [Hlen _]]]]].
+  exact Hlen.
+
+  apply stc_pure_to_soR_mon.
+}
+
+set (S' :=
+  {|
+    int_T := next i;
+    int_U := nextu j;
+    int_V := nextv k;
+    int_so := Hso_next;
+    int_si := Hsi_next
+  |} : intersection_state).
+
+exists (int_send p lbl sr S').
+
+unfold valid_intersection_layer.
+cbn.
+
+exists sh, next, shu, nextu, shv, nextv.
+repeat split; try reflexivity.
+
+exists i, j, k.
+
+repeat split.
+- exact Hi.
+- symmetry. exact HkeyU.
+- symmetry. exact HkeyV.
+- exact Hsingleton.
+apply stc_pure_to_siR_mon.
+apply stc_pure_to_soR_mon.
+
+assert (HU :
+  exists q shu nextu,
+    U = stc_pure_receive q shu nextu).
+{
+  pose proof Hso as Hso'.
+  punfold Hso'.
+
+  destruct U as [| q shu nextu | q shu nextu];
+    cbn [stc_pure_to_soR] in Hso';
+    try contradiction.
+
+  eexists _, _, _.
+  reflexivity.
+
+  apply stc_pure_to_soR_mon.
+}
+
+assert (HV :
+  exists q shv nextv,
+    V = stc_pure_receive q shv nextv).
+{
+  pose proof Hsi as Hsi'.
+  punfold Hsi'.
+
+  destruct V as [| q shv nextv | q shv nextv];
+    cbn [stc_pure_to_siR] in Hsi';
+    try contradiction.
+
+  eexists _, _, _.
+  reflexivity.
+
+  apply stc_pure_to_siR_mon.
+}
+
+destruct HU as [q [shu [nextu HU]]].
+destruct HV as [q' [shv [nextv HV]]].
+
+subst U V.
+
+pose proof Hso as Hso'.
+pose proof Hsi as Hsi'.
+
+punfold Hso'.
+punfold Hsi'.
+
+cbn [stc_pure_to_soR] in Hso'.
+cbn [stc_pure_to_siR] in Hsi'.
+
+destruct Hso' as [Hp _].
+destruct Hsi' as [Hp' _].
+
+subst q q'.
+
+destruct
+  (so_si_receive_match_strong
+     p sh next shu nextu shv nextv Hso Hsi)
+  as [i [j [k
+       [HkeyU [HkeyV [Hso_next Hsi_next]]]]]].
+
+assert (Hsingleton :
+  List.length (branch_labels shv) = 1).
+{
+  pose proof Hsi as Hsi'.
+  punfold Hsi'.
+  cbn [stc_pure_to_siR] in Hsi'.
+
+  destruct Hsi' as
+    [_ [i0 [k0 [_ [Hlen _]]]]].
+
+  exact Hlen.
+
+  apply stc_pure_to_siR_mon.
+}
+
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hi.
+
+set (S' :=
+  {|
+    int_T := next i;
+    int_U := nextu j;
+    int_V := nextv k;
+    int_so := Hso_next;
+    int_si := Hsi_next
+  |} : intersection_state).
+
+exists (int_receive p lbl sr S').
+
+unfold valid_intersection_layer.
+cbn.
+
+exists sh, next, shu, nextu, shv, nextv.
+
+repeat split; try reflexivity.
+
+exists i, j, k.
+
+repeat split.
+- exact Hi.
+- symmetry. exact HkeyU.
+- symmetry. exact HkeyV.
+- exact Hsingleton.
+apply stc_pure_to_siR_mon.
+apply stc_pure_to_soR_mon.
+Qed.
+
+
+Definition observe_intersection
+  (S : intersection_state)
+  : intersection_layer :=
+  proj1_sig
+    (constructive_indefinite_description
+       (fun L : intersection_layer =>
+          valid_intersection_layer S L)
+       (intersection_layer_exists S)).
+
+Lemma observe_intersection_correct :
+  forall S : intersection_state,
+    valid_intersection_layer
+      S (observe_intersection S).
+Proof.
+  intro S.
+  unfold observe_intersection.
+  destruct
+    (constructive_indefinite_description
+       (fun L : intersection_layer =>
+          valid_intersection_layer S L)
+       (intersection_layer_exists S))
+    as [L HL].
+  simpl.
+  exact HL.
+Qed.
+
+CoFixpoint make_intersection
+  (S : intersection_state) : stc_pure :=
+  match observe_intersection S with
+
+  | int_end =>
+      stc_pure_end
+
+  | int_send p lbl sr S' =>
+      stc_pure_send p
+        {| branch_labels := [(lbl, sr)] |}
+        (fun _ => make_intersection S')
+
+  | int_receive p lbl sr S' =>
+      stc_pure_receive p
+        {| branch_labels := [(lbl, sr)] |}
+        (fun _ => make_intersection S')
+
+  end.
+
+Lemma fin_unique_one :
+  forall i j : Fin.t 1,
+    i = j.
+Proof.
+  intros i j.
+  dependent destruction i.
+  dependent destruction j.
+  reflexivity.
+  inversion j.
+  inversion i.
+Qed.
+
+Lemma fin_unique_length_one :
+  forall (sh : branch_shape)
+         (Hlen : List.length (branch_labels sh) = 1)
+         (i j : branch_pos sh),
+    i = j.
+Proof.
+  intros sh Hlen i j.
+  unfold branch_pos in *.
+  subst.
+  revert i j.
+  rewrite Hlen.
+  intros.
+
+  apply fin_unique_one.
+Qed.
+
+Lemma fin_nth_singleton_any :
+  forall (A : Type) (x : A) (j : Fin.t 1),
+    fin_nth [x] j = x.
+Proof.
+  intros A x j.
+  assert (Hj : j = @Fin.F1 0).
+  {
+    apply fin_unique_one.
+  }
+  subst j.
+  reflexivity.
+Qed.
+
+Lemma make_intersection_left_correct :
+  forall S : intersection_state,
+    stc_pure_to_si
+      (int_U S)
+      (make_intersection S).
+Proof.
+  pcofix CIH.
+  intro S.
+  pfold.
+
+pose proof (observe_intersection_correct S) as Hvalid.
+destruct (observe_intersection S)
+  as [| p lbl sr S' | p lbl sr S']
+  eqn:Hobs.
+- (* End *)
+  cbn [valid_intersection_layer] in Hvalid.
+
+  destruct Hvalid as [_ [HU _]].
+
+  rewrite HU.
+
+  cbn [make_intersection stc_pure_to_siR].
+  rewrite Hobs.
+  simpl.
+
+  exact Coq.Init.Logic.I.
+
+- (* Send *)
+  cbn [valid_intersection_layer] in Hvalid.
+
+  destruct Hvalid as
+    [sh [next
+    [shu [nextu
+    [shv [nextv
+    [HT [HU [HV Hmatch]]]]]]]]].
+
+  destruct Hmatch as
+    [i [j [k
+      [Hi [Hj [Hk
+        [Hsingleton
+          [HT' [HU' HV']]]]]]]]].
+  rewrite HU.
+  cbn [make_intersection stc_pure_to_siR].
+  rewrite Hobs.
+  cbn.
+split.
+- reflexivity.
+- unfold stc_pure_branches_bisim.
+  exists Hsingleton.
+  intro i0.
+
+assert (Heq : i0 = j).
+{
+  apply fin_unique_length_one.
+  exact Hsingleton.
+}
+subst i0.
+rewrite Hj.
+cbn [branch_labels].
+
+rewrite fin_nth_singleton_any.
+cbn.
+
+repeat split; try reflexivity.
+
+
+rewrite <- HU'.
+right.
+apply CIH.
+
+
+cbn [valid_intersection_layer] in Hvalid.
+
+destruct Hvalid as
+  [sh [next
+  [shu [nextu
+  [shv [nextv
+  [HT [HU [HV Hmatch]]]]]]]]].
+
+destruct Hmatch as
+  [i [j [k
+    [Hi [Hj [Hk
+      [Hsingleton
+        [HT' [HU' HV']]]]]]]]].
+
+rewrite HU.
+
+cbn [make_intersection stc_pure_to_siR].
+rewrite Hobs.
+cbn.
+
+split.
+- reflexivity.
+
+- exists j.
+  exists (@Fin.F1 0).
+
+  repeat split.
+  + rewrite Hj.
+    reflexivity.
+
+  + right.
+    rewrite <- HU'.
+    apply CIH.
+Qed.
+
+Lemma make_intersection_right_correct :
+  forall S : intersection_state,
+    stc_pure_to_so
+      (int_V S)
+      (make_intersection S).
+Proof.
+  pcofix CIH.
+  intro S.
+  pfold.
+
+  pose proof
+    (observe_intersection_correct S)
+    as Hvalid.
+
+  destruct (observe_intersection S)
+    as [| p lbl sr S' | p lbl sr S']
+    eqn:Hobs.
+
+cbn [valid_intersection_layer] in Hvalid.
+destruct Hvalid as [_ [_ HV]].
+
+rewrite HV.
+
+cbn [make_intersection stc_pure_to_soR].
+rewrite Hobs.
+cbn.
+
+exact Coq.Init.Logic.I.
+
+cbn [valid_intersection_layer] in Hvalid.
+
+destruct Hvalid as
+  [sh [next
+  [shu [nextu
+  [shv [nextv
+  [HT [HU [HV Hmatch]]]]]]]]].
+
+destruct Hmatch as
+  [i [j [k
+    [Hi [Hj [Hk
+      [Hsingleton
+        [HT' [HU' HV']]]]]]]]].
+
+rewrite HV.
+
+cbn [make_intersection stc_pure_to_soR].
+rewrite Hobs.
+cbn.
+
+split.
+- reflexivity.
+
+- exists k.
+  exists (@Fin.F1 0).
+
+  repeat split.
+
+  + rewrite Hk.
+    reflexivity.
+
+  + right.
+    rewrite <- HV'.
+    apply CIH.
+
+cbn [valid_intersection_layer] in Hvalid.
+
+destruct Hvalid as
+  [sh [next
+  [shu [nextu
+  [shv [nextv
+  [HT [HU [HV Hmatch]]]]]]]]].
+
+destruct Hmatch as
+  [i [j [k
+    [Hi [Hj [Hk
+      [Hsingleton
+        [HT' [HU' HV']]]]]]]]].
+
+rewrite HV.
+
+cbn [make_intersection stc_pure_to_soR].
+rewrite Hobs.
+cbn.
+
+split.
+- reflexivity.
+
+- unfold stc_pure_branches_bisim.
+
+  exists Hsingleton.
+  intro i0.
+
+  assert (Heq : i0 = k).
+  {
+    apply fin_unique_length_one.
+    exact Hsingleton.
+  }
+
+  subst i0.
+
+cbn [branch_labels].
+rewrite fin_nth_singleton_any.
+cbn.
+
+    rewrite Hk.
+    cbn.
+
+    repeat split; try reflexivity.
+
+    right.
+    rewrite <- HV'.
+    apply CIH.
+Qed.
+
+Theorem stc_pure_decomposition_intersection :
+  forall T U V : stc_pure,
+    stc_pure_to_so T U ->
+    stc_pure_to_si T V ->
+    exists W : stc_pure,
+      stc_pure_to_si U W /\
+      stc_pure_to_so V W.
+Proof.
+  intros T U V Hso Hsi.
+
+  set (S :=
+    {|
+      int_T := T;
+      int_U := U;
+      int_V := V;
+      int_so := Hso;
+      int_si := Hsi
+    |} : intersection_state).
+
+  exists (make_intersection S).
+
+  split.
+  - change (stc_pure_to_si (int_U S) (make_intersection S)).
+    exact (make_intersection_left_correct S).
+
+  - change (stc_pure_to_so (int_V S) (make_intersection S)).
+    exact (make_intersection_right_correct S).
+Qed.
+ 
