@@ -10187,4 +10187,4231 @@ Proof.
   - change (stc_pure_to_so (int_V S) (make_intersection S)).
     exact (make_intersection_right_correct S).
 Qed.
- 
+
+(*uniformisation -- 3.15*)
+
+Record uniformisation_state : Type := {
+  uni_T : stc_pure;
+
+  uni_Y : stc_pure -> Prop;
+
+  uni_nonempty : nonempty_pure uni_T;
+
+  uni_H :
+    forall V,
+      stc_pure_to_si uni_T V ->
+      exists W,
+        stc_pure_to_so V W /\
+        uni_Y W
+}.
+
+Inductive uniformisation_layer : Type :=
+| uni_end :
+    uniformisation_layer
+
+| uni_send :
+    string -> string -> sort ->
+    uniformisation_state ->
+    uniformisation_layer
+
+| uni_receive :
+    forall (p : string) (sh : branch_shape),
+      (branch_pos sh -> uniformisation_state) ->
+      uniformisation_layer.
+
+From Coq Require Import Logic.ClassicalEpsilon.
+
+Lemma finite_uniform_choice :
+  forall (n : nat)
+         (A : Fin.t n -> Type)
+         (P : forall i : Fin.t n, A i -> Prop),
+
+    (forall i, inhabited (A i)) ->
+
+    (forall f : forall i, A i,
+       exists i, P i (f i)) ->
+
+    exists i,
+      forall x : A i, P i x.
+Proof.
+  intros n A P Hinh Hall.
+
+  apply NNPP.
+  intro Hnone.
+
+  assert (Hbad :
+    forall i : Fin.t n,
+      exists x : A i, ~ P i x).
+  {
+    intro i.
+
+    apply NNPP.
+    intro Hno.
+
+    apply Hnone.
+    exists i.
+
+    intro x.
+    apply NNPP.
+    intro Hnot.
+    apply Hno.
+    exists x.
+    exact Hnot.
+  }
+
+pose (f := fun i : Fin.t n =>
+  proj1_sig
+    (constructive_indefinite_description
+       (fun x : A i => ~ P i x)
+       (Hbad i))).
+
+assert (Hf : forall i, ~ P i (f i)).
+{
+  intro i.
+  unfold f.
+  exact
+    (proj2_sig
+       (constructive_indefinite_description
+          (fun x : A i => ~ P i x)
+          (Hbad i))).
+}
+
+destruct (Hall f) as [i Hi].
+exact (Hf i Hi).
+Qed.
+
+Definition send_residual
+  (Y : stc_pure -> Prop)
+  (p lbl : string)
+  (sr : sort)
+  : stc_pure -> Prop :=
+  fun W =>
+    Y
+      (stc_pure_send p
+        {| branch_labels := [(lbl, sr)] |}
+        (fun _ => W)).
+
+Definition receive_residual
+  (Y : stc_pure -> Prop)
+  (p : string)
+  (lbl : string)
+  (sr : sort)
+  : stc_pure -> Prop :=
+  fun W =>
+    Y
+      (stc_pure_receive p
+        {| branch_labels := [(lbl, sr)] |}
+        (fun _ => W)).
+
+Definition receive_residual_exists
+  (Y : stc_pure -> Prop)
+  (p lbl : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists (sh : branch_shape)
+         (next : branch_pos sh -> stc_pure)
+         (j : branch_pos sh),
+    List.length (branch_labels sh) = 1 /\
+    fin_nth (branch_labels sh) j = (lbl, sr) /\
+    next j = W /\
+    Y (stc_pure_receive p sh next).
+
+Definition send_residual_exists
+  (Y : stc_pure -> Prop)
+  (p lbl : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists (sh : branch_shape)
+         (next : branch_pos sh -> stc_pure)
+         (j : branch_pos sh),
+    List.length (branch_labels sh) = 1 /\
+    fin_nth (branch_labels sh) j = (lbl, sr) /\
+    next j = W /\
+    Y (stc_pure_send p sh next).
+
+Definition valid_uniformisation_layer
+  (S : uniformisation_state)
+  (L : uniformisation_layer) : Prop :=
+  match L with
+
+  | uni_end =>
+      uni_T S = stc_pure_end /\
+      uni_Y S stc_pure_end
+
+  | uni_send p lbl sr S' =>
+      exists (sh : branch_shape)
+             (next : branch_pos sh -> stc_pure)
+             (i : branch_pos sh),
+
+        uni_T S = stc_pure_send p sh next /\
+
+        fin_nth (branch_labels sh) i = (lbl, sr) /\
+
+        uni_T S' = next i /\
+
+        (forall W : stc_pure,
+           uni_Y S' W <->
+           send_residual_exists
+             (uni_Y S) p lbl sr W)
+
+  | uni_receive p sh children =>
+      exists (next : branch_pos sh -> stc_pure),
+
+        uni_T S = stc_pure_receive p sh next /\
+
+        (forall i : branch_pos sh,
+           uni_T (children i) = next i) /\
+
+        (forall i : branch_pos sh,
+           let '(lbl, sr) :=
+             fin_nth (branch_labels sh) i
+           in
+           forall W : stc_pure,
+             uni_Y (children i) W <->
+             receive_residual_exists
+               (uni_Y S) p lbl sr W)
+
+  end.
+
+Lemma so_end_inv :
+  forall U : stc_pure,
+    stc_pure_to_so stc_pure_end U ->
+    U = stc_pure_end.
+Proof.
+  intros U Hso.
+
+  punfold Hso.
+
+  destruct U as
+    [| p sh next
+     | p sh next];
+    cbn [stc_pure_to_soR] in Hso.
+
+  - reflexivity.
+  - contradiction.
+  - contradiction.
+
+  apply stc_pure_to_soR_mon.
+Qed.
+
+Lemma si_send_congruence :
+  forall (p : string)
+         (sh : branch_shape)
+         (next next' : branch_pos sh -> stc_pure),
+
+    (forall i : branch_pos sh,
+       stc_pure_to_si (next i) (next' i)) ->
+
+    stc_pure_to_si
+      (stc_pure_send p sh next)
+      (stc_pure_send p sh next').
+Proof.
+  intros p sh next next' Hnext.
+
+  unfold stc_pure_to_si.
+  pfold.
+
+  cbn [stc_pure_to_siR].
+
+  split.
+  - reflexivity.
+
+  - unfold stc_pure_branches_bisim.
+
+    exists eq_refl.
+    intro i.
+
+    destruct (fin_nth (branch_labels sh) i)
+      as [lbl sr] eqn:Hkey.
+
+    cbn.
+    repeat split; try reflexivity.
+
+rewrite Hkey.
+cbn.
+
+repeat split; try reflexivity.
+
+left.
+apply Hnext.
+Qed.
+
+Lemma so_send_singleton_inv :
+  forall p sh next W,
+    stc_pure_to_so
+      (stc_pure_send p sh next) W ->
+    exists (sh' : branch_shape)
+           (next' : branch_pos sh' -> stc_pure)
+           (i : branch_pos sh)
+           (j : branch_pos sh'),
+      W = stc_pure_send p sh' next' /\
+      List.length (branch_labels sh') = 1 /\
+      fin_nth (branch_labels sh) i =
+        fin_nth (branch_labels sh') j /\
+      stc_pure_to_so (next i) (next' j).
+Proof.
+  intros p sh next W Hso.
+
+  pose proof Hso as Hso'.
+  punfold Hso'.
+
+  destruct W as
+    [| q sh' next'
+     | q sh' next'];
+    cbn [stc_pure_to_soR] in Hso';
+    try contradiction.
+
+  destruct Hso' as
+    [Hp [i [j [Hkey [Hsingleton Hrec]]]]].
+
+  subst q.
+
+  exists sh', next', i, j.
+
+  split; try reflexivity.
+  split. easy. split. easy.
+  unfold stc_pure_to_so.
+  destruct Hrec as [Hrec | Hbot].
+    + exact Hrec.
+    + contradiction.
+
+  apply stc_pure_to_soR_mon.
+Qed.
+
+Definition si_witness
+  (T : stc_pure) : Type :=
+  { V : stc_pure |
+      stc_pure_to_si T V }.
+
+Lemma si_witness_inhabited :
+  forall T,
+    nonempty_pure T ->
+    inhabited (si_witness T).
+Proof.
+  intros T HT.
+
+  destruct (stc_pure_si_exists T HT)
+    as [V HV].
+
+  constructor.
+  exists V.
+  exact HV.
+Qed.
+
+Definition send_branch_success
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (Y : stc_pure -> Prop)
+  (i : branch_pos sh)
+  (X : si_witness (next i)) : Prop :=
+
+  let '(lbl, sr) :=
+    fin_nth (branch_labels sh) i
+  in
+
+  exists W,
+    stc_pure_to_so (proj1_sig X) W /\
+    send_residual_exists Y p lbl sr W.
+
+Lemma uniformisation_send_family :
+  forall p sh next Y,
+
+    (forall V,
+       stc_pure_to_si
+         (stc_pure_send p sh next) V ->
+       exists W,
+         stc_pure_to_so V W /\
+         Y W) ->
+
+    forall f :
+      forall i : branch_pos sh,
+        si_witness (next i),
+
+    exists i : branch_pos sh,
+      send_branch_success
+        p sh next Y i (f i).
+Proof.
+  intros p sh next Y HY f.
+
+  set (nextV :=
+    fun i : branch_pos sh =>
+      proj1_sig (f i)).
+
+  assert (Hsi :
+    stc_pure_to_si
+      (stc_pure_send p sh next)
+      (stc_pure_send p sh nextV)).
+  {
+    apply si_send_congruence.
+    intro i.
+    exact (proj2_sig (f i)).
+  }
+
+  destruct
+    (HY (stc_pure_send p sh nextV) Hsi)
+    as [Wfull [Hsofull HYfull]].
+
+  destruct
+    (so_send_singleton_inv
+       p sh nextV Wfull Hsofull)
+    as [sh' [next'
+        [i [j
+          [HWfull
+            [Hsingleton
+              [Hkey Hrec]]]]]]].
+
+  exists i.
+
+  unfold send_branch_success.
+  unfold send_residual_exists.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hi.
+
+  simpl.
+
+  exists (next' j).
+
+  split.
+  - exact Hrec.
+
+  - exists sh', next', j.
+
+    repeat split.
+    + exact Hsingleton.
+    + rewrite <- Hkey. easy.
+    + rewrite HWfull in HYfull.
+      exact HYfull.
+Qed.
+
+Lemma uniformisation_send_choice_exists :
+  forall p sh next Y,
+
+    nonempty_pure (stc_pure_send p sh next) ->
+
+    (forall V,
+       stc_pure_to_si
+         (stc_pure_send p sh next) V ->
+       exists W,
+         stc_pure_to_so V W /\ Y W) ->
+
+    exists i : branch_pos sh,
+      let '(lbl, sr) :=
+        fin_nth (branch_labels sh) i
+      in
+      forall V,
+        stc_pure_to_si (next i) V ->
+        exists W,
+          stc_pure_to_so V W /\
+          send_residual_exists Y p lbl sr W.
+Proof.
+  intros p sh next Y Hnonempty HY.
+
+  (* Apply the finite uniform-choice principle. *)
+  assert (Hchoice :
+    exists i : branch_pos sh,
+      forall X : si_witness (next i),
+        send_branch_success
+          p sh next Y i X).
+  {
+    apply finite_uniform_choice.
+
+    - (* Every continuation has an SI decomposition. *)
+      intro i.
+
+      apply si_witness_inhabited.
+
+      exact
+        (nonempty_pure_send_next
+           p sh next Hnonempty i).
+
+    - (* Every family has a successful branch. *)
+      intro f.
+
+      eapply uniformisation_send_family.
+      + exact HY.
+  }
+
+  destruct Hchoice as [i Hi].
+
+  exists i.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  cbn.
+
+  intros V Hsi.
+
+specialize
+  (Hi (exist
+         (fun V0 : stc_pure =>
+            stc_pure_to_si (next i) V0)
+         V Hsi)).
+
+unfold send_branch_success in Hi.
+
+rewrite Hkey in Hi.
+cbn in Hi.
+
+exact Hi.
+Qed.
+
+Definition singleton_receive
+  (p lbl : string)
+  (sr : sort)
+  (V : stc_pure) : stc_pure :=
+  stc_pure_receive p
+    {| branch_labels := [(lbl, sr)] |}
+    (fun _ => V).
+
+Lemma si_receive_singleton :
+  forall (p : string)
+         (sh : branch_shape)
+         (next : branch_pos sh -> stc_pure)
+         (i : branch_pos sh)
+         (V : stc_pure),
+
+    stc_pure_to_si (next i) V ->
+
+    let '(lbl, sr) :=
+      fin_nth (branch_labels sh) i
+    in
+    stc_pure_to_si
+      (stc_pure_receive p sh next)
+      (singleton_receive p lbl sr V).
+Proof.
+  intros p sh next i V Hsi.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  cbn.
+
+  unfold stc_pure_to_si.
+  pfold.
+
+  cbn [stc_pure_to_siR].
+
+  split.
+  - reflexivity.
+
+  - exists i.
+    exists (@Fin.F1 0).
+
+    repeat split.
+    + rewrite Hkey.
+      reflexivity.
+    + left.
+      exact Hsi.
+Qed.
+
+Lemma so_singleton_receive_inv :
+  forall p lbl sr V Wfull,
+
+    stc_pure_to_so
+      (singleton_receive p lbl sr V)
+      Wfull ->
+
+    exists Wnext,
+      stc_pure_to_so V Wnext /\
+      receive_residual_exists
+        (fun X => X = Wfull)
+        p lbl sr Wnext.
+Proof.
+  intros p lbl sr V Wfull Hso.
+
+  pose proof Hso as Hso'.
+  punfold Hso'.
+
+  destruct Wfull as
+    [| q sh' next'
+     | q sh' next'];
+    cbn [singleton_receive stc_pure_to_soR] in Hso';
+    try contradiction.
+
+  destruct Hso' as [Hp Hbranches].
+  subst q.
+
+  unfold stc_pure_branches_bisim in Hbranches.
+
+  destruct Hbranches as [Hlen Hnext].
+
+  set (j :=
+    eq_rect
+      1
+      Fin.t
+      (@Fin.F1 0)
+      (List.length (branch_labels sh'))
+      Hlen).
+
+  specialize (Hnext (@Fin.F1 0)).
+
+  cbn in Hnext.
+
+  destruct (fin_nth (branch_labels sh') j)
+    as [lbl' sr'] eqn:Hkey.
+
+unfold j in Hkey.
+rewrite Hkey in Hnext.
+cbn in Hnext.
+
+destruct Hnext as [Hl [Hs Hrec]].
+
+exists (next' j).
+
+split.
+
+
+- (* Recursive SO decomposition *)
+  unfold stc_pure_to_so.
+  destruct Hrec as [Hrec | Hbot].
+  + exact Hrec.
+  + contradiction.
+
+- (* Receive residual *)
+  unfold receive_residual_exists.
+
+  exists sh', next', j.
+
+  repeat split.
+  + symmetry.
+    exact Hlen.
+unfold j.
+rewrite Hkey.
+rewrite Hl, Hs.
+reflexivity.
+
+  apply stc_pure_to_soR_mon.
+Qed.
+
+
+Lemma uniformisation_receive_choice_exists :
+  forall p sh next Y,
+
+    (forall V,
+       stc_pure_to_si
+         (stc_pure_receive p sh next) V ->
+       exists W,
+         stc_pure_to_so V W /\
+         Y W) ->
+
+    forall i : branch_pos sh,
+
+      let '(lbl, sr) :=
+        fin_nth (branch_labels sh) i
+      in
+
+      forall V,
+        stc_pure_to_si (next i) V ->
+
+        exists W,
+          stc_pure_to_so V W /\
+          receive_residual_exists
+            Y p lbl sr W.
+Proof.
+  intros p sh next Y HY i.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  cbn.
+
+  intros V Hsi.
+
+  assert (Hfull :
+    stc_pure_to_si
+      (stc_pure_receive p sh next)
+      (singleton_receive p lbl sr V)).
+  {
+    pose proof
+      (si_receive_singleton p sh next i V Hsi)
+      as H.
+
+    rewrite Hkey in H.
+    cbn in H.
+    exact H.
+  }
+
+  destruct (HY _ Hfull)
+    as [Wfull [Hsofull HYfull]].
+
+  destruct
+    (so_singleton_receive_inv
+       p lbl sr V Wfull Hsofull)
+    as [Wnext [Hso_next Hres]].
+
+  exists Wnext.
+
+  split.
+  - exact Hso_next.
+
+  - unfold receive_residual_exists in *.
+
+    destruct Hres as
+      [sh' [next' [j
+        [Hlen [Hkey' [Hnext' HWfull]]]]]].
+
+    exists sh', next', j.
+
+    repeat split; try assumption.
+
+    rewrite HWfull.
+    exact HYfull.
+Qed.
+
+Definition make_receive_child
+  (p : string)
+  (sh : branch_shape)
+  (next : branch_pos sh -> stc_pure)
+  (Y : stc_pure -> Prop)
+  (Hnonempty : nonempty_pure (stc_pure_receive p sh next))
+  (HY :
+    forall V,
+      stc_pure_to_si
+        (stc_pure_receive p sh next) V ->
+      exists W,
+        stc_pure_to_so V W /\ Y W)
+  (i : branch_pos sh)
+  : uniformisation_state.
+Proof.
+  refine
+    {|
+      uni_T := next i;
+
+      uni_Y :=
+        let '(lbl, sr) :=
+          fin_nth (branch_labels sh) i
+        in receive_residual_exists Y p lbl sr;
+
+      uni_nonempty :=
+        nonempty_pure_receive_next
+          p sh next Hnonempty i;
+
+      uni_H := _
+    |}.
+
+intros V Hsi.
+
+pose proof
+  (uniformisation_receive_choice_exists
+     p sh next Y HY i)
+  as Hchoice.
+
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hkey
+  in Hchoice |- *.
+
+cbn in Hchoice |- *.
+
+exact (Hchoice V Hsi).
+
+Defined.
+
+Lemma make_receive_child_T :
+  forall p sh next Y
+         (Hnonempty :
+            nonempty_pure (stc_pure_receive p sh next))
+         (HY :
+            forall V,
+              stc_pure_to_si
+                (stc_pure_receive p sh next) V ->
+              exists W,
+                stc_pure_to_so V W /\ Y W)
+         (i : branch_pos sh),
+    uni_T
+      (make_receive_child
+         p sh next Y Hnonempty HY i)
+    = next i.
+Proof.
+  intros.
+  unfold make_receive_child.
+  cbn.
+  reflexivity.
+Qed.
+
+Lemma uniformisation_layer_exists :
+  forall S : uniformisation_state,
+    exists L : uniformisation_layer,
+      valid_uniformisation_layer S L.
+Proof.
+  intros [T Y Hnonempty HY].
+  simpl in *.
+
+  destruct T as [| p sh next | p sh next].
+
+  - (* End *)
+    assert (Hsi :
+      stc_pure_to_si stc_pure_end stc_pure_end).
+    {
+      unfold stc_pure_to_si.
+      pfold.
+      simpl.
+      exact Coq.Init.Logic.I.
+    }
+
+    destruct (HY stc_pure_end Hsi)
+      as [W [Hso HW]].
+
+    apply so_end_inv in Hso.
+    subst W.
+
+    exists uni_end.
+    simpl.
+    split; [reflexivity | exact HW].
+
+  - (* Send *)
+    destruct
+      (uniformisation_send_choice_exists
+         p sh next Y Hnonempty HY)
+      as [i Hchoice].
+
+    destruct (fin_nth (branch_labels sh) i)
+      as [lbl sr] eqn:Hkey.
+set (S' :=
+  {|
+    uni_T := next i;
+    uni_Y := send_residual_exists Y p lbl sr;
+    uni_nonempty :=
+      nonempty_pure_send_next
+        p sh next Hnonempty i;
+    uni_H := Hchoice
+  |} : uniformisation_state).
+
+exists (uni_send p lbl sr S').
+
+unfold valid_uniformisation_layer.
+cbn.
+
+exists sh, next, i.
+
+repeat split.
+- exact Hkey.
+easy. easy.
+
+set (children :=
+  fun i : branch_pos sh =>
+    make_receive_child p sh next Y Hnonempty HY i).
+
+exists (uni_receive p sh children).
+
+unfold valid_uniformisation_layer.
+cbn.
+
+exists next. split. easy.
+
+split.
+- (* The child has the correct source continuation. *)
+  intro i.
+  unfold children.
+  unfold make_receive_child.
+  cbn.
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hkey.
+  easy.
+
+- (* The child carries the correct residual predicate. *)
+  intro i.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  intro W.
+
+  unfold children.
+  unfold make_receive_child. easy.
+Qed.
+
+From Coq Require Import Logic.ClassicalEpsilon.
+
+Definition observe_uniformisation
+  (S : uniformisation_state)
+  : uniformisation_layer :=
+  proj1_sig
+    (constructive_indefinite_description
+       (fun L : uniformisation_layer =>
+          valid_uniformisation_layer S L)
+       (uniformisation_layer_exists S)).
+
+Lemma observe_uniformisation_correct :
+  forall S : uniformisation_state,
+    valid_uniformisation_layer
+      S (observe_uniformisation S).
+Proof.
+  intro S.
+  unfold observe_uniformisation.
+
+  destruct
+    (constructive_indefinite_description
+       (fun L : uniformisation_layer =>
+          valid_uniformisation_layer S L)
+       (uniformisation_layer_exists S))
+    as [L HL].
+
+  simpl.
+  exact HL.
+Qed.
+
+CoFixpoint make_uniform_so
+  (S : uniformisation_state) : stc_pure :=
+  match observe_uniformisation S with
+  | uni_end =>
+      stc_pure_end
+  | uni_send p lbl sr S' =>
+      stc_pure_send p
+        {| branch_labels := [(lbl, sr)] |}
+        (fun _ => make_uniform_so S')
+  | uni_receive p sh children =>
+      stc_pure_receive p sh
+        (fun i => make_uniform_so (children i))
+  end.
+
+Definition uniformisation_candidate
+  (S : uniformisation_state)
+  (U : stc_pure) : Prop :=
+  stc_pure_to_so (uni_T S) U /\
+  forall W,
+    stc_pure_to_si U W ->
+    uni_Y S W.
+
+Definition uniformisable
+  (T : stc_pure)
+  (Y : stc_pure -> Prop) : Prop :=
+  (forall V,
+     stc_pure_to_si T V ->
+     exists W,
+       stc_pure_to_so V W /\ Y W) ->
+  exists U,
+    stc_pure_to_so T U /\
+    forall W,
+      stc_pure_to_si U W ->
+      Y W.
+
+Lemma make_uniform_so_correct :
+  forall S : uniformisation_state,
+    stc_pure_to_so
+      (uni_T S)
+      (make_uniform_so S).
+Proof.
+  pcofix CIH.
+  intro S.
+  pfold.
+
+  pose proof
+    (observe_uniformisation_correct S)
+    as Hvalid.
+
+  destruct (observe_uniformisation S)
+    as [| p lbl sr S' | p sh children]
+    eqn:Hobs.
+
+- (* End case *)
+  cbn [valid_uniformisation_layer] in Hvalid.
+
+  destruct Hvalid as [HT HY].
+
+  rewrite HT.
+
+  cbn [make_uniform_so stc_pure_to_soR].
+  rewrite Hobs.
+  cbn.
+
+  exact Coq.Init.Logic.I.
+
+cbn [valid_uniformisation_layer] in Hvalid.
+
+destruct Hvalid as
+  [sh [next [i [HT [Hkey [HT' Hres]]]]]].
+rewrite HT.
+
+cbn [make_uniform_so stc_pure_to_soR].
+rewrite Hobs.
+cbn.
+split.
+- reflexivity.
+
+- exists i.
+  exists (@Fin.F1 0).
+
+  repeat split.
+
+  + (* Branch labels match *)
+    rewrite Hkey.
+    reflexivity.
+  + (* Recursive SO decomposition *)
+    right.
+    rewrite <- HT'.
+    apply CIH.
+
+- (* Receive *)
+  cbn [valid_uniformisation_layer] in Hvalid.
+
+  destruct Hvalid as
+    [next [HT [Hchildren Hres]]].
+
+  rewrite HT.
+
+  cbn [make_uniform_so stc_pure_to_soR].
+  rewrite Hobs.
+  cbn.
+
+  split.
+  + reflexivity.
+
+  + unfold stc_pure_branches_bisim.
+
+    exists eq_refl.
+    intro i.
+
+    destruct (fin_nth (branch_labels sh) i)
+      as [lbl sr] eqn:Hkey.
+
+cbn.
+rewrite Hkey.
+cbn.
+
+repeat split; try reflexivity.
+
+right.
+rewrite <- (Hchildren i).
+apply CIH.
+Qed.
+
+Lemma si_end_inv :
+  forall W : stc_pure,
+    stc_pure_to_si stc_pure_end W ->
+    W = stc_pure_end.
+Proof.
+  intros W Hsi.
+  punfold Hsi.
+
+  destruct W as
+    [| p sh next
+     | p sh next];
+    cbn [stc_pure_to_siR] in Hsi;
+    try contradiction;
+    reflexivity.
+
+  apply stc_pure_to_siR_mon.
+Qed.
+
+Definition observe_pure (T : stc_pure) : stc_pure :=
+  match T with
+  | stc_pure_end =>
+      stc_pure_end
+  | stc_pure_send p sh next =>
+      stc_pure_send p sh next
+  | stc_pure_receive p sh next =>
+      stc_pure_receive p sh next
+  end.
+
+Lemma observe_pure_eq :
+  forall T : stc_pure,
+    T = observe_pure T.
+Proof.
+  intro T.
+  destruct T; reflexivity.
+Qed.
+
+Lemma make_uniform_so_unfold :
+  forall S : uniformisation_state,
+    make_uniform_so S =
+      match observe_uniformisation S with
+      | uni_end =>
+          stc_pure_end
+      | uni_send p lbl sr S' =>
+          stc_pure_send p
+            {| branch_labels := [(lbl, sr)] |}
+            (fun _ => make_uniform_so S')
+      | uni_receive p sh children =>
+          stc_pure_receive p sh
+            (fun i => make_uniform_so (children i))
+      end.
+Proof.
+  intro S.
+
+  rewrite (observe_pure_eq (make_uniform_so S)) at 1.
+  cbn.
+  unfold observe_pure.
+  cbn [make_uniform_so].
+destruct (observe_uniformisation S)
+  as [| p lbl sr S' | p sh children];
+  reflexivity.
+Qed.
+
+Fixpoint stc_pure_eq_depth
+  (n : nat)
+  (T U : stc_pure) : Prop :=
+  match n with
+  | 0 => True
+  | S n' =>
+      match T, U with
+      | stc_pure_end, stc_pure_end =>
+          True
+
+      | stc_pure_send p sh next,
+        stc_pure_send q sh' next' =>
+          p = q /\
+          exists H : sh = sh',
+            forall i : branch_pos sh,
+              stc_pure_eq_depth n'
+                (next i)
+                (next' (eq_rect sh branch_pos i sh' H))
+
+      | stc_pure_receive p sh next,
+        stc_pure_receive q sh' next' =>
+          p = q /\
+          exists H : sh = sh',
+            forall i : branch_pos sh,
+              stc_pure_eq_depth n'
+                (next i)
+                (next' (eq_rect sh branch_pos i sh' H))
+
+      | _, _ => False
+      end
+  end.
+
+Definition prefix_closed
+  (Y : stc_pure -> Prop) : Prop :=
+  forall W,
+    (forall n,
+       exists Wn,
+         Y Wn /\
+         stc_pure_eq_depth n W Wn) ->
+    Y W.
+
+Lemma fin_nth_length_one :
+  forall (A : Type)
+         (xs : list A)
+         (i : Fin.t (List.length xs)),
+    List.length xs = 1 ->
+    xs = [fin_nth xs i].
+Proof.
+  intros A xs i Hlen.
+
+  destruct xs as [| x xs].
+  - discriminate Hlen.
+
+  destruct xs as [| y xs].
+  - simpl.
+    assert (Hi : i = Fin.F1).
+    {
+dependent destruction i.
+- reflexivity.
+- inversion i.
+    }
+    subst i.
+    reflexivity.
+
+  - simpl in Hlen.
+    discriminate Hlen.
+Qed.
+
+Lemma singleton_shapes_equal :
+  forall (sh1 sh2 : branch_shape)
+         (i : branch_pos sh1)
+         (j : branch_pos sh2),
+
+    List.length (branch_labels sh1) = 1 ->
+
+    List.length (branch_labels sh2) = 1 ->
+
+    fin_nth (branch_labels sh1) i =
+    fin_nth (branch_labels sh2) j ->
+
+    sh1 = sh2.
+Proof.
+  intros [xs] [ys] i j Hlen1 Hlen2 Hkey.
+  simpl in *.
+
+  assert (Hxs : xs = [fin_nth xs i]).
+  {
+    apply fin_nth_length_one.
+    exact Hlen1.
+  }
+
+  assert (Hys : ys = [fin_nth ys j]).
+  {
+    apply fin_nth_length_one.
+    exact Hlen2.
+  }
+
+  rewrite Hxs.
+  rewrite Hys.
+  rewrite Hkey.
+
+  reflexivity.
+Qed.
+
+Lemma make_uniform_so_approximates_Y :
+  forall S W,
+    stc_pure_to_si (make_uniform_so S) W ->
+    forall n,
+      exists Wn,
+        uni_Y S Wn /\
+        stc_pure_eq_depth n W Wn.
+Proof.
+  intros S W Hsi n.
+  revert S W Hsi.
+  induction n as [| n IH].
+
+  - (* Base case *)
+    intros S W Hsi.
+
+    destruct
+      (stc_pure_si_exists
+         (uni_T S)
+         (uni_nonempty S))
+      as [V HV].
+
+    destruct (uni_H S V HV)
+      as [Wn [Hso HY]].
+
+    exists Wn.
+    split.
+    + exact HY.
+    + easy.
+
+  - (* Inductive case *)
+    intros S W Hsi.
+
+    pose proof
+      (observe_uniformisation_correct S)
+      as Hvalid.
+
+    destruct (observe_uniformisation S)
+      as [| p lbl sr S' | p sh children]
+      eqn:Hobs.
+
+destruct
+  (stc_pure_si_exists
+     (uni_T S)
+     (uni_nonempty S))
+  as [V HV].
+
+destruct (uni_H S V HV)
+  as [Wn [Hso HY]].
+
+exists Wn.
+split.
+- exact HY.
+cbn [valid_uniformisation_layer] in Hvalid.
+destruct Hvalid as [HT Hend].
+
+(* The constructed tree is end. *)
+rewrite make_uniform_so_unfold in Hsi.
+rewrite Hobs in Hsi.
+cbn in Hsi.
+
+apply si_end_inv in Hsi.
+subst W.
+
+(* The source tree is also end. *)
+rewrite HT in HV.
+apply si_end_inv in HV.
+subst V.
+
+(* Every SO decomposition of end is end. *)
+apply so_end_inv in Hso.
+subst Wn.
+
+simpl.
+easy.
+
+cbn [valid_uniformisation_layer] in Hvalid.
+
+destruct Hvalid as
+  [sh [next [i [HT [Hkey [HT' Hres]]]]]].
+rewrite make_uniform_so_unfold in Hsi.
+rewrite Hobs in Hsi.
+cbn in Hsi.
+pose proof Hsi as Hsi'.
+punfold Hsi'.
+
+destruct W as
+  [| q shw nextw
+   | q shw nextw];
+  cbn [stc_pure_to_siR] in Hsi';
+  try contradiction.
+destruct Hsi' as [Hp Hbranches].
+subst q.
+
+unfold stc_pure_branches_bisim in Hbranches.
+destruct Hbranches as [Hlen Hnext].
+specialize (Hnext (@Fin.F1 0)).
+
+set (j :=
+  eq_rect
+    1 Fin.t (@Fin.F1 0)
+    (List.length (branch_labels shw))
+    Hlen).
+
+cbn [branch_labels fin_nth] in Hnext.
+
+change (
+  let '(lbl2, sr2) :=
+    fin_nth (branch_labels shw) j
+  in
+    lbl = lbl2 /\
+    sr = sr2 /\
+    upaco2 stc_pure_to_siR bot2
+      (make_uniform_so S')
+      (nextw j)
+) in Hnext.
+destruct (fin_nth (branch_labels shw) j)
+  as [lbl' sr'] eqn:Hj.
+
+unfold j in Hj.
+destruct Hnext as [Hl [Hs Hrec]].
+assert (Hsi_next :
+  stc_pure_to_si (make_uniform_so S') (nextw j)).
+{
+  unfold stc_pure_to_si.
+  destruct Hrec as [Hr | Hbot].
+  - exact Hr.
+  - contradiction.
+}
+
+destruct (IH S' (nextw j) Hsi_next)
+  as [Wnext [HYnext Heqnext]].
+pose proof
+  (proj1 (Hres Wnext) HYnext)
+  as Hresidual.
+
+unfold send_residual_exists in Hresidual.
+
+destruct Hresidual as
+  [sh' [next' [j'
+    [Hsingleton [Hlabel [Hcontinuation HYfull]]]]]].
+exists (stc_pure_send p sh' next').
+
+split.
+- exact HYfull.
+-
+assert (Hkey_equal :
+  fin_nth (branch_labels shw) j =
+  fin_nth (branch_labels sh') j').
+{
+  unfold j.
+  rewrite Hj.
+  rewrite Hlabel.
+  now rewrite Hl, Hs.
+}
+
+assert (Hshape : shw = sh').
+{
+  apply (singleton_shapes_equal shw sh' j j').
+  - simpl in Hlen.
+    symmetry.
+    exact Hlen.
+  - exact Hsingleton.
+  - exact Hkey_equal.
+}
+subst.
+
+cbn [stc_pure_eq_depth].
+
+split.
+- reflexivity.
+
+- exists eq_refl.
+  intro k.
+
+  assert (Hkj : k = j).
+  {
+    eapply fin_unique_length_one.
+    exact Hsingleton.
+  }
+
+  assert (Hjj' : j = j').
+  {
+    eapply fin_unique_length_one.
+    exact Hsingleton.
+  }
+
+  subst k.
+  subst j'.
+
+  cbn.
+  exact Heqnext.
+  apply stc_pure_to_siR_mon.
+
+cbn [valid_uniformisation_layer] in Hvalid.
+
+destruct Hvalid as [next [HT [Hchildren Hres]]].
+rewrite make_uniform_so_unfold in Hsi.
+rewrite Hobs in Hsi.
+cbn in Hsi.
+
+pose proof Hsi as Hsi'.
+punfold Hsi'.
+
+destruct W as
+  [| q shw nextw
+   | q shw nextw];
+  cbn [stc_pure_to_siR] in Hsi';
+  try contradiction.
+
+destruct Hsi' as
+  [Hp [i [j [Hkey [Hsingleton Hrec]]]]].
+
+subst q.
+
+assert (Hsi_next :
+  stc_pure_to_si
+    (make_uniform_so (children i))
+    (nextw j)).
+{
+  unfold stc_pure_to_si.
+  destruct Hrec as [Hr | Hbot].
+  - exact Hr.
+  - contradiction.
+}
+destruct (IH (children i) (nextw j) Hsi_next)
+  as [Wnext [HYnext Heqnext]].
+
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hi.
+
+specialize (Hres i).
+
+rewrite Hi in Hres.
+cbn in Hres.
+
+pose proof
+  (proj1 (Hres Wnext) HYnext)
+  as Hresidual.
+
+unfold receive_residual_exists in Hresidual.
+
+destruct Hresidual as
+  [shr [nextr [jr
+    [Hlenr [Hkeyr [Hcontinuation HYfull]]]]]].
+
+exists (stc_pure_receive p shr nextr).
+
+split.
+- exact HYfull.
+- subst.
+assert (Hkey_equal :
+  fin_nth (branch_labels shw) j =
+  fin_nth (branch_labels shr) jr).
+{
+  rewrite <- Hkey.
+  symmetry.
+  exact Hkeyr.
+}
+assert (Hshape : shw = shr).
+{
+  eapply singleton_shapes_equal.
+  - exact Hsingleton.
+  - exact Hlenr.
+  - exact Hkey_equal.
+}
+
+subst shr.
+
+cbn [stc_pure_eq_depth].
+
+split.
+- reflexivity.
+- exists eq_refl.
+  intro k.
+assert (Hkj : k = j).
+{
+  eapply fin_unique_length_one.
+  exact Hsingleton.
+}
+
+assert (Hjjr : j = jr).
+{
+  eapply fin_unique_length_one.
+  exact Hsingleton.
+}
+subst k.
+subst jr.
+
+cbn.
+exact Heqnext.
+apply stc_pure_to_siR_mon.
+Qed.
+
+Lemma make_uniform_so_global_correct_closed :
+  forall S : uniformisation_state,
+    prefix_closed (uni_Y S) ->
+    forall W,
+      stc_pure_to_si (make_uniform_so S) W ->
+      uni_Y S W.
+Proof.
+  intros S Hclosed W Hsi.
+  apply Hclosed.
+  intro n.
+  exact (make_uniform_so_approximates_Y S W Hsi n).
+Qed.
+
+Theorem decomposition_uniformisation_closed :
+  forall (T : stc_pure)
+         (Y : stc_pure -> Prop),
+
+    nonempty_pure T ->
+
+    prefix_closed Y ->
+
+    (forall V,
+       stc_pure_to_si T V ->
+       exists W,
+         stc_pure_to_so V W /\
+         Y W) ->
+
+    exists U,
+      stc_pure_to_so T U /\
+      forall W,
+        stc_pure_to_si U W ->
+        Y W.
+Proof.
+  intros T Y Hnonempty Hclosed HY.
+
+  set (S :=
+    {|
+      uni_T := T;
+      uni_Y := Y;
+      uni_nonempty := Hnonempty;
+      uni_H := HY
+    |} : uniformisation_state).
+
+  exists (make_uniform_so S).
+
+  split.
+  - exact (make_uniform_so_correct S).
+
+  - intros W Hsi.
+    apply (make_uniform_so_global_correct_closed S).
+    + exact Hclosed.
+    + exact Hsi.
+Qed.
+
+
+(* ============================================================ *)
+(* SISO REFINEMENT FOR stc_pure                                  *)
+(* ============================================================ *)
+
+From Coq Require Import String List.
+From Paco Require Import paco.
+
+Import ListNotations.
+
+
+(* ============================================================ *)
+(* 1. Canonical singleton constructors                           *)
+(* ============================================================ *)
+
+Definition singleton_send
+  (p lbl : string)
+  (sr : sort)
+  (T : stc_pure) : stc_pure :=
+  stc_pure_send p
+    {| branch_labels := [(lbl, sr)] |}
+    (fun _ => T).
+
+(* singleton_receive is already defined in our development. *)
+
+
+(* ============================================================ *)
+(* 2. Actions                                                    *)
+(* ============================================================ *)
+
+Inductive pure_action : Type :=
+| pure_input :
+    string -> string -> sort -> pure_action
+
+| pure_output :
+    string -> string -> sort -> pure_action.
+
+
+(* ============================================================ *)
+(* 3. Permitted anticipation actions                             *)
+(* ============================================================ *)
+
+Definition allowed_A
+  (p : string)
+  (a : pure_action) : Prop :=
+  match a with
+  | pure_input q _ _ =>
+      q <> p
+
+  | pure_output _ _ _ =>
+      False
+  end.
+
+Definition allowed_B
+  (p : string)
+  (a : pure_action) : Prop :=
+  match a with
+  | pure_input _ _ _ =>
+      True
+
+  | pure_output q _ _ =>
+      q <> p
+  end.
+
+
+(* ============================================================ *)
+(* 4. Finite anticipation prefixes                               *)
+(* ============================================================ *)
+
+Definition pure_prefix := list pure_action.
+
+(* Empty prefixes are allowed.
+   They represent direct matching without anticipation. *)
+
+Definition A_prefix
+  (p : string)
+  (xs : pure_prefix) : Prop :=
+  List.Forall (allowed_A p) xs.
+
+Definition B_prefix
+  (p : string)
+  (xs : pure_prefix) : Prop :=
+  List.Forall (allowed_B p) xs.
+
+
+(* ============================================================ *)
+(* 5. Prepending finite prefixes                                 *)
+(* ============================================================ *)
+
+Fixpoint prepend_pure
+  (xs : pure_prefix)
+  (T : stc_pure) : stc_pure :=
+  match xs with
+
+  | [] =>
+      T
+
+  | pure_input p lbl sr :: xs' =>
+      singleton_receive p lbl sr
+        (prepend_pure xs' T)
+
+  | pure_output p lbl sr :: xs' =>
+      singleton_send p lbl sr
+        (prepend_pure xs' T)
+
+  end.
+
+
+(* ============================================================ *)
+(* 6. Action keys                                                *)
+(* ============================================================ *)
+
+Inductive pure_action_key : Type :=
+| key_input :
+    string -> pure_action_key
+
+| key_output :
+    string -> pure_action_key.
+
+
+Definition action_key
+  (a : pure_action) : pure_action_key :=
+  match a with
+
+  | pure_input p _ _ =>
+      key_input p
+
+  | pure_output p _ _ =>
+      key_output p
+
+  end.
+
+
+(* ============================================================ *)
+(* 7. Action occurrence                                          *)
+(* ============================================================ *)
+
+Inductive pure_has_action
+  (a : pure_action_key)
+  : stc_pure -> Prop :=
+
+| has_send_here :
+    forall p sh next,
+      a = key_output p ->
+      pure_has_action a
+        (stc_pure_send p sh next)
+
+| has_receive_here :
+    forall p sh next,
+      a = key_input p ->
+      pure_has_action a
+        (stc_pure_receive p sh next)
+
+| has_send_later :
+    forall p sh next
+           (i : branch_pos sh),
+      pure_has_action a (next i) ->
+      pure_has_action a
+        (stc_pure_send p sh next)
+
+| has_receive_later :
+    forall p sh next
+           (i : branch_pos sh),
+      pure_has_action a (next i) ->
+      pure_has_action a
+        (stc_pure_receive p sh next).
+
+
+(* ============================================================ *)
+(* 8. Equality of action sets                                    *)
+(* ============================================================ *)
+
+Definition pure_act_eq
+  (T U : stc_pure) : Prop :=
+  forall a : pure_action_key,
+    pure_has_action a T <->
+    pure_has_action a U.
+
+
+Lemma pure_act_eq_refl :
+  forall T,
+    pure_act_eq T T.
+Proof.
+  intros T a.
+  reflexivity.
+Qed.
+
+
+Lemma pure_act_eq_sym :
+  forall T U,
+    pure_act_eq T U ->
+    pure_act_eq U T.
+Proof.
+  intros T U H a.
+  symmetry.
+  apply H.
+Qed.
+
+
+Lemma pure_act_eq_trans :
+  forall T U V,
+    pure_act_eq T U ->
+    pure_act_eq U V ->
+    pure_act_eq T V.
+Proof.
+  intros T U V HTU HUV a.
+  transitivity (pure_has_action a U).
+  - apply HTU.
+  - apply HUV.
+Qed.
+
+
+(* ============================================================ *)
+(* 9. Prefix conditions                                          *)
+(* ============================================================ *)
+
+(* For empty prefixes, no action-equality condition is needed.
+
+   For nonempty prefixes, action equality is required.
+
+   This combines the paper's direct matching rules
+   with genuine asynchronous anticipation. *)
+
+Definition A_prefix_condition
+  (p : string)
+  (xs : pure_prefix)
+  (T U : stc_pure) : Prop :=
+  A_prefix p xs /\
+  (xs = [] \/
+   pure_act_eq T (prepend_pure xs U)).
+
+
+Definition B_prefix_condition
+  (p : string)
+  (xs : pure_prefix)
+  (T U : stc_pure) : Prop :=
+  B_prefix p xs /\
+  (xs = [] \/
+   pure_act_eq T (prepend_pure xs U)).
+
+
+(* ============================================================ *)
+(* 10. SISO refinement functional                                *)
+(* ============================================================ *)
+
+Inductive stc_pure_refinementR
+  (r : stc_pure -> stc_pure -> Prop)
+  : stc_pure -> stc_pure -> Prop :=
+
+(* ------------------------------------------------------------ *)
+(* Termination                                                   *)
+(* ------------------------------------------------------------ *)
+
+| pure_ref_end :
+    stc_pure_refinementR r
+      stc_pure_end
+      stc_pure_end
+
+
+(* ------------------------------------------------------------ *)
+(* Input matching / R1 anticipation                              *)
+(* ------------------------------------------------------------ *)
+
+| pure_ref_input :
+    forall p lbl s s' T U xs,
+
+      (* Contravariant input sorts *)
+      subsort s' s ->
+
+      (* Empty prefix = direct input matching.
+         Nonempty prefix = R1 anticipation. *)
+      A_prefix_condition p xs T U ->
+
+      (* Recursive refinement *)
+      r T (prepend_pure xs U) ->
+
+      stc_pure_refinementR r
+        (singleton_receive p lbl s T)
+        (prepend_pure xs
+          (singleton_receive p lbl s' U))
+
+
+(* ------------------------------------------------------------ *)
+(* Output matching / R2 anticipation                             *)
+(* ------------------------------------------------------------ *)
+
+| pure_ref_output :
+    forall p lbl s s' T U xs,
+
+      (* Covariant output sorts *)
+      subsort s s' ->
+
+      (* Empty prefix = direct output matching.
+         Nonempty prefix = R2 anticipation. *)
+      B_prefix_condition p xs T U ->
+
+      (* Recursive refinement *)
+      r T (prepend_pure xs U) ->
+
+      stc_pure_refinementR r
+        (singleton_send p lbl s T)
+        (prepend_pure xs
+          (singleton_send p lbl s' U)).
+
+
+(* ============================================================ *)
+(* 11. Paco refinement                                           *)
+(* ============================================================ *)
+
+Definition stc_pure_refinement :
+  stc_pure -> stc_pure -> Prop :=
+  paco2 stc_pure_refinementR bot2.
+
+
+(* ============================================================ *)
+(* 12. Monotonicity                                              *)
+(* ============================================================ *)
+
+Lemma stc_pure_refinementR_mon :
+  monotone2 stc_pure_refinementR.
+Proof.
+  unfold monotone2.
+  intros T U r r' H LE.
+
+  induction H.
+
+  - (* End *)
+    constructor.
+
+  - (* Input / R1 *)
+    eapply pure_ref_input.
+    + eassumption.
+    + eassumption.
+    + apply LE.
+      eassumption.
+
+  - (* Output / R2 *)
+    eapply pure_ref_output.
+    + eassumption.
+    + eassumption.
+    + apply LE.
+      eassumption.
+Qed.
+
+Hint Resolve stc_pure_refinementR_mon : paco.
+
+Definition subtype_pure
+  (T T' : stc_pure) : Prop :=
+  forall U V,
+    stc_pure_to_so T U ->
+    stc_pure_to_si T' V ->
+    exists W W',
+      stc_pure_to_si U W /\
+      stc_pure_to_so V W' /\
+      stc_pure_refinement W W'.
+
+Lemma refinement_end :
+  stc_pure_refinement
+    stc_pure_end stc_pure_end.
+Proof.
+  pfold.
+  constructor.
+Qed.
+
+Lemma singleton_send_canonical :
+  forall p sh next
+         (i : branch_pos sh)
+         lbl sr,
+    List.length (branch_labels sh) = 1 ->
+    fin_nth (branch_labels sh) i = (lbl, sr) ->
+    stc_pure_send p sh next =
+      singleton_send p lbl sr (next i).
+Proof.
+  intros p sh next i lbl sr Hlen Hkey.
+
+  assert (Hshape :
+    sh = {| branch_labels := [(lbl, sr)] |}).
+  {
+    eapply singleton_shapes_equal
+      with (i := i) (j := Fin.F1).
+
+    - exact Hlen.
+    - reflexivity.
+    - rewrite Hkey.
+      reflexivity.
+  }
+
+  subst sh.
+
+  unfold singleton_send.
+
+  f_equal.
+
+  apply functional_extensionality.
+  intro j.
+
+  assert (Hji : j = i).
+  {
+    eapply fin_unique_length_one.
+    reflexivity.
+  }
+
+  subst j.
+  reflexivity.
+Qed.
+
+Lemma singleton_receive_canonical :
+  forall p sh next
+         (i : branch_pos sh)
+         lbl sr,
+    List.length (branch_labels sh) = 1 ->
+    fin_nth (branch_labels sh) i = (lbl, sr) ->
+    stc_pure_receive p sh next =
+      singleton_receive p lbl sr (next i).
+Proof.
+  intros p sh next i lbl sr Hlen Hkey.
+
+  assert (Hshape :
+    sh = {| branch_labels := [(lbl, sr)] |}).
+  {
+    eapply singleton_shapes_equal
+      with (i := i) (j := Fin.F1).
+
+    - exact Hlen.
+    - reflexivity.
+    - rewrite Hkey.
+      reflexivity.
+  }
+
+  subst sh.
+
+  unfold singleton_receive.
+
+  f_equal.
+
+  apply functional_extensionality.
+  intro j.
+
+  assert (Hji : j = i).
+  {
+    eapply fin_unique_length_one.
+    reflexivity.
+  }
+
+  subst j.
+  reflexivity.
+Qed.
+
+
+CoFixpoint repeat_receive_pure
+  (q lbl : string)
+  (sr : sort) : stc_pure :=
+  singleton_receive q lbl sr
+    (repeat_receive_pure q lbl sr).
+
+Fixpoint repeat_input_prefix
+  (n : nat)
+  (q lbl : string)
+  (sr : sort) : pure_prefix :=
+  match n with
+  | 0 => []
+  | S n' =>
+      pure_input q lbl sr ::
+        repeat_input_prefix n' q lbl sr
+  end.
+
+Definition counter_L
+  (p q lp lq : string)
+  (sr : sort) : stc_pure :=
+  singleton_send p lp sr
+    (repeat_receive_pure q lq sr).
+
+Definition counter_R
+  (n : nat)
+  (p q lp lq : string)
+  (sr : sort) : stc_pure :=
+  prepend_pure
+    (repeat_input_prefix n q lq sr)
+    (counter_L p q lp lq sr).
+
+Definition counter_R_infinity
+  (q lq : string)
+  (sr : sort) : stc_pure :=
+  repeat_receive_pure q lq sr.
+
+Lemma repeat_receive_pure_unfold :
+  forall q lbl sr,
+    repeat_receive_pure q lbl sr =
+    singleton_receive q lbl sr
+      (repeat_receive_pure q lbl sr).
+Proof.
+  intros q lbl sr.
+
+  rewrite
+    (observe_pure_eq
+       (repeat_receive_pure q lbl sr))
+    at 1.
+
+  unfold observe_pure.
+  cbn [repeat_receive_pure].
+
+  reflexivity.
+Qed.
+
+Lemma counter_R_approximates_infinity :
+  forall n p q lp lq sr,
+    stc_pure_eq_depth n
+      (counter_R_infinity q lq sr)
+      (counter_R n p q lp lq sr).
+Proof.
+  induction n as [| n IH].
+
+  - (* Depth zero *)
+    intros.
+    simpl.
+    easy.
+
+  - (* Successor depth *)
+    intros p q lp lq sr.
+
+    unfold counter_R_infinity.
+    unfold counter_R.
+
+    rewrite repeat_receive_pure_unfold.
+
+    cbn [repeat_input_prefix prepend_pure].
+
+    unfold singleton_receive.
+
+    cbn [stc_pure_eq_depth].
+
+    split.
+    + reflexivity.
+
+    + exists eq_refl.
+      intro i.
+
+      cbn.
+
+      (* Both continuations agree up to depth n. *)
+      change
+        (stc_pure_eq_depth n
+          (counter_R_infinity q lq sr)
+          (counter_R n p q lp lq sr)).
+
+      apply IH.
+Qed.
+
+Lemma repeat_receive_has_action :
+  forall q lq sr a,
+    pure_has_action a (repeat_receive_pure q lq sr) <->
+    a = key_input q.
+Proof.
+  intros q lq sr a.
+  split.
+  - intro H.
+    remember (repeat_receive_pure q lq sr) as T eqn:HT.
+    revert q lq sr HT.
+
+    induction H; intros q0 lq0 sr0 HT;
+      rewrite repeat_receive_pure_unfold in HT;
+      unfold singleton_receive in HT;
+      inversion HT; subst; clear HT.
+
+    + easy. (* Send at root: impossible *)
+
+    + (* Receive continuation *)
+apply Eqdep.EqdepTheory.inj_pair2 in H3.
+
+assert (Hnext :
+  next i = repeat_receive_pure q0 lq0 sr0).
+{
+  exact (f_equal (fun f => f i) H3).
+}
+
+rewrite (IHpure_has_action q0 lq0 sr0 Hnext). easy.
+
+  - intro Ha.
+    subst a.
+    rewrite repeat_receive_pure_unfold.
+    unfold singleton_receive.
+    apply has_receive_here.
+    reflexivity.
+Qed.
+
+Lemma pure_act_eq_receive_prefix :
+  forall q lbl sr T,
+    pure_has_action (key_input q) T ->
+    pure_act_eq
+      T
+      (singleton_receive q lbl sr T).
+Proof.
+  intros q lbl sr T Hq a.
+  unfold pure_act_eq.
+  split.
+
+  - (* Every action in T occurs in the prefixed tree. *)
+    intro Ha.
+
+    unfold singleton_receive.
+
+    eapply has_receive_later
+      with (i := Fin.F1).
+
+    exact Ha.
+
+  - (* Every action in the prefixed tree occurs in T. *)
+    intro Ha.
+
+    unfold singleton_receive in Ha.
+
+    inversion Ha; subst; clear Ha.
+
+    + (* New receive action at the root. *)
+      exact Hq.
+
+    + (* Action occurs in the continuation. *)
+apply Eqdep.EqdepTheory.inj_pair2 in H2.
+
+assert (Hnext : next0 i = T).
+{
+  exact (f_equal (fun f => f i) H2).
+}
+
+rewrite Hnext in H0.
+exact H0.
+Qed.
+
+Lemma repeat_receive_prefix_act_eq :
+  forall n q lq sr,
+    pure_act_eq
+      (repeat_receive_pure q lq sr)
+      (prepend_pure
+        (repeat_input_prefix n q lq sr)
+        (repeat_receive_pure q lq sr)).
+Proof.
+  induction n as [| n IH].
+  - intros q lq sr.
+    simpl.
+    apply pure_act_eq_refl.
+
+  - intros q lq sr.
+    simpl [repeat_input_prefix prepend_pure].
+
+    eapply pure_act_eq_trans.
+    + apply IH.
+    + apply pure_act_eq_receive_prefix.
+
+      destruct n as [| n'].
+      * simpl.
+        apply
+          (proj2
+            (repeat_receive_has_action
+               q lq sr (key_input q))).
+        reflexivity.
+
+      * simpl [repeat_input_prefix prepend_pure].
+        unfold singleton_receive.
+        apply has_receive_here.
+        reflexivity.
+Qed.
+
+
+Definition repeat_receive_prefix_rel
+  (q lq : string)
+  (sr : sort)
+  : stc_pure -> stc_pure -> Prop :=
+  fun T U =>
+    exists n,
+      T = repeat_receive_pure q lq sr /\
+      U =
+        prepend_pure
+          (repeat_input_prefix n q lq sr)
+          (repeat_receive_pure q lq sr).
+
+Lemma repeat_receive_prefix_rel_step :
+  forall q lq sr T U,
+    repeat_receive_prefix_rel q lq sr T U ->
+    stc_pure_refinementR
+      (upaco2 stc_pure_refinementR
+         (repeat_receive_prefix_rel q lq sr))
+      T U.
+Proof.
+  intros q lq sr T U Hrel.
+
+  destruct Hrel as [n [HT HU]].
+  subst T U.
+
+  rewrite repeat_receive_pure_unfold.
+
+  destruct n as [| n].
+
+  - (* Zero prefix *)
+    cbn [repeat_input_prefix prepend_pure].
+
+    rewrite repeat_receive_pure_unfold.
+
+    eapply pure_ref_input
+      with (xs := []).
+
+    + apply srefl.
+
+    + unfold A_prefix_condition, A_prefix.
+      split.
+      * constructor.
+      * left. reflexivity.
+
+    + right.
+unfold repeat_receive_prefix_rel.
+
+exists 0.
+split.
+- symmetry.
+  apply repeat_receive_pure_unfold.
+
+- cbn [repeat_input_prefix prepend_pure].
+  symmetry.
+  apply repeat_receive_pure_unfold.
+
+
+  - (* Positive prefix *)
+    cbn [repeat_input_prefix prepend_pure].
+
+    eapply pure_ref_input
+      with (xs := []).
+
+    + apply srefl.
+
+    + unfold A_prefix_condition, A_prefix.
+      split.
+      * constructor.
+      * left. reflexivity.
+
+    + right.
+      exists n.
+split.
+- reflexivity.
+- cbn [prepend_pure].
+  replace
+    (singleton_receive q lq sr
+       (repeat_receive_pure q lq sr))
+    with
+    (repeat_receive_pure q lq sr).
+  + reflexivity.
+  + apply repeat_receive_pure_unfold.
+Qed.
+
+Lemma repeat_receive_prefix_refinement :
+  forall n q lq sr,
+    stc_pure_refinement
+      (repeat_receive_pure q lq sr)
+      (prepend_pure
+        (repeat_input_prefix n q lq sr)
+        (repeat_receive_pure q lq sr)).
+Proof.
+  intros n q lq sr.
+
+  eapply paco2_acc
+    with (l := repeat_receive_prefix_rel q lq sr)
+         (r := bot2).
+
+  - intros rr INCr INCl x y Hxy.
+
+    pfold.
+
+    eapply stc_pure_refinementR_mon.
+
+    + apply repeat_receive_prefix_rel_step.
+      exact Hxy.
+
+    + intros x' y' Hrel.
+      destruct Hrel as [Hpaco | Hrr].
+
+      * left.
+eapply paco2_mon.
+- exact Hpaco.
+- intros a b Hab.
+  apply INCl.
+  exact Hab.
+
+      * right.
+        apply INCl.
+        exact Hrr.
+
+  - exists n.
+    split; reflexivity.
+Qed.
+
+Lemma counter_R_finite_refinement :
+  forall n p q lp lq sr,
+    stc_pure_refinement
+      (counter_L p q lp lq sr)
+      (counter_R n p q lp lq sr).
+Proof.
+  intros n p q lp lq sr.
+
+  unfold counter_L, counter_R.
+
+  pfold.
+
+  eapply pure_ref_output
+    with
+      (xs := repeat_input_prefix n q lq sr)
+      (U := repeat_receive_pure q lq sr).
+
+  - (* Sort covariance *)
+    apply srefl.
+
+  - (* B-prefix condition *)
+    unfold B_prefix_condition.
+    split.
+
+    + (* All prefix actions are permitted. *)
+      induction n as [| n IH].
+      * constructor.
+      * simpl.
+        constructor.
+        -- easy.
+        -- exact IH.
+
+    + (* Empty prefix or action equality *)
+      destruct n as [| n].
+      * left.
+        reflexivity.
+      * right.
+        apply repeat_receive_prefix_act_eq.
+
+  - (* Recursive refinement *)
+left.
+apply repeat_receive_prefix_refinement.
+Qed.
+
+Lemma repeat_receive_not_prefixed_send :
+  forall q lq sr xs p lp sp U,
+    repeat_receive_pure q lq sr <>
+    prepend_pure xs (singleton_send p lp sp U).
+Proof.
+  intros q lq sr xs.
+  induction xs as [| a xs IH];
+    intros p lp sp U Heq.
+
+  - (* Empty prefix *)
+    cbn [prepend_pure] in Heq.
+
+    rewrite repeat_receive_pure_unfold in Heq.
+    unfold singleton_receive, singleton_send in Heq.
+
+    discriminate Heq.
+
+  - (* Nonempty prefix *)
+    destruct a as
+      [r lbl s | r lbl s].
+
+    + (* Input prefix *)
+      cbn [prepend_pure] in Heq.
+
+      rewrite repeat_receive_pure_unfold in Heq.
+      unfold singleton_receive in Heq.
+
+      inversion Heq; subst.
+    + (* Output prefix *)
+      cbn [prepend_pure] in Heq.
+
+      rewrite repeat_receive_pure_unfold in Heq.
+      unfold singleton_receive, singleton_send in Heq.
+
+apply Eqdep.EqdepTheory.inj_pair2 in H3.
+
+pose proof
+  (f_equal (fun f => f Fin.F1) H3)
+  as Hcont.
+
+cbn in Hcont.
+
+apply (IH p lp sp U).
+exact Hcont.
+
+cbn [prepend_pure] in Heq.
+rewrite repeat_receive_pure_unfold in Heq.
+unfold singleton_receive, singleton_send in Heq.
+discriminate Heq.
+Qed.
+
+Lemma counter_R_infinite_not_refinement :
+  forall p q lp lq sr,
+    ~ stc_pure_refinement
+        (counter_L p q lp lq sr)
+        (counter_R_infinity q lq sr).
+Proof.
+  intros p q lp lq sr Href.
+
+  unfold stc_pure_refinement in Href.
+  punfold Href.
+
+  unfold counter_L, counter_R_infinity in Href.
+
+  inversion Href; subst; clear Href.
+eapply repeat_receive_not_prefixed_send.
+symmetry.
+exact H4.
+Qed.
+
+Theorem refinement_not_prefix_closed :
+  forall p q lp lq sr,
+    ~ prefix_closed
+        (fun W =>
+           stc_pure_refinement
+             (counter_L p q lp lq sr) W).
+Proof.
+  intros p q lp lq sr Hclosed.
+
+  apply (counter_R_infinite_not_refinement
+           p q lp lq sr).
+
+  apply Hclosed.
+  intro n.
+
+  exists (counter_R n p q lp lq sr).
+
+  split.
+  - apply counter_R_finite_refinement.
+  - apply counter_R_approximates_infinity.
+Qed.
+
+Definition refinement_preimage
+  (U1 : stc_pure)
+  (W2 : stc_pure) : Prop :=
+  exists W1,
+    stc_pure_to_si U1 W1 /\
+    stc_pure_refinement W1 W2.
+
+Definition repeat_receive_si_rel
+  (T U : stc_pure) : Prop :=
+  exists q lq sr,
+    T = repeat_receive_pure q lq sr /\
+    U = repeat_receive_pure q lq sr.
+
+Lemma repeat_receive_si_rel_step :
+  forall T U,
+    repeat_receive_si_rel T U ->
+    stc_pure_to_siR
+      (upaco2 stc_pure_to_siR repeat_receive_si_rel)
+      T U.
+Proof.
+  intros T U Hrel.
+  destruct Hrel as [q [lq [sr [HT HU]]]].
+  subst T U.
+
+  rewrite repeat_receive_pure_unfold.
+  unfold singleton_receive.
+
+  cbn [stc_pure_to_siR].
+
+  (* Both trees have the same receive participant. *)
+  split.
+  - reflexivity.
+
+  (* The target has exactly one receive branch. *)
+  - exists Fin.F1, Fin.F1.
+
+    repeat split; try reflexivity.
+
+    right.
+    exists q, lq, sr.
+    split; reflexivity.
+Qed.
+
+Lemma repeat_receive_pure_si_self :
+  forall q lq sr,
+    stc_pure_to_si
+      (repeat_receive_pure q lq sr)
+      (repeat_receive_pure q lq sr).
+Proof.
+  intros q lq sr.
+
+  unfold stc_pure_to_si.
+
+  eapply paco2_acc
+    with (l := repeat_receive_si_rel)
+         (r := bot2).
+
+  - intros rr INCr INCl x y Hxy.
+
+    pfold.
+
+    eapply stc_pure_to_siR_mon.
+
+    + apply repeat_receive_si_rel_step.
+      exact Hxy.
+
+    + intros x' y' Hrel.
+      destruct Hrel as [Hpaco | Hinv].
+
+      * left.
+        eapply paco2_mon.
+        -- exact Hpaco.
+        -- intros a b Hab.
+           apply INCl.
+           exact Hab.
+
+      * right.
+        apply INCl.
+        exact Hinv.
+
+  - exists q, lq, sr.
+    split; reflexivity.
+Qed.
+
+
+Lemma counter_L_si_self :
+  forall p q lp lq sr,
+    stc_pure_to_si
+      (counter_L p q lp lq sr)
+      (counter_L p q lp lq sr).
+Proof.
+  intros p q lp lq sr.
+
+  unfold counter_L, singleton_send.
+
+  pfold.
+  cbn [stc_pure_to_siR].
+
+  split.
+  - reflexivity.
+unfold stc_pure_branches_bisim.
+
+exists eq_refl.
+intro i.
+
+cbn.
+
+destruct (fin_nth (branch_labels
+  {| branch_labels := [(lp, sr)] |}) i)
+  as [lbl sri] eqn:Hkey.
+
+assert (Hi : i = Fin.F1).
+{
+  eapply fin_unique_length_one.
+  reflexivity.
+}
+
+subst i.
+cbn.
+
+repeat split; try reflexivity.
+
+left.
+apply repeat_receive_pure_si_self.
+Qed.
+
+Lemma counter_L_si_not_refine_infinity :
+  forall p q lp lq sr W,
+    stc_pure_to_si
+      (counter_L p q lp lq sr) W ->
+    ~ stc_pure_refinement
+        W
+        (counter_R_infinity q lq sr).
+Proof.
+  intros p q lp lq sr W Hsi Href.
+
+  (* Expose the SI decomposition. *)
+  unfold counter_L in Hsi.
+  punfold Hsi.
+
+  (* SI preserves the initial send constructor. *)
+  destruct W as
+    [| pw shw nextw
+     | pw shw nextw];
+    cbn [stc_pure_to_siR] in Hsi;
+    try contradiction.
+
+  (* Only the send case survives. *)
+  destruct Hsi as [Hp Hbranches].
+  subst pw.
+
+  (* Expose the refinement relation. *)
+  unfold stc_pure_refinement in Href.
+  punfold Href.
+
+  (* Only pure_ref_output can have a send on the left. *)
+  inversion Href; subst; clear Href.
+
+  (* The right-hand tree must contain a send
+     after some finite anticipation prefix. *)
+  eapply repeat_receive_not_prefixed_send.
+
+  symmetry.
+  eassumption.
+  apply stc_pure_to_siR_mon.
+Qed.
+
+Theorem refinement_preimage_not_prefix_closed :
+  forall p q lp lq sr,
+    ~ prefix_closed
+        (refinement_preimage
+           (counter_L p q lp lq sr)).
+Proof.
+  intros p q lp lq sr Hclosed.
+
+  assert (Hlimit :
+    refinement_preimage
+      (counter_L p q lp lq sr)
+      (counter_R_infinity q lq sr)).
+  {
+    apply Hclosed.
+    intro n.
+
+    exists (counter_R n p q lp lq sr).
+    split.
+    - exists (counter_L p q lp lq sr).
+      split.
+      + apply counter_L_si_self.
+      + apply counter_R_finite_refinement.
+    - apply counter_R_approximates_infinity.
+  }
+
+  destruct Hlimit as [W1 [Hsi Href]].
+
+  eapply counter_L_si_not_refine_infinity.
+  - exact Hsi.
+  - exact Href.
+Qed.
+
+Lemma refinement_uniformisation_approx :
+  forall T U1,
+    nonempty_pure T ->
+    (forall V,
+       stc_pure_to_si T V ->
+       exists W,
+         stc_pure_to_so V W /\
+         refinement_preimage U1 W) ->
+    exists U,
+      stc_pure_to_so T U /\
+      forall W,
+        stc_pure_to_si U W ->
+        forall n,
+          exists Wn,
+            refinement_preimage U1 Wn /\
+            stc_pure_eq_depth n W Wn.
+Proof.
+  intros T U1 Hnonempty H.
+
+  set (S :=
+    {|
+      uni_T := T;
+      uni_Y := refinement_preimage U1;
+      uni_nonempty := Hnonempty;
+      uni_H := H
+    |} : uniformisation_state).
+
+  exists (make_uniform_so S).
+
+  split.
+  - exact (make_uniform_so_correct S).
+
+  - intros W Hsi n.
+    exact (make_uniform_so_approximates_Y S W Hsi n).
+Qed.
+
+Lemma refinement_send_choice_exists :
+  forall p sh next U1,
+    nonempty_pure (stc_pure_send p sh next) ->
+
+    (forall V,
+       stc_pure_to_si
+         (stc_pure_send p sh next) V ->
+       exists W,
+         stc_pure_to_so V W /\
+         refinement_preimage U1 W) ->
+
+    exists (i : branch_pos sh)
+           (lbl : string)
+           (sr : sort),
+
+      fin_nth (branch_labels sh) i = (lbl, sr) /\
+
+      forall V,
+        stc_pure_to_si (next i) V ->
+        exists W,
+          stc_pure_to_so V W /\
+          send_residual_exists
+            (refinement_preimage U1)
+            p lbl sr W.
+Proof.
+  intros p sh next U1 Hnonempty HY.
+
+  destruct
+    (uniformisation_send_choice_exists
+       p sh next
+       (refinement_preimage U1)
+       Hnonempty HY)
+    as [i Hchoice].
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  exists i, lbl, sr.
+
+  split.
+  - exact Hkey.
+  - exact Hchoice.
+Qed.
+
+Lemma refinementR_right_send_inv :
+  forall r W1 p lbl sr W2,
+    stc_pure_refinementR r
+      W1
+      (singleton_send p lbl sr W2) ->
+    (exists q l s T,
+       W1 = singleton_receive q l s T) \/
+    (exists q l s T,
+       W1 = singleton_send q l s T).
+Proof.
+  intros r W1 p lbl sr W2 Href.
+  inversion Href; subst.
+  - (* Input *)
+    left.
+    eexists _, _, _, _.
+    reflexivity.
+  - (* Output *)
+    right.
+    eexists _, _, _, _.
+    reflexivity.
+Qed.
+
+Lemma refinementR_inv :
+  forall r T U,
+    stc_pure_refinementR r T U ->
+    (T = stc_pure_end /\
+     U = stc_pure_end) \/
+
+    (exists p lbl s s' T' U' xs,
+       T = singleton_receive p lbl s T' /\
+       U = prepend_pure xs
+             (singleton_receive p lbl s' U') /\
+       subsort s' s /\
+       A_prefix_condition p xs T' U' /\
+       r T' (prepend_pure xs U')) \/
+
+    (exists p lbl s s' T' U' xs,
+       T = singleton_send p lbl s T' /\
+       U = prepend_pure xs
+             (singleton_send p lbl s' U') /\
+       subsort s s' /\
+       B_prefix_condition p xs T' U' /\
+       r T' (prepend_pure xs U')).
+Proof.
+  intros r T U Href.
+  destruct Href.
+
+  - (* End *)
+    left.
+    split; reflexivity.
+
+  - (* Input / R1 *)
+    right.
+    left.
+    repeat eexists; eauto.
+destruct H0 as [HA Hact].
+- exact HA.
+destruct H0 as [_ Hact].
+exact Hact.
+
+
+  - (* Output / R2 *)
+    right.
+    right.
+    repeat eexists; eauto.
+all: unfold B_prefix_condition in H0.
+all: destruct H0 as [HB Hact].
+- exact HB.
+- exact Hact.
+Qed.
+
+Lemma A_prefix_prepend_not_send :
+  forall p xs q lbl sr T lbl' sr' U,
+    A_prefix p xs ->
+    prepend_pure xs (singleton_receive p lbl sr T) <>
+    singleton_send q lbl' sr' U.
+Proof.
+  intros p xs.
+  induction xs as [| a xs IH];
+    intros q lbl sr T lbl' sr' U HA Heq.
+
+  - (* Empty prefix *)
+    cbn [prepend_pure] in Heq.
+    unfold singleton_receive, singleton_send in Heq.
+    discriminate Heq.
+
+  - (* Nonempty prefix *)
+    inversion HA as [| a' xs' Ha Htail]; subst.
+    destruct a as [r l s | r l s].
+
+    + (* Input prefix *)
+      cbn [prepend_pure] in Heq.
+      unfold singleton_receive, singleton_send in Heq.
+      discriminate Heq.
+
+    + (* Output prefix: forbidden by A_prefix *)
+      simpl in Ha.
+      contradiction.
+Qed.
+
+Lemma refinement_right_send_left_send :
+  forall W1 p lbl sr W2,
+    stc_pure_refinement
+      W1
+      (singleton_send p lbl sr W2) ->
+    exists q l s T,
+      W1 = singleton_send q l s T.
+Proof.
+  intros W1 p lbl sr W2 Href.
+
+  unfold stc_pure_refinement in Href.
+  punfold Href.
+
+  destruct (refinementR_inv _ _ _ Href)
+    as [[HT HU] | [Hin | Hout]].
+
+  - (* End case: impossible *)
+    subst W1.
+    unfold singleton_send in HU.
+    discriminate HU.
+
+  - (* Input / R1 case *)
+    destruct Hin as
+      [q [l [s [s' [T [U [xs
+        [HT [HU [Hsort [HA Hr]]]]]]]]]]].
+
+    exfalso.
+
+    apply
+      (A_prefix_prepend_not_send
+         q xs p l s' U lbl sr W2).
+
+    + exact (proj1 HA).
+symmetry.
+exact HU.
+
+  - (* Output / R2 case *)
+    destruct Hout as
+      [q [l [s [s' [T [U [xs
+        [HT [HU [Hsort [HB Hr]]]]]]]]]]].
+
+    exists q, l, s, T.
+    exact HT.
+Qed.
+
+Lemma refinement_right_send_inv :
+  forall W1 p lbl sr W2,
+    stc_pure_refinement
+      W1
+      (singleton_send p lbl sr W2) ->
+
+    exists q l s s' T U xs,
+
+      W1 = singleton_send q l s T /\
+
+      singleton_send p lbl sr W2 =
+        prepend_pure xs
+          (singleton_send q l s' U) /\
+
+      subsort s s' /\
+
+      B_prefix_condition q xs T U /\
+
+      upaco2 stc_pure_refinementR bot2
+        T (prepend_pure xs U).
+Proof.
+  intros W1 p lbl sr W2 Href.
+
+  unfold stc_pure_refinement in Href.
+  punfold Href.
+
+  destruct (refinementR_inv _ _ _ Href)
+    as [[HT HU] | [Hin | Hout]].
+
+  - (* End: impossible *)
+    unfold singleton_send in HU.
+    discriminate HU.
+
+  - (* Input: impossible *)
+    destruct Hin as
+      [q [l [s [s' [T [U [xs
+        [HT [HU [Hsort [HA Hr]]]]]]]]]]].
+
+    exfalso.
+
+    eapply A_prefix_prepend_not_send.
+    + exact (proj1 HA).
+    + symmetry.
+      exact HU.
+
+  - (* Output *)
+    destruct Hout as
+      [q [l [s [s' [T [U [xs
+        [HT [HU [Hsort [HB Hr]]]]]]]]]]].
+
+    exists q, l, s, s', T, U, xs.
+
+    split; try easy.
+Qed.
+
+Lemma prepend_pure_send_inv :
+  forall xs T p lbl sr W,
+    prepend_pure xs T = singleton_send p lbl sr W ->
+    (xs = [] /\ T = singleton_send p lbl sr W) \/
+    (exists xs',
+       xs = pure_output p lbl sr :: xs' /\
+       W = prepend_pure xs' T).
+Proof.
+  intros xs T p lbl sr W H.
+  destruct xs as [| a xs'].
+
+  - left.
+    split.
+    + reflexivity.
+    + exact H.
+
+  - right.
+    destruct a as [q l s | q l s].
+
+    + (* Input cannot produce a send root. *)
+      cbn [prepend_pure] in H.
+      unfold singleton_receive, singleton_send in H.
+      discriminate H.
+
+    + (* Output prefix *)
+      cbn [prepend_pure] in H.
+
+      assert (Hq : q = p).
+      {
+        unfold singleton_send in H.
+        inversion H.
+        reflexivity.
+      }
+
+      subst q.
+unfold singleton_send in H.
+inversion H; subst.
+
+apply Eqdep.EqdepTheory.inj_pair2 in H3.
+
+exists xs'.
+split.
+- reflexivity.
+- pose proof
+    (f_equal (fun f => f Fin.F1) H3)
+    as Hcont.
+  cbn in Hcont.
+  symmetry.
+  exact Hcont.
+Qed.
+
+Lemma refinement_right_send_cases :
+  forall W1 p lbl sr W2,
+    stc_pure_refinement
+      W1
+      (singleton_send p lbl sr W2) ->
+
+    (exists s T,
+       W1 = singleton_send p lbl s T /\
+       subsort s sr /\
+       upaco2 stc_pure_refinementR bot2 T W2)
+
+    \/
+
+    (exists q l s s' T U xs,
+       q <> p /\
+       W1 = singleton_send q l s T /\
+       W2 =
+         prepend_pure xs
+           (singleton_send q l s' U) /\
+       subsort s s' /\
+       B_prefix_condition q
+         (pure_output p lbl sr :: xs) T U /\
+       upaco2 stc_pure_refinementR bot2
+         T
+         (prepend_pure
+           (pure_output p lbl sr :: xs) U)).
+Proof.
+  intros W1 p lbl sr W2 Href.
+
+  destruct
+    (refinement_right_send_inv
+       W1 p lbl sr W2 Href)
+    as [q [l [s [s' [T [U [xs
+      [HT [HU [Hsort [HB Hr]]]]]]]]]]].
+
+destruct
+  (prepend_pure_send_inv
+     xs (singleton_send q l s' U)
+     p lbl sr W2 (eq_sym HU))
+  as [[Hnil Hdirect] | [xs' [Hxs HW2]]].
+
+  - (* Direct matching *)
+    subst xs.
+    cbn [prepend_pure] in *.
+
+    unfold singleton_send in Hdirect.
+    inversion Hdirect; subst.
+
+    (* Extract continuation equality if needed. *)
+    left.
+    exists s, T.
+    repeat split; try assumption.
+apply Eqdep.EqdepTheory.inj_pair2 in H3.
+
+pose proof
+  (f_equal (fun f => f Fin.F1) H3)
+  as Hcont.
+
+cbn in Hcont. subst. easy. 
+
+  - (* R2 anticipation *)
+    subst xs.
+
+    destruct HB as [HBprefix HBact].
+
+    inversion HBprefix as
+      [| a rest Hallowed Htail];
+      subst.
+
+    cbn [allowed_B] in Hallowed.
+
+    right.
+    exists q, l, s, s', T, U, xs'.
+
+    repeat split; try assumption.
+    easy.
+Qed.
+
+Definition refinement_send_residual
+  (U1 : stc_pure)
+  (p lbl : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists W1,
+    stc_pure_to_si U1 W1 /\
+    stc_pure_refinement
+      W1
+      (singleton_send p lbl sr W).
+
+Lemma refinement_send_residual_equiv :
+  forall U1 p lbl sr W,
+    send_residual_exists
+      (refinement_preimage U1)
+      p lbl sr W
+    <->
+    refinement_send_residual U1 p lbl sr W.
+Proof.
+  intros U1 p lbl sr W.
+  split.
+
+  - (* Forward *)
+    intros Hres.
+
+    unfold send_residual_exists in Hres.
+
+    destruct Hres as
+      [sh [next [i
+        [Hlen [Hkey [Hnext HY]]]]]].
+
+    unfold refinement_preimage in HY.
+
+    destruct HY as [W1 [Hsi Href]].
+
+    assert (Hcanonical :
+      stc_pure_send p sh next =
+      singleton_send p lbl sr W).
+    {
+      rewrite
+        (singleton_send_canonical
+           p sh next i lbl sr Hlen Hkey).
+
+      rewrite Hnext.
+      reflexivity.
+    }
+
+    unfold refinement_send_residual.
+
+    exists W1.
+    split.
+    + exact Hsi.
+    + rewrite <- Hcanonical.
+      exact Href.
+
+  - (* Reverse *)
+    intros Hres.
+
+    unfold refinement_send_residual in Hres.
+
+    destruct Hres as [W1 [Hsi Href]].
+
+    unfold send_residual_exists.
+
+    exists {| branch_labels := [(lbl, sr)] |}.
+
+    exists
+      (fun _ : branch_pos
+        {| branch_labels := [(lbl, sr)] |} => W).
+
+    exists Fin.F1.
+
+    repeat split.
+
+    + unfold refinement_preimage.
+      exists W1.
+      split.
+      * exact Hsi.
+      * exact Href.
+Qed.
+
+Definition refinement_send_direct_residual
+  (U1 : stc_pure)
+  (p lbl : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists s T,
+    subsort s sr /\
+    stc_pure_to_si U1
+      (singleton_send p lbl s T) /\
+    stc_pure_refinement T W.
+
+Lemma refinement_send_direct_residual_sound :
+  forall U1 p lbl sr W,
+    refinement_send_direct_residual U1 p lbl sr W ->
+    refinement_send_residual U1 p lbl sr W.
+Proof.
+  intros U1 p lbl sr W H.
+
+  unfold refinement_send_direct_residual in H.
+  destruct H as [s [T [Hsort [Hsi Href]]]].
+
+  unfold refinement_send_residual.
+
+  exists (singleton_send p lbl s T).
+  split.
+  - exact Hsi.
+
+  - unfold stc_pure_refinement in *.
+
+    pfold.
+
+    eapply pure_ref_output
+      with (xs := []).
+
+    + exact Hsort.
+
+    + unfold B_prefix_condition, B_prefix.
+      split.
+      * constructor.
+      * left.
+        reflexivity.
+
+    + left.
+      exact Href.
+Qed.
+
+Definition refinement_send_anticipation_residual
+  (U1 : stc_pure)
+  (p lbl : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists q l s s' T U xs,
+
+    q <> p /\
+
+    stc_pure_to_si U1
+      (singleton_send q l s T) /\
+
+    W =
+      prepend_pure xs
+        (singleton_send q l s' U) /\
+
+    subsort s s' /\
+
+    B_prefix_condition q
+      (pure_output p lbl sr :: xs) T U /\
+
+    stc_pure_refinement
+      T
+      (prepend_pure
+        (pure_output p lbl sr :: xs) U).
+
+Lemma refinement_send_residual_cases :
+  forall U1 p lbl sr W,
+    refinement_send_residual U1 p lbl sr W ->
+    refinement_send_direct_residual U1 p lbl sr W \/
+    refinement_send_anticipation_residual U1 p lbl sr W.
+Proof.
+  intros U1 p lbl sr W Hres.
+
+  unfold refinement_send_residual in Hres.
+  destruct Hres as [W1 [Hsi Href]].
+
+  destruct
+    (refinement_right_send_cases
+       W1 p lbl sr W Href)
+    as [Hdirect | Hanticipation].
+
+  - (* Direct matching *)
+    destruct Hdirect as
+      [s [T [HW1 [Hsort Hr]]]].
+
+    left.
+    unfold refinement_send_direct_residual.
+
+    exists s, T.
+    split. easy.
+    + split. rewrite <- HW1.
+      exact Hsi.
+    + destruct Hr as [Hr | Hbot].
+      * exact Hr.
+      * contradiction.
+
+  - (* R2 anticipation *)
+    destruct Hanticipation as
+      [q [l [s [s' [T [U [xs
+        [Hneq [HW1 [HW [Hsort [HB Hr]]]]]]]]]]]].
+
+    right.
+    unfold refinement_send_anticipation_residual.
+
+    exists q, l, s, s', T, U, xs.
+
+    split. easy.
+    + split. rewrite <- HW1.
+      exact Hsi.
+    + split. exact HW.
+    + split. exact Hsort.
+    + split. exact HB.
+    + destruct Hr as [Hr | Hbot].
+      * exact Hr.
+      * contradiction.
+Qed.
+
+Inductive finite_pure : stc_pure -> Prop :=
+| finite_pure_end :
+    finite_pure stc_pure_end
+
+| finite_pure_send :
+    forall p sh next,
+      (forall i : branch_pos sh,
+         finite_pure (next i)) ->
+      finite_pure (stc_pure_send p sh next)
+
+| finite_pure_receive :
+    forall p sh next,
+      (forall i : branch_pos sh,
+         finite_pure (next i)) ->
+      finite_pure (stc_pure_receive p sh next).
+
+Lemma stc_pure_refinement_trans :
+  forall T U V : stc_pure,
+    stc_pure_refinement T U ->
+    stc_pure_refinement U V ->
+    stc_pure_refinement T V.
+Admitted.
+
+Theorem subtype_pure_trans_closed :
+  forall T1 T2 T3,
+    nonempty_pure T2 ->
+    (forall U1,
+       stc_pure_to_so T1 U1 ->
+       prefix_closed (refinement_preimage U1)) ->
+    subtype_pure T1 T2 ->
+    subtype_pure T2 T3 ->
+    subtype_pure T1 T3.
+Proof.
+  intros T1 T2 T3 Hnonempty Hclosed H12 H23.
+
+  unfold subtype_pure.
+  intros U1 V3 Hso1 Hsi3.
+
+  assert (HY :
+    forall V2,
+      stc_pure_to_si T2 V2 ->
+      exists W2,
+        stc_pure_to_so V2 W2 /\
+        refinement_preimage U1 W2).
+  {
+    intros V2 Hsi2.
+
+    destruct (H12 U1 V2 Hso1 Hsi2)
+      as [W1 [W2 [Hsi1 [Hso2 Href12]]]].
+
+    exists W2.
+    split.
+    - exact Hso2.
+    - exists W1.
+      split; assumption.
+  }
+
+  destruct
+    (decomposition_uniformisation_closed
+       T2
+       (refinement_preimage U1)
+       Hnonempty
+       (Hclosed U1 Hso1)
+       HY)
+    as [U2 [Hso2 Hunif]].
+
+  destruct (H23 U2 V3 Hso2 Hsi3)
+    as [W2 [W3 [Hsi2 [Hso3 Href23]]]].
+
+  destruct (Hunif W2 Hsi2)
+    as [W1 [Hsi1 Href12]].
+
+  exists W1, W3.
+
+  split.
+  - exact Hsi1.
+  - split. exact Hso3.
+  - eapply stc_pure_refinement_trans.
+    + exact Href12.
+    + exact Href23.
+Qed.
+
+Definition finitely_compatible_with
+  (Y : stc_pure -> Prop)
+  (W : stc_pure) : Prop :=
+  forall n,
+    exists W',
+      Y W' /\
+      stc_pure_eq_depth n W W'.
+
+Definition observationally_complete
+  (Y : stc_pure -> Prop) : Prop :=
+  forall W,
+    finitely_compatible_with Y W ->
+    Y W.
+
+Lemma prefix_closed_iff_observationally_complete :
+  forall Y,
+    prefix_closed Y <->
+    observationally_complete Y.
+Proof.
+  intro Y.
+  unfold prefix_closed,
+         observationally_complete,
+         finitely_compatible_with.
+  tauto.
+Qed.
+
+Definition observational_closure
+  (Y : stc_pure -> Prop)
+  (W : stc_pure) : Prop :=
+  forall n,
+    exists Wn,
+      Y Wn /\
+      stc_pure_eq_depth n W Wn.
+
+Lemma stc_pure_eq_depth_refl :
+  forall n (T : stc_pure),
+    stc_pure_eq_depth n T T.
+Proof.
+  induction n as [| n IH].
+  - intros T.
+    simpl.
+    easy.
+
+  - intros T.
+    destruct T as
+      [| p sh next
+       | p sh next];
+      simpl.
+
+    + (* End *)
+      easy.
+
+    + (* Send *)
+      split.
+      * reflexivity.
+      * exists eq_refl.
+        intro i.
+        simpl.
+        apply IH.
+
+    + (* Receive *)
+      split.
+      * reflexivity.
+      * exists eq_refl.
+        intro i.
+        simpl.
+        apply IH.
+Qed.
+
+Lemma prefix_closed_iff_observational_fixed_point :
+  forall Y,
+    prefix_closed Y <->
+    forall W,
+      Y W <-> observational_closure Y W.
+Proof.
+  intros Y.
+  split.
+
+  - intros Hclosed W.
+    split.
+
+    + intros HY n.
+      exists W.
+      split.
+      * exact HY.
+      * apply stc_pure_eq_depth_refl.
+
+    + apply Hclosed.
+
+  - intros Hfixed W Happrox.
+    apply (proj2 (Hfixed W)).
+    exact Happrox.
+Qed.
+
+Definition finitely_separated
+  (Y : stc_pure -> Prop) : Prop :=
+  forall W,
+    ~ Y W ->
+    exists n,
+      forall W',
+        Y W' ->
+        ~ stc_pure_eq_depth n W W'.
+
+From Coq Require Import Logic.Classical.
+
+From Coq Require Import Logic.Classical.
+
+Lemma prefix_closed_iff_finitely_separated :
+  forall Y,
+    prefix_closed Y <-> finitely_separated Y.
+Proof.
+  intro Y.
+  unfold prefix_closed, finitely_separated.
+  split.
+
+  - (* Prefix closed -> finite separation *)
+    intros Hclosed W Hnot.
+
+    assert (Hnoapprox :
+      ~ (forall n,
+          exists W',
+            Y W' /\
+            stc_pure_eq_depth n W W')).
+    {
+      intro Happrox.
+      apply Hnot.
+      apply Hclosed.
+      exact Happrox.
+    }
+
+    apply not_all_ex_not in Hnoapprox.
+
+    destruct Hnoapprox as [n Hn].
+
+    exists n.
+    intros W' HY Heq.
+
+    apply Hn.
+    exists W'.
+    split; assumption.
+
+  - (* Finite separation -> prefix closed *)
+    intros Hsep W Happrox.
+
+    apply NNPP.
+    intro Hnot.
+
+    destruct (Hsep W Hnot) as [n Hn].
+
+    destruct (Happrox n) as [Wn [HY Heq]].
+
+    exact (Hn Wn HY Heq).
+Qed.
+
+Theorem subtype_pure_trans_finitely_separated :
+  forall T1 T2 T3,
+    nonempty_pure T2 ->
+
+    (forall U1,
+       stc_pure_to_so T1 U1 ->
+       finitely_separated (refinement_preimage U1)) ->
+
+    subtype_pure T1 T2 ->
+    subtype_pure T2 T3 ->
+    subtype_pure T1 T3.
+Proof.
+  intros T1 T2 T3 Hnonempty Hsep H12 H23.
+
+  eapply subtype_pure_trans_closed.
+  - exact Hnonempty.
+  - intros U1 Hso.
+    apply (proj2
+      (prefix_closed_iff_finitely_separated
+         (refinement_preimage U1))).
+    apply Hsep.
+    exact Hso.
+  - exact H12.
+  - exact H23.
+Qed.
+
+(***)
+
+Inductive branch_uniformisation
+  (R : stc_pure -> (stc_pure -> Prop) -> stc_pure -> Prop)
+  (p : string)
+  (sh : branch_shape)
+  (next children : branch_pos sh -> stc_pure)
+  (Y : stc_pure -> Prop) : Prop :=
+| branch_uniformisation_intro :
+    (forall i,
+       let '(lbl, sr) := fin_nth (branch_labels sh) i in
+       R (next i)
+         (receive_residual_exists Y p lbl sr)
+         (children i)) ->
+    branch_uniformisation R p sh next children Y.
+
+Inductive uniformises_step
+  (r : stc_pure ->
+       (stc_pure -> Prop) ->
+       stc_pure -> Prop)
+  : stc_pure ->
+    (stc_pure -> Prop) ->
+    stc_pure -> Prop :=
+
+| uniformises_step_end :
+    forall Y,
+      Y stc_pure_end ->
+      uniformises_step r
+        stc_pure_end Y stc_pure_end
+
+| uniformises_step_send :
+    forall p sh next Y
+           (i : branch_pos sh)
+           lbl sr U,
+
+      fin_nth (branch_labels sh) i = (lbl, sr) ->
+
+      r
+        (next i)
+        (send_residual_exists Y p lbl sr)
+        U ->
+
+      uniformises_step r
+        (stc_pure_send p sh next)
+        Y
+        (singleton_send p lbl sr U)
+
+| uniformises_step_receive :
+    forall p sh next Y
+           (children : branch_pos sh -> stc_pure),
+
+      (forall i : branch_pos sh,
+         let '(lbl, sr) := fin_nth (branch_labels sh) i in
+         r
+           (next i)
+           (receive_residual_exists Y p lbl sr)
+           (children i)) ->
+
+      uniformises_step r
+        (stc_pure_receive p sh next)
+        Y
+        (stc_pure_receive p sh children).
+
+Definition uniformises :=
+  paco3 uniformises_step bot3.
+
+Lemma uniformises_step_mon :
+  monotone3 uniformises_step.
+Proof.
+  unfold monotone3.
+  intros T Y U r r' LE H.
+  destruct LE.
+
+  - (* End *)
+    constructor.
+    assumption.
+
+  - (* Send *)
+    eapply uniformises_step_send.
+    + eassumption.
+    + apply H.
+      eassumption.
+
+  - (* Receive *)
+    eapply uniformises_step_receive.
+    intro i.
+destruct (fin_nth (branch_labels sh) i)
+  as [lbl sr] eqn:Hkey.
+
+specialize (H0 i).
+rewrite Hkey in H0.
+simpl in H0.
+
+apply H.
+exact H0.
+Qed.
+
+
+Definition infinite_receive_uniform_rel
+  : stc_pure ->
+    (stc_pure -> Prop) ->
+    stc_pure ->
+    Prop :=
+  fun T Y U =>
+    exists q lbl sr,
+      T = repeat_receive_pure q lbl sr /\
+      U = repeat_receive_pure q lbl sr.
+
+
+Lemma infinite_receive_uniform_rel_step :
+  forall T Y U,
+    infinite_receive_uniform_rel T Y U ->
+    uniformises_step
+      (upaco3 uniformises_step infinite_receive_uniform_rel)
+      T Y U.
+Proof.
+  intros T Y U Hrel.
+
+  destruct Hrel as
+    [q [lbl [sr [HT HU]]]].
+
+  subst T U.
+
+  rewrite repeat_receive_pure_unfold.
+  unfold singleton_receive.
+
+  eapply uniformises_step_receive.
+
+  intro i.
+
+  destruct (fin_nth
+    (branch_labels {| branch_labels := [(lbl, sr)] |}) i)
+    as [lbl' sr'] eqn:Hkey.
+
+  right.
+
+  exists q, lbl, sr.
+  split; reflexivity.
+Qed.
+
+Lemma uniformises_empty_infinite_receive :
+  forall q lbl sr,
+    uniformises
+      (repeat_receive_pure q lbl sr)
+      (fun _ => False)
+      (repeat_receive_pure q lbl sr).
+Proof.
+  intros q lbl sr.
+
+  unfold uniformises.
+
+  eapply paco3_acc
+    with (l := infinite_receive_uniform_rel)
+         (r := bot3).
+
+  - intros rr INCr INCl T Y U Hrel.
+
+    pfold.
+
+    eapply uniformises_step_mon.
+
+    + apply infinite_receive_uniform_rel_step.
+      exact Hrel.
+
+    + intros T' Y' U' Hstep.
+
+      destruct Hstep as [Hpaco | Hinv].
+
+      * left.
+        eapply paco3_mon.
+        -- exact Hpaco.
+        -- intros a b c Hab.
+           apply INCl.
+           exact Hab.
+
+      * right.
+        apply INCl.
+        exact Hinv.
+
+  - exists q, lbl, sr.
+    split; reflexivity.
+Qed.
+
+Lemma uniformises_Y_correct_false :
+  forall (q lbl : string) (sr : sort),
+    ~ (forall T Y U,
+         uniformises T Y U ->
+         forall W,
+           stc_pure_to_si U W ->
+           Y W).
+Proof.
+  intros q lbl sr Hsound.
+
+  pose proof
+    (uniformises_empty_infinite_receive q lbl sr)
+    as Huni.
+
+  pose proof
+    (repeat_receive_pure_si_self q lbl sr)
+    as Hsi.
+
+  exact
+    (Hsound
+       (repeat_receive_pure q lbl sr)
+       (fun _ => False)
+       (repeat_receive_pure q lbl sr)
+       Huni
+       (repeat_receive_pure q lbl sr)
+       Hsi).
+Qed.
+
+Definition SO_wins
+  (T : stc_pure)
+  (Y : stc_pure -> Prop) : Prop :=
+  exists U,
+    stc_pure_to_so T U /\
+    forall W,
+      stc_pure_to_si U W ->
+      Y W.
+
+Definition SI_wins
+  (T : stc_pure)
+  (Y : stc_pure -> Prop) : Prop :=
+  exists V,
+    stc_pure_to_si T V /\
+    forall W,
+      stc_pure_to_so V W ->
+      ~ Y W.
+
+Definition decomposition_determined
+  (T : stc_pure)
+  (Y : stc_pure -> Prop) : Prop :=
+  SO_wins T Y \/ SI_wins T Y.
+
+Theorem decomposition_uniformisation_determined :
+  forall (T : stc_pure)
+         (Y : stc_pure -> Prop),
+
+    decomposition_determined T Y ->
+
+    (forall V,
+       stc_pure_to_si T V ->
+       exists W,
+         stc_pure_to_so V W /\
+         Y W) ->
+
+    exists U,
+      stc_pure_to_so T U /\
+      forall W,
+        stc_pure_to_si U W ->
+        Y W.
+Proof.
+  intros T Y Hdet HY.
+
+  unfold decomposition_determined in Hdet.
+  destruct Hdet as [HSO | HSI].
+
+  - (* SO has a winning strategy *)
+    exact HSO.
+
+  - (* SI has a winning strategy: contradiction *)
+    destruct HSI as [V [Hsi Hbad]].
+
+    destruct (HY V Hsi) as [W [Hso HYw]].
+
+    exfalso.
+    apply (Hbad W Hso).
+    exact HYw.
+Qed.
+
+From Coq Require Import Logic.Classical.
+
+Lemma no_SO_win_iff :
+  forall T Y,
+    ~ SO_wins T Y <->
+    (forall U,
+       stc_pure_to_so T U ->
+       exists W,
+         stc_pure_to_si U W /\
+         ~ Y W).
+Proof.
+  intros T Y.
+  unfold SO_wins.
+  split.
+
+  - intros Hnot U Hso.
+
+    apply NNPP.
+    intro Hnone.
+
+    apply Hnot.
+    exists U.
+    split.
+    + exact Hso.
+    + intros W Hsi.
+      apply NNPP.
+      intro Hbad.
+      apply Hnone.
+      exists W.
+      split; assumption.
+
+  - intros Hfail [U [Hso Hall]].
+
+    destruct (Hfail U Hso)
+      as [W [Hsi Hnot]].
+
+    apply Hnot.
+    apply Hall.
+    exact Hsi.
+Qed.
+
+Definition finitely_decidable_property
+  (Y : stc_pure -> Prop) : Prop :=
+  forall W,
+    exists n,
+      forall W',
+        stc_pure_eq_depth n W W' ->
+        (Y W <-> Y W').
+
+Lemma finitely_decidable_prefix_closed :
+  forall Y,
+    finitely_decidable_property Y ->
+    prefix_closed Y.
+Proof.
+  intros Y Hdec W Happrox.
+
+  destruct (Hdec W) as [n Hn].
+  destruct (Happrox n) as [Wn [HY Heq]].
+
+  apply (proj2 (Hn Wn Heq)).
+  exact HY.
+Qed.
+
+From Coq Require Import Logic.Classical.
+
+Lemma decomposition_determined_finitely_decidable :
+  forall T Y,
+    nonempty_pure T ->
+    finitely_decidable_property Y ->
+    decomposition_determined T Y.
+Proof.
+  intros T Y Hnonempty Hdec.
+
+  unfold decomposition_determined.
+
+  destruct
+    (classic
+       (forall V,
+          stc_pure_to_si T V ->
+          exists W,
+            stc_pure_to_so V W /\ Y W))
+    as [HY | HnotHY].
+
+  - (* SO wins *)
+    left.
+    unfold SO_wins.
+
+    eapply decomposition_uniformisation_closed.
+    + exact Hnonempty.
+    + apply finitely_decidable_prefix_closed.
+      exact Hdec.
+    + exact HY.
+
+- (* SI wins *)
+  right.
+  unfold SI_wins.
+
+  apply not_all_ex_not in HnotHY.
+  destruct HnotHY as [V HV].
+
+  assert (Hsi : stc_pure_to_si T V).
+  {
+    apply NNPP.
+    intro HnotSI.
+    apply HV.
+    intro H.
+    contradiction.
+  }
+
+  exists V.
+  split.
+  + exact Hsi.
+  + intros W Hso HYw.
+    apply HV.
+    intro.
+    exists W.
+    split; assumption.
+Qed.
+
+Lemma refinement_uniformisation_determined :
+  forall T U1,
+    nonempty_pure T ->
+    decomposition_determined
+      T (refinement_preimage U1) ->
+    (forall V,
+       stc_pure_to_si T V ->
+       exists W,
+         stc_pure_to_so V W /\
+         refinement_preimage U1 W) ->
+    exists U,
+      stc_pure_to_so T U /\
+      forall W,
+        stc_pure_to_si U W ->
+        refinement_preimage U1 W.
+Proof.
+  intros T U1 Hnonempty Hdet HY.
+
+  eapply decomposition_uniformisation_determined.
+  - exact Hdet.
+  - exact HY.
+Qed.
+
+Theorem subtype_pure_trans_determined :
+  forall T1 T2 T3,
+    nonempty_pure T2 ->
+
+    (forall U1,
+       stc_pure_to_so T1 U1 ->
+       decomposition_determined
+         T2 (refinement_preimage U1)) ->
+
+    subtype_pure T1 T2 ->
+    subtype_pure T2 T3 ->
+    subtype_pure T1 T3.
+Proof.
+  intros T1 T2 T3 Hnonempty Hdet H12 H23.
+
+  unfold subtype_pure.
+  intros U1 V3 Hso1 Hsi3.
+
+  assert (HY :
+    forall V2,
+      stc_pure_to_si T2 V2 ->
+      exists W2,
+        stc_pure_to_so V2 W2 /\
+        refinement_preimage U1 W2).
+  {
+    intros V2 Hsi2.
+
+    destruct (H12 U1 V2 Hso1 Hsi2)
+      as [W1 [W2 [Hsi1 [Hso2 Href12]]]].
+
+    exists W2.
+    split.
+    - exact Hso2.
+    - exists W1.
+      split; assumption.
+  }
+
+  destruct
+    (refinement_uniformisation_determined
+       T2 U1
+       Hnonempty
+       (Hdet U1 Hso1)
+       HY)
+    as [U2 [Hso2 Hunif]].
+
+  destruct (H23 U2 V3 Hso2 Hsi3)
+    as [W2 [W3 [Hsi2 [Hso3 Href23]]]].
+
+  destruct (Hunif W2 Hsi2)
+    as [W1 [Hsi1 Href12]].
+
+  exists W1, W3.
+  split.
+  - exact Hsi1.
+  - split. exact Hso3.
+  - eapply stc_pure_refinement_trans.
+    + exact Href12.
+    + exact Href23.
+Qed.
+
+Lemma uniformisation_send_choice_with_witness :
+  forall p sh next Y,
+    nonempty_pure (stc_pure_send p sh next) ->
+    (forall V,
+       stc_pure_to_si
+         (stc_pure_send p sh next) V ->
+       exists W,
+         stc_pure_to_so V W /\
+         Y W) ->
+    exists i,
+      let '(lbl, sr) :=
+        fin_nth (branch_labels sh) i in
+      forall V,
+        stc_pure_to_si (next i) V ->
+        exists W Wparent,
+          stc_pure_to_so V W /\
+          Y Wparent /\
+          (exists sh' next' (j : branch_pos sh'),
+             length (branch_labels sh') = 1 /\
+             fin_nth (branch_labels sh') j = (lbl, sr) /\
+             next' j = W /\
+             Wparent = stc_pure_send p sh' next').
+Proof.
+  intros p sh next Y Hnonempty HY.
+
+  destruct
+    (uniformisation_send_choice_exists
+       p sh next Y Hnonempty HY)
+    as [i Hi].
+
+  exists i.
+
+  destruct (fin_nth (branch_labels sh) i)
+    as [lbl sr] eqn:Hkey.
+
+  intros V Hsi.
+
+  destruct (Hi V Hsi)
+    as [W [Hso Hres]].
+
+  destruct Hres as
+    [sh' [next' [j
+      [Hlen [Hkey' [Hnext HYparent]]]]]].
+
+  exists W, (stc_pure_send p sh' next').
+
+  split.
+  - exact Hso.
+  - split.
+    + exact HYparent.
+    + exists sh', next', j.
+      repeat split; assumption.
+Qed.
+
+Lemma send_residual_exists_two_steps :
+  forall Y p lp sp q lq sq W,
+    send_residual_exists
+      (send_residual_exists Y p lp sp)
+      q lq sq W ->
+    exists Wmid Wroot,
+      send_residual_exists Y p lp sp Wmid /\
+      Y Wroot /\
+      (exists sh2 next2 (j2 : branch_pos sh2),
+         length (branch_labels sh2) = 1 /\
+         fin_nth (branch_labels sh2) j2 = (lq, sq) /\
+         next2 j2 = W /\
+         Wmid = stc_pure_send q sh2 next2) /\
+      (exists sh1 next1 (j1 : branch_pos sh1),
+         length (branch_labels sh1) = 1 /\
+         fin_nth (branch_labels sh1) j1 = (lp, sp) /\
+         next1 j1 = Wmid /\
+         Wroot = stc_pure_send p sh1 next1).
+Proof.
+  intros Y p lp sp q lq sq W Hres.
+
+  unfold send_residual_exists in Hres.
+
+  destruct Hres as
+    [sh2 [next2 [j2
+      [Hlen2 [Hkey2 [Hnext2 Hmid]]]]]].
+
+  unfold send_residual_exists in Hmid.
+
+  destruct Hmid as
+    [sh1 [next1 [j1
+      [Hlen1 [Hkey1 [Hnext1 Hroot]]]]]].
+
+  exists (stc_pure_send q sh2 next2).
+  exists (stc_pure_send p sh1 next1).
+
+  repeat split.
+  - exists sh1, next1, j1.
+    repeat split; assumption.
+
+  - exact Hroot.
+
+  - exists sh2, next2, j2.
+    repeat split; try easy.
+
+  - exists sh1, next1, j1.
+    repeat split; try assumption.
+
+Qed.
+
+CoFixpoint test_T
+  (p : string) (sr : sort) : stc_pure :=
+  stc_pure_send p
+    {| branch_labels := [("a"%string, sr); ("b"%string, sr)] |}
+    (fun _ => test_T p sr).
+
+CoFixpoint test_A
+  (p : string) (sr : sort) : stc_pure :=
+  singleton_send p "a" sr (test_A p sr).
+
+Fixpoint test_W
+  (n : nat)
+  (p : string)
+  (sr : sort) : stc_pure :=
+  match n with
+  | 0 =>
+      singleton_send p "b" sr (test_A p sr)
+  | S k =>
+      singleton_send p "a" sr (test_W k p sr)
+  end.
+
+Definition test_Y
+  (p : string)
+  (sr : sort)
+  (W : stc_pure) : Prop :=
+  exists n,
+    W = test_W n p sr.
+
+Lemma test_W_in_Y :
+  forall n p sr,
+    test_Y p sr (test_W n p sr).
+Proof.
+  intros n p sr.
+  exists n.
+  reflexivity.
+Qed.
+
+Lemma test_A_differs_from_W :
+  forall n p sr,
+    ~ stc_pure_eq_depth (S n)
+        (test_A p sr)
+        (test_W n p sr).
+Proof.
+  induction n as [| n IH]; intros p sr Hdepth.
+
+- (* Base case: a versus b *)
+  simpl in Hdepth.
+  destruct Hdepth as [_ Hbranches].
+  destruct Hbranches as [Hlen Hlabels].
+  discriminate Hlen.
+  - (* Step: both begin with a *)
+    simpl in Hdepth.
+    destruct Hdepth as [_ Hchildren].
+    destruct Hchildren as [Hlen Hnext].
+
+    specialize (Hnext Fin.F1).
+    simpl in Hnext.
+
+    apply (IH p sr).
+    exact Hnext.
+Qed.
+
+Lemma test_A_not_in_Y :
+  forall p sr,
+    ~ test_Y p sr (test_A p sr).
+Proof.
+  intros p sr [n Heq].
+  apply (test_A_differs_from_W n p sr).
+  rewrite <- Heq.
+  apply stc_pure_eq_depth_refl.
+Qed.
+
+Lemma test_A_approximated :
+  forall n p sr,
+    stc_pure_eq_depth n
+      (test_A p sr)
+      (test_W n p sr).
+Proof.
+  induction n as [| n IH]; intros p sr.
+
+  - (* Depth 0 *)
+    simpl.
+    easy.
+
+  - (* Depth S n: both begin with output "a" *)
+    simpl.
+    split.
+    + reflexivity.
+    + split.
+      * reflexivity.
+      * intro i.
+        apply IH.
+Qed.
+
+Lemma test_Y_not_prefix_closed :
+  forall p sr,
+    ~ prefix_closed (test_Y p sr).
+Proof.
+  intros p sr Hclosed.
+
+  apply (test_A_not_in_Y p sr).
+
+  apply Hclosed.
+  intro n.
+
+  exists (test_W n p sr).
+  split.
+  - apply test_W_in_Y.
+  - apply test_A_approximated.
+Qed.
+
+Lemma test_Y_send_residual_a :
+  forall n p sr,
+    send_residual_exists
+      (test_Y p sr)
+      p "a" sr
+      (test_W n p sr).
+Proof.
+  intros n p sr.
+
+  unfold send_residual_exists.
+
+  exists {| branch_labels := [("a"%string, sr)] |}.
+  exists (fun _ => test_W n p sr).
+  exists Fin.F1.
+
+  split.
+  - reflexivity.
+  - split. reflexivity.
+  - split. reflexivity.
+  - unfold test_Y.
+    exists (S n).
+    reflexivity.
+Qed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
